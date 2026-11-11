@@ -23,15 +23,38 @@ var _bob := 0.0
 const ATTACK_LEN := 0.62
 
 
+const BONE_NAMES := ["Pelvis", "Spine", "Head", "UpperArmL", "ForearmL", "UpperArmR", "ForearmR",
+		"Hammer", "ThighL", "ShinL", "ThighR", "ShinR"]
+
+## Модель со скелетом: повороты задаются в осях модели и переводятся в локальные оси кости.
+var _skel: Skeleton3D
+var _idx := {}
+var _rest_local := {}   ## Quaternion — локальный rest кости
+var _rest_global := {}  ## Quaternion — глобальный rest кости (в пространстве скелета)
+var _rest_node := {}    ## Basis — rest для обычных узлов (молоток)
+
+
 func _ready() -> void:
-	for n in ["Pelvis", "Spine", "Head", "UpperArmL", "ForearmL", "UpperArmR", "ForearmR",
-			"Hammer", "ThighL", "ShinL", "ThighR", "ShinR"]:
-		var node := find_child(n, true, false) as Node3D
-		if node:
-			_bones[n] = node
+	var sk := find_children("*", "Skeleton3D", true, false)
+	_skel = sk[0] if sk.size() > 0 else null
+	for n in BONE_NAMES:
+		var i := _skel.find_bone(n) if _skel else -1
+		if i >= 0:
+			_idx[n] = i
+			_rest_local[n] = _skel.get_bone_rest(i).basis.get_rotation_quaternion()
+			_rest_global[n] = _skel.get_bone_global_rest(i).basis.get_rotation_quaternion()
+			_bones[n] = i
 			_pose[n] = Vector3.ZERO
-	if _bones.has("Pelvis"):
-		_pelvis_base = _bones["Pelvis"].position
+		else:
+			var node := find_child(n, true, false) as Node3D
+			if node:
+				_bones[n] = node
+				_rest_node[n] = node.basis
+				_pose[n] = Vector3.ZERO
+	if _idx.has("Pelvis"):
+		_pelvis_base = _skel.get_bone_rest(_idx["Pelvis"]).origin
+	elif _bones.has("Pelvis"):
+		_pelvis_base = (_bones["Pelvis"] as Node3D).position
 
 
 func play_attack() -> void:
@@ -125,8 +148,20 @@ func update_anim(delta: float, speed: float, sprint: float, state: int, yaw_rate
 	var w := 1.0 if instant else 1.0 - exp(-smoothing * delta)
 	for k in _bones:
 		_pose[k] = (_pose[k] as Vector3).lerp(target[k], w)
-		(_bones[k] as Node3D).rotation = _pose[k]
+		_apply(k, _pose[k])
 	# вертикальное покачивание и приседание на шаге
 	_bob = lerpf(_bob, absf(c) * a * (0.045 + sprint * 0.03) - a * 0.03, 1.0 - exp(-14.0 * delta))
-	if _bones.has("Pelvis"):
-		_bones["Pelvis"].position = _pelvis_base + Vector3(0, _bob, 0)
+	if _idx.has("Pelvis"):
+		_skel.set_bone_pose_position(_idx["Pelvis"], _pelvis_base + Vector3(0, _bob, 0))
+	elif _bones.has("Pelvis"):
+		(_bones["Pelvis"] as Node3D).position = _pelvis_base + Vector3(0, _bob, 0)
+
+
+## Поворот euler (в осях модели) → поза кости. Для кости: rest_local * (G⁻¹ · R · G).
+func _apply(k: String, euler: Vector3) -> void:
+	var r := Quaternion.from_euler(euler)
+	if _idx.has(k):
+		var g: Quaternion = _rest_global[k]
+		_skel.set_bone_pose_rotation(_idx[k], (_rest_local[k] as Quaternion) * (g.inverse() * r * g))
+	else:
+		(_bones[k] as Node3D).basis = (_rest_node[k] as Basis) * Basis(r)

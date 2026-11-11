@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://kvgeypv4x4cc"
-path.s3tc="res://.godot/imported/yur_face.png-65cbd22627098616ba6abf7a3ae3ca9e.s3tc.ctex"
+uid="uid://dbh3eysfk02ij"
+path.s3tc="res://.godot/imported/yur2_jeans.png-bb30db587f9e62e96e1ac47001767b53.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://assets/textures/yur_face.png"
-dest_files=["res://.godot/imported/yur_face.png-65cbd22627098616ba6abf7a3ae3ca9e.s3tc.ctex"]
+source_file="res://assets/textures/yur2_jeans.png"
+dest_files=["res://.godot/imported/yur2_jeans.png-bb30db587f9e62e96e1ac47001767b53.s3tc.ctex"]
 
 [params]
 
