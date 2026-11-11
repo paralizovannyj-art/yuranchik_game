@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bsj21or6lqrlu"
-path.s3tc="res://.godot/imported/yur_skin.png-ecccc31faffda5cd4abeb8a6dfa1e1e0.s3tc.ctex"
+uid="uid://bukruq6v4s2n6"
+path.s3tc="res://.godot/imported/yur2_face.png-209ee03aac81ad8892621f3f7c16049d.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://assets/textures/yur_skin.png"
-dest_files=["res://.godot/imported/yur_skin.png-ecccc31faffda5cd4abeb8a6dfa1e1e0.s3tc.ctex"]
+source_file="res://assets/textures/yur2_face.png"
+dest_files=["res://.godot/imported/yur2_face.png-209ee03aac81ad8892621f3f7c16049d.s3tc.ctex"]
 
 [params]
 

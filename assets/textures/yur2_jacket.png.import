@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dsyjt06q0y2x7"
-path.s3tc="res://.godot/imported/yur_beanie.png-d4efe5ef4bacc0c891e14ab677c9b543.s3tc.ctex"
+uid="uid://qc31rnb8elwp"
+path.s3tc="res://.godot/imported/yur2_jacket.png-75735a0bf312103a45dd6343876b5175.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://assets/textures/yur_beanie.png"
-dest_files=["res://.godot/imported/yur_beanie.png-d4efe5ef4bacc0c891e14ab677c9b543.s3tc.ctex"]
+source_file="res://assets/textures/yur2_jacket.png"
+dest_files=["res://.godot/imported/yur2_jacket.png-75735a0bf312103a45dd6343876b5175.s3tc.ctex"]
 
 [params]
 

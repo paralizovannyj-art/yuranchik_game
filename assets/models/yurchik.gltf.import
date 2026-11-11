@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://dwqc2u3jfu5po"
-path="res://.godot/imported/yurchik_placeholder.gltf-1f03878eb814bbfc98396a7386a0d99f.scn"
+uid="uid://4f8gmarv2h0"
+path="res://.godot/imported/yurchik.gltf-e7fc37a6eb813c99f3e0ac21945376d5.scn"
 
 [deps]
 
-source_file="res://assets/models/yurchik_placeholder.gltf"
-dest_files=["res://.godot/imported/yurchik_placeholder.gltf-1f03878eb814bbfc98396a7386a0d99f.scn"]
+source_file="res://assets/models/yurchik.gltf"
+dest_files=["res://.godot/imported/yurchik.gltf-e7fc37a6eb813c99f3e0ac21945376d5.scn"]
 
 [params]
 
