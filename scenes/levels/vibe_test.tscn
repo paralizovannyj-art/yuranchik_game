@@ -1,5 +1,8 @@
 [gd_scene format=3 uid="uid://cc3t5wpp7opn4"]
 
+[ext_resource type="Shader" uid="uid://cl2y4php6t33u" path="res://shaders/city_night_sky.gdshader" id="1_gt6fp"]
+[ext_resource type="Script" uid="uid://bsrgiiid28yqq" path="res://scripts/world/flicker_light.gd" id="5_t5v6d"]
+[ext_resource type="Material" uid="uid://cy0efahah6x6w" path="res://assets/materials/lamp_halo.tres" id="7_qst3w"]
 [ext_resource type="PackedScene" uid="uid://w36jmfyy7xtj" path="res://assets/models/panel_building.gltf" id="b"]
 [ext_resource type="PackedScene" uid="uid://c5dp2fdxehukf" path="res://assets/models/bench.gltf" id="ben"]
 [ext_resource type="PackedScene" uid="uid://bj1dy7d72csco" path="res://assets/models/trash_bin.gltf" id="bin"]
@@ -17,9 +20,25 @@
 [ext_resource type="PackedScene" uid="uid://rbksdn78awq5" path="res://assets/models/tree_b.gltf" id="tb"]
 [ext_resource type="PackedScene" uid="uid://51qn4bwlr2w0" path="res://assets/models/turnik.gltf" id="tur"]
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bjkw8"]
+shader = ExtResource("1_gt6fp")
+shader_parameter/zenith_color = Color(0.012, 0.016, 0.03, 1)
+shader_parameter/mid_color = Color(0.07, 0.065, 0.07, 1)
+shader_parameter/horizon_color = Color(0.42, 0.25, 0.14, 1)
+shader_parameter/ground_color = Color(0.05, 0.04, 0.035, 1)
+shader_parameter/glow_height = 0.28
+shader_parameter/glow_energy = 1.3
+shader_parameter/cloud_amount = 0.6
+shader_parameter/cloud_speed = 0.004
+
+[sub_resource type="Sky" id="Sky_td7hf"]
+sky_material = SubResource("ShaderMaterial_bjkw8")
+radiance_size = 0
+
 [sub_resource type="Environment" id="env"]
-background_mode = 1
+background_mode = 2
 background_color = Color(0.015, 0.02, 0.035, 1)
+sky = SubResource("Sky_td7hf")
 ambient_light_source = 2
 ambient_light_color = Color(0.3, 0.42, 0.6, 1)
 ambient_light_energy = 0.3
@@ -31,8 +50,17 @@ glow_strength = 1.2
 glow_bloom = 0.08
 glow_hdr_threshold = 0.75
 fog_enabled = true
-fog_light_color = Color(0.07, 0.09, 0.13, 1)
-fog_density = 0.022
+fog_light_color = Color(0.13, 0.1, 0.085, 1)
+fog_density = 0.012
+fog_aerial_perspective = 0.75
+fog_sky_affect = 0.2
+volumetric_fog_enabled = true
+volumetric_fog_density = 0.018
+volumetric_fog_albedo = Color(0.85, 0.85, 0.9, 1)
+volumetric_fog_anisotropy = 0.55
+volumetric_fog_length = 60.0
+volumetric_fog_ambient_inject = 0.12
+volumetric_fog_sky_affect = 0.0
 
 [sub_resource type="StandardMaterial3D" id="mat_snow"]
 albedo_texture = ExtResource("snow")
@@ -57,6 +85,37 @@ size = Vector2(5, 80)
 material = SubResource("mat_slush")
 size = Vector2(2.5, 12)
 
+[sub_resource type="Gradient" id="Gradient_wmyyq"]
+offsets = PackedFloat32Array(0, 0.15, 1)
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0.55, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_u8r6j"]
+gradient = SubResource("Gradient_wmyyq")
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8kxpv"]
+transparency = 1
+blend_mode = 1
+shading_mode = 0
+albedo_color = Color(1, 0.8, 0.55, 0.45)
+albedo_texture = SubResource("GradientTexture2D_u8r6j")
+disable_receive_shadows = true
+billboard_mode = 1
+
+[sub_resource type="QuadMesh" id="QuadMesh_kdxkx"]
+material = SubResource("StandardMaterial3D_8kxpv")
+size = Vector2(0.6, 0.6)
+
+[sub_resource type="QuadMesh" id="QuadMesh_p153r"]
+material = ExtResource("7_qst3w")
+size = Vector2(2.6, 2.6)
+
+[sub_resource type="QuadMesh" id="QuadMesh_d7g3w"]
+material = ExtResource("7_qst3w")
+size = Vector2(2.6, 2.6)
+
 [sub_resource type="ParticleProcessMaterial" id="pm_snow"]
 emission_shape = 3
 emission_box_extents = Vector3(35, 1, 35)
@@ -70,8 +129,7 @@ turbulence_noise_strength = 0.4
 turbulence_noise_scale = 6.0
 
 [sub_resource type="StandardMaterial3D" id="mat_flake"]
-shading_mode = 0
-albedo_color = Color(0.85, 0.9, 1, 1)
+albedo_color = Color(0.95, 0.97, 1, 1)
 billboard_mode = 3
 particles_anim_h_frames = 1
 particles_anim_v_frames = 1
@@ -79,7 +137,7 @@ particles_anim_loop = false
 
 [sub_resource type="QuadMesh" id="mesh_flake"]
 material = SubResource("mat_flake")
-size = Vector2(0.04, 0.04)
+size = Vector2(0.05, 0.05)
 
 [sub_resource type="ShaderMaterial" id="mat_post"]
 shader = ExtResource("post")
@@ -121,13 +179,22 @@ mesh = SubResource("mesh_walk")
 [node name="BuildingA" parent="." unique_id=1992057558 instance=ExtResource("b")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -14)
 
-[node name="EntranceLight" type="OmniLight3D" parent="BuildingA" unique_id=1876268967]
+[node name="EntranceLight" type="OmniLight3D" parent="BuildingA" unique_id=1876268967 node_paths=PackedStringArray("glow_mesh")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.05, 2.35, 7.2)
-light_color = Color(1, 0.85, 0.6, 1)
-light_energy = 2.0
+light_color = Color(1, 0.82, 0.55, 1)
+light_energy = 1.8
+light_volumetric_fog_energy = 1.5
 shadow_enabled = true
 omni_range = 7.0
 omni_attenuation = 1.3
+script = ExtResource("5_t5v6d")
+flicker_chance = 0.5
+glow_mesh = NodePath("../EntranceHalo")
+
+[node name="EntranceHalo" type="MeshInstance3D" parent="BuildingA" unique_id=515280655]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.05, 2.3999999, 7.0499997)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_kdxkx")
 
 [node name="BuildingB" parent="." unique_id=334267204 instance=ExtResource("b")]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -32, 0, 8)
@@ -140,32 +207,54 @@ transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -1, 0, -0.6)
 
 [node name="Spot" type="SpotLight3D" parent="Lamp1" unique_id=1109890879]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 7.8, 2.05)
-light_color = Color(1, 0.58, 0.25, 1)
-light_energy = 9.0
+light_color = Color(1, 0.52, 0.18, 1)
+light_energy = 42.0
+light_volumetric_fog_energy = 2.0
 shadow_enabled = true
-spot_range = 16.0
-spot_attenuation = 0.9
-spot_angle = 60.0
-spot_angle_attenuation = 0.5
+spot_range = 15.0
+spot_angle = 48.0
+spot_angle_attenuation = 1.6
 
 [node name="Fill" type="OmniLight3D" parent="Lamp1" unique_id=1709582854]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.4, 2.05)
-light_color = Color(1, 0.6, 0.3, 1)
-light_energy = 0.6
-omni_range = 10.0
+light_color = Color(1, 0.55, 0.22, 1)
+light_energy = 1.2
+light_volumetric_fog_energy = 1.5
+omni_range = 6.0
+
+[node name="Halo" type="MeshInstance3D" parent="Lamp1" unique_id=306246587]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.8, 2.05)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_p153r")
 
 [node name="Lamp2" parent="." unique_id=1970116140 instance=ExtResource("lamp")]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 15, 0, 12)
 
-[node name="Spot" type="SpotLight3D" parent="Lamp2" unique_id=922128762]
+[node name="Spot" type="SpotLight3D" parent="Lamp2" unique_id=922128762 node_paths=PackedStringArray("glow_mesh")]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 7.8, 2.05)
-light_color = Color(1, 0.58, 0.25, 1)
-light_energy = 9.0
+light_color = Color(1, 0.52, 0.18, 1)
+light_energy = 42.0
+light_volumetric_fog_energy = 2.0
 shadow_enabled = true
-spot_range = 16.0
-spot_attenuation = 0.9
-spot_angle = 60.0
-spot_angle_attenuation = 0.5
+spot_range = 15.0
+spot_angle = 48.0
+spot_angle_attenuation = 1.6
+script = ExtResource("5_t5v6d")
+flicker_chance = 0.12
+min_factor = 0.0
+glow_mesh = NodePath("../Halo")
+
+[node name="Fill" type="OmniLight3D" parent="Lamp2" unique_id=1046121104]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.4, 2.05)
+light_color = Color(1, 0.55, 0.22, 1)
+light_energy = 1.2
+light_volumetric_fog_energy = 1.5
+omni_range = 6.0
+
+[node name="Halo" type="MeshInstance3D" parent="Lamp2" unique_id=499058159]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.8, 2.05)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_d7g3w")
 
 [node name="Garages" parent="." unique_id=600941929 instance=ExtResource("gar")]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 24, 0, -4)

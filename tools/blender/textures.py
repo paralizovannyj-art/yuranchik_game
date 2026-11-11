@@ -28,12 +28,15 @@ def concrete_base(w, h, rng, tone=(0.56, 0.55, 0.52), grime=0.35):
 def facade():
     cols, rows, cell = 8, 9, 64
     w, h = cols * cell, rows * cell
-    arr = concrete_base(w, h, R)
+    src = photo("Concrete036", 192, relief=0.9, sat=0.55, gain=1.05)
+    arr = np.zeros((h, w, 3), np.float32)
     emi = np.zeros((h, w, 3), np.float32)
-    # тон каждой панели немного разный
+    # каждая панель — свой кусок фото бетона и чуть свой тон
     for r in range(rows):
         for c in range(cols):
-            arr[r*cell:(r+1)*cell, c*cell:(c+1)*cell] *= 1 + (R.random() - 0.5) * 0.08
+            oy, ox = R.integers(0, 192 - cell, 2)
+            arr[r*cell:(r+1)*cell, c*cell:(c+1)*cell] = src[oy:oy+cell, ox:ox+cell] * (1 + (R.random() - 0.5) * 0.1)
+    arr = arr * 0.85 + concrete_base(w, h, R) * 0.15
     # потёки по всему фасаду + сильнее внизу
     st = streaks(w, h, R, 0.5) * fbm(w, h, 6, 4, R)
     grad = np.linspace(0.5, 1.4, h, dtype=np.float32)[:, None]
@@ -105,9 +108,10 @@ def facade():
 
 def wall_side():
     w = h = 256
-    arr = concrete_base(w, h, R)
-    st = streaks(w, h, R)
-    arr *= (1 - st[..., None] * 0.3)
+    arr = tile(photo("Concrete034", 128, relief=1.0, sat=0.5, tint=(0.66, 0.65, 0.62)), w, h)
+    arr *= concrete_base(w, h, R, tone=(1, 1, 1), grime=0.5)
+    st = streaks(w, h, R, 0.6) * fbm(w, h, 4, 4, R)
+    arr *= (1 - st[..., None] * 0.25)
     for k in range(0, 256, 128):
         arr[k:k+2, :] *= 0.3
         arr[:, k:k+2] *= 0.3
@@ -116,13 +120,8 @@ def wall_side():
 
 def plinth():
     w, h = 256, 64
-    arr = concrete_base(w, h, R, tone=(0.42, 0.36, 0.32), grime=0.6)
-    # плитка цоколя
-    for x in range(0, w, 32):
-        arr[:, x:x+1] *= 0.5
-    for y in range(0, h, 16):
-        arr[y:y+1, :] *= 0.5
-    arr[:12] *= 0.6  # грязь от земли сверху (перевернём UV в модели)
+    arr = tile(photo("Tiles140", 128, relief=0.7, sat=0.4, gain=1.2)[::2, ::2], w, h)
+    arr[:12] *= np.linspace(0.5, 1, 12, dtype=np.float32)[:, None, None]
     save("plinth", arr)
 
 
@@ -135,31 +134,22 @@ def roof():
 
 def door():
     w, h = 128, 256
-    arr = fill(h, w, (0.30, 0.12, 0.08)) * (0.85 + fbm(w, h, 8, 16, R)[..., None] * 0.3)
-    rust = np.clip((fbm(w, h, 6, 12, R) - 0.55) * 4, 0, 1)
-    arr = arr * (1 - rust[..., None]) + rust[..., None] * rgb((0.35, 0.18, 0.07))
+    p = photo("PaintedMetal013", w, h, relief=0.9)
+    rm = rust_mask("PaintedMetal013", w, h)[..., None]
+    arr = p * rgb((0.55, 0.22, 0.15)) * (1 - rm) + p * rm
     arr[8:16, :] *= 0.6; arr[-16:-8, :] *= 0.6
     arr[:, 8:12] *= 0.6; arr[:, -12:-8] *= 0.6
-    # домофон
     arr[90:112, 96:112] = rgb((0.15, 0.15, 0.15))
     arr[94:98, 99:109] = rgb((0.5, 0.6, 0.5))
-    # ручка
     arr[120:150, 14:20] = rgb((0.4, 0.4, 0.38))
-    # граффити-каракули
-    g = fbm(w, h, 30, 10, R, oct=2)
-    tag = (np.abs(g - 0.5) < 0.012)
-    tag[:60] = False; tag[200:] = False
-    arr[tag] = rgb((0.85, 0.85, 0.9))
     save("door", arr)
 
 
 def balcony():
-    # 2 варианта по горизонтали: открытый бетонный / застеклённый деревянный
-    w, h = 256, 128
-    a = concrete_base(128, 128, R, tone=(0.5, 0.49, 0.47), grime=0.6)
-    a *= (1 - streaks(128, 128, R, 2)[..., None] * 0.4)
+    a = photo("Concrete036", 128, relief=1.0, sat=0.5)
+    a *= (1 - (streaks(128, 128, R, 0.8) * fbm(128, 128, 3, 3, R))[..., None] * 0.3)
     a[:6] *= 0.5
-    b = fill(128, 128, (0.38, 0.27, 0.18)) * (0.8 + fbm(128, 128, 4, 16, R)[..., None] * 0.4)
+    b = photo("Planks023A", 128, relief=0.8, tint=(1.1, 0.95, 0.85))
     for x0 in range(4, 124, 30):
         b[10:70, x0+3:x0+27] = rgb((0.05, 0.06, 0.08)) + (fbm(24, 60, 2, 4, R)[..., None] * 0.08)
     b[70:74] *= 0.5
@@ -167,97 +157,70 @@ def balcony():
 
 
 def snow():
-    w = h = 256
-    n1 = fbm(w, h, 4, 4, R)
-    n2 = fbm(w, h, 24, 24, R, oct=3)
-    sp = (R.random((h, w)) > 0.985).astype(np.float32)
-    v = 0.78 + (n1 - 0.5) * 0.22 + (n2 - 0.5) * 0.08 + sp * 0.15
-    arr = fill(h, w, (0.88, 0.92, 1.0)) * v[..., None]
-    # грязные пятна
-    d = np.clip((fbm(w, h, 5, 5, R) - 0.6) * 3, 0, 1)
-    arr = arr * (1 - d[..., None] * 0.35) + d[..., None] * rgb((0.12, 0.1, 0.08))
+    arr = photo("Snow013", 256, relief=1.0, sat=0.6, tint=(0.95, 0.98, 1.04))
+    d = np.clip((fbm(256, 256, 5, 5, R) - 0.62) * 3, 0, 1)
+    arr = arr * (1 - d[..., None] * 0.3) + d[..., None] * rgb((0.1, 0.09, 0.07))
     save("snow", arr)
 
 
 def slush():
     w = h = 256
-    n = fbm(w, h, 6, 6, R)
-    base = fill(h, w, (0.16, 0.15, 0.14)) * (0.8 + fbm(w, h, 40, 40, R, oct=2)[..., None] * 0.4)
-    snowy = np.clip((n - 0.55) * 5, 0, 1)
-    # колея: две полосы чистого асфальта по оси V
+    s = photo("Snow012", w, relief=0.8, sat=0.7)
+    road = photo("Road013A", w, relief=0.8, sat=0.5, gain=1.1)
+    s = s * 0.8 + 0.12
+    lum = s @ np.array([0.3, 0.6, 0.1], np.float32)
+    m = np.clip((lum - 0.3) * 1.5, 0, 1) * 0.85
     xs = np.linspace(0, 1, w, dtype=np.float32)[None, :]
-    rut = (np.abs(xs - 0.3) < 0.08) | (np.abs(xs - 0.7) < 0.08)
-    snowy = np.where(rut, snowy * 0.2, snowy)
-    arr = base * (1 - snowy[..., None]) + snowy[..., None] * rgb((0.62, 0.64, 0.68))
+    rut = ((np.abs(xs - 0.3) < 0.08) | (np.abs(xs - 0.7) < 0.08)).astype(np.float32)
+    m = m * (1 - rut * 0.8)
+    arr = road * (1 - m[..., None]) + s * m[..., None]
     save("slush", arr)
 
 
 def garage():
-    # атлас 4 ворот: 128x128 каждые
-    cols = [(0.20, 0.32, 0.24), (0.18, 0.26, 0.40), (0.38, 0.22, 0.14), (0.30, 0.30, 0.28)]
+    srcs = [("CorrugatedSteel006A", (0.75, 0.8, 0.75)), ("CorrugatedSteel007A", (0.55, 0.65, 0.8)),
+            ("CorrugatedSteel007A", (0.75, 0.45, 0.3)), ("Metal021", (1, 1, 1))]
+    rust_src = rust_mask("PaintedMetal006", 256)
+    rust_col = photo("Metal021", 256, sat=1.3)
     parts = []
-    for c in cols:
-        a = fill(128, 128, c) * (0.85 + fbm(128, 128, 6, 6, R)[..., None] * 0.3)
-        ribs = (np.arange(128) % 10 < 2)[None, :, None]
-        a = np.where(ribs, a * 0.75, a)
-        rust = np.clip((fbm(128, 128, 5, 5, R) - 0.62) * 3, 0, 1)
-        rust = np.maximum(rust, np.linspace(0, 0.45, 128, dtype=np.float32)[:, None] ** 2 * 2 * (fbm(128, 128, 20, 3, R) > 0.55))
-        a = a * (1 - rust[..., None]) + rust[..., None] * rgb((0.36, 0.17, 0.06)) * (0.8 + R.random() * 0.3)
-        a[:, 62:66] *= 0.4  # стык створок
-        a[60:66, 52:58] = rgb((0.1, 0.1, 0.1))  # замок
+    for i, (aid, tint) in enumerate(srcs):
+        a = photo(aid, 128, relief=1.4, tint=tint, sat=0.8)
+        oy, ox = (i * 37) % 128, (i * 71) % 128
+        rm = rust_src[oy:oy+128, ox:ox+128] * 0.9
+        rm = np.maximum(rm, (np.linspace(0, 1, 128, dtype=np.float32)[:, None] ** 3) * (fbm(128, 128, 20, 3, R) > 0.5))
+        rc = rust_col[oy:oy+128, ox:ox+128] * rgb((1.1, 0.75, 0.5))
+        a = a * (1 - rm[..., None]) + rc * rm[..., None]
+        a[:, 62:66] *= 0.4
+        a[60:66, 52:58] = rgb((0.1, 0.1, 0.1))
         parts.append(a)
     save("garage_doors", np.concatenate(parts, axis=1))
-    # стены гаражей: штукатурка/кирпич
-    w = h = 128
-    a = concrete_base(w, h, R, tone=(0.52, 0.45, 0.38), grime=0.7)
-    for y in range(0, h, 8):
-        a[y:y+1] *= 0.6
-        off = 8 if (y // 8) % 2 else 0
-        for x in range(off, w, 16):
-            a[y:y+8, x:x+1] *= 0.6
+    a = photo("Concrete012", 128, relief=1.0, sat=0.6, gain=0.9)
+    a *= (1 - (streaks(128, 128, R, 0.8) * fbm(128, 128, 3, 3, R))[..., None] * 0.3)
     save("garage_wall", a)
 
 
 def metal():
-    w = h = 128
-    a = fill(h, w, (0.22, 0.23, 0.24)) * (0.85 + fbm(w, h, 8, 8, R)[..., None] * 0.3)
-    rust = np.clip((fbm(w, h, 6, 6, R) - 0.55) * 4, 0, 1)
-    a = a * (1 - rust[..., None]) + rust[..., None] * rgb((0.33, 0.16, 0.06))
-    save("metal", a)
+    save("metal", photo("Metal021", 128, relief=0.8, sat=0.8))
 
 
 def green_metal():
-    w = h = 128
-    a = fill(h, w, (0.16, 0.30, 0.18)) * (0.85 + fbm(w, h, 8, 8, R)[..., None] * 0.3)
-    rust = np.clip((fbm(w, h, 5, 5, R) - 0.5) * 3, 0, 1)
-    a = a * (1 - rust[..., None]) + rust[..., None] * rgb((0.33, 0.16, 0.06))
-    save("green_metal", a)
+    save("green_metal", photo("PaintedMetal006", 128, relief=0.8, sat=0.8, gain=0.75))
 
 
 def bark():
-    w, h = 64, 128
-    n = fbm(w, h, 16, 2, R, oct=3)
-    a = fill(h, w, (0.13, 0.11, 0.09)) * (0.6 + n[..., None] * 0.8)
-    save("bark", a)
+    save("bark", photo("Bark006", 64, 128, relief=1.0, sat=0.25, gain=0.55))
 
 
 def wood():
-    w, h = 128, 64
-    n = fbm(w, h, 2, 24, R, oct=3)
-    a = fill(h, w, (0.32, 0.22, 0.14)) * (0.6 + n[..., None] * 0.7)
-    for y in range(0, h, 16):
-        a[y:y+2] *= 0.3
-    save("wood", a)
+    save("wood", photo("Planks023A", 128, 64, relief=0.8))
 
 
 def kiosk():
-    # атлас 256x256: верх — вывеска, середина — витрина, низ — металл
     w, h = 256, 256
-    a = fill(h, w, (0.15, 0.28, 0.48)) * (0.85 + fbm(w, h, 8, 8, R)[..., None] * 0.3)
-    rust = np.clip((fbm(w, h, 6, 6, R) - 0.55) * 4, 0, 1)
-    a = a * (1 - rust[..., None]) + rust[..., None] * rgb((0.33, 0.16, 0.06))
+    body = photo("CorrugatedSteel007A", w, relief=1.0, tint=(0.35, 0.55, 0.9), sat=1.0, gain=0.8)
+    rm = rust_mask("PaintedMetal013", w)[..., None] * 0.8
+    a = body * (1 - rm) + photo("Metal021", w) * rgb((1.0, 0.7, 0.45)) * rm
     emi = np.zeros_like(a)
-    # вывеска 0..64
     a[0:64] = rgb((0.7, 0.08, 0.06))
     t = "ПРОДУКТЫ"
     sx = (w - text_width(t, 3)) // 2
@@ -265,8 +228,8 @@ def kiosk():
     t2 = "24 ЧАСА"
     sx2 = (w - text_width(t2, 2)) // 2
     draw_text(a, t2, sx2, 40, 2, rgb((1.0, 1.0, 1.0)))
+    a[0:64] *= (0.85 + fbm(w, 64, 8, 2, R)[..., None] * 0.3)
     emi[0:64] = a[0:64] * 0.9
-    # витрина 64..176: тёплый свет, полки, решётка
     inner = rgb((1.0, 0.85, 0.55)) * (0.6 + fbm(w, 112, 6, 4, R)[..., None] * 0.5)
     for y in range(20, 112, 28):
         inner[y:y+4] *= 0.3
@@ -283,8 +246,7 @@ def kiosk():
 
 
 def lamp_glass():
-    a = fill(32, 32, (1.0, 0.75, 0.45))
-    save("lamp_glass", a)
+    save("lamp_glass", fill(32, 32, (1.0, 0.75, 0.45)))
 
 
 facade(); wall_side(); plinth(); roof(); door(); balcony()

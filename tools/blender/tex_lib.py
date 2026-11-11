@@ -61,6 +61,55 @@ def save(name, arr):
     return path
 
 
+# --- Фототекстуры из библиотеки ---
+LIB = r"C:\Users\mrs\Documents\yuranchik_game\assets\texture_library\ambientcg"
+_LIGHT = np.array([-0.45, 0.55, 0.70], np.float32)
+_LIGHT /= np.linalg.norm(_LIGHT)
+
+
+def _load(path, w, h):
+    img = bpy.data.images.load(path)
+    img.scale(w, h)
+    a = np.array(img.pixels[:], np.float32).reshape(h, w, 4)[::-1, :, :3].copy()
+    bpy.data.images.remove(img)
+    return a
+
+
+def photo(aid, w, h=None, relief=0.8, ao=1.0, tint=None, sat=1.0, gain=1.0):
+    """Фото-текстура w x h с «запечённым» рельефом (из карты нормалей) и AO — как в PS2."""
+    h = h or w
+    base = os.path.join(LIB, aid, f"{aid}_1K-JPG_")
+    col = _load(base + "Color.jpg", w, h)
+    if relief and os.path.exists(base + "NormalGL.jpg"):
+        n = _load(base + "NormalGL.jpg", w, h) * 2 - 1
+        n /= np.linalg.norm(n, axis=2, keepdims=True) + 1e-6
+        shade = (n @ _LIGHT) / _LIGHT[2]
+        col *= (1 + (np.clip(shade, 0.2, 1.6) - 1) * relief)[..., None]
+    if ao and os.path.exists(base + "AmbientOcclusion.jpg"):
+        a = _load(base + "AmbientOcclusion.jpg", w, h)[..., :1]
+        col *= 1 - (1 - a) * ao
+    if sat != 1.0:
+        l = col @ np.array([0.299, 0.587, 0.114], np.float32)
+        col = l[..., None] + (col - l[..., None]) * sat
+    if tint is not None:
+        col *= np.array(tint, np.float32)
+    return np.clip(col * gain, 0, 1)
+
+
+def rust_mask(aid, w, h=None):
+    """Маска ржавчины: где фото рыже-бурое."""
+    h = h or w
+    c = _load(os.path.join(LIB, aid, f"{aid}_1K-JPG_Color.jpg"), w, h)
+    m = (c[..., 0] - c[..., 1] * 0.9 - c[..., 2] * 0.3)
+    return np.clip(m * 4, 0, 1)
+
+
+def tile(arr, w, h):
+    """Повторить текстуру до размера w x h."""
+    ry = -(-h // arr.shape[0]); rx = -(-w // arr.shape[1])
+    return np.tile(arr, (ry, rx, 1))[:h, :w]
+
+
 # --- Пиксельный шрифт 5x7 для вывесок ---
 FONT = {
     'П': ["11111", "10001", "10001", "10001", "10001", "10001", "10001"],
