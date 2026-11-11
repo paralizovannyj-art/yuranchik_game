@@ -1,0 +1,51 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/player/player.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/player/yurchik_anim.gd" id="2"]
+[ext_resource type="PackedScene" path="res://assets/models/yurchik_placeholder.gltf" id="3"]
+
+[sub_resource type="CapsuleShape3D" id="capsule"]
+radius = 0.3
+height = 1.8
+
+[sub_resource type="SphereShape3D" id="cam_shape"]
+radius = 0.18
+
+[node name="Player" type="CharacterBody3D"]
+script = ExtResource("1")
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("capsule")
+
+[node name="Model" type="Node3D" parent="."]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
+script = ExtResource("2")
+
+[node name="Yurchik" parent="Model" instance=ExtResource("3")]
+
+[node name="CamPivot" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.62, 0)
+
+[node name="SpringArm" type="SpringArm3D" parent="CamPivot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.55, 0, 0)
+shape = SubResource("cam_shape")
+spring_length = 2.3
+margin = 0.05
+
+[node name="Camera" type="Camera3D" parent="CamPivot/SpringArm"]
+current = true
+fov = 62.0
+near = 0.1
+far = 250.0
+
+[node name="Flashlight" type="SpotLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.995, 0.1, 0, -0.1, 0.995, 0.16, 1.35, -0.3)
+light_color = Color(0.95, 0.96, 1, 1)
+light_energy = 22.0
+light_volumetric_fog_energy = 1.2
+shadow_enabled = true
+spot_range = 20.0
+spot_attenuation = 0.8
+spot_angle = 22.0
+spot_angle_attenuation = 1.4

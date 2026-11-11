@@ -3,10 +3,11 @@
 [ext_resource type="Shader" uid="uid://cl2y4php6t33u" path="res://shaders/city_night_sky.gdshader" id="1_gt6fp"]
 [ext_resource type="Script" uid="uid://bsrgiiid28yqq" path="res://scripts/world/flicker_light.gd" id="5_t5v6d"]
 [ext_resource type="Material" uid="uid://cy0efahah6x6w" path="res://assets/materials/lamp_halo.tres" id="7_qst3w"]
+[ext_resource type="PackedScene" path="res://scenes/characters/player.tscn" id="19_t5v6d"]
+[ext_resource type="Script" uid="uid://biu7nmbtfy7hv" path="res://scripts/player/player.gd" id="20_qst3w"]
 [ext_resource type="PackedScene" uid="uid://w36jmfyy7xtj" path="res://assets/models/panel_building.gltf" id="b"]
 [ext_resource type="PackedScene" uid="uid://c5dp2fdxehukf" path="res://assets/models/bench.gltf" id="ben"]
 [ext_resource type="PackedScene" uid="uid://bj1dy7d72csco" path="res://assets/models/trash_bin.gltf" id="bin"]
-[ext_resource type="Script" uid="uid://vjmrmf0e1l7r" path="res://scripts/tools/free_camera.gd" id="cam"]
 [ext_resource type="PackedScene" uid="uid://dilorlk8hfa4u" path="res://assets/models/drift_long.gltf" id="dl"]
 [ext_resource type="PackedScene" uid="uid://dsu3ennqf57fn" path="res://assets/models/drift_round.gltf" id="dr"]
 [ext_resource type="PackedScene" uid="uid://cffye3bnv42lo" path="res://assets/models/fence.gltf" id="fen"]
@@ -153,6 +154,8 @@ shader_parameter/highlight_tint = Color(1, 0.94, 0.86, 1)
 shader_parameter/halo = 0.25
 shader_parameter/grain = 0.045
 shader_parameter/vignette = 0.55
+
+[sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_bjkw8"]
 
 [node name="VibeTest" type="Node3D" unique_id=14377035]
 
@@ -321,11 +324,6 @@ visibility_aabb = AABB(-40, -25, -40, 80, 30, 80)
 process_material = SubResource("pm_snow")
 draw_pass_1 = SubResource("mesh_flake")
 
-[node name="Camera" type="Camera3D" parent="." unique_id=94935956]
-transform = Transform3D(0.88378793, 0.05555024, 0.46457836, 0, 0.9929271, -0.11872558, -0.4678877, 0.10492824, 0.87753695, 6, 1.7, 9)
-fov = 62.0
-script = ExtResource("cam")
-
 [node name="PS2Post" type="CanvasLayer" parent="." unique_id=1683858089]
 layer = 10
 
@@ -337,3 +335,12 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="GroundBody" type="StaticBody3D" parent="." unique_id=1171828723]
+
+[node name="@CollisionShape3D@22686" type="CollisionShape3D" parent="GroundBody" unique_id=1561885092]
+shape = SubResource("WorldBoundaryShape3D_bjkw8")
+
+[node name="Player" type="CharacterBody3D" parent="." unique_id=1765651385 instance=ExtResource("19_t5v6d")]
+transform = Transform3D(0.9393727, 0, 0.3428978, 0, 1, 0, -0.3428978, 0, 0.9393727, 3, 0, 6)
+script = ExtResource("20_qst3w")

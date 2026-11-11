@@ -383,4 +383,5 @@ def main():
     return stats
 
 
-result = main()
+if not globals().get("NO_MAIN"):
+    result = main()
