@@ -1,0 +1,319 @@
+[gd_scene format=3 uid="uid://cc3t5wpp7opn4"]
+
+[ext_resource type="PackedScene" path="res://scenes/props/panel_building.tscn" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/props/street_lamp.tscn" id="2"]
+[ext_resource type="Texture2D" uid="uid://d4fysl50vmh5r" path="res://assets/textures/snow.png" id="3"]
+[ext_resource type="Texture2D" uid="uid://yuh20eu6en4x" path="res://assets/textures/slush.png" id="4"]
+[ext_resource type="Texture2D" uid="uid://pp8mab0xmu5b" path="res://assets/textures/garage_metal.png" id="5"]
+[ext_resource type="Shader" uid="uid://507jlrfn4qwu" path="res://shaders/ps2_post.gdshader" id="6"]
+[ext_resource type="Script" uid="uid://vjmrmf0e1l7r" path="res://scripts/tools/free_camera.gd" id="7"]
+[ext_resource type="Texture2D" uid="uid://b267wxd2o2nyu" path="res://assets/textures/concrete.png" id="8"]
+
+[sub_resource type="Environment" id="env"]
+background_mode = 1
+background_color = Color(0.02, 0.025, 0.04, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.32, 0.4, 0.55, 1)
+ambient_light_energy = 0.35
+tonemap_mode = 2
+tonemap_exposure = 1.1
+glow_enabled = true
+glow_intensity = 1.1
+glow_strength = 1.1
+glow_bloom = 0.04
+glow_hdr_threshold = 0.85
+fog_enabled = true
+fog_light_color = Color(0.1, 0.12, 0.16, 1)
+fog_density = 0.02
+
+[sub_resource type="StandardMaterial3D" id="mat_snow"]
+albedo_texture = ExtResource("3")
+roughness = 0.9
+uv1_scale = Vector3(30, 30, 1)
+
+[sub_resource type="PlaneMesh" id="mesh_ground"]
+material = SubResource("mat_snow")
+size = Vector2(120, 120)
+
+[sub_resource type="StandardMaterial3D" id="mat_slush"]
+albedo_texture = ExtResource("4")
+metallic_specular = 0.7
+roughness = 0.35
+uv1_scale = Vector3(2, 30, 1)
+
+[sub_resource type="PlaneMesh" id="mesh_path"]
+material = SubResource("mat_slush")
+size = Vector2(4, 70)
+
+[sub_resource type="PlaneMesh" id="mesh_path2"]
+material = SubResource("mat_slush")
+size = Vector2(3, 14)
+
+[sub_resource type="StandardMaterial3D" id="mat_concrete"]
+albedo_texture = ExtResource("8")
+uv1_scale = Vector3(2, 1, 1)
+
+[sub_resource type="BoxMesh" id="mesh_curb"]
+material = SubResource("mat_concrete")
+size = Vector3(0.25, 0.2, 70)
+
+[sub_resource type="StandardMaterial3D" id="mat_garage"]
+albedo_texture = ExtResource("5")
+roughness = 0.6
+uv1_scale = Vector3(3, 1, 1)
+
+[sub_resource type="BoxMesh" id="mesh_garage"]
+material = SubResource("mat_garage")
+size = Vector3(3.2, 2.6, 6)
+
+[sub_resource type="PlaneMesh" id="mesh_garage_roof"]
+material = SubResource("mat_snow")
+size = Vector2(3.4, 6.3)
+
+[sub_resource type="BoxMesh" id="mesh_bin"]
+material = SubResource("mat_garage")
+size = Vector3(1.4, 1.2, 1)
+
+[sub_resource type="BoxMesh" id="mesh_bench"]
+material = SubResource("mat_concrete")
+size = Vector3(2, 0.45, 0.5)
+
+[sub_resource type="SphereMesh" id="mesh_drift"]
+material = SubResource("mat_snow")
+radius = 1.0
+height = 2.0
+radial_segments = 10
+rings = 5
+
+[sub_resource type="StandardMaterial3D" id="mat_tree"]
+albedo_color = Color(0.09, 0.08, 0.07, 1)
+
+[sub_resource type="CylinderMesh" id="mesh_trunk"]
+material = SubResource("mat_tree")
+top_radius = 0.06
+bottom_radius = 0.18
+height = 7.0
+radial_segments = 6
+rings = 1
+
+[sub_resource type="CylinderMesh" id="mesh_branch"]
+material = SubResource("mat_tree")
+top_radius = 0.02
+bottom_radius = 0.07
+height = 3.0
+radial_segments = 5
+rings = 1
+
+[sub_resource type="ParticleProcessMaterial" id="pm_snow"]
+emission_shape = 3
+emission_box_extents = Vector3(30, 1, 30)
+direction = Vector3(0, -1, 0)
+spread = 20.0
+initial_velocity_min = 0.6
+initial_velocity_max = 1.2
+gravity = Vector3(0.35, -0.5, 0.1)
+turbulence_enabled = true
+turbulence_noise_strength = 0.4
+turbulence_noise_scale = 6.0
+
+[sub_resource type="StandardMaterial3D" id="mat_flake"]
+shading_mode = 0
+albedo_color = Color(0.85, 0.9, 1, 1)
+billboard_mode = 3
+particles_anim_h_frames = 1
+particles_anim_v_frames = 1
+particles_anim_loop = false
+
+[sub_resource type="QuadMesh" id="mesh_flake"]
+material = SubResource("mat_flake")
+size = Vector2(0.045, 0.045)
+
+[sub_resource type="ShaderMaterial" id="mat_post"]
+shader = ExtResource("6")
+shader_parameter/blur_px = 0.55
+shader_parameter/color_levels = 32.0
+shader_parameter/dither_strength = 1.0
+shader_parameter/saturation = 0.78
+shader_parameter/contrast = 1.08
+shader_parameter/tint = Color(0.9, 0.96, 1, 1)
+shader_parameter/shadow_tint = Color(0.03, 0.05, 0.09, 1)
+shader_parameter/grain = 0.045
+shader_parameter/vignette = 0.55
+shader_parameter/scanlines = 0.06
+
+[node name="VibeTest" type="Node3D" unique_id=1979664547]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1967111344]
+environment = SubResource("env")
+
+[node name="Moon" type="DirectionalLight3D" parent="." unique_id=1669682019]
+transform = Transform3D(0.8944272, -0.35856858, 0.26726124, 0, 0.5976143, 0.80178374, -0.4472136, -0.71713716, 0.5345225, 0, 30, 0)
+light_color = Color(0.55, 0.65, 0.9, 1)
+light_energy = 0.18
+shadow_enabled = true
+
+[node name="Ground" type="MeshInstance3D" parent="." unique_id=926792351]
+mesh = SubResource("mesh_ground")
+
+[node name="Path" type="MeshInstance3D" parent="." unique_id=1898446772]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0.01, -5.5)
+mesh = SubResource("mesh_path")
+
+[node name="PathToEntrance" type="MeshInstance3D" parent="." unique_id=711111802]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.4, 0.012, 2)
+mesh = SubResource("mesh_path2")
+
+[node name="Curb" type="MeshInstance3D" parent="." unique_id=40602705]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0.1, -3.4)
+mesh = SubResource("mesh_curb")
+
+[node name="BuildingA" parent="." unique_id=5718982 instance=ExtResource("1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -14)
+
+[node name="BuildingB" parent="." unique_id=1369265072 instance=ExtResource("1")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -30, 0, 6)
+
+[node name="BuildingC" parent="." unique_id=1752346248 instance=ExtResource("1")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 4, 0, 34)
+
+[node name="Lamp1" parent="." unique_id=817341712 instance=ExtResource("2")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -2, 0, -2.8)
+
+[node name="Lamp2" parent="." unique_id=1037677321 instance=ExtResource("2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 10)
+
+[node name="Garages" type="Node3D" parent="." unique_id=1336597024]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 22, 0, 6)
+
+[node name="G1" type="MeshInstance3D" parent="Garages" unique_id=590609741]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.6, 1.3, 0)
+mesh = SubResource("mesh_garage")
+
+[node name="G1Roof" type="MeshInstance3D" parent="Garages" unique_id=842694945]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.6, 2.61, 0)
+mesh = SubResource("mesh_garage_roof")
+
+[node name="G2" type="MeshInstance3D" parent="Garages" unique_id=78248568]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.3, 1.3, 0)
+mesh = SubResource("mesh_garage")
+
+[node name="G2Roof" type="MeshInstance3D" parent="Garages" unique_id=121622665]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.3, 2.61, 0)
+mesh = SubResource("mesh_garage_roof")
+
+[node name="G3" type="MeshInstance3D" parent="Garages" unique_id=434023196]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.3, 0)
+mesh = SubResource("mesh_garage")
+
+[node name="G3Roof" type="MeshInstance3D" parent="Garages" unique_id=1065055086]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.61, 0)
+mesh = SubResource("mesh_garage_roof")
+
+[node name="G4" type="MeshInstance3D" parent="Garages" unique_id=486650233]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.3, 1.3, 0)
+mesh = SubResource("mesh_garage")
+
+[node name="G4Roof" type="MeshInstance3D" parent="Garages" unique_id=201021178]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.3, 2.61, 0)
+mesh = SubResource("mesh_garage_roof")
+
+[node name="G5" type="MeshInstance3D" parent="Garages" unique_id=746964911]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.6, 1.3, 0)
+mesh = SubResource("mesh_garage")
+
+[node name="G5Roof" type="MeshInstance3D" parent="Garages" unique_id=1277547581]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.6, 2.61, 0)
+mesh = SubResource("mesh_garage_roof")
+
+[node name="Bins" type="Node3D" parent="." unique_id=262208803]
+transform = Transform3D(0.94, 0, 0.342, 0, 1, 0, -0.342, 0, 0.94, 9, 0, -4.5)
+
+[node name="Bin1" type="MeshInstance3D" parent="Bins" unique_id=288459421]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+mesh = SubResource("mesh_bin")
+
+[node name="Bin2" type="MeshInstance3D" parent="Bins" unique_id=943656443]
+transform = Transform3D(0.985, 0, -0.174, 0, 1, 0, 0.174, 0, 0.985, 1.6, 0.6, 0.1)
+mesh = SubResource("mesh_bin")
+
+[node name="Bench" type="MeshInstance3D" parent="." unique_id=2127690801]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0.22, -1.5)
+mesh = SubResource("mesh_bench")
+
+[node name="Drifts" type="Node3D" parent="." unique_id=70270764]
+
+[node name="D1" type="MeshInstance3D" parent="Drifts" unique_id=127479067]
+transform = Transform3D(2.5, 0, 0, 0, 0.5, 0, 0, 0, 1.2, -12, 0, -7.2)
+mesh = SubResource("mesh_drift")
+
+[node name="D2" type="MeshInstance3D" parent="Drifts" unique_id=1327561780]
+transform = Transform3D(3, 0, 0, 0, 0.6, 0, 0, 0, 1.4, 2, 0, -7.4)
+mesh = SubResource("mesh_drift")
+
+[node name="D3" type="MeshInstance3D" parent="Drifts" unique_id=1028552582]
+transform = Transform3D(1.8, 0, 0, 0, 0.4, 0, 0, 0, 1.6, 12, 0, 1)
+mesh = SubResource("mesh_drift")
+
+[node name="D4" type="MeshInstance3D" parent="Drifts" unique_id=364216975]
+transform = Transform3D(2.2, 0, 0, 0, 0.7, 0, 0, 0, 2.2, -16, 0, 12)
+mesh = SubResource("mesh_drift")
+
+[node name="Tree1" type="Node3D" parent="." unique_id=841179088]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, 3)
+
+[node name="Trunk" type="MeshInstance3D" parent="Tree1" unique_id=245094008]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, 0)
+mesh = SubResource("mesh_trunk")
+
+[node name="B1" type="MeshInstance3D" parent="Tree1" unique_id=1518395102]
+transform = Transform3D(0.866, -0.5, 0, 0.5, 0.866, 0, 0, 0, 1, -0.7, 4.8, 0)
+mesh = SubResource("mesh_branch")
+
+[node name="B2" type="MeshInstance3D" parent="Tree1" unique_id=266381588]
+transform = Transform3D(0.866, 0.5, 0, -0.5, 0.866, 0, 0, 0, 1, 0.7, 5.5, 0.2)
+mesh = SubResource("mesh_branch")
+
+[node name="B3" type="MeshInstance3D" parent="Tree1" unique_id=2004894833]
+transform = Transform3D(1, 0, 0, 0, 0.866, -0.5, 0, 0.5, 0.866, 0, 5.2, 0.7)
+mesh = SubResource("mesh_branch")
+
+[node name="Tree2" type="Node3D" parent="." unique_id=87422391]
+transform = Transform3D(0.5, 0, 0.866, 0, 1.2, 0, -0.866, 0, 0.5, 7, 0, 16)
+
+[node name="Trunk" type="MeshInstance3D" parent="Tree2" unique_id=1630140672]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, 0)
+mesh = SubResource("mesh_trunk")
+
+[node name="B1" type="MeshInstance3D" parent="Tree2" unique_id=1619967489]
+transform = Transform3D(0.866, -0.5, 0, 0.5, 0.866, 0, 0, 0, 1, -0.7, 4.8, 0)
+mesh = SubResource("mesh_branch")
+
+[node name="B2" type="MeshInstance3D" parent="Tree2" unique_id=1103769564]
+transform = Transform3D(0.866, 0.5, 0, -0.5, 0.866, 0, 0, 0, 1, 0.7, 5.5, 0.2)
+mesh = SubResource("mesh_branch")
+
+[node name="Snowfall" type="GPUParticles3D" parent="." unique_id=424616111]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 18, 5)
+amount = 5000
+lifetime = 16.0
+preprocess = 16.0
+visibility_aabb = AABB(-40, -25, -40, 80, 30, 80)
+process_material = SubResource("pm_snow")
+draw_pass_1 = SubResource("mesh_flake")
+
+[node name="Camera" type="Camera3D" parent="." unique_id=671021472]
+transform = Transform3D(0.87157553, 0.07392252, 0.4846561, 0, 0.988567, -0.1507819, -0.49026123, 0.13141781, 0.86161083, 5, 1.7, 8)
+fov = 60.0
+script = ExtResource("7")
+
+[node name="PS2Post" type="CanvasLayer" parent="." unique_id=188923680]
+layer = 10
+
+[node name="Filter" type="ColorRect" parent="PS2Post" unique_id=1839512268]
+material = SubResource("mat_post")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
