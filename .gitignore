@@ -1,0 +1,15 @@
+# Godot
+.godot/
+/android/
+*.translation
+export_presets.cfg
+/build/
+
+# Blender backups
+*.blend1
+*.blend2
+
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store
