@@ -71,9 +71,10 @@ func update_anim(delta: float, speed: float, running: bool, state: int) -> void:
 		target["UpperArmL"] = Vector3(-0.55, 0, 0.25)
 		target["ForearmL"] = Vector3(-0.7, 0, 0)
 		target["Spine"] = Vector3(0.08, -0.15, 0)
-		target["ThighL"] = Vector3(-0.15, 0, 0)
-		target["ThighR"] = Vector3(0.12, 0, 0)
-		target["ShinL"] = Vector3(0.12, 0, 0)
+		if not moving:
+			target["ThighL"] = Vector3(-0.15, 0, 0)
+			target["ThighR"] = Vector3(0.12, 0, 0)
+			target["ShinL"] = Vector3(0.12, 0, 0)
 
 	var instant := false
 	if _attack_t >= 0.0:
