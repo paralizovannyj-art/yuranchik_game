@@ -39,9 +39,9 @@
   <rect x="12" y="-115" width="4" height="3" fill="#3f8f5a"/><rect x="18" y="-115" width="4" height="3" fill="#c9502f"/>
   <text x="0" y="-108" font-size="3.6" text-anchor="middle" fill="#222">остановка + ряд ларьков</text>
   <!-- подземный переход -->
-  <rect x="57" y="-148" width="6" height="34" fill="none" stroke="#222" stroke-width="0.6" stroke-dasharray="1.5 1"/>
-  <rect x="55" y="-118" width="10" height="4" fill="#555"/><rect x="55" y="-150" width="10" height="4" fill="#555"/>
-  <text x="67" y="-120" font-size="3.6" fill="#222">подземный переход (−4 м)</text>
+  <rect x="-70" y="-148" width="6" height="42" fill="none" stroke="#222" stroke-width="0.6" stroke-dasharray="1.5 1"/>
+  <rect x="-72" y="-150" width="10" height="4" fill="#555"/><rect x="-72" y="-112" width="10" height="6" fill="#555"/>
+  <text x="-73" y="-114.5" font-size="3.2" fill="#222" text-anchor="end">подземный переход (вход — портал из двора)</text>
   <!-- аварии-границы -->
   <rect x="-148" y="-145" width="5" height="26" fill="#b23b3b" transform="rotate(-20 -145 -132)"/>
   <text x="-140" y="-143.5" font-size="3.4" fill="#8a1f1f">трамвай поперёк + машины</text>
@@ -51,7 +51,7 @@
 
   <!-- ===== внутриквартальный проезд (хребет района) ===== -->
   <rect x="35" y="-118" width="10" height="258" fill="#5a5d64"/>
-  <text x="40" y="20" font-size="3.4" fill="#fff" text-anchor="middle" transform="rotate(-90 40 20)">проезд: +6 → +3 → 0 → −4.5</text>
+  <text x="40" y="20" font-size="3.4" fill="#fff" text-anchor="middle" transform="rotate(-90 40 20)">проезд: +6 → +3 → 0 → −7.5</text>
 
   <!-- ===== 2. ДВОР ЮРЧИКА (+3) — хаб ===== -->
   <rect x="-45" y="-104" width="43" height="12" fill="#59606e"/>
@@ -95,7 +95,7 @@
   <text x="-147" y="-22" font-size="3.4" fill="#222">подпорная стенка 3 м</text>
   <rect x="-26" y="-23" width="12" height="6" fill="url(#hatch)" stroke="#222" stroke-width="0.3"/>
   <text x="-20" y="-13" font-size="3" text-anchor="middle" fill="#222">широкая лестница</text>
-  <rect x="86" y="-23" width="6" height="6" fill="url(#hatch)" stroke="#222" stroke-width="0.3"/>
+  <rect x="84" y="-23" width="6" height="6" fill="url(#hatch)" stroke="#222" stroke-width="0.3"/>
   <rect x="-110" y="-23" width="6" height="6" fill="url(#hatch)" stroke="#222" stroke-width="0.3"/>
 
   <!-- ===== 4. ЮЖНЫЕ ДВОРЫ (0) ===== -->
@@ -134,9 +134,9 @@
     <rect x="-55" y="114" width="85" height="6"/><rect x="50" y="114" width="95" height="6"/>
     <rect x="-55" y="134" width="85" height="6"/><rect x="50" y="134" width="95" height="6"/>
   </g>
-  <text x="95" y="80" font-size="3.2" fill="#222" text-anchor="middle">−1.5 м</text>
-  <text x="95" y="104" font-size="3.2" fill="#222" text-anchor="middle">−3 м</text>
-  <text x="95" y="127" font-size="3.2" fill="#222" text-anchor="middle">−4.5 м</text>
+  <text x="95" y="80" font-size="3.2" fill="#222" text-anchor="middle">−2.5 м</text>
+  <text x="95" y="104" font-size="3.2" fill="#222" text-anchor="middle">−5 м</text>
+  <text x="95" y="127" font-size="3.2" fill="#222" text-anchor="middle">−7.5 м</text>
   <text x="-12" y="104" font-size="4.5" fill="#222" font-weight="bold" text-anchor="middle">6. ГАРАЖИ (террасы вниз)</text>
   <text x="-12" y="109" font-size="3.2" fill="#222" text-anchor="middle">крыша нижнего ряда = земля верхнего: можно идти по крышам</text>
   <rect x="34" y="138" width="12" height="6" fill="#b23b3b"/><text x="40" y="149" font-size="3.2" fill="#8a1f1f" text-anchor="middle">завал: машины + сугроб</text>
@@ -184,7 +184,7 @@
     <rect x="0" y="32" width="8" height="5" fill="#ece7dc"/><text x="11" y="36">+6 м — проспект</text>
     <rect x="0" y="40" width="8" height="5" fill="#d9d4c8"/><text x="11" y="44">+3 м — двор Юрчика, школа, западный двор</text>
     <rect x="0" y="48" width="8" height="5" fill="#c3beb2"/><text x="11" y="52">0 м — южные дворы, котельная, пустырь</text>
-    <rect x="0" y="56" width="8" height="5" fill="#a39d91"/><text x="11" y="60">−1.5…−4.5 м — террасы гаражей</text>
+    <rect x="0" y="56" width="8" height="5" fill="#a39d91"/><text x="11" y="60">−2.5…−7.5 м — террасы гаражей</text>
     <rect x="0" y="64" width="8" height="5" fill="#857f78"/><text x="11" y="68">−5 м — котлован</text>
 
     <text x="0" y="82" font-weight="bold">Ориентиры по цвету света</text>
