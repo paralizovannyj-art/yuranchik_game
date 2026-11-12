@@ -9735,7 +9735,7 @@
 		{
 			"mimeType":"image/png",
 			"name":"yur3_atlas",
-			"uri":"../../.claude/worktrees/blender-ps2-character-model-5d4b9f/assets/textures/yur3_atlas.png"
+			"uri":"../textures/yur3_atlas.png"
 		}
 	],
 	"skins":[
