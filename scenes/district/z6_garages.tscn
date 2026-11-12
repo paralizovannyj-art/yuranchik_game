@@ -1,0 +1,157 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/tools/blockout_box.gd" id="bb"]
+
+[node name="Garages" type="Node3D"]
+
+[node name="GarageRow" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, -2.5, 63)
+script = ExtResource("bb")
+size = Vector3(85, 2.5, 6)
+kind = "garage"
+label = "Гаражи · по крышам можно пройти"
+
+[node name="GarageRow2" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 97.5, -2.5, 63)
+script = ExtResource("bb")
+size = Vector3(95, 2.5, 6)
+kind = "garage"
+
+[node name="GarageRow3" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, -5, 88)
+script = ExtResource("bb")
+size = Vector3(85, 2.5, 6)
+kind = "garage"
+label = "Гаражи"
+
+[node name="GarageRow4" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 97.5, -5, 88)
+script = ExtResource("bb")
+size = Vector3(95, 2.5, 6)
+kind = "garage"
+
+[node name="GarageRow5" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, -7.5, 113)
+script = ExtResource("bb")
+size = Vector3(85, 2.5, 6)
+kind = "garage"
+label = "Гаражи"
+
+[node name="GarageRow6" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 97.5, -7.5, 113)
+script = ExtResource("bb")
+size = Vector3(95, 2.5, 6)
+kind = "garage"
+
+[node name="GarageRow7" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, -7.5, 135)
+script = ExtResource("bb")
+size = Vector3(85, 2.5, 6)
+kind = "garage"
+
+[node name="GarageRow8" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 97.5, -7.5, 135)
+script = ExtResource("bb")
+size = Vector3(95, 2.5, 6)
+kind = "garage"
+
+[node name="Guardhouse" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 48, 0, 55)
+script = ExtResource("bb")
+size = Vector3(4, 2.6, 4)
+kind = "prop"
+label = "Сторожка, шлагбаум"
+
+[node name="Barrier" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 0.9, 58)
+script = ExtResource("bb")
+size = Vector3(10, 0.12, 0.2)
+kind = "rail"
+solid = false
+
+[node name="GuardBulb" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 48, 2.4, 52.6)
+light_color = Color(1, 0.85, 0.6, 1)
+light_energy = 1
+omni_range = 8
+omni_attenuation = 1.2
+
+[node name="Drift" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, -7.5, 141.5)
+script = ExtResource("bb")
+size = Vector3(10, 3, 7)
+kind = "snow"
+
+[node name="Blockage" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, -7.5, 140.2)
+script = ExtResource("bb")
+size = Vector3(11, 0.1, 0.4)
+kind = "boundary"
+label = "Завал: машины + сугроб"
+solid = false
+
+[node name="Car" type="Node3D" parent="."]
+transform = Transform3D(0.766, 0, 0.643, 0, 1, 0, -0.643, 0, 0.766, 37, -7.5, 135)
+script = ExtResource("bb")
+size = Vector3(1.7, 1.45, 4.2)
+kind = "car"
+
+[node name="Car2" type="Node3D" parent="."]
+transform = Transform3D(0.5, 0, -0.866, 0, 1, 0, 0.866, 0, 0.5, 43, -7.5, 136.5)
+script = ExtResource("bb")
+size = Vector3(1.7, 1.45, 4.2)
+kind = "car"
+
+[node name="Drift2" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, -2.5, 75)
+script = ExtResource("bb")
+size = Vector3(5, 1.3, 2)
+kind = "snow"
+
+[node name="Drift3" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100, -2.5, 80)
+script = ExtResource("bb")
+size = Vector3(5, 1.3, 2)
+kind = "snow"
+
+[node name="Drift4" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, -5, 100)
+script = ExtResource("bb")
+size = Vector3(5, 1.3, 2)
+kind = "snow"
+
+[node name="Drift5" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 120, -5, 104)
+script = ExtResource("bb")
+size = Vector3(5, 1.3, 2)
+kind = "snow"
+
+[node name="Drift6" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40, -7.5, 125)
+script = ExtResource("bb")
+size = Vector3(5, 1.3, 2)
+kind = "snow"
+
+[node name="Drift7" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, -7.5, 126)
+script = ExtResource("bb")
+size = Vector3(5, 1.3, 2)
+kind = "snow"
+
+[node name="Car3" type="Node3D" parent="."]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, -2.5, 73)
+script = ExtResource("bb")
+size = Vector3(1.7, 1.45, 4.2)
+kind = "car"
+
+[node name="Car4" type="Node3D" parent="."]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 90, -5, 97)
+script = ExtResource("bb")
+size = Vector3(1.7, 1.45, 4.2)
+kind = "car"
+
+[node name="Car5" type="Node3D" parent="."]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -30, -7.5, 122)
+script = ExtResource("bb")
+size = Vector3(1.7, 1.45, 4.2)
+kind = "car"

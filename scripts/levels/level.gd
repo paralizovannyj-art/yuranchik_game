@@ -10,6 +10,7 @@ extends Node3D
 @export var step_variants := 4
 @export var flashlight_energy := 22.0   ## яркость фонарика: в тесных помещениях нужна меньше
 @export_group("Навигация врагов")
+@export var bake_navigation := true     ## строить ли сетку при запуске (для большого района без врагов — выключено)
 @export var nav_agent_radius := 0.5     ## насколько далеко враги обходят стены
 @export var nav_cell := 0.25            ## точность сетки: меньше — точнее (для тесных помещений 0.125)
 @export var nav_bounds := AABB()        ## область, где враги умеют ходить (пусто — весь уровень)
@@ -33,7 +34,8 @@ func _ready() -> void:
 	Game.save_checkpoint(scene_file_path)
 	Game.health_changed.emit()
 	Game.ambience(ambience_sound, ambience_db)
-	_bake_navigation()
+	if bake_navigation:
+		_bake_navigation()
 	hud.fade_in(1.6)
 	_start()
 

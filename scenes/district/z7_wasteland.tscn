@@ -1,0 +1,277 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/tools/blockout_box.gd" id="bb"]
+
+[node name="Wasteland" type="Node3D"]
+
+[node name="Slab" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -112.5, 2.7, 95)
+script = ExtResource("bb")
+size = Vector3(45, 0.3, 6)
+kind = "construction"
+
+[node name="Slab2" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -110.5, 2.7, 101.5)
+script = ExtResource("bb")
+size = Vector3(41, 0.3, 7)
+kind = "construction"
+
+[node name="Slab3" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -112.5, 5.7, 95)
+script = ExtResource("bb")
+size = Vector3(45, 0.3, 6)
+kind = "construction"
+
+[node name="Slab4" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -115, 5.7, 101.5)
+script = ExtResource("bb")
+size = Vector3(40, 0.3, 7)
+kind = "construction"
+
+[node name="Slab5" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -91, 5.7, 101.5)
+script = ExtResource("bb")
+size = Vector3(2, 0.3, 7)
+kind = "construction"
+
+[node name="Slab6" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -112.5, 8.7, 95)
+script = ExtResource("bb")
+size = Vector3(45, 0.3, 6)
+kind = "construction"
+
+[node name="Slab7" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -110.5, 8.7, 101.5)
+script = ExtResource("bb")
+size = Vector3(41, 0.3, 7)
+kind = "construction"
+
+[node name="Slab8" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -112.5, 11.7, 98.5)
+script = ExtResource("bb")
+size = Vector3(45, 0.3, 13)
+kind = "construction"
+label = "Недострой · 3 этажа доступны"
+
+[node name="Flight" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -132.5, 0, 100.5)
+script = ExtResource("bb")
+size = Vector3(3, 3, 5)
+kind = "construction"
+shape = "stairs"
+label = "Лестница"
+
+[node name="Flight2" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -93.5, 3, 100.5)
+script = ExtResource("bb")
+size = Vector3(3, 3, 5)
+kind = "construction"
+shape = "stairs"
+
+[node name="Flight3" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -132.5, 6, 100.5)
+script = ExtResource("bb")
+size = Vector3(3, 3, 5)
+kind = "construction"
+shape = "stairs"
+
+[node name="Column" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -134.5, 0, 92.5)
+script = ExtResource("bb")
+size = Vector3(0.5, 11.7, 0.5)
+kind = "construction"
+
+[node name="Column2" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -134.5, 0, 104.5)
+script = ExtResource("bb")
+size = Vector3(0.5, 11.7, 0.5)
+kind = "construction"
+
+[node name="Column3" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -126, 0, 92.5)
+script = ExtResource("bb")
+size = Vector3(0.5, 11.7, 0.5)
+kind = "construction"
+
+[node name="Column4" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -126, 0, 104.5)
+script = ExtResource("bb")
+size = Vector3(0.5, 11.7, 0.5)
+kind = "construction"
+
+[node name="Column5" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -117, 0, 92.5)
+script = ExtResource("bb")
+size = Vector3(0.5, 11.7, 0.5)
+kind = "construction"
+
+[node name="Column6" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -117, 0, 104.5)
+script = ExtResource("bb")
+size = Vector3(0.5, 11.7, 0.5)
+kind = "construction"
+
+[node name="Column7" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -108, 0, 92.5)
+script = ExtResource("bb")
+size = Vector3(0.5, 11.7, 0.5)
+kind = "construction"
+
+[node name="Column8" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -108, 0, 104.5)
+script = ExtResource("bb")
+size = Vector3(0.5, 11.7, 0.5)
+kind = "construction"
+
+[node name="Column9" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -99, 0, 92.5)
+script = ExtResource("bb")
+size = Vector3(0.5, 11.7, 0.5)
+kind = "construction"
+
+[node name="Column10" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -99, 0, 104.5)
+script = ExtResource("bb")
+size = Vector3(0.5, 11.7, 0.5)
+kind = "construction"
+
+[node name="Column11" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -90.5, 0, 92.5)
+script = ExtResource("bb")
+size = Vector3(0.5, 11.7, 0.5)
+kind = "construction"
+
+[node name="Column12" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -90.5, 0, 104.5)
+script = ExtResource("bb")
+size = Vector3(0.5, 11.7, 0.5)
+kind = "construction"
+
+[node name="CraneTower" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 0, 88)
+script = ExtResource("bb")
+size = Vector3(2, 40, 2)
+kind = "construction"
+label = "Башенный кран"
+
+[node name="CraneJib" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 40, 88)
+script = ExtResource("bb")
+size = Vector3(50, 1.5, 1)
+kind = "construction"
+solid = false
+
+[node name="CraneCab" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -81, 38, 88)
+script = ExtResource("bb")
+size = Vector3(4, 2, 4)
+kind = "construction"
+solid = false
+
+[node name="CraneLamp" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -70, 39, 88)
+light_color = Color(1, 0.85, 0.35, 1)
+light_energy = 6
+omni_range = 45
+omni_attenuation = 1.2
+
+[node name="Slabs" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -88, 0, 41)
+script = ExtResource("bb")
+size = Vector3(6, 1.2, 1.6)
+kind = "prop"
+label = "Плиты"
+
+[node name="Slabs2" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -86, 0, 46)
+script = ExtResource("bb")
+size = Vector3(6, 1.8, 1.6)
+kind = "prop"
+
+[node name="Slabs3" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -75, 0, 30)
+script = ExtResource("bb")
+size = Vector3(6, 0.6, 1.6)
+kind = "prop"
+
+[node name="Slabs4" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -110, 0, 12)
+script = ExtResource("bb")
+size = Vector3(6, 1.2, 1.6)
+kind = "prop"
+
+[node name="Cabin" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -142, 0, 126.25)
+script = ExtResource("bb")
+size = Vector3(6, 2.6, 2.5)
+kind = "garage"
+label = "Бытовки"
+tint = Color(0.36, 0.42, 0.3, 1)
+
+[node name="Cabin2" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -133, 0, 126.25)
+script = ExtResource("bb")
+size = Vector3(6, 2.6, 2.5)
+kind = "garage"
+tint = Color(0.36, 0.42, 0.3, 1)
+
+[node name="Drift" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -120, 0, 5)
+script = ExtResource("bb")
+size = Vector3(8, 1.5, 3)
+kind = "snow"
+
+[node name="Drift2" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 0, 70)
+script = ExtResource("bb")
+size = Vector3(4, 1.3, 6)
+kind = "snow"
+
+[node name="Drift3" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -130, 0, 135)
+script = ExtResource("bb")
+size = Vector3(6, 1.6, 3)
+kind = "snow"
+
+[node name="Drift4" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -70, 0, 120)
+script = ExtResource("bb")
+size = Vector3(5, 1.2, 2)
+kind = "snow"
+
+[node name="Tree" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -140, 0, -10)
+script = ExtResource("bb")
+size = Vector3(0.5, 7, 0.5)
+kind = "tree"
+
+[node name="Tree2" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -100, 0, -5)
+script = ExtResource("bb")
+size = Vector3(0.5, 7, 0.5)
+kind = "tree"
+
+[node name="Tree3" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -70, 0, 10)
+script = ExtResource("bb")
+size = Vector3(0.5, 7, 0.5)
+kind = "tree"
+
+[node name="Tree4" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -145, 0, 85)
+script = ExtResource("bb")
+size = Vector3(0.5, 7, 0.5)
+kind = "tree"
+
+[node name="LampPole" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -105, 0, -12)
+script = ExtResource("bb")
+size = Vector3(0.24, 7.5, 0.24)
+kind = "prop"
+
+[node name="LampLight" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -105, 7.2, -12)
+light_color = Color(1, 0.62, 0.3, 1)
+light_energy = 2.2
+omni_range = 15
+omni_attenuation = 1.2
