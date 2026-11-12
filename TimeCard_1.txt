@@ -1,0 +1,6 @@
+V5ID 10/15/2026
+4.0 - Onboarding/Local enviroment configuration
+
+V5ID 10/16/2026
+1.5 - STARTUP-1492 Correcting inaccuracies in the wiki
+2.5 - STARTUP-1420 Fix vulnerabilities on all sites
