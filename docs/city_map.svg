@@ -1,212 +1,395 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-178 -178 480 356" width="1440" height="1068" font-family="Arial, sans-serif">
-  <!-- Карта микрорайона «Паскот». Координаты = метры игрового мира: X — восток, Z (вниз по картинке) — юг. Центр (0,0). -->
-  <defs>
-    <pattern id="hatch" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-      <line x1="0" y1="0" x2="0" y2="3" stroke="#6b5a3a" stroke-width="1"/>
-    </pattern>
-    <pattern id="cars" width="5" height="3" patternUnits="userSpaceOnUse">
-      <rect x="0.5" y="0.5" width="3.6" height="1.8" fill="#7d8796"/>
-    </pattern>
-  </defs>
-
-  <!-- фон-декорация за границей -->
-  <rect x="-178" y="-178" width="480" height="356" fill="#1c2130"/>
-  <text x="0" y="-171" font-size="4.5" fill="#9fb0d0" text-anchor="middle">ДЕКОРАЦИЯ: 16-эт. свечки и огни города за проспектом (дойти нельзя)</text>
-  <text x="0" y="175" font-size="4.5" fill="#9fb0d0" text-anchor="middle">ДЕКОРАЦИЯ: балка, голые деревья, огни дальнего района</text>
-  <text x="172" y="0" font-size="4.5" fill="#9fb0d0" text-anchor="middle" transform="rotate(90 172 0)">ДЕКОРАЦИЯ: ТЭЦ — две трубы с красными огнями, промзона</text>
-  <text x="-172" y="0" font-size="4.5" fill="#9fb0d0" text-anchor="middle" transform="rotate(-90 -172 0)">ДЕКОРАЦИЯ: соседний микрорайон, силуэты панелек</text>
-
-  <!-- уровни земли -->
-  <rect x="-150" y="-150" width="300" height="38" fill="#ece7dc"/>            <!-- +6 -->
-  <rect x="-150" y="-112" width="300" height="92" fill="#d9d4c8"/>            <!-- +3 -->
-  <rect x="-150" y="-20" width="300" height="80" fill="#c3beb2"/>             <!-- 0 -->
-  <rect x="-60" y="60" width="210" height="25" fill="#b3ada1"/>               <!-- -1.5 -->
-  <rect x="-60" y="85" width="210" height="25" fill="#a39d91"/>               <!-- -3 -->
-  <rect x="-60" y="110" width="210" height="35" fill="#938d81"/>              <!-- -4.5 -->
-  <rect x="-150" y="-20" width="90" height="165" fill="#c3beb2"/>             <!-- пустырь 0 -->
-
-  <!-- ===== 1. ПРОСПЕКТ (+6) ===== -->
-  <rect x="-150" y="-170" width="300" height="20" fill="#3a3f4b"/>
-  <text x="-60" y="-158" font-size="4" fill="#d8dce6">дома северной стороны: сплошная стена, витрины 1-го этажа (настоящие вывески)</text>
-  <rect x="-150" y="-142" width="300" height="24" fill="#4a4d55"/>
-  <rect x="-150" y="-133" width="300" height="6" fill="#6b6458"/>
-  <line x1="-150" y1="-131.5" x2="150" y2="-131.5" stroke="#aaa" stroke-width="0.4"/>
-  <line x1="-150" y1="-128.5" x2="150" y2="-128.5" stroke="#aaa" stroke-width="0.4"/>
-  <text x="-100" y="-136" font-size="4.5" fill="#fff" font-weight="bold">1. ПРОСПЕКТ (+6 м) — 4 полосы, трамвай посередине</text>
-  <!-- остановка и ларьки -->
-  <rect x="-10" y="-118" width="20" height="2.5" fill="#2d6a8a"/>
-  <rect x="-26" y="-115" width="4" height="3" fill="#c9502f"/><rect x="-20" y="-115" width="4" height="3" fill="#d2a43a"/>
-  <rect x="12" y="-115" width="4" height="3" fill="#3f8f5a"/><rect x="18" y="-115" width="4" height="3" fill="#c9502f"/>
-  <text x="0" y="-108" font-size="3.6" text-anchor="middle" fill="#222">остановка + ряд ларьков</text>
-  <!-- подземный переход -->
-  <rect x="-70" y="-148" width="6" height="42" fill="none" stroke="#222" stroke-width="0.6" stroke-dasharray="1.5 1"/>
-  <rect x="-72" y="-150" width="10" height="4" fill="#555"/><rect x="-72" y="-112" width="10" height="6" fill="#555"/>
-  <text x="-73" y="-114.5" font-size="3.2" fill="#222" text-anchor="end">подземный переход (вход — портал из двора)</text>
-  <!-- аварии-границы -->
-  <rect x="-148" y="-145" width="5" height="26" fill="#b23b3b" transform="rotate(-20 -145 -132)"/>
-  <text x="-140" y="-143.5" font-size="3.4" fill="#8a1f1f">трамвай поперёк + машины</text>
-  <rect x="140" y="-142" width="6" height="12" fill="#b23b3b" transform="rotate(30 143 -136)"/>
-  <rect x="134" y="-128" width="5" height="9" fill="#b23b3b" transform="rotate(-15 136 -124)"/>
-  <text x="134" y="-143.5" font-size="3.4" fill="#8a1f1f" text-anchor="end">маршрутка + фура</text>
-
-  <!-- ===== внутриквартальный проезд (хребет района) ===== -->
-  <rect x="35" y="-118" width="10" height="258" fill="#5a5d64"/>
-  <text x="40" y="20" font-size="3.4" fill="#fff" text-anchor="middle" transform="rotate(-90 40 20)">проезд: +6 → +3 → 0 → −7.5</text>
-
-  <!-- ===== 2. ДВОР ЮРЧИКА (+3) — хаб ===== -->
-  <rect x="-45" y="-104" width="43" height="12" fill="#59606e"/>
-  <text x="-23.5" y="-96.5" font-size="3.6" fill="#fff" text-anchor="middle">дом Юрчика, 9 эт., 4 подъезда</text>
-  <rect x="-60" y="-84" width="12" height="52" fill="#59606e"/>
-  <text x="-54" y="-58" font-size="3.4" fill="#fff" text-anchor="middle" transform="rotate(-90 -54 -58)">9 эт.</text>
-  <rect x="-35" y="-76" width="22" height="18" fill="none" stroke="#7a6a4a" stroke-width="0.6"/>
-  <text x="-24" y="-66" font-size="3.2" text-anchor="middle" fill="#333">детплощадка</text>
-  <rect x="8" y="-64" width="4" height="3" fill="#c9502f"/><text x="14" y="-62" font-size="3.2" fill="#333">ларёк</text>
-  <rect x="22" y="-100" width="5" height="4" fill="#666"/><text x="22" y="-93" font-size="3" fill="#333">трансформаторная</text>
-  <circle cx="-20" cy="-84" r="2.2" fill="#ff7a1a"/>
-  <text x="-20" y="-78" font-size="3.4" text-anchor="middle" fill="#a34000" font-weight="bold">★ старт</text>
-  <text x="-12" y="-40" font-size="4.5" fill="#222" font-weight="bold" text-anchor="middle">2. ДВОР ЮРЧИКА (+3 м) — центр</text>
-  <!-- лестница с проспекта во двор -->
-  <rect x="25" y="-114" width="8" height="5" fill="url(#hatch)" stroke="#333" stroke-width="0.3"/>
-  <text x="29" y="-105" font-size="3" fill="#333" text-anchor="middle">лестница</text>
-
-  <!-- ===== западный двор (+3) ===== -->
-  <rect x="-135" y="-100" width="18" height="18" fill="#454b5a"/>
-  <rect x="-105" y="-70" width="18" height="18" fill="#454b5a"/>
-  <text x="-126" y="-90" font-size="3.4" fill="#fff" text-anchor="middle">16 эт.</text>
-  <text x="-96" y="-60" font-size="3.4" fill="#fff" text-anchor="middle">16 эт.</text>
-  <rect x="-145" y="-65" width="32" height="24" fill="url(#cars)" stroke="#555" stroke-width="0.3"/>
-  <text x="-129" y="-36" font-size="3.4" text-anchor="middle" fill="#333">стоянка, машины в снегу</text>
-  <text x="-105" y="-106" font-size="4.5" fill="#222" font-weight="bold" text-anchor="middle">ЗАПАДНЫЙ ДВОР (+3 м)</text>
-
-  <!-- ===== 3. ШКОЛА (+3) ===== -->
-  <rect x="48" y="-108" width="97" height="84" fill="none" stroke="#2f4f7a" stroke-width="0.8" stroke-dasharray="2 1"/>
-  <rect x="60" y="-102" width="60" height="12" fill="#b59a4a"/>
-  <rect x="60" y="-90" width="12" height="16" fill="#b59a4a"/>
-  <rect x="108" y="-90" width="12" height="16" fill="#b59a4a"/>
-  <text x="90" y="-95" font-size="3.6" text-anchor="middle" fill="#222">школа, 3 эт., П-образная</text>
-  <ellipse cx="97" cy="-48" rx="34" ry="16" fill="#cfd8c4" stroke="#6b7a5a" stroke-width="0.6"/>
-  <text x="97" y="-47" font-size="3.6" text-anchor="middle" fill="#222">стадион</text>
-  <circle cx="128" cy="-60" r="2" fill="#dfefff" stroke="#6b8bb0" stroke-width="0.5"/>
-  <text x="96" y="-27" font-size="4.5" fill="#222" font-weight="bold">3. ШКОЛА (+3 м), забор</text>
-  <text x="49" y="-60" font-size="3" fill="#2f4f7a">ворота</text>
-
-  <!-- ===== подпорная стенка +3 / 0 ===== -->
-  <line x1="-150" y1="-20" x2="150" y2="-20" stroke="#222" stroke-width="1.6"/>
-  <text x="-147" y="-22" font-size="3.4" fill="#222">подпорная стенка 3 м</text>
-  <rect x="-26" y="-23" width="12" height="6" fill="url(#hatch)" stroke="#222" stroke-width="0.3"/>
-  <text x="-20" y="-13" font-size="3" text-anchor="middle" fill="#222">широкая лестница</text>
-  <rect x="84" y="-23" width="6" height="6" fill="url(#hatch)" stroke="#222" stroke-width="0.3"/>
-  <rect x="-110" y="-23" width="6" height="6" fill="url(#hatch)" stroke="#222" stroke-width="0.3"/>
-
-  <!-- ===== 4. ЮЖНЫЕ ДВОРЫ (0) ===== -->
-  <rect x="-45" y="-6" width="60" height="11" fill="#7a6e66"/>
-  <rect x="-30" y="22" width="60" height="11" fill="#7a6e66"/>
-  <rect x="50" y="4" width="40" height="11" fill="#7a6e66"/>
-  <text x="-15" y="1" font-size="3.4" fill="#fff" text-anchor="middle">хрущёвка, 5 эт.</text>
-  <text x="0" y="29" font-size="3.4" fill="#fff" text-anchor="middle">хрущёвка, 5 эт.</text>
-  <text x="70" y="11" font-size="3.4" fill="#fff" text-anchor="middle">хрущёвка</text>
-  <rect x="-52" y="36" width="5" height="5" fill="#6b5a3a"/><text x="-45" y="40" font-size="3" fill="#222">голубятня, сараи</text>
-  <text x="-15" y="15" font-size="4.5" fill="#222" font-weight="bold" text-anchor="middle">4. ЮЖНЫЕ ДВОРЫ (0 м)</text>
-
-  <!-- ===== 5. КОТЕЛЬНАЯ (0) ===== -->
-  <rect x="96" y="-15" width="54" height="72" fill="none" stroke="#7a3a2a" stroke-width="0.8" stroke-dasharray="2 1"/>
-  <rect x="105" y="-5" width="35" height="22" fill="#8a4a3a"/>
-  <text x="122" y="7" font-size="3.6" fill="#fff" text-anchor="middle">котельная</text>
-  <circle cx="132" cy="36" r="3.2" fill="#6a2a1a"/>
-  <circle cx="132" cy="36" r="1.2" fill="#ff2a2a"/>
-  <text x="132" y="45" font-size="3.2" fill="#222" text-anchor="middle">труба 45 м, красные огни</text>
-  <ellipse cx="112" cy="32" rx="7" ry="5" fill="#2a2a2a"/>
-  <text x="112" y="26" font-size="3" fill="#222" text-anchor="middle">уголь</text>
-  <text x="122" y="-8" font-size="4.5" fill="#222" font-weight="bold" text-anchor="middle">5. КОТЕЛЬНАЯ (0 м)</text>
-
-  <!-- ===== теплотрасса ===== -->
-  <polyline points="105,52 -60,52 -60,20 -100,20" fill="none" stroke="#d98a2b" stroke-width="2.2" stroke-dasharray="4 1"/>
-  <polyline points="92,52 92,-26" fill="none" stroke="#d98a2b" stroke-width="2.2" stroke-dasharray="4 1"/>
-  <rect x="34" y="49" width="12" height="6" fill="none" stroke="#a35a10" stroke-width="0.8"/>
-  <text x="48" y="47" font-size="3" fill="#a35a10">П-арка над проездом</text>
-  <text x="-57" y="48" font-size="3" fill="#a35a10">теплотрасса на опорах, местами можно пройти поверху</text>
-
-  <!-- ===== 6. ГАРАЖНЫЙ КООПЕРАТИВ (террасы) ===== -->
-  <rect x="38" y="57" width="4" height="3" fill="#444"/><text x="47" y="63" font-size="3" fill="#222">шлагбаум, сторожка</text>
-  <g fill="#6e5844">
-    <rect x="-55" y="66" width="85" height="6"/><rect x="50" y="66" width="95" height="6"/>
-    <rect x="-55" y="90" width="85" height="6"/><rect x="50" y="90" width="95" height="6"/>
-    <rect x="-55" y="114" width="85" height="6"/><rect x="50" y="114" width="95" height="6"/>
-    <rect x="-55" y="134" width="85" height="6"/><rect x="50" y="134" width="95" height="6"/>
-  </g>
-  <text x="95" y="80" font-size="3.2" fill="#222" text-anchor="middle">−2.5 м</text>
-  <text x="95" y="104" font-size="3.2" fill="#222" text-anchor="middle">−5 м</text>
-  <text x="95" y="127" font-size="3.2" fill="#222" text-anchor="middle">−7.5 м</text>
-  <text x="-12" y="104" font-size="4.5" fill="#222" font-weight="bold" text-anchor="middle">6. ГАРАЖИ (террасы вниз)</text>
-  <text x="-12" y="109" font-size="3.2" fill="#222" text-anchor="middle">крыша нижнего ряда = земля верхнего: можно идти по крышам</text>
-  <rect x="34" y="138" width="12" height="6" fill="#b23b3b"/><text x="40" y="149" font-size="3.2" fill="#8a1f1f" text-anchor="middle">завал: машины + сугроб</text>
-  <line x1="-60" y1="145" x2="150" y2="145" stroke="#8a1f1f" stroke-width="0.8" stroke-dasharray="2 1"/>
-  <text x="100" y="149" font-size="3" fill="#8a1f1f">забор над обрывом балки</text>
-
-  <!-- ===== 7. ПУСТЫРЬ И НЕДОСТРОЙ ===== -->
-  <rect x="-140" y="25" width="45" height="50" fill="#857f78" stroke="#555" stroke-width="0.4"/>
-  <text x="-117" y="52" font-size="3.6" fill="#fff" text-anchor="middle">котлован −5 м</text>
-  <rect x="-135" y="92" width="45" height="13" fill="url(#hatch)" stroke="#6b5a3a" stroke-width="0.6"/>
-  <text x="-112" y="113" font-size="3.4" fill="#222" text-anchor="middle">каркас 9-эт. (3 этажа доступны)</text>
-  <circle cx="-80" cy="88" r="1.8" fill="#e8c23a"/>
-  <circle cx="-80" cy="88" r="40" fill="none" stroke="#b08a1a" stroke-width="0.4" stroke-dasharray="2 2"/>
-  <text x="-80" y="83" font-size="3.2" fill="#6b5000" text-anchor="middle">башенный кран</text>
-  <rect x="-88" y="40" width="10" height="3" fill="#888"/><rect x="-86" y="45" width="10" height="3" fill="#888"/>
-  <text x="-82" y="53" font-size="3" fill="#222" text-anchor="middle">плиты</text>
-  <rect x="-145" y="125" width="8" height="4" fill="#5a6a4a"/><rect x="-135" y="125" width="8" height="4" fill="#5a6a4a"/>
-  <text x="-130" y="135" font-size="3" fill="#222">бытовки</text>
-  <line x1="-150" y1="-15" x2="-150" y2="145" stroke="#8a1f1f" stroke-width="0.8" stroke-dasharray="2 1"/>
-  <text x="-105" y="0" font-size="4.5" fill="#222" font-weight="bold" text-anchor="middle">7. ПУСТЫРЬ И НЕДОСТРОЙ (0 м)</text>
-  <text x="-105" y="6" font-size="3" fill="#222" text-anchor="middle">край — стройзабор</text>
-
-  <!-- граница играбельной зоны -->
-  <rect x="-150" y="-150" width="300" height="295" fill="none" stroke="#e05050" stroke-width="0.6" stroke-dasharray="3 2" opacity="0.8"/>
-
-  <!-- компас и масштаб -->
-  <g transform="translate(-162 -162)">
-    <polygon points="0,-7 3,2 0,0 -3,2" fill="#fff"/>
-    <text x="0" y="8" font-size="4.5" fill="#fff" text-anchor="middle">С</text>
-  </g>
-  <g transform="translate(-150 160)">
-    <line x1="0" y1="0" x2="50" y2="0" stroke="#fff" stroke-width="0.8"/>
-    <line x1="0" y1="-2" x2="0" y2="2" stroke="#fff" stroke-width="0.8"/>
-    <line x1="50" y1="-2" x2="50" y2="2" stroke="#fff" stroke-width="0.8"/>
-    <text x="25" y="-2" font-size="3.6" fill="#fff" text-anchor="middle">50 м (~30 с шагом, ~11 с бегом)</text>
-  </g>
-
-  <!-- ===== легенда ===== -->
-  <g transform="translate(185 -165)" font-size="4" fill="#e6e9f0">
-    <text x="0" y="0" font-size="6" font-weight="bold">Паскот — микрорайон</text>
-    <text x="0" y="8" font-size="3.6" fill="#9fb0d0">v0.1, принята 2026-11-12 · играбельно ~300×295 м</text>
-    <text x="0" y="8" font-size="3.6" fill="#9fb0d0" dy="5">(старый двор — 54×39 м, в ~40 раз меньше)</text>
-
-    <text x="0" y="28" font-weight="bold">Высота земли</text>
-    <rect x="0" y="32" width="8" height="5" fill="#ece7dc"/><text x="11" y="36">+6 м — проспект</text>
-    <rect x="0" y="40" width="8" height="5" fill="#d9d4c8"/><text x="11" y="44">+3 м — двор Юрчика, школа, западный двор</text>
-    <rect x="0" y="48" width="8" height="5" fill="#c3beb2"/><text x="11" y="52">0 м — южные дворы, котельная, пустырь</text>
-    <rect x="0" y="56" width="8" height="5" fill="#a39d91"/><text x="11" y="60">−2.5…−7.5 м — террасы гаражей</text>
-    <rect x="0" y="64" width="8" height="5" fill="#857f78"/><text x="11" y="68">−5 м — котлован</text>
-
-    <text x="0" y="82" font-weight="bold">Ориентиры по цвету света</text>
-    <circle cx="4" cy="88" r="2.2" fill="#ff7a1a"/><text x="11" y="89.5">оранжевые фонари — двор Юрчика</text>
-    <circle cx="4" cy="96" r="2.2" fill="#dfefff"/><text x="11" y="97.5">холодный белый прожектор — стадион школы</text>
-    <circle cx="4" cy="104" r="2.2" fill="#ff2a2a"/><text x="11" y="105.5">красные огни трубы котельной (видно отовсюду)</text>
-    <circle cx="4" cy="112" r="2.2" fill="#e8c23a"/><text x="11" y="113.5">жёлтый прожектор на кране — недострой</text>
-    <circle cx="4" cy="120" r="2.2" fill="#3f8f5a"/><text x="11" y="121.5">разноцветные ларьки — остановка</text>
-    <circle cx="4" cy="128" r="2.2" fill="#555"/><text x="11" y="129.5">гаражи — почти темно, одна лампочка</text>
-
-    <text x="0" y="144" font-weight="bold">Прочее</text>
-    <rect x="0" y="148" width="8" height="5" fill="url(#hatch)" stroke="#999" stroke-width="0.3"/><text x="11" y="152">лестницы / недострой</text>
-    <rect x="0" y="156" width="8" height="2" fill="#d98a2b"/><text x="11" y="159">теплотрасса</text>
-    <rect x="0" y="163" width="8" height="5" fill="#b23b3b"/><text x="11" y="167">завалы и аварии (граница)</text>
-    <line x1="0" y1="173" x2="8" y2="173" stroke="#e05050" stroke-width="0.8" stroke-dasharray="2 1"/><text x="11" y="174.5">край играбельной зоны</text>
-    <rect x="0" y="178" width="8" height="5" fill="#59606e"/><text x="11" y="182">дома (стены — тоже граница)</text>
-
-    <text x="0" y="198" font-weight="bold">Маршруты-петли (чтобы уходить от Сергея)</text>
-    <text x="0" y="205" font-size="3.6">• двор → проспект → переход/ларьки → школа → двор</text>
-    <text x="0" y="211" font-size="3.6">• двор → лестница вниз → южные дворы → котельная → школа</text>
-    <text x="0" y="217" font-size="3.6">• южные дворы → гаражи (по крышам) → пустырь → западный двор</text>
-    <text x="0" y="230" font-size="3.4" fill="#9fb0d0">Север — вверх. 1 клетка карты = 1 метр игры.</text>
-    <text x="0" y="235" font-size="3.4" fill="#9fb0d0">Точные размеры и координаты — в docs/CITY_PLAN.md</text>
-  </g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-112 -118 345 232" width="1380" height="928" font-family="Arial, sans-serif">
+<rect x="-112" y="-118" width="345" height="232" fill="#1c2130"/>
+<rect x="-100" y="-100" width="42" height="20" fill="#ece7dc"/>
+<rect x="-52" y="-100" width="152" height="20" fill="#ece7dc"/>
+<rect x="-60" y="-110" width="2" height="10" fill="#ece7dc"/>
+<rect x="-52" y="-110" width="2" height="10" fill="#ece7dc"/>
+<rect x="-58" y="-110" width="6" height="3" fill="#ece7dc"/>
+<rect x="-58" y="-107" width="6" height="33" fill="#8f8a80"/>
+<rect x="-58" y="-100" width="6" height="20" fill="#ece7dc"/>
+<rect x="-58" y="-107" width="6" height="7" fill="#8c8578"/>
+<rect x="-58" y="-80" width="6" height="6" fill="#8c8578"/>
+<rect x="-58.2" y="-107" width="0.2" height="7" fill="#9a9a9a" stroke="#222" stroke-width="0.15"/>
+<rect x="-52" y="-107" width="0.2" height="7" fill="#9a9a9a" stroke="#222" stroke-width="0.15"/>
+<rect x="-58" y="-100" width="6" height="0.2" fill="#9a9a9a" stroke="#222" stroke-width="0.15"/>
+<rect x="-100" y="-80" width="42" height="65" fill="#d9d4c8"/>
+<rect x="-52" y="-80" width="152" height="65" fill="#d9d4c8"/>
+<rect x="-58" y="-74" width="6" height="59" fill="#d9d4c8"/>
+<rect x="-100" y="-15" width="200" height="29" fill="#c3beb2"/>
+<rect x="-100" y="14" width="2" height="30" fill="#c3beb2"/>
+<rect x="-78" y="14" width="178" height="30" fill="#c3beb2"/>
+<rect x="-100" y="44" width="200" height="3" fill="#c3beb2"/>
+<rect x="-98" y="14" width="20" height="30" fill="#857f78"/>
+<rect x="-84" y="20" width="6" height="24" fill="#8c8578"/>
+<rect x="-100" y="47" width="200" height="18" fill="#b3ada1"/>
+<rect x="-100" y="65" width="200" height="18" fill="#a39d91"/>
+<rect x="-100" y="83" width="200" height="18" fill="#938d81"/>
+<rect x="10" y="-80" width="8" height="5.5" fill="#8c8578"/>
+<rect x="20" y="-80" width="6" height="10" fill="#4a4d55"/>
+<rect x="-40" y="-15" width="10" height="5.5" fill="#8c8578"/>
+<rect x="-60" y="-15" width="6" height="5.5" fill="#8c8578"/>
+<rect x="50" y="-15" width="6" height="5.5" fill="#8c8578"/>
+<rect x="20" y="-15" width="6" height="10" fill="#4a4d55"/>
+<rect x="20" y="47" width="6" height="10" fill="#4a4d55"/>
+<rect x="-61.5" y="47" width="2" height="4.5" fill="#8c8578"/>
+<rect x="20" y="65" width="6" height="10" fill="#4a4d55"/>
+<rect x="-61.5" y="65" width="2" height="4.5" fill="#8c8578"/>
+<rect x="20" y="83" width="6" height="10" fill="#4a4d55"/>
+<rect x="-61.5" y="83" width="2" height="4.5" fill="#8c8578"/>
+<rect x="-100" y="-80.2" width="110" height="0.2" fill="#9a9a9a" stroke="#222" stroke-width="0.15"/>
+<rect x="18" y="-80.2" width="2" height="0.2" fill="#9a9a9a" stroke="#222" stroke-width="0.15"/>
+<rect x="26" y="-80.2" width="74" height="0.2" fill="#9a9a9a" stroke="#222" stroke-width="0.15"/>
+<rect x="-100" y="-15.2" width="40" height="0.2" fill="#9a9a9a" stroke="#222" stroke-width="0.15"/>
+<rect x="-54" y="-15.2" width="14" height="0.2" fill="#9a9a9a" stroke="#222" stroke-width="0.15"/>
+<rect x="-30" y="-15.2" width="50" height="0.2" fill="#9a9a9a" stroke="#222" stroke-width="0.15"/>
+<rect x="26" y="-15.2" width="24" height="0.2" fill="#9a9a9a" stroke="#222" stroke-width="0.15"/>
+<rect x="56" y="-15.2" width="44" height="0.2" fill="#9a9a9a" stroke="#222" stroke-width="0.15"/>
+<rect x="20" y="-70" width="6" height="55" fill="#4a4d55"/>
+<rect x="20" y="-5" width="6" height="52" fill="#4a4d55"/>
+<rect x="20" y="57" width="6" height="8" fill="#4a4d55"/>
+<rect x="20" y="75" width="6" height="8" fill="#4a4d55"/>
+<rect x="20" y="93" width="6" height="8" fill="#4a4d55"/>
+<rect x="-100" y="-112" width="40" height="12" fill="#5d6474" stroke="#222" stroke-width="0.15"/>
+<rect x="-50" y="-112" width="150" height="12" fill="#5d6474" stroke="#222" stroke-width="0.15"/>
+<rect x="-60" y="-114" width="10" height="4" fill="#5d6474" stroke="#222" stroke-width="0.15"/>
+<rect x="-101" y="-100" width="1" height="20" fill="#b23b3b" stroke="#222" stroke-width="0.15"/>
+<rect x="100" y="-100" width="1" height="20" fill="#b23b3b" stroke="#222" stroke-width="0.15"/>
+<rect x="-101" y="-80" width="1" height="65" fill="#b23b3b" stroke="#222" stroke-width="0.15"/>
+<rect x="-101" y="-15" width="1" height="62" fill="#b23b3b" stroke="#222" stroke-width="0.15"/>
+<rect x="-101" y="47" width="1" height="54" fill="#b23b3b" stroke="#222" stroke-width="0.15"/>
+<rect x="100" y="-80" width="1" height="65" fill="#b23b3b" stroke="#222" stroke-width="0.15"/>
+<rect x="100" y="-15" width="1" height="62" fill="#b23b3b" stroke="#222" stroke-width="0.15"/>
+<rect x="100" y="47" width="1" height="54" fill="#b23b3b" stroke="#222" stroke-width="0.15"/>
+<rect x="-100" y="101" width="200" height="1" fill="#b23b3b" stroke="#222" stroke-width="0.15"/>
+<rect x="-100" y="-97" width="200" height="12" fill="#4a4d55"/>
+<rect x="-100" y="-93" width="200" height="4" fill="#eef2f7"/>
+<rect x="-100" y="-92.05" width="200" height="0.1" fill="#9a9a9a" stroke="#222" stroke-width="0.15"/>
+<rect x="-100" y="-90.05" width="200" height="0.1" fill="#9a9a9a" stroke="#222" stroke-width="0.15"/>
+<rect x="-90.18" y="-91.2" width="0.36" height="0.4" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-70.18" y="-91.2" width="0.36" height="0.4" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-50.18" y="-91.2" width="0.36" height="0.4" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-30.18" y="-91.2" width="0.36" height="0.4" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-10.18" y="-91.2" width="0.36" height="0.4" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="9.82" y="-91.2" width="0.36" height="0.4" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="29.82" y="-91.2" width="0.36" height="0.4" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="49.82" y="-91.2" width="0.36" height="0.4" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="69.82" y="-91.2" width="0.36" height="0.4" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="89.82" y="-91.2" width="0.36" height="0.4" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-8" y="-82.3" width="16" height="0.2" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-8" y="-84.5" width="16" height="2.4" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-40" y="-84.5" width="4" height="2" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-34" y="-84.5" width="4" height="2" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="30" y="-84.5" width="4" height="2" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="36" y="-84.5" width="4" height="2" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-59.5" y="-109.5" width="0.5" height="0.5" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-99.5" y="-92.3" width="15" height="2.6" fill="#5a6a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-85.85" y="-88.6" width="1.7" height="4.2" fill="#5a6a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-84.85" y="-97.6" width="1.7" height="4.2" fill="#5a6a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-99.5" y="-83.5" width="4" height="3" fill="#eef2f7"/>
+<rect x="88.9" y="-96" width="2.2" height="6" fill="#5a6a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="92.75" y="-94.5" width="2.5" height="13" fill="#5a6a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="81.9" y="-90.85" width="4.2" height="1.7" fill="#5a6a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-72.1" y="-87.05" width="4.2" height="1.7" fill="#5a6a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-22.1" y="-87.05" width="4.2" height="1.7" fill="#5a6a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="47.9" y="-87.05" width="4.2" height="1.7" fill="#5a6a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="67.9" y="-87.05" width="4.2" height="1.7" fill="#5a6a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-67" y="-81.8" width="4" height="1.2" fill="#eef2f7"/>
+<rect x="-18" y="-81.8" width="4" height="1.2" fill="#eef2f7"/>
+<rect x="54" y="-81.8" width="4" height="1.2" fill="#eef2f7"/>
+<rect x="78" y="-81.8" width="4" height="1.2" fill="#eef2f7"/>
+<rect x="-75.12" y="-81.12" width="0.24" height="0.24" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-25.12" y="-81.12" width="0.24" height="0.24" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="24.88" y="-81.12" width="0.24" height="0.24" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="74.88" y="-81.12" width="0.24" height="0.24" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-38" y="-77" width="46" height="12" fill="#5d6474" stroke="#222" stroke-width="0.15"/>
+<rect x="-26.55" y="-65" width="2.6" height="1.6" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-26.75" y="-65" width="3" height="1.8" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-17.05" y="-65" width="2.6" height="1.6" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-17.25" y="-65" width="3" height="1.8" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-7.55" y="-65" width="2.6" height="1.6" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-7.75" y="-65" width="3" height="1.8" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="1.95" y="-65" width="2.6" height="1.6" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="1.75" y="-65" width="3" height="1.8" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-42" y="-65" width="12" height="15" fill="#5d6474" stroke="#222" stroke-width="0.15"/>
+<rect x="-42" y="-50" width="12" height="4" fill="#5d6474" stroke="#222" stroke-width="0.15"/>
+<rect x="-42" y="-46" width="12" height="19" fill="#5d6474" stroke="#222" stroke-width="0.15"/>
+<rect x="-30" y="-38" width="16" height="11" fill="#5d6474" stroke="#222" stroke-width="0.15"/>
+<rect x="-14" y="-38" width="4" height="11" fill="#5d6474" stroke="#222" stroke-width="0.15"/>
+<rect x="-10" y="-38" width="18" height="11" fill="#5d6474" stroke="#222" stroke-width="0.15"/>
+<rect x="6" y="-60" width="10" height="18" fill="#7f6b60" stroke="#222" stroke-width="0.15"/>
+<rect x="-27" y="-59" width="1.5" height="3" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-21" y="-58.5" width="3" height="1" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-24" y="-54" width="2" height="2" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-19" y="-54" width="3" height="3" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-30" y="-46" width="18" height="3" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="2" y="-56" width="4" height="2.5" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-8" y="-48.1" width="2" height="0.2" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-10.9" y="-55.25" width="1.8" height="0.5" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="1.1" y="-50.25" width="1.8" height="0.5" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-8.1" y="-60.85" width="4.2" height="1.7" fill="#5a6a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="0.9" y="-42.85" width="4.2" height="1.7" fill="#5a6a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-17" y="-41.5" width="6" height="2" fill="#eef2f7"/>
+<rect x="-28" y="-41.5" width="4" height="2" fill="#eef2f7"/>
+<rect x="-12.25" y="-57.25" width="0.5" height="0.5" fill="#3e5a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="-2.25" y="-46.25" width="0.5" height="0.5" fill="#3e5a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="-26" y="-24" width="5" height="4" fill="#8a4a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="-18" y="-24" width="14" height="5" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="11.15" y="-22.1" width="1.7" height="4.2" fill="#5a6a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="2" y="-18" width="6" height="2" fill="#eef2f7"/>
+<rect x="-14.12" y="-62.62" width="0.24" height="0.24" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-2.12" y="-40.12" width="0.24" height="0.24" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="11.88" y="-62.62" width="0.24" height="0.24" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-35.12" y="-20.12" width="0.24" height="0.24" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="11.88" y="-30.12" width="0.24" height="0.24" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-100" y="-78" width="16" height="16" fill="#5d6474" stroke="#222" stroke-width="0.15"/>
+<rect x="-80" y="-78" width="18" height="12" fill="#5d6474" stroke="#222" stroke-width="0.15"/>
+<rect x="-74" y="-62" width="12" height="24" fill="#5d6474" stroke="#222" stroke-width="0.15"/>
+<rect x="-100" y="-58" width="12" height="16" fill="#5d6474" stroke="#222" stroke-width="0.15"/>
+<rect x="-100" y="-42" width="12" height="4" fill="#5d6474" stroke="#222" stroke-width="0.15"/>
+<rect x="-100" y="-38" width="12" height="18" fill="#5d6474" stroke="#222" stroke-width="0.15"/>
+<rect x="-88" y="-32" width="10" height="12" fill="#5d6474" stroke="#222" stroke-width="0.15"/>
+<rect x="-78" y="-32" width="4" height="12" fill="#5d6474" stroke="#222" stroke-width="0.15"/>
+<rect x="-74" y="-32" width="12" height="12" fill="#5d6474" stroke="#222" stroke-width="0.15"/>
+<rect x="-85.85" y="-57.1" width="1.7" height="4.2" fill="#5a6a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-85.85" y="-51.1" width="1.7" height="4.2" fill="#5a6a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-77.85" y="-54.1" width="1.7" height="4.2" fill="#5a6a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-77.85" y="-46.1" width="1.7" height="4.2" fill="#5a6a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-84" y="-37" width="6" height="2" fill="#eef2f7"/>
+<rect x="-59" y="-56" width="4" height="30" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="-51" y="-56" width="4" height="30" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="-55" y="-61.25" width="4" height="2.5" fill="#eef2f7"/>
+<rect x="-81.12" y="-45.12" width="0.24" height="0.24" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-58.12" y="-68.12" width="0.24" height="0.24" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="27.925" y="-78" width="0.15" height="28" fill="#3a3f46" stroke="#222" stroke-width="0.15"/>
+<rect x="27.925" y="-44" width="0.15" height="27" fill="#3a3f46" stroke="#222" stroke-width="0.15"/>
+<rect x="28" y="-78.075" width="58" height="0.15" fill="#3a3f46" stroke="#222" stroke-width="0.15"/>
+<rect x="85.925" y="-78" width="0.15" height="61" fill="#3a3f46" stroke="#222" stroke-width="0.15"/>
+<rect x="28" y="-17.075" width="21" height="0.15" fill="#3a3f46" stroke="#222" stroke-width="0.15"/>
+<rect x="57" y="-17.075" width="29" height="0.15" fill="#3a3f46" stroke="#222" stroke-width="0.15"/>
+<rect x="89" y="-78" width="11" height="61" fill="#5d6474" stroke="#222" stroke-width="0.15"/>
+<rect x="34" y="-75" width="46" height="11" fill="#b59a4a" stroke="#222" stroke-width="0.15"/>
+<rect x="34" y="-64" width="10" height="12" fill="#b59a4a" stroke="#222" stroke-width="0.15"/>
+<rect x="70" y="-64" width="10" height="12" fill="#b59a4a" stroke="#222" stroke-width="0.15"/>
+<rect x="53" y="-64" width="8" height="1.5" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="52.5" y="-64" width="9" height="2.5" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="34" y="-48" width="44" height="27" fill="#eef2f7"/>
+<rect x="79" y="-47" width="6" height="25" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="46" y="-51" width="22" height="1.5" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="75.8" y="-50.2" width="0.4" height="0.4" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="31.75" y="-76.75" width="0.5" height="0.5" fill="#3e5a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="83.75" y="-76.75" width="0.5" height="0.5" fill="#3e5a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="37" y="-26" width="6" height="2" fill="#eef2f7"/>
+<rect x="30" y="-63" width="2" height="6" fill="#eef2f7"/>
+<rect x="-42" y="-5" width="22" height="11" fill="#7f6b60" stroke="#222" stroke-width="0.15"/>
+<rect x="-20" y="-5" width="4" height="11" fill="#7f6b60" stroke="#222" stroke-width="0.15"/>
+<rect x="-16" y="-5" width="28" height="11" fill="#7f6b60" stroke="#222" stroke-width="0.15"/>
+<rect x="-42" y="6" width="11" height="14" fill="#7f6b60" stroke="#222" stroke-width="0.15"/>
+<rect x="-42" y="20" width="11" height="4" fill="#7f6b60" stroke="#222" stroke-width="0.15"/>
+<rect x="-42" y="24" width="11" height="14" fill="#7f6b60" stroke="#222" stroke-width="0.15"/>
+<rect x="-31" y="27" width="26" height="11" fill="#7f6b60" stroke="#222" stroke-width="0.15"/>
+<rect x="-5" y="27" width="4" height="11" fill="#7f6b60" stroke="#222" stroke-width="0.15"/>
+<rect x="-1" y="27" width="13" height="11" fill="#7f6b60" stroke="#222" stroke-width="0.15"/>
+<rect x="-28" y="9" width="4" height="4" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="-18" y="15" width="22" height="3" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="-12" y="10.95" width="4" height="0.1" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-2" y="22.95" width="4" height="0.1" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="5.15" y="7.9" width="1.7" height="4.2" fill="#5a6a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-23" y="23" width="6" height="2" fill="#eef2f7"/>
+<rect x="15.15" y="12.9" width="1.7" height="4.2" fill="#5a6a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="14.5" y="27" width="3" height="6" fill="#eef2f7"/>
+<rect x="7.75" y="-8.25" width="0.5" height="0.5" fill="#3e5a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="-25.12" y="-7.12" width="0.24" height="0.24" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-10.12" y="19.88" width="0.24" height="0.24" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="14.88" y="-0.12" width="0.24" height="0.24" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="29" y="-6" width="12" height="11" fill="#7f6b60" stroke="#222" stroke-width="0.15"/>
+<rect x="41" y="-6" width="4" height="11" fill="#7f6b60" stroke="#222" stroke-width="0.15"/>
+<rect x="45" y="-6" width="12" height="11" fill="#7f6b60" stroke="#222" stroke-width="0.15"/>
+<rect x="31" y="8" width="24" height="3" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="29" y="16" width="28" height="11" fill="#7f6b60" stroke="#222" stroke-width="0.15"/>
+<rect x="32.9" y="32.15" width="4.2" height="1.7" fill="#5a6a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="45" y="30" width="6" height="2" fill="#eef2f7"/>
+<rect x="59.85" y="-12" width="0.3" height="30" fill="#3a3f46" stroke="#222" stroke-width="0.15"/>
+<rect x="59.85" y="24" width="0.3" height="17" fill="#3a3f46" stroke="#222" stroke-width="0.15"/>
+<rect x="60" y="-12.15" width="40" height="0.3" fill="#3a3f46" stroke="#222" stroke-width="0.15"/>
+<rect x="60" y="40.85" width="40" height="0.3" fill="#3a3f46" stroke="#222" stroke-width="0.15"/>
+<rect x="66" y="-8" width="26" height="18" fill="#8a4a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="90" y="28" width="4" height="4" fill="#8a4a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="66" y="22" width="8" height="8" fill="#4a4d55"/>
+<rect x="62.88" y="14.88" width="0.24" height="0.24" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-45" y="42.3" width="64.4" height="1.4" fill="#d98a2b" stroke="#222" stroke-width="0.15"/>
+<rect x="26.6" y="42.3" width="71.4" height="1.4" fill="#d98a2b" stroke="#222" stroke-width="0.15"/>
+<rect x="-46" y="41.5" width="1" height="3" fill="#d98a2b" stroke="#222" stroke-width="0.15"/>
+<rect x="19.4" y="42.3" width="0.6" height="1.4" fill="#d98a2b" stroke="#222" stroke-width="0.15"/>
+<rect x="26" y="42.3" width="0.6" height="1.4" fill="#d98a2b" stroke="#222" stroke-width="0.15"/>
+<rect x="19.4" y="42.3" width="7.2" height="1.4" fill="#d98a2b" stroke="#222" stroke-width="0.15"/>
+<rect x="14.2" y="38.1" width="1.6" height="4" fill="#9a9a9a" stroke="#222" stroke-width="0.15"/>
+<rect x="14.2" y="42.1" width="1.6" height="1.8" fill="#9a9a9a" stroke="#222" stroke-width="0.15"/>
+<rect x="14.2" y="43.9" width="1.6" height="4" fill="#9a9a9a" stroke="#222" stroke-width="0.15"/>
+<rect x="39.2" y="38.1" width="1.6" height="4" fill="#9a9a9a" stroke="#222" stroke-width="0.15"/>
+<rect x="39.2" y="42.1" width="1.6" height="1.8" fill="#9a9a9a" stroke="#222" stroke-width="0.15"/>
+<rect x="39.2" y="43.9" width="1.6" height="4" fill="#9a9a9a" stroke="#222" stroke-width="0.15"/>
+<rect x="58.3" y="-21" width="1.4" height="63.3" fill="#d98a2b" stroke="#222" stroke-width="0.15"/>
+<rect x="58.8" y="-9.2" width="0.4" height="0.4" fill="#d98a2b" stroke="#222" stroke-width="0.15"/>
+<rect x="58.8" y="-1.2" width="0.4" height="0.4" fill="#d98a2b" stroke="#222" stroke-width="0.15"/>
+<rect x="58.8" y="6.8" width="0.4" height="0.4" fill="#d98a2b" stroke="#222" stroke-width="0.15"/>
+<rect x="58.8" y="14.8" width="0.4" height="0.4" fill="#d98a2b" stroke="#222" stroke-width="0.15"/>
+<rect x="58.8" y="22.8" width="0.4" height="0.4" fill="#d98a2b" stroke="#222" stroke-width="0.15"/>
+<rect x="58.8" y="30.8" width="0.4" height="0.4" fill="#d98a2b" stroke="#222" stroke-width="0.15"/>
+<rect x="58.8" y="38.8" width="0.4" height="0.4" fill="#d98a2b" stroke="#222" stroke-width="0.15"/>
+<rect x="58" y="41.5" width="2" height="3" fill="#d98a2b" stroke="#222" stroke-width="0.15"/>
+<rect x="-98" y="47" width="36" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="-98" y="58" width="36" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="-59" y="47" width="36" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="-59" y="58" width="36" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="-20" y="47" width="37" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="-20" y="58" width="37" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="29" y="47" width="33" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="29" y="58" width="33" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="65" y="47" width="33" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="65" y="58" width="33" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="-98" y="65" width="36" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="-98" y="76" width="36" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="-59" y="65" width="36" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="-59" y="76" width="36" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="-20" y="65" width="37" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="-20" y="76" width="37" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="29" y="65" width="33" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="29" y="76" width="33" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="65" y="65" width="33" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="65" y="76" width="33" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="-98" y="83" width="36" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="-98" y="94" width="36" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="-59" y="83" width="36" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="-59" y="94" width="36" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="-20" y="83" width="37" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="-20" y="94" width="37" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="29" y="83" width="33" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="29" y="94" width="33" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="65" y="83" width="33" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="65" y="94" width="33" height="6" fill="#6e5844" stroke="#222" stroke-width="0.15"/>
+<rect x="27" y="44" width="3" height="2.8" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="20" y="46.4" width="6" height="0.2" fill="#9a9a9a" stroke="#222" stroke-width="0.15"/>
+<rect x="20" y="96" width="6" height="5" fill="#eef2f7"/>
+<rect x="20" y="95.8" width="6" height="0.2" fill="#b23b3b" stroke="#222" stroke-width="0.15"/>
+<rect x="21.15" y="90.9" width="1.7" height="4.2" fill="#5a6a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-42.5" y="54.5" width="5" height="2" fill="#eef2f7"/>
+<rect x="47.5" y="54.5" width="5" height="2" fill="#eef2f7"/>
+<rect x="-82.5" y="72.5" width="5" height="2" fill="#eef2f7"/>
+<rect x="7.5" y="72.5" width="5" height="2" fill="#eef2f7"/>
+<rect x="-7.5" y="90.5" width="5" height="2" fill="#eef2f7"/>
+<rect x="77.5" y="90.5" width="5" height="2" fill="#eef2f7"/>
+<rect x="-77.1" y="54.65" width="4.2" height="1.7" fill="#5a6a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="72.9" y="72.65" width="4.2" height="1.7" fill="#5a6a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-42.1" y="90.65" width="4.2" height="1.7" fill="#5a6a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-74" y="30" width="27" height="6" fill="#a07a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="-70" y="36" width="23" height="7" fill="#a07a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="-74" y="30" width="27" height="6" fill="#a07a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="-74" y="36" width="22" height="7" fill="#a07a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="-49" y="36" width="2" height="7" fill="#a07a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="-74" y="30" width="27" height="6" fill="#a07a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="-70" y="36" width="23" height="7" fill="#a07a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="-74" y="30" width="27" height="13" fill="#a07a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="-73" y="36" width="3" height="5" fill="#a07a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="-52" y="36" width="3" height="5" fill="#a07a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="-73" y="36" width="3" height="5" fill="#a07a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="-73.75" y="30.25" width="0.5" height="0.5" fill="#a07a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="-73.75" y="42.25" width="0.5" height="0.5" fill="#a07a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="-65.25" y="30.25" width="0.5" height="0.5" fill="#a07a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="-65.25" y="42.25" width="0.5" height="0.5" fill="#a07a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="-56.25" y="30.25" width="0.5" height="0.5" fill="#a07a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="-56.25" y="42.25" width="0.5" height="0.5" fill="#a07a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="-47.75" y="30.25" width="0.5" height="0.5" fill="#a07a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="-47.75" y="42.25" width="0.5" height="0.5" fill="#a07a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="-62" y="20" width="2" height="2" fill="#a07a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="-85" y="20.5" width="45" height="1" fill="#a07a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="-64" y="19" width="4" height="4" fill="#a07a3a" stroke="#222" stroke-width="0.15"/>
+<rect x="-98" y="-12" width="6" height="2.5" fill="#5b6b4c" stroke="#222" stroke-width="0.15"/>
+<rect x="-89" y="-12" width="6" height="2.5" fill="#5b6b4c" stroke="#222" stroke-width="0.15"/>
+<rect x="-80" y="-12" width="6" height="2.5" fill="#5b6b4c" stroke="#222" stroke-width="0.15"/>
+<rect x="-71" y="-12" width="6" height="2.5" fill="#5b6b4c" stroke="#222" stroke-width="0.15"/>
+<rect x="-94" y="-5" width="6" height="2.5" fill="#5b6b4c" stroke="#222" stroke-width="0.15"/>
+<rect x="-85" y="-5" width="6" height="2.5" fill="#5b6b4c" stroke="#222" stroke-width="0.15"/>
+<rect x="-76" y="-5" width="6" height="2.5" fill="#5b6b4c" stroke="#222" stroke-width="0.15"/>
+<rect x="-67" y="-5" width="6" height="2.5" fill="#5b6b4c" stroke="#222" stroke-width="0.15"/>
+<rect x="-98" y="3" width="6" height="1.6" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-88" y="3" width="6" height="1.6" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-76" y="3" width="6" height="1.6" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-95" y="8" width="6" height="1.6" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-70" y="8" width="6" height="1.6" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<rect x="-46.1" y="-2" width="0.2" height="17" fill="#3a3f46" stroke="#222" stroke-width="0.15"/>
+<rect x="-46.1" y="19" width="0.2" height="22" fill="#3a3f46" stroke="#222" stroke-width="0.15"/>
+<rect x="-62" y="9" width="4" height="2" fill="#eef2f7"/>
+<rect x="-76.5" y="23.5" width="3" height="5" fill="#eef2f7"/>
+<rect x="-80.12" y="-7.62" width="0.24" height="0.24" fill="#8a8a8a" stroke="#222" stroke-width="0.15"/>
+<text x="-80" y="-106" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">Дома северной стороны проспекта (стена)</text>
+<text x="25" y="-106" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">Дома северной стороны проспекта (стена)</text>
+<text x="-15" y="-71" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">Дом Юрчика · 9 эт., 4 подъезда</text>
+<text x="-36" y="-57.5" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">9 эт.</text>
+<text x="-22" y="-32.5" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">9 эт.</text>
+<text x="11" y="-51" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90 11 -51)">Хрущёвка · 5 эт.</text>
+<text x="-21" y="-44.5" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">Сараи</text>
+<text x="-23.5" y="-22" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">Трансформаторная</text>
+<text x="-11" y="-21.5" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">Гаражи-ракушки</text>
+<text x="-92" y="-70" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">Свечка · 16 эт.</text>
+<text x="-71" y="-72" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">9 эт.</text>
+<text x="-68" y="-50" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90 -68 -50)">9 эт.</text>
+<text x="-94" y="-50" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">9 эт.</text>
+<text x="-83" y="-26" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">9 эт.</text>
+<text x="-57" y="-41" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90 -57 -41)">Гаражи-ракушки</text>
+<text x="94.5" y="-47.5" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90 94.5 -47.5)">9 эт.</text>
+<text x="57" y="-69.5" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">Школа · 3 эт.</text>
+<text x="-31" y="0.5" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">Хрущёвка · 5 эт.</text>
+<text x="-36.5" y="13" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">Хрущёвка · 5 эт.</text>
+<text x="-18" y="32.5" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">Хрущёвка · 5 эт.</text>
+<text x="-26" y="11" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">Голубятня</text>
+<text x="-7" y="16.5" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">Сараи</text>
+<text x="35" y="-0.5" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">Хрущёвка · 5 эт.</text>
+<text x="43" y="9.5" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">Гаражи-ракушки</text>
+<text x="43" y="21.5" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">Хрущёвка · 5 эт.</text>
+<text x="79" y="1" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">Котельная</text>
+<text x="92" y="30" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">Труба котельной · 45 м</text>
+<text x="-1.5" y="50" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">Гаражи · по крышам можно пройти</text>
+<text x="-1.5" y="61" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">Гаражи</text>
+<text x="-1.5" y="79" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">Гаражи</text>
+<text x="-1.5" y="97" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">Гаражи</text>
+<text x="-60.5" y="36.5" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">Недострой · 3 этажа доступны</text>
+<text x="-71.5" y="38.5" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90 -71.5 38.5)">Лестница</text>
+<text x="-61" y="21" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">Башенный кран</text>
+<text x="-95" y="-10.75" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">Бытовки</text>
+<text x="0" y="-90.5" font-size="4" font-weight="bold" fill="#111" stroke="#fff" stroke-width="0.6" paint-order="stroke" text-anchor="middle">1. ПРОСПЕКТ (+6)</text>
+<text x="-12" y="-50" font-size="4" font-weight="bold" fill="#111" stroke="#fff" stroke-width="0.6" paint-order="stroke" text-anchor="middle">2. ДВОР ЮРЧИКА (+3)</text>
+<text x="-81" y="-46" font-size="4" font-weight="bold" fill="#111" stroke="#fff" stroke-width="0.6" paint-order="stroke" text-anchor="middle">ЗАПАДНЫЙ ДВОР</text>
+<text x="57" y="-38" font-size="4" font-weight="bold" fill="#111" stroke="#fff" stroke-width="0.6" paint-order="stroke" text-anchor="middle">3. ШКОЛА (+3)</text>
+<text x="-10" y="21" font-size="4" font-weight="bold" fill="#111" stroke="#fff" stroke-width="0.6" paint-order="stroke" text-anchor="middle">4. ЮЖНЫЕ ДВОРЫ (0)</text>
+<text x="80" y="36" font-size="4" font-weight="bold" fill="#111" stroke="#fff" stroke-width="0.6" paint-order="stroke" text-anchor="middle">5. КОТЕЛЬНАЯ (0)</text>
+<text x="-40" y="74" font-size="4" font-weight="bold" fill="#111" stroke="#fff" stroke-width="0.6" paint-order="stroke" text-anchor="middle">6. ГАРАЖИ (−2,5 / −5 / −7,5)</text>
+<text x="-80" y="8" font-size="4" font-weight="bold" fill="#111" stroke="#fff" stroke-width="0.6" paint-order="stroke" text-anchor="middle">7. СТРОЙКА (0)</text>
+<circle cx="-5" cy="-55" r="2" fill="#ff7a1a" stroke="#fff" stroke-width="0.4"/><text x="-5" y="-54.9" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">F1</text>
+<circle cx="15" cy="-82" r="2" fill="#ff7a1a" stroke="#fff" stroke-width="0.4"/><text x="15" y="-81.9" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">F2</text>
+<circle cx="57" cy="-35" r="2" fill="#ff7a1a" stroke="#fff" stroke-width="0.4"/><text x="57" y="-34.9" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">F3</text>
+<circle cx="-10" cy="22" r="2" fill="#ff7a1a" stroke="#fff" stroke-width="0.4"/><text x="-10" y="22.1" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">F4</text>
+<circle cx="64" cy="21" r="2" fill="#ff7a1a" stroke="#fff" stroke-width="0.4"/><text x="64" y="21.1" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">F5</text>
+<circle cx="0" cy="55.5" r="2" fill="#ff7a1a" stroke="#fff" stroke-width="0.4"/><text x="0" y="55.6" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">F6</text>
+<circle cx="-70" cy="1.5" r="2" fill="#ff7a1a" stroke="#fff" stroke-width="0.4"/><text x="-70" y="1.6" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">F7</text>
+<circle cx="-81" cy="-48" r="2" fill="#ff7a1a" stroke="#fff" stroke-width="0.4"/><text x="-81" y="-47.9" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle">F8</text>
+<g transform="translate(112 -108)" font-size="4" fill="#e6e9f0">
+<text x="0" y="0" font-size="6" font-weight="bold">Паскот — микрорайон</text>
+<text x="0" y="7" font-size="3.4" fill="#9fb0d0">v2, плотная планировка · ~200×215 м · проходы 3–5 м</text>
+<text x="0" y="12" font-size="3.4" fill="#9fb0d0">Нарисовано tools/make_district_blockout.py по данным блокаута</text>
+<rect x="0" y="18" width="7" height="4.5" fill="#ece7dc" stroke="#999" stroke-width="0.2"/><text x="10" y="22.5">+6 м — проспект</text>
+<rect x="0" y="25" width="7" height="4.5" fill="#d9d4c8" stroke="#999" stroke-width="0.2"/><text x="10" y="29.5">+3 м — дворы и школа</text>
+<rect x="0" y="32" width="7" height="4.5" fill="#c3beb2" stroke="#999" stroke-width="0.2"/><text x="10" y="36.5">0 м — южная полоса</text>
+<rect x="0" y="39" width="7" height="4.5" fill="#a39d91" stroke="#999" stroke-width="0.2"/><text x="10" y="43.5">−2,5…−7,5 м — террасы гаражей</text>
+<rect x="0" y="46" width="7" height="4.5" fill="#857f78" stroke="#999" stroke-width="0.2"/><text x="10" y="50.5">−5 м котлован, +2 м переход</text>
+<rect x="0" y="53" width="7" height="4.5" fill="#8c8578" stroke="#999" stroke-width="0.2"/><text x="10" y="57.5">лестницы и пандусы</text>
+<rect x="0" y="60" width="7" height="4.5" fill="#5d6474" stroke="#999" stroke-width="0.2"/><text x="10" y="64.5">панельные дома (9 и 16 эт.)</text>
+<rect x="0" y="67" width="7" height="4.5" fill="#80695f" stroke="#999" stroke-width="0.2"/><text x="10" y="71.5">хрущёвки (5 эт.)</text>
+<rect x="0" y="74" width="7" height="4.5" fill="#6e5844" stroke="#999" stroke-width="0.2"/><text x="10" y="78.5">гаражи, сараи, ракушки</text>
+<rect x="0" y="81" width="7" height="4.5" fill="#d98a2b" stroke="#999" stroke-width="0.2"/><text x="10" y="85.5">теплотрасса</text>
+<rect x="0" y="88" width="7" height="4.5" fill="#eef2f7" stroke="#999" stroke-width="0.2"/><text x="10" y="92.5">сугробы</text>
+<rect x="0" y="95" width="7" height="4.5" fill="#5a6a8a" stroke="#999" stroke-width="0.2"/><text x="10" y="99.5">машины</text>
+<rect x="0" y="102" width="7" height="4.5" fill="#b23b3b" stroke="#999" stroke-width="0.2"/><text x="10" y="106.5">граница района</text>
+<rect x="0" y="109" width="7" height="4.5" fill="#ff7a1a" stroke="#999" stroke-width="0.2"/><text x="10" y="113.5">F1–F8 — точки телепорта</text>
+<text x="0" y="124" font-size="3.4" fill="#9fb0d0">Арки — проходы сквозь первый этаж домов (подпись «Арка» в игре).</text>
+<text x="0" y="130" font-size="3.4" fill="#9fb0d0">Север — вверху. 10 м ≈ 6 с шагом, ≈ 2 с бегом.</text>
+</g></svg>

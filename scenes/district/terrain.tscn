@@ -5,43 +5,57 @@
 [node name="Terrain" type="Node3D"]
 
 [node name="Prospect" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -110, -20, -131)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -79, -20, -90)
 script = ExtResource("bb")
-size = Vector3(80, 26, 38)
+size = Vector3(42, 26, 20)
 kind = "ground"
 tint = Color(0.66, 0.64, 0.6, 1)
 
 [node name="Prospect2" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 43, -20, -131)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, -20, -90)
 script = ExtResource("bb")
-size = Vector3(214, 26, 38)
+size = Vector3(152, 26, 20)
+kind = "ground"
+tint = Color(0.66, 0.64, 0.6, 1)
+
+[node name="Niche" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -59, -20, -105)
+script = ExtResource("bb")
+size = Vector3(2, 26, 10)
+kind = "ground"
+tint = Color(0.66, 0.64, 0.6, 1)
+
+[node name="Niche2" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -51, -20, -105)
+script = ExtResource("bb")
+size = Vector3(2, 26, 10)
 kind = "ground"
 tint = Color(0.66, 0.64, 0.6, 1)
 
 [node name="TunnelCapN" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -67, -20, -148.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -55, -20, -108.5)
 script = ExtResource("bb")
 size = Vector3(6, 26, 3)
 kind = "ground"
 tint = Color(0.66, 0.64, 0.6, 1)
 
 [node name="TunnelFloor" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -67, -20, -126.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -55, -20, -90.5)
 script = ExtResource("bb")
-size = Vector3(6, 22, 41)
+size = Vector3(6, 22, 33)
 kind = "ground"
 label = "Подземный переход"
 tint = Color(0.34, 0.31, 0.28, 1)
 
 [node name="TunnelRoof" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -67, 5.4, -126)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -55, 5.4, -90)
 script = ExtResource("bb")
-size = Vector3(6, 0.6, 28)
+size = Vector3(6, 0.6, 20)
 kind = "ground"
 tint = Color(0.66, 0.64, 0.6, 1)
 
 [node name="TunnelStairsN" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -67, 2, -143.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -55, 2, -103.5)
 script = ExtResource("bb")
 size = Vector3(6, 4, 7)
 kind = "ground"
@@ -49,7 +63,7 @@ shape = "stairs"
 tint = Color(0.66, 0.64, 0.6, 1)
 
 [node name="TunnelRampS" type="Node3D" parent="."]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -67, 2, -109)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -55, 2, -77)
 script = ExtResource("bb")
 size = Vector3(6, 1, 6)
 kind = "ground"
@@ -57,118 +71,111 @@ shape = "ramp"
 tint = Color(0.6, 0.58, 0.54, 1)
 
 [node name="TunnelRail" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -69.9, 6, -143.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58.1, 6, -103.5)
 script = ExtResource("bb")
 size = Vector3(0.2, 1, 7)
 kind = "rail"
 
 [node name="TunnelRail2" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -64.1, 6, -143.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -51.9, 6, -103.5)
 script = ExtResource("bb")
 size = Vector3(0.2, 1, 7)
 kind = "rail"
 
 [node name="TunnelRail3" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -67, 6, -139.9)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -55, 6, -99.9)
 script = ExtResource("bb")
 size = Vector3(6, 1, 0.2)
 kind = "rail"
 
 [node name="Hub" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -110, -20, -66)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -79, -20, -47.5)
 script = ExtResource("bb")
-size = Vector3(80, 23, 92)
+size = Vector3(42, 23, 65)
 kind = "ground"
 tint = Color(0.6, 0.58, 0.54, 1)
 
 [node name="Hub2" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 43, -20, -66)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, -20, -47.5)
 script = ExtResource("bb")
-size = Vector3(214, 23, 92)
+size = Vector3(152, 23, 65)
 kind = "ground"
 tint = Color(0.6, 0.58, 0.54, 1)
 
 [node name="Hub3" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -67, -20, -63)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -55, -20, -44.5)
 script = ExtResource("bb")
-size = Vector3(6, 23, 86)
+size = Vector3(6, 23, 59)
 kind = "ground"
 tint = Color(0.6, 0.58, 0.54, 1)
 
 [node name="South" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 45, -20, 20)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -20, -0.5)
 script = ExtResource("bb")
-size = Vector3(210, 20, 80)
+size = Vector3(200, 20, 29)
 kind = "ground"
 tint = Color(0.53, 0.51, 0.47, 1)
 
-[node name="Wasteland" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -105, -20, 2.5)
+[node name="South2" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -99, -20, 29)
 script = ExtResource("bb")
-size = Vector3(90, 20, 45)
+size = Vector3(2, 20, 30)
 kind = "ground"
 tint = Color(0.53, 0.51, 0.47, 1)
 
-[node name="Wasteland2" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -105, -20, 110)
+[node name="South3" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, -20, 29)
 script = ExtResource("bb")
-size = Vector3(90, 20, 70)
+size = Vector3(178, 20, 30)
 kind = "ground"
 tint = Color(0.53, 0.51, 0.47, 1)
 
-[node name="Wasteland3" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -145, -20, 50)
+[node name="South4" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -20, 45.5)
 script = ExtResource("bb")
-size = Vector3(10, 20, 50)
-kind = "ground"
-tint = Color(0.53, 0.51, 0.47, 1)
-
-[node name="Wasteland4" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -77.5, -20, 50)
-script = ExtResource("bb")
-size = Vector3(35, 20, 50)
+size = Vector3(200, 20, 3)
 kind = "ground"
 tint = Color(0.53, 0.51, 0.47, 1)
 
 [node name="Pit" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -117.5, -20, 50)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -88, -20, 29)
 script = ExtResource("bb")
-size = Vector3(45, 15, 50)
+size = Vector3(20, 15, 30)
 kind = "ground"
 label = "Котлован −5 м"
 tint = Color(0.34, 0.31, 0.28, 1)
 
 [node name="PitRamp" type="Node3D" parent="."]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -98, -5, 60)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -81, -5, 32)
 script = ExtResource("bb")
-size = Vector3(6, 5, 30)
+size = Vector3(6, 5, 24)
 kind = "ground"
 shape = "ramp"
 tint = Color(0.34, 0.31, 0.28, 1)
 
 [node name="Garages1" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 45, -20, 72.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -20, 56)
 script = ExtResource("bb")
-size = Vector3(210, 17.5, 25)
+size = Vector3(200, 17.5, 18)
 kind = "ground"
 tint = Color(0.48, 0.46, 0.42, 1)
 
 [node name="Garages2" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 45, -20, 97.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -20, 74)
 script = ExtResource("bb")
-size = Vector3(210, 15, 25)
+size = Vector3(200, 15, 18)
 kind = "ground"
 tint = Color(0.43, 0.41, 0.38, 1)
 
 [node name="Garages3" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 45, -20, 127.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -20, 92)
 script = ExtResource("bb")
-size = Vector3(210, 12.5, 35)
+size = Vector3(200, 12.5, 18)
 kind = "ground"
 tint = Color(0.38, 0.36, 0.33, 1)
 
 [node name="StairsProspect" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 29, 3, -109.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 3, -77.25)
 script = ExtResource("bb")
 size = Vector3(8, 3, 5.5)
 kind = "ground"
@@ -177,31 +184,31 @@ label = "Лестница на проспект"
 tint = Color(0.6, 0.58, 0.54, 1)
 
 [node name="RampProspect" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 3, -106)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, 3, -75)
 script = ExtResource("bb")
-size = Vector3(10, 3, 12)
+size = Vector3(6, 3, 10)
 kind = "road"
 shape = "ramp"
 
 [node name="StairsWide" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0, -17.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -35, 0, -12.25)
 script = ExtResource("bb")
-size = Vector3(12, 3, 5.5)
+size = Vector3(10, 3, 5.5)
 kind = "ground"
 shape = "stairs"
-label = "Широкая лестница"
+label = "Лестница вниз"
 tint = Color(0.53, 0.51, 0.47, 1)
 
-[node name="StairsSchool" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 87, 0, -17.25)
+[node name="StairsWest" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -57, 0, -12.25)
 script = ExtResource("bb")
 size = Vector3(6, 3, 5.5)
 kind = "ground"
 shape = "stairs"
 tint = Color(0.53, 0.51, 0.47, 1)
 
-[node name="StairsWest" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -107, 0, -17.25)
+[node name="StairsSchool" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 53, 0, -12.25)
 script = ExtResource("bb")
 size = Vector3(6, 3, 5.5)
 kind = "ground"
@@ -209,244 +216,251 @@ shape = "stairs"
 tint = Color(0.53, 0.51, 0.47, 1)
 
 [node name="RampSouth" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 0, -14)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, 0, -10)
 script = ExtResource("bb")
-size = Vector3(10, 3, 12)
+size = Vector3(6, 3, 10)
 kind = "road"
 shape = "ramp"
 
 [node name="RampGarages" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, -2.5, 65)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, -2.5, 52)
 script = ExtResource("bb")
-size = Vector3(10, 2.5, 10)
+size = Vector3(6, 2.5, 10)
 kind = "road"
 shape = "ramp"
 
 [node name="StairsGarages" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58, -2.5, 62.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60.5, -2.5, 49.25)
 script = ExtResource("bb")
-size = Vector3(3, 2.5, 4.5)
+size = Vector3(2, 2.5, 4.5)
 kind = "ground"
 shape = "stairs"
 tint = Color(0.48, 0.46, 0.42, 1)
 
 [node name="RampGarages2" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, -5, 90)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, -5, 70)
 script = ExtResource("bb")
-size = Vector3(10, 2.5, 10)
+size = Vector3(6, 2.5, 10)
 kind = "road"
 shape = "ramp"
 
 [node name="StairsGarages2" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58, -5, 87.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60.5, -5, 67.25)
 script = ExtResource("bb")
-size = Vector3(3, 2.5, 4.5)
+size = Vector3(2, 2.5, 4.5)
 kind = "ground"
 shape = "stairs"
 tint = Color(0.43, 0.41, 0.38, 1)
 
 [node name="RampGarages3" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, -7.5, 115)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, -7.5, 88)
 script = ExtResource("bb")
-size = Vector3(10, 2.5, 10)
+size = Vector3(6, 2.5, 10)
 kind = "road"
 shape = "ramp"
 
 [node name="StairsGarages3" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58, -7.5, 112.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60.5, -7.5, 85.25)
 script = ExtResource("bb")
-size = Vector3(3, 2.5, 4.5)
+size = Vector3(2, 2.5, 4.5)
 kind = "ground"
 shape = "stairs"
 tint = Color(0.38, 0.36, 0.33, 1)
 
 [node name="Parapet" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -62.5, 6, -112.1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -45, 6, -80.1)
 script = ExtResource("bb")
-size = Vector3(175, 1, 0.2)
+size = Vector3(110, 1, 0.2)
 kind = "rail"
 
 [node name="Parapet2" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 6, -112.1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19, 6, -80.1)
 script = ExtResource("bb")
 size = Vector3(2, 1, 0.2)
 kind = "rail"
 
 [node name="Parapet3" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 97.5, 6, -112.1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 63, 6, -80.1)
 script = ExtResource("bb")
-size = Vector3(105, 1, 0.2)
+size = Vector3(74, 1, 0.2)
 kind = "rail"
 
 [node name="Parapet4" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -130, 3, -20.1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 3, -15.1)
 script = ExtResource("bb")
 size = Vector3(40, 1, 0.2)
 kind = "rail"
 
 [node name="Parapet5" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -65, 3, -20.1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -47, 3, -15.1)
 script = ExtResource("bb")
-size = Vector3(78, 1, 0.2)
+size = Vector3(14, 1, 0.2)
 kind = "rail"
 
 [node name="Parapet6" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 3, -20.1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 3, -15.1)
 script = ExtResource("bb")
-size = Vector3(49, 1, 0.2)
+size = Vector3(50, 1, 0.2)
 kind = "rail"
 
 [node name="Parapet7" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 64.5, 3, -20.1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 38, 3, -15.1)
 script = ExtResource("bb")
-size = Vector3(39, 1, 0.2)
+size = Vector3(24, 1, 0.2)
 kind = "rail"
 
 [node name="Parapet8" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 120, 3, -20.1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 78, 3, -15.1)
 script = ExtResource("bb")
-size = Vector3(60, 1, 0.2)
-kind = "rail"
-
-[node name="Parapet9" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60.1, 0, 102.5)
-script = ExtResource("bb")
-size = Vector3(0.2, 1, 85)
+size = Vector3(44, 1, 0.2)
 kind = "rail"
 
 [node name="Road" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 3, -60)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, 3, -42.5)
 script = ExtResource("bb")
-size = Vector3(10, 0.03, 80)
+size = Vector3(6, 0.03, 55)
 kind = "road"
 solid = false
 
 [node name="Road2" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 0, 26)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, 0, 21)
 script = ExtResource("bb")
-size = Vector3(10, 0.03, 68)
+size = Vector3(6, 0.03, 52)
 kind = "road"
 solid = false
 
 [node name="Road3" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, -2.5, 77.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, -2.5, 61)
 script = ExtResource("bb")
-size = Vector3(10, 0.03, 15)
+size = Vector3(6, 0.03, 8)
 kind = "road"
 solid = false
 
 [node name="Road4" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, -5, 102.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, -5, 79)
 script = ExtResource("bb")
-size = Vector3(10, 0.03, 15)
+size = Vector3(6, 0.03, 8)
 kind = "road"
 solid = false
 
 [node name="Road5" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, -7.5, 132.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, -7.5, 97)
 script = ExtResource("bb")
-size = Vector3(10, 0.03, 25)
+size = Vector3(6, 0.03, 8)
 kind = "road"
 solid = false
 
 [node name="NorthFacades" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, -161)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 6, -106)
 script = ExtResource("bb")
-size = Vector3(300, 27, 22)
+size = Vector3(40, 27, 12)
 kind = "building"
 label = "Дома северной стороны проспекта (стена)"
 
-[node name="Edge" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -150.5, 6, -131)
+[node name="NorthFacades2" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 6, -106)
 script = ExtResource("bb")
-size = Vector3(1, 5, 38)
+size = Vector3(150, 27, 12)
+kind = "building"
+label = "Дома северной стороны проспекта (стена)"
+
+[node name="NorthFacades3" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -55, 6, -112)
+script = ExtResource("bb")
+size = Vector3(10, 27, 4)
+kind = "building"
+
+[node name="Edge" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -100.5, 6, -90)
+script = ExtResource("bb")
+size = Vector3(1, 5, 20)
 kind = "boundary"
 label = "Завал: трамвай поперёк + машины"
 
 [node name="Edge2" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150.5, 6, -131)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100.5, 6, -90)
 script = ExtResource("bb")
-size = Vector3(1, 5, 38)
+size = Vector3(1, 5, 20)
 kind = "boundary"
 label = "Завал: маршрутка + фура"
 
 [node name="Edge3" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -150.5, 3, -66)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -100.5, 3, -47.5)
 script = ExtResource("bb")
-size = Vector3(1, 3.5, 92)
+size = Vector3(1, 3.5, 65)
 kind = "boundary"
 label = "Забор / торцы домов"
 
 [node name="Edge4" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -150.5, 0, 62.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -100.5, 0, 16)
 script = ExtResource("bb")
-size = Vector3(1, 3.5, 165)
+size = Vector3(1, 3.5, 62)
 kind = "boundary"
 label = "Стройзабор"
 
 [node name="Edge5" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150.5, 3, -66)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -100.5, -7.5, 74)
 script = ExtResource("bb")
-size = Vector3(1, 3.5, 92)
+size = Vector3(1, 11, 54)
 kind = "boundary"
 label = "Забор"
 
 [node name="Edge6" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150.5, 0, 20)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100.5, 3, -47.5)
 script = ExtResource("bb")
-size = Vector3(1, 3.5, 80)
-kind = "boundary"
-label = "Бетонный забор «ёлочка»"
-
-[node name="Edge7" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150.5, -7.5, 102.5)
-script = ExtResource("bb")
-size = Vector3(1, 11, 85)
+size = Vector3(1, 3.5, 65)
 kind = "boundary"
 label = "Забор"
 
-[node name="Edge8" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -105.5, 0, 145.5)
+[node name="Edge7" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100.5, 0, 16)
 script = ExtResource("bb")
-size = Vector3(91, 3.5, 1)
+size = Vector3(1, 3.5, 62)
 kind = "boundary"
-label = "Стройзабор"
+label = "Бетонный забор «ёлочка»"
+
+[node name="Edge8" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100.5, -7.5, 74)
+script = ExtResource("bb")
+size = Vector3(1, 11, 54)
+kind = "boundary"
+label = "Забор"
 
 [node name="Edge9" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 45.5, -7.5, 145.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -7.5, 101.5)
 script = ExtResource("bb")
-size = Vector3(211, 3.5, 1)
+size = Vector3(200, 3.5, 1)
 kind = "boundary"
 label = "Забор над обрывом балки"
 
 [node name="OuterW" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -425.5, -20, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -400.5, -20, 0)
 script = ExtResource("bb")
-size = Vector3(549, 20, 1400)
+size = Vector3(599, 20, 1400)
 kind = "ground"
 tint = Color(0.53, 0.51, 0.47, 1)
 solid = false
 
 [node name="OuterE" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 425.5, -20, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 400.5, -20, 0)
 script = ExtResource("bb")
-size = Vector3(549, 20, 1400)
+size = Vector3(599, 20, 1400)
 kind = "ground"
 tint = Color(0.53, 0.51, 0.47, 1)
 solid = false
 
 [node name="OuterN" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -20, -436)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -20, -407)
 script = ExtResource("bb")
-size = Vector3(302, 20, 528)
+size = Vector3(202, 20, 586)
 kind = "ground"
 tint = Color(0.53, 0.51, 0.47, 1)
 solid = false
 
 [node name="OuterS" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -20, 423)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -20, 401)
 script = ExtResource("bb")
-size = Vector3(302, 8, 554)
+size = Vector3(202, 8, 598)
 kind = "ground"
 tint = Color(0.38, 0.36, 0.33, 1)
 solid = false

@@ -5,153 +5,280 @@
 [node name="Garages" type="Node3D"]
 
 [node name="GarageRow" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, -2.5, 63)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, -2.5, 50)
 script = ExtResource("bb")
-size = Vector3(85, 2.5, 6)
+size = Vector3(36, 2.5, 6)
 kind = "garage"
-label = "Гаражи · по крышам можно пройти"
 
 [node name="GarageRow2" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 97.5, -2.5, 63)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, -2.5, 61)
 script = ExtResource("bb")
-size = Vector3(95, 2.5, 6)
+size = Vector3(36, 2.5, 6)
 kind = "garage"
 
 [node name="GarageRow3" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, -5, 88)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -41, -2.5, 50)
 script = ExtResource("bb")
-size = Vector3(85, 2.5, 6)
+size = Vector3(36, 2.5, 6)
 kind = "garage"
-label = "Гаражи"
 
 [node name="GarageRow4" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 97.5, -5, 88)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -41, -2.5, 61)
 script = ExtResource("bb")
-size = Vector3(95, 2.5, 6)
+size = Vector3(36, 2.5, 6)
 kind = "garage"
 
 [node name="GarageRow5" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, -7.5, 113)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, -2.5, 50)
 script = ExtResource("bb")
-size = Vector3(85, 2.5, 6)
+size = Vector3(37, 2.5, 6)
+kind = "garage"
+label = "Гаражи · по крышам можно пройти"
+
+[node name="GarageRow6" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, -2.5, 61)
+script = ExtResource("bb")
+size = Vector3(37, 2.5, 6)
 kind = "garage"
 label = "Гаражи"
 
-[node name="GarageRow6" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 97.5, -7.5, 113)
-script = ExtResource("bb")
-size = Vector3(95, 2.5, 6)
-kind = "garage"
-
 [node name="GarageRow7" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, -7.5, 135)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 45.5, -2.5, 50)
 script = ExtResource("bb")
-size = Vector3(85, 2.5, 6)
+size = Vector3(33, 2.5, 6)
 kind = "garage"
 
 [node name="GarageRow8" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 97.5, -7.5, 135)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 45.5, -2.5, 61)
 script = ExtResource("bb")
-size = Vector3(95, 2.5, 6)
+size = Vector3(33, 2.5, 6)
+kind = "garage"
+
+[node name="GarageRow9" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 81.5, -2.5, 50)
+script = ExtResource("bb")
+size = Vector3(33, 2.5, 6)
+kind = "garage"
+
+[node name="GarageRow10" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 81.5, -2.5, 61)
+script = ExtResource("bb")
+size = Vector3(33, 2.5, 6)
+kind = "garage"
+
+[node name="GarageRow11" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, -5, 68)
+script = ExtResource("bb")
+size = Vector3(36, 2.5, 6)
+kind = "garage"
+
+[node name="GarageRow12" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, -5, 79)
+script = ExtResource("bb")
+size = Vector3(36, 2.5, 6)
+kind = "garage"
+
+[node name="GarageRow13" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -41, -5, 68)
+script = ExtResource("bb")
+size = Vector3(36, 2.5, 6)
+kind = "garage"
+
+[node name="GarageRow14" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -41, -5, 79)
+script = ExtResource("bb")
+size = Vector3(36, 2.5, 6)
+kind = "garage"
+
+[node name="GarageRow15" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, -5, 68)
+script = ExtResource("bb")
+size = Vector3(37, 2.5, 6)
+kind = "garage"
+
+[node name="GarageRow16" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, -5, 79)
+script = ExtResource("bb")
+size = Vector3(37, 2.5, 6)
+kind = "garage"
+label = "Гаражи"
+
+[node name="GarageRow17" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 45.5, -5, 68)
+script = ExtResource("bb")
+size = Vector3(33, 2.5, 6)
+kind = "garage"
+
+[node name="GarageRow18" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 45.5, -5, 79)
+script = ExtResource("bb")
+size = Vector3(33, 2.5, 6)
+kind = "garage"
+
+[node name="GarageRow19" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 81.5, -5, 68)
+script = ExtResource("bb")
+size = Vector3(33, 2.5, 6)
+kind = "garage"
+
+[node name="GarageRow20" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 81.5, -5, 79)
+script = ExtResource("bb")
+size = Vector3(33, 2.5, 6)
+kind = "garage"
+
+[node name="GarageRow21" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, -7.5, 86)
+script = ExtResource("bb")
+size = Vector3(36, 2.5, 6)
+kind = "garage"
+
+[node name="GarageRow22" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, -7.5, 97)
+script = ExtResource("bb")
+size = Vector3(36, 2.5, 6)
+kind = "garage"
+
+[node name="GarageRow23" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -41, -7.5, 86)
+script = ExtResource("bb")
+size = Vector3(36, 2.5, 6)
+kind = "garage"
+
+[node name="GarageRow24" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -41, -7.5, 97)
+script = ExtResource("bb")
+size = Vector3(36, 2.5, 6)
+kind = "garage"
+
+[node name="GarageRow25" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, -7.5, 86)
+script = ExtResource("bb")
+size = Vector3(37, 2.5, 6)
+kind = "garage"
+
+[node name="GarageRow26" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, -7.5, 97)
+script = ExtResource("bb")
+size = Vector3(37, 2.5, 6)
+kind = "garage"
+label = "Гаражи"
+
+[node name="GarageRow27" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 45.5, -7.5, 86)
+script = ExtResource("bb")
+size = Vector3(33, 2.5, 6)
+kind = "garage"
+
+[node name="GarageRow28" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 45.5, -7.5, 97)
+script = ExtResource("bb")
+size = Vector3(33, 2.5, 6)
+kind = "garage"
+
+[node name="GarageRow29" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 81.5, -7.5, 86)
+script = ExtResource("bb")
+size = Vector3(33, 2.5, 6)
+kind = "garage"
+
+[node name="GarageRow30" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 81.5, -7.5, 97)
+script = ExtResource("bb")
+size = Vector3(33, 2.5, 6)
 kind = "garage"
 
 [node name="Guardhouse" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 48, 0, 55)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.5, 0, 45.4)
 script = ExtResource("bb")
-size = Vector3(4, 2.6, 4)
+size = Vector3(3, 2.6, 2.8)
 kind = "prop"
 label = "Сторожка, шлагбаум"
 
 [node name="Barrier" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 0.9, 58)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, 0.9, 46.5)
 script = ExtResource("bb")
-size = Vector3(10, 0.12, 0.2)
+size = Vector3(6, 0.12, 0.2)
 kind = "rail"
 solid = false
 
 [node name="GuardBulb" type="OmniLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 48, 2.4, 52.6)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.5, 2.4, 43.5)
 light_color = Color(1, 0.85, 0.6, 1)
 light_energy = 1
 omni_range = 8
 omni_attenuation = 1.2
 
 [node name="Drift" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, -7.5, 141.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, -7.5, 98.5)
 script = ExtResource("bb")
-size = Vector3(10, 3, 7)
+size = Vector3(6, 3, 5)
 kind = "snow"
 
 [node name="Blockage" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, -7.5, 140.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, -7.5, 95.9)
 script = ExtResource("bb")
-size = Vector3(11, 0.1, 0.4)
+size = Vector3(6, 0.1, 0.2)
 kind = "boundary"
 label = "Завал: машины + сугроб"
 solid = false
 
 [node name="Car" type="Node3D" parent="."]
-transform = Transform3D(0.766, 0, 0.643, 0, 1, 0, -0.643, 0, 0.766, 37, -7.5, 135)
-script = ExtResource("bb")
-size = Vector3(1.7, 1.45, 4.2)
-kind = "car"
-
-[node name="Car2" type="Node3D" parent="."]
-transform = Transform3D(0.5, 0, -0.866, 0, 1, 0, 0.866, 0, 0.5, 43, -7.5, 136.5)
+transform = Transform3D(0.766, 0, 0.643, 0, 1, 0, -0.643, 0, 0.766, 22, -7.5, 93)
 script = ExtResource("bb")
 size = Vector3(1.7, 1.45, 4.2)
 kind = "car"
 
 [node name="Drift2" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, -2.5, 75)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40, -2.5, 55.5)
 script = ExtResource("bb")
 size = Vector3(5, 1.3, 2)
 kind = "snow"
 
 [node name="Drift3" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100, -2.5, 80)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, -2.5, 55.5)
 script = ExtResource("bb")
 size = Vector3(5, 1.3, 2)
 kind = "snow"
 
 [node name="Drift4" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, -5, 100)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, -5, 73.5)
 script = ExtResource("bb")
 size = Vector3(5, 1.3, 2)
 kind = "snow"
 
 [node name="Drift5" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 120, -5, 104)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, -5, 73.5)
 script = ExtResource("bb")
 size = Vector3(5, 1.3, 2)
 kind = "snow"
 
 [node name="Drift6" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40, -7.5, 125)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, -7.5, 91.5)
 script = ExtResource("bb")
 size = Vector3(5, 1.3, 2)
 kind = "snow"
 
 [node name="Drift7" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, -7.5, 126)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, -7.5, 91.5)
 script = ExtResource("bb")
 size = Vector3(5, 1.3, 2)
 kind = "snow"
 
+[node name="Car2" type="Node3D" parent="."]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -75, -2.5, 55.5)
+script = ExtResource("bb")
+size = Vector3(1.7, 1.45, 4.2)
+kind = "car"
+
 [node name="Car3" type="Node3D" parent="."]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, -2.5, 73)
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 75, -5, 73.5)
 script = ExtResource("bb")
 size = Vector3(1.7, 1.45, 4.2)
 kind = "car"
 
 [node name="Car4" type="Node3D" parent="."]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 90, -5, 97)
-script = ExtResource("bb")
-size = Vector3(1.7, 1.45, 4.2)
-kind = "car"
-
-[node name="Car5" type="Node3D" parent="."]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -30, -7.5, 122)
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -40, -7.5, 91.5)
 script = ExtResource("bb")
 size = Vector3(1.7, 1.45, 4.2)
 kind = "car"
