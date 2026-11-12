@@ -3,7 +3,6 @@
 [ext_resource type="Script" path="res://scripts/levels/stairwell.gd" id="lvl"]
 [ext_resource type="PackedScene" path="res://assets/models/stairwell.gltf" id="model"]
 [ext_resource type="PackedScene" path="res://scenes/characters/player.tscn" id="player"]
-[ext_resource type="PackedScene" path="res://scenes/characters/enemy.tscn" id="enemy"]
 [ext_resource type="PackedScene" path="res://scenes/characters/sergey.tscn" id="sergey"]
 [ext_resource type="Script" path="res://scripts/world/interactable.gd" id="inter"]
 [ext_resource type="Script" path="res://scripts/world/pickup.gd" id="pick"]
@@ -153,26 +152,6 @@ item_id = "bottle"
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6, 5.63, -0.5)
 script = ExtResource("pick")
 item_id = "bandage"
-
-[node name="Enemies" type="Node3D" parent="."]
-
-[node name="OfnikFloor2" parent="Enemies" instance=ExtResource("enemy")]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -1.9, 2.82, -1.2)
-variant = "b"
-wander_radius = 0.0
-sight_range = 10.0
-
-[node name="OfnikFloor3a" parent="Enemies" instance=ExtResource("enemy")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 2.1, 5.62, -1.4)
-variant = "a"
-wander_radius = 0.0
-sight_range = 10.0
-
-[node name="OfnikFloor3b" parent="Enemies" instance=ExtResource("enemy")]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -2.1, 5.62, -0.9)
-variant = "c"
-wander_radius = 0.0
-sight_range = 10.0
 
 [node name="AptDoorUse" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.75, 9.4, -1.25)

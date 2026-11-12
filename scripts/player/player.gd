@@ -43,12 +43,12 @@ enum State { NORMAL, AIM, ATTACK, QUICKTURN, HURT, GRABBED, THROW, BUSY, DEAD }
 
 @export_group("Выносливость")
 @export var max_stamina := 100.0
-@export var sprint_cost := 13.0        ## в секунду
-@export var attack_cost := 14.0
-@export var heavy_attack_cost := 24.0
-@export var stamina_regen := 24.0      ## в секунду
-@export var stamina_delay := 0.9       ## пауза перед восстановлением
-@export var recover_level := 30.0      ## выдохся — не побежит, пока не накопит столько
+@export var sprint_cost := 8.0         ## в секунду (полной полоски хватает на ~12 с бега)
+@export var attack_cost := 9.0
+@export var heavy_attack_cost := 16.0
+@export var stamina_regen := 30.0      ## в секунду
+@export var stamina_delay := 0.6       ## пауза перед восстановлением
+@export var recover_level := 25.0      ## выдохся — не побежит, пока не накопит столько
 
 @export_group("Бой")
 @export var attack_time := 0.83        ## берётся из длины клипа удара, если он есть
