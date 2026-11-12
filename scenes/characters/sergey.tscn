@@ -1,0 +1,46 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy.gd" id="1"]
+[ext_resource type="PackedScene" path="res://assets/models/sergey.gltf" id="2"]
+
+[sub_resource type="CapsuleShape3D" id="capsule"]
+radius = 0.36
+height = 2.1
+
+[node name="Sergey" type="CharacterBody3D"]
+collision_layer = 4
+collision_mask = 7
+script = ExtResource("1")
+display_name = "Сергей"
+is_stalker = true
+model_scale = 1.18
+max_hp = 9.0
+walk_speed = 1.0
+chase_speed = 2.0
+turn_rate = 4.0
+wander_radius = 0.0
+idle_anim = "Idle"
+wander_anim = "Walk"
+chase_anim = "Walk"
+chase_anim_speed = 0.9
+sight_range = 40.0
+lose_time = 9999.0
+attack_range = 1.45
+attack_damage = 30.0
+attack_anim = "Hook"
+attack_anim_rate = 0.55
+attack_windup = 0.5
+attack_total = 1.1
+attack_cooldown = 1.4
+heavy_hits = true
+can_grab = false
+stun_time = 10.0
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 0)
+shape = SubResource("capsule")
+
+[node name="Model" type="Node3D" parent="."]
+transform = Transform3D(-1.18, 0, 0, 0, 1.18, 0, 0, 0, -1.18, 0, 0, 0)
+
+[node name="Mesh" parent="Model" instance=ExtResource("2")]

@@ -1,16 +1,17 @@
 ## Пост-обработка импорта моделей из Blender (.gltf).
 ## - чинит свечение (умножение вместо сложения);
-## - для окружения добавляет статические коллизии (персонажам — нет).
+## - для окружения добавляет статические коллизии (персонажам и предметам — нет);
+## - узлы с «nocol» в имени остаются без коллизии (ступени, перила — по ним ходят через невидимые пандусы).
 @tool
 extends EditorScenePostImport
 
-const NO_COLLISION := ["yurchik", "character"]
+const NO_COLLISION := ["yurchik", "character", "enemy", "sergey", "item_"]
 
 
 func _post_import(scene: Node) -> Object:
 	var src := get_source_file().to_lower()
 	var collide := true
-	for k in NO_COLLISION:
+	for k: String in NO_COLLISION:
 		if k in src:
 			collide = false
 	_fix(scene, scene, collide)
@@ -38,7 +39,7 @@ func _fix(node: Node, root: Node, collide: bool) -> void:
 			mat.emission_energy_multiplier = 1.8
 		else:
 			mat.emission_enabled = false
-	if collide:
+	if collide and not "nocol" in String(mi.name).to_lower():
 		var body := StaticBody3D.new()
 		body.name = "Collision"
 		var cs := CollisionShape3D.new()
