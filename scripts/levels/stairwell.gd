@@ -20,7 +20,7 @@ func _start() -> void:
 	apt_use.interacted.connect(_open_apartment)
 	apt_trigger.body_entered.connect(_on_apartment)
 	await after(1.5)
-	Game.say("В подъезде кто-то есть. На третьем опять выкрутили лампочку.")
+	Game.say("Тихо. На третьем опять выкрутили лампочку.")
 	if Game.flags.get("sergey", false) and sergey_scene:
 		await after(sergey_delay)
 		if _ended:
