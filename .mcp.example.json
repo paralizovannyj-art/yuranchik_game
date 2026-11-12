@@ -3,7 +3,7 @@
     "godot-mcp-pro": {
       "command": "node",
       "args": [
-        "C:/Users/mrs/Desktop/godot-mcp-pro-v1.17.1/server/build/index.js"
+        "<путь к godot-mcp-pro>/server/build/index.js"
       ]
     }
   }

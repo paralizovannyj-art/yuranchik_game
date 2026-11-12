@@ -14,3 +14,7 @@ Thumbs.db
 desktop.ini
 .DS_Store
 __pycache__/
+
+# Личные настройки: у каждого свои пути и разрешения, в git не нужны
+.claude/settings.local.json
+.mcp.json
