@@ -1,0 +1,212 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-178 -178 480 356" width="1440" height="1068" font-family="Arial, sans-serif">
+  <!-- Карта микрорайона «Паскот». Координаты = метры игрового мира: X — восток, Z (вниз по картинке) — юг. Центр (0,0). -->
+  <defs>
+    <pattern id="hatch" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="3" stroke="#6b5a3a" stroke-width="1"/>
+    </pattern>
+    <pattern id="cars" width="5" height="3" patternUnits="userSpaceOnUse">
+      <rect x="0.5" y="0.5" width="3.6" height="1.8" fill="#7d8796"/>
+    </pattern>
+  </defs>
+
+  <!-- фон-декорация за границей -->
+  <rect x="-178" y="-178" width="480" height="356" fill="#1c2130"/>
+  <text x="0" y="-171" font-size="4.5" fill="#9fb0d0" text-anchor="middle">ДЕКОРАЦИЯ: 16-эт. свечки и огни города за проспектом (дойти нельзя)</text>
+  <text x="0" y="175" font-size="4.5" fill="#9fb0d0" text-anchor="middle">ДЕКОРАЦИЯ: балка, голые деревья, огни дальнего района</text>
+  <text x="172" y="0" font-size="4.5" fill="#9fb0d0" text-anchor="middle" transform="rotate(90 172 0)">ДЕКОРАЦИЯ: ТЭЦ — две трубы с красными огнями, промзона</text>
+  <text x="-172" y="0" font-size="4.5" fill="#9fb0d0" text-anchor="middle" transform="rotate(-90 -172 0)">ДЕКОРАЦИЯ: соседний микрорайон, силуэты панелек</text>
+
+  <!-- уровни земли -->
+  <rect x="-150" y="-150" width="300" height="38" fill="#ece7dc"/>            <!-- +6 -->
+  <rect x="-150" y="-112" width="300" height="92" fill="#d9d4c8"/>            <!-- +3 -->
+  <rect x="-150" y="-20" width="300" height="80" fill="#c3beb2"/>             <!-- 0 -->
+  <rect x="-60" y="60" width="210" height="25" fill="#b3ada1"/>               <!-- -1.5 -->
+  <rect x="-60" y="85" width="210" height="25" fill="#a39d91"/>               <!-- -3 -->
+  <rect x="-60" y="110" width="210" height="35" fill="#938d81"/>              <!-- -4.5 -->
+  <rect x="-150" y="-20" width="90" height="165" fill="#c3beb2"/>             <!-- пустырь 0 -->
+
+  <!-- ===== 1. ПРОСПЕКТ (+6) ===== -->
+  <rect x="-150" y="-170" width="300" height="20" fill="#3a3f4b"/>
+  <text x="-60" y="-158" font-size="4" fill="#d8dce6">дома северной стороны: сплошная стена, витрины 1-го этажа (настоящие вывески)</text>
+  <rect x="-150" y="-142" width="300" height="24" fill="#4a4d55"/>
+  <rect x="-150" y="-133" width="300" height="6" fill="#6b6458"/>
+  <line x1="-150" y1="-131.5" x2="150" y2="-131.5" stroke="#aaa" stroke-width="0.4"/>
+  <line x1="-150" y1="-128.5" x2="150" y2="-128.5" stroke="#aaa" stroke-width="0.4"/>
+  <text x="-100" y="-136" font-size="4.5" fill="#fff" font-weight="bold">1. ПРОСПЕКТ (+6 м) — 4 полосы, трамвай посередине</text>
+  <!-- остановка и ларьки -->
+  <rect x="-10" y="-118" width="20" height="2.5" fill="#2d6a8a"/>
+  <rect x="-26" y="-115" width="4" height="3" fill="#c9502f"/><rect x="-20" y="-115" width="4" height="3" fill="#d2a43a"/>
+  <rect x="12" y="-115" width="4" height="3" fill="#3f8f5a"/><rect x="18" y="-115" width="4" height="3" fill="#c9502f"/>
+  <text x="0" y="-108" font-size="3.6" text-anchor="middle" fill="#222">остановка + ряд ларьков</text>
+  <!-- подземный переход -->
+  <rect x="57" y="-148" width="6" height="34" fill="none" stroke="#222" stroke-width="0.6" stroke-dasharray="1.5 1"/>
+  <rect x="55" y="-118" width="10" height="4" fill="#555"/><rect x="55" y="-150" width="10" height="4" fill="#555"/>
+  <text x="67" y="-120" font-size="3.6" fill="#222">подземный переход (−4 м)</text>
+  <!-- аварии-границы -->
+  <rect x="-148" y="-145" width="5" height="26" fill="#b23b3b" transform="rotate(-20 -145 -132)"/>
+  <text x="-140" y="-143.5" font-size="3.4" fill="#8a1f1f">трамвай поперёк + машины</text>
+  <rect x="140" y="-142" width="6" height="12" fill="#b23b3b" transform="rotate(30 143 -136)"/>
+  <rect x="134" y="-128" width="5" height="9" fill="#b23b3b" transform="rotate(-15 136 -124)"/>
+  <text x="134" y="-143.5" font-size="3.4" fill="#8a1f1f" text-anchor="end">маршрутка + фура</text>
+
+  <!-- ===== внутриквартальный проезд (хребет района) ===== -->
+  <rect x="35" y="-118" width="10" height="258" fill="#5a5d64"/>
+  <text x="40" y="20" font-size="3.4" fill="#fff" text-anchor="middle" transform="rotate(-90 40 20)">проезд: +6 → +3 → 0 → −4.5</text>
+
+  <!-- ===== 2. ДВОР ЮРЧИКА (+3) — хаб ===== -->
+  <rect x="-45" y="-104" width="43" height="12" fill="#59606e"/>
+  <text x="-23.5" y="-96.5" font-size="3.6" fill="#fff" text-anchor="middle">дом Юрчика, 9 эт., 4 подъезда</text>
+  <rect x="-60" y="-84" width="12" height="52" fill="#59606e"/>
+  <text x="-54" y="-58" font-size="3.4" fill="#fff" text-anchor="middle" transform="rotate(-90 -54 -58)">9 эт.</text>
+  <rect x="-35" y="-76" width="22" height="18" fill="none" stroke="#7a6a4a" stroke-width="0.6"/>
+  <text x="-24" y="-66" font-size="3.2" text-anchor="middle" fill="#333">детплощадка</text>
+  <rect x="8" y="-64" width="4" height="3" fill="#c9502f"/><text x="14" y="-62" font-size="3.2" fill="#333">ларёк</text>
+  <rect x="22" y="-100" width="5" height="4" fill="#666"/><text x="22" y="-93" font-size="3" fill="#333">трансформаторная</text>
+  <circle cx="-20" cy="-84" r="2.2" fill="#ff7a1a"/>
+  <text x="-20" y="-78" font-size="3.4" text-anchor="middle" fill="#a34000" font-weight="bold">★ старт</text>
+  <text x="-12" y="-40" font-size="4.5" fill="#222" font-weight="bold" text-anchor="middle">2. ДВОР ЮРЧИКА (+3 м) — центр</text>
+  <!-- лестница с проспекта во двор -->
+  <rect x="25" y="-114" width="8" height="5" fill="url(#hatch)" stroke="#333" stroke-width="0.3"/>
+  <text x="29" y="-105" font-size="3" fill="#333" text-anchor="middle">лестница</text>
+
+  <!-- ===== западный двор (+3) ===== -->
+  <rect x="-135" y="-100" width="18" height="18" fill="#454b5a"/>
+  <rect x="-105" y="-70" width="18" height="18" fill="#454b5a"/>
+  <text x="-126" y="-90" font-size="3.4" fill="#fff" text-anchor="middle">16 эт.</text>
+  <text x="-96" y="-60" font-size="3.4" fill="#fff" text-anchor="middle">16 эт.</text>
+  <rect x="-145" y="-65" width="32" height="24" fill="url(#cars)" stroke="#555" stroke-width="0.3"/>
+  <text x="-129" y="-36" font-size="3.4" text-anchor="middle" fill="#333">стоянка, машины в снегу</text>
+  <text x="-105" y="-106" font-size="4.5" fill="#222" font-weight="bold" text-anchor="middle">ЗАПАДНЫЙ ДВОР (+3 м)</text>
+
+  <!-- ===== 3. ШКОЛА (+3) ===== -->
+  <rect x="48" y="-108" width="97" height="84" fill="none" stroke="#2f4f7a" stroke-width="0.8" stroke-dasharray="2 1"/>
+  <rect x="60" y="-102" width="60" height="12" fill="#b59a4a"/>
+  <rect x="60" y="-90" width="12" height="16" fill="#b59a4a"/>
+  <rect x="108" y="-90" width="12" height="16" fill="#b59a4a"/>
+  <text x="90" y="-95" font-size="3.6" text-anchor="middle" fill="#222">школа, 3 эт., П-образная</text>
+  <ellipse cx="97" cy="-48" rx="34" ry="16" fill="#cfd8c4" stroke="#6b7a5a" stroke-width="0.6"/>
+  <text x="97" y="-47" font-size="3.6" text-anchor="middle" fill="#222">стадион</text>
+  <circle cx="128" cy="-60" r="2" fill="#dfefff" stroke="#6b8bb0" stroke-width="0.5"/>
+  <text x="96" y="-27" font-size="4.5" fill="#222" font-weight="bold">3. ШКОЛА (+3 м), забор</text>
+  <text x="49" y="-60" font-size="3" fill="#2f4f7a">ворота</text>
+
+  <!-- ===== подпорная стенка +3 / 0 ===== -->
+  <line x1="-150" y1="-20" x2="150" y2="-20" stroke="#222" stroke-width="1.6"/>
+  <text x="-147" y="-22" font-size="3.4" fill="#222">подпорная стенка 3 м</text>
+  <rect x="-26" y="-23" width="12" height="6" fill="url(#hatch)" stroke="#222" stroke-width="0.3"/>
+  <text x="-20" y="-13" font-size="3" text-anchor="middle" fill="#222">широкая лестница</text>
+  <rect x="86" y="-23" width="6" height="6" fill="url(#hatch)" stroke="#222" stroke-width="0.3"/>
+  <rect x="-110" y="-23" width="6" height="6" fill="url(#hatch)" stroke="#222" stroke-width="0.3"/>
+
+  <!-- ===== 4. ЮЖНЫЕ ДВОРЫ (0) ===== -->
+  <rect x="-45" y="-6" width="60" height="11" fill="#7a6e66"/>
+  <rect x="-30" y="22" width="60" height="11" fill="#7a6e66"/>
+  <rect x="50" y="4" width="40" height="11" fill="#7a6e66"/>
+  <text x="-15" y="1" font-size="3.4" fill="#fff" text-anchor="middle">хрущёвка, 5 эт.</text>
+  <text x="0" y="29" font-size="3.4" fill="#fff" text-anchor="middle">хрущёвка, 5 эт.</text>
+  <text x="70" y="11" font-size="3.4" fill="#fff" text-anchor="middle">хрущёвка</text>
+  <rect x="-52" y="36" width="5" height="5" fill="#6b5a3a"/><text x="-45" y="40" font-size="3" fill="#222">голубятня, сараи</text>
+  <text x="-15" y="15" font-size="4.5" fill="#222" font-weight="bold" text-anchor="middle">4. ЮЖНЫЕ ДВОРЫ (0 м)</text>
+
+  <!-- ===== 5. КОТЕЛЬНАЯ (0) ===== -->
+  <rect x="96" y="-15" width="54" height="72" fill="none" stroke="#7a3a2a" stroke-width="0.8" stroke-dasharray="2 1"/>
+  <rect x="105" y="-5" width="35" height="22" fill="#8a4a3a"/>
+  <text x="122" y="7" font-size="3.6" fill="#fff" text-anchor="middle">котельная</text>
+  <circle cx="132" cy="36" r="3.2" fill="#6a2a1a"/>
+  <circle cx="132" cy="36" r="1.2" fill="#ff2a2a"/>
+  <text x="132" y="45" font-size="3.2" fill="#222" text-anchor="middle">труба 45 м, красные огни</text>
+  <ellipse cx="112" cy="32" rx="7" ry="5" fill="#2a2a2a"/>
+  <text x="112" y="26" font-size="3" fill="#222" text-anchor="middle">уголь</text>
+  <text x="122" y="-8" font-size="4.5" fill="#222" font-weight="bold" text-anchor="middle">5. КОТЕЛЬНАЯ (0 м)</text>
+
+  <!-- ===== теплотрасса ===== -->
+  <polyline points="105,52 -60,52 -60,20 -100,20" fill="none" stroke="#d98a2b" stroke-width="2.2" stroke-dasharray="4 1"/>
+  <polyline points="92,52 92,-26" fill="none" stroke="#d98a2b" stroke-width="2.2" stroke-dasharray="4 1"/>
+  <rect x="34" y="49" width="12" height="6" fill="none" stroke="#a35a10" stroke-width="0.8"/>
+  <text x="48" y="47" font-size="3" fill="#a35a10">П-арка над проездом</text>
+  <text x="-57" y="48" font-size="3" fill="#a35a10">теплотрасса на опорах, местами можно пройти поверху</text>
+
+  <!-- ===== 6. ГАРАЖНЫЙ КООПЕРАТИВ (террасы) ===== -->
+  <rect x="38" y="57" width="4" height="3" fill="#444"/><text x="47" y="63" font-size="3" fill="#222">шлагбаум, сторожка</text>
+  <g fill="#6e5844">
+    <rect x="-55" y="66" width="85" height="6"/><rect x="50" y="66" width="95" height="6"/>
+    <rect x="-55" y="90" width="85" height="6"/><rect x="50" y="90" width="95" height="6"/>
+    <rect x="-55" y="114" width="85" height="6"/><rect x="50" y="114" width="95" height="6"/>
+    <rect x="-55" y="134" width="85" height="6"/><rect x="50" y="134" width="95" height="6"/>
+  </g>
+  <text x="95" y="80" font-size="3.2" fill="#222" text-anchor="middle">−1.5 м</text>
+  <text x="95" y="104" font-size="3.2" fill="#222" text-anchor="middle">−3 м</text>
+  <text x="95" y="127" font-size="3.2" fill="#222" text-anchor="middle">−4.5 м</text>
+  <text x="-12" y="104" font-size="4.5" fill="#222" font-weight="bold" text-anchor="middle">6. ГАРАЖИ (террасы вниз)</text>
+  <text x="-12" y="109" font-size="3.2" fill="#222" text-anchor="middle">крыша нижнего ряда = земля верхнего: можно идти по крышам</text>
+  <rect x="34" y="138" width="12" height="6" fill="#b23b3b"/><text x="40" y="149" font-size="3.2" fill="#8a1f1f" text-anchor="middle">завал: машины + сугроб</text>
+  <line x1="-60" y1="145" x2="150" y2="145" stroke="#8a1f1f" stroke-width="0.8" stroke-dasharray="2 1"/>
+  <text x="100" y="149" font-size="3" fill="#8a1f1f">забор над обрывом балки</text>
+
+  <!-- ===== 7. ПУСТЫРЬ И НЕДОСТРОЙ ===== -->
+  <rect x="-140" y="25" width="45" height="50" fill="#857f78" stroke="#555" stroke-width="0.4"/>
+  <text x="-117" y="52" font-size="3.6" fill="#fff" text-anchor="middle">котлован −5 м</text>
+  <rect x="-135" y="92" width="45" height="13" fill="url(#hatch)" stroke="#6b5a3a" stroke-width="0.6"/>
+  <text x="-112" y="113" font-size="3.4" fill="#222" text-anchor="middle">каркас 9-эт. (3 этажа доступны)</text>
+  <circle cx="-80" cy="88" r="1.8" fill="#e8c23a"/>
+  <circle cx="-80" cy="88" r="40" fill="none" stroke="#b08a1a" stroke-width="0.4" stroke-dasharray="2 2"/>
+  <text x="-80" y="83" font-size="3.2" fill="#6b5000" text-anchor="middle">башенный кран</text>
+  <rect x="-88" y="40" width="10" height="3" fill="#888"/><rect x="-86" y="45" width="10" height="3" fill="#888"/>
+  <text x="-82" y="53" font-size="3" fill="#222" text-anchor="middle">плиты</text>
+  <rect x="-145" y="125" width="8" height="4" fill="#5a6a4a"/><rect x="-135" y="125" width="8" height="4" fill="#5a6a4a"/>
+  <text x="-130" y="135" font-size="3" fill="#222">бытовки</text>
+  <line x1="-150" y1="-15" x2="-150" y2="145" stroke="#8a1f1f" stroke-width="0.8" stroke-dasharray="2 1"/>
+  <text x="-105" y="0" font-size="4.5" fill="#222" font-weight="bold" text-anchor="middle">7. ПУСТЫРЬ И НЕДОСТРОЙ (0 м)</text>
+  <text x="-105" y="6" font-size="3" fill="#222" text-anchor="middle">край — стройзабор</text>
+
+  <!-- граница играбельной зоны -->
+  <rect x="-150" y="-150" width="300" height="295" fill="none" stroke="#e05050" stroke-width="0.6" stroke-dasharray="3 2" opacity="0.8"/>
+
+  <!-- компас и масштаб -->
+  <g transform="translate(-162 -162)">
+    <polygon points="0,-7 3,2 0,0 -3,2" fill="#fff"/>
+    <text x="0" y="8" font-size="4.5" fill="#fff" text-anchor="middle">С</text>
+  </g>
+  <g transform="translate(-150 160)">
+    <line x1="0" y1="0" x2="50" y2="0" stroke="#fff" stroke-width="0.8"/>
+    <line x1="0" y1="-2" x2="0" y2="2" stroke="#fff" stroke-width="0.8"/>
+    <line x1="50" y1="-2" x2="50" y2="2" stroke="#fff" stroke-width="0.8"/>
+    <text x="25" y="-2" font-size="3.6" fill="#fff" text-anchor="middle">50 м (~30 с шагом, ~11 с бегом)</text>
+  </g>
+
+  <!-- ===== легенда ===== -->
+  <g transform="translate(185 -165)" font-size="4" fill="#e6e9f0">
+    <text x="0" y="0" font-size="6" font-weight="bold">Паскот — микрорайон</text>
+    <text x="0" y="8" font-size="3.6" fill="#9fb0d0">v0.1, принята 2026-11-12 · играбельно ~300×295 м</text>
+    <text x="0" y="8" font-size="3.6" fill="#9fb0d0" dy="5">(старый двор — 54×39 м, в ~40 раз меньше)</text>
+
+    <text x="0" y="28" font-weight="bold">Высота земли</text>
+    <rect x="0" y="32" width="8" height="5" fill="#ece7dc"/><text x="11" y="36">+6 м — проспект</text>
+    <rect x="0" y="40" width="8" height="5" fill="#d9d4c8"/><text x="11" y="44">+3 м — двор Юрчика, школа, западный двор</text>
+    <rect x="0" y="48" width="8" height="5" fill="#c3beb2"/><text x="11" y="52">0 м — южные дворы, котельная, пустырь</text>
+    <rect x="0" y="56" width="8" height="5" fill="#a39d91"/><text x="11" y="60">−1.5…−4.5 м — террасы гаражей</text>
+    <rect x="0" y="64" width="8" height="5" fill="#857f78"/><text x="11" y="68">−5 м — котлован</text>
+
+    <text x="0" y="82" font-weight="bold">Ориентиры по цвету света</text>
+    <circle cx="4" cy="88" r="2.2" fill="#ff7a1a"/><text x="11" y="89.5">оранжевые фонари — двор Юрчика</text>
+    <circle cx="4" cy="96" r="2.2" fill="#dfefff"/><text x="11" y="97.5">холодный белый прожектор — стадион школы</text>
+    <circle cx="4" cy="104" r="2.2" fill="#ff2a2a"/><text x="11" y="105.5">красные огни трубы котельной (видно отовсюду)</text>
+    <circle cx="4" cy="112" r="2.2" fill="#e8c23a"/><text x="11" y="113.5">жёлтый прожектор на кране — недострой</text>
+    <circle cx="4" cy="120" r="2.2" fill="#3f8f5a"/><text x="11" y="121.5">разноцветные ларьки — остановка</text>
+    <circle cx="4" cy="128" r="2.2" fill="#555"/><text x="11" y="129.5">гаражи — почти темно, одна лампочка</text>
+
+    <text x="0" y="144" font-weight="bold">Прочее</text>
+    <rect x="0" y="148" width="8" height="5" fill="url(#hatch)" stroke="#999" stroke-width="0.3"/><text x="11" y="152">лестницы / недострой</text>
+    <rect x="0" y="156" width="8" height="2" fill="#d98a2b"/><text x="11" y="159">теплотрасса</text>
+    <rect x="0" y="163" width="8" height="5" fill="#b23b3b"/><text x="11" y="167">завалы и аварии (граница)</text>
+    <line x1="0" y1="173" x2="8" y2="173" stroke="#e05050" stroke-width="0.8" stroke-dasharray="2 1"/><text x="11" y="174.5">край играбельной зоны</text>
+    <rect x="0" y="178" width="8" height="5" fill="#59606e"/><text x="11" y="182">дома (стены — тоже граница)</text>
+
+    <text x="0" y="198" font-weight="bold">Маршруты-петли (чтобы уходить от Сергея)</text>
+    <text x="0" y="205" font-size="3.6">• двор → проспект → переход/ларьки → школа → двор</text>
+    <text x="0" y="211" font-size="3.6">• двор → лестница вниз → южные дворы → котельная → школа</text>
+    <text x="0" y="217" font-size="3.6">• южные дворы → гаражи (по крышам) → пустырь → западный двор</text>
+    <text x="0" y="230" font-size="3.4" fill="#9fb0d0">Север — вверх. 1 клетка карты = 1 метр игры.</text>
+    <text x="0" y="235" font-size="3.4" fill="#9fb0d0">Точные размеры и координаты — в docs/CITY_PLAN.md</text>
+  </g>
+</svg>
