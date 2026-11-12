@@ -51,6 +51,12 @@ CLIPS = [
     ("Death", "UAL1", "Death01", False),
     ("Interact", "UAL1", "Interact", False),
     ("PickUp", "UAL1", "PickUp_Table", False),
+    # MVP: бросок, лечение, вырывание из захвата, падение и подъём
+    ("Throw", "UAL2", "OverhandThrow", False),
+    ("Consume", "UAL2", "Consume", False),
+    ("Push", "UAL1", "Push_Loop", False),
+    ("Knockback", "UAL2", "Hit_Knockback", False),
+    ("GetUp", "UAL2", "LayToIdle", False),
 ]
 
 

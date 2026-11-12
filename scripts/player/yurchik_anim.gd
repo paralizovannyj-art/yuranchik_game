@@ -4,6 +4,7 @@
 ##   стойка ↔ ходьба (вперёд/назад) ↔ бег  →  верх тела: стойка «готов к удару» (ПКМ)  →  удар (OneShot).
 ## Скорость проигрывания подгоняется под скорость героя, чтобы ноги не скользили.
 ## Поверх — процедурный крен в поворотах и наклон при разгоне (YurchikLean).
+## Разовые действия (бросок, получил удар, вырывается, лечится) — play_action(); смерть — play_death().
 extends Node3D
 
 @export_group("Клипы")
@@ -33,6 +34,8 @@ const UPPER := ["Spine", "Head", "UpperArmL", "ForearmL", "HandL", "UpperArmR", 
 
 var _anim: AnimationPlayer
 var _tree: AnimationTree
+var _bt: AnimationNodeBlendTree
+var _dead := false
 var _lean_mod: YurchikLean
 var _move := 0.0
 var _run := 0.0
@@ -62,7 +65,8 @@ func _ready() -> void:
 	_tree.anim_player = _tree.get_path_to(_anim)
 	_tree.root_node = _tree.get_path_to(_anim.get_node(_anim.root_node))
 	_tree.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
-	_tree.tree_root = _build_tree()
+	_bt = _build_tree()
+	_tree.tree_root = _bt
 	_tree.active = true
 
 	var sk := find_children("*", "Skeleton3D", true, false)
@@ -115,8 +119,55 @@ func _build_tree() -> AnimationNodeBlendTree:
 	bt.add_node("attack", shot)
 	bt.connect_node("attack", 0, "aim")
 	bt.connect_node("attack", 1, "attack_clip_ts")
-	bt.connect_node("output", 0, "attack")
+
+	# разовые действия поверх всего: act_upper — только верх тела (бросок, лечение), act_full — всё тело
+	for key: String in ["act_upper", "act_full"]:
+		var os := AnimationNodeOneShot.new()
+		os.fadein_time = 0.08
+		os.fadeout_time = 0.22
+		if key == "act_upper":
+			os.filter_enabled = true
+			for i in ref.get_track_count():
+				var path := ref.track_get_path(i)
+				if path.get_concatenated_subnames() in UPPER:
+					os.set_filter_path(path, true)
+		bt.add_node(key, os)
+		bt.add_node(key + "_clip", _clip("HitChest"))
+		bt.add_node(key + "_ts", AnimationNodeTimeScale.new())
+		bt.connect_node(key + "_ts", 0, key + "_clip")
+		bt.connect_node(key, 1, key + "_ts")
+	bt.connect_node("act_upper", 0, "attack")
+	bt.connect_node("act_full", 0, "act_upper")
+	bt.connect_node("output", 0, "act_full")
 	return bt
+
+
+## Разовое действие: имя клипа из модели (HitChest, HitHead, Throw, Consume, Push, PickUp, Interact…).
+func play_action(clip: String, upper := false, rate := 1.0) -> void:
+	if _tree == null or _dead or not _anim.has_animation(clip):
+		return
+	var key := "act_upper" if upper else "act_full"
+	(_bt.get_node(key + "_clip") as AnimationNodeAnimation).animation = clip
+	_tree.set("parameters/%s_ts/scale" % key, rate)
+	_tree.set("parameters/%s/request" % key, AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE)
+
+
+func stop_action() -> void:
+	if _tree == null or _dead:
+		return
+	for key: String in ["act_upper", "act_full"]:
+		_tree.set("parameters/%s/request" % key, AnimationNodeOneShot.ONE_SHOT_REQUEST_FADE_OUT)
+
+
+## Смерть: дерево смешивания выключается, клип падения доигрывает до конца и замирает.
+func play_death() -> void:
+	if _tree == null or _dead:
+		return
+	_dead = true
+	_tree.active = false
+	if _lean_mod:
+		_lean_mod.spine = Vector3.ZERO
+	_anim.play("Death", 0.15)
 
 
 func play_attack() -> void:
@@ -134,7 +185,7 @@ func attack_length() -> float:
 
 ## speed — со знаком (назад < 0); sprint 0..1; state: 0 обычный, 1 замах (ПКМ), 2 удар.
 func update_anim(delta: float, speed: float, sprint: float, state: int, yaw_rate: float, accel: float) -> void:
-	if _tree == null:
+	if _tree == null or _dead:
 		return
 	_time += delta
 	var spd := absf(speed)

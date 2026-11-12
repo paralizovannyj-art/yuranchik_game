@@ -1,0 +1,558 @@
+[gd_scene format=3]
+
+[ext_resource type="Shader" uid="uid://cl2y4php6t33u" path="res://shaders/city_night_sky.gdshader" id="1_gt6fp"]
+[ext_resource type="Script" uid="uid://bsrgiiid28yqq" path="res://scripts/world/flicker_light.gd" id="5_t5v6d"]
+[ext_resource type="Material" uid="uid://cy0efahah6x6w" path="res://assets/materials/lamp_halo.tres" id="7_qst3w"]
+[ext_resource type="PackedScene" path="res://scenes/characters/player.tscn" id="19_t5v6d"]
+[ext_resource type="Script" uid="uid://biu7nmbtfy7hv" path="res://scripts/player/player.gd" id="20_qst3w"]
+[ext_resource type="PackedScene" uid="uid://w36jmfyy7xtj" path="res://assets/models/panel_building.gltf" id="b"]
+[ext_resource type="PackedScene" uid="uid://c5dp2fdxehukf" path="res://assets/models/bench.gltf" id="ben"]
+[ext_resource type="PackedScene" uid="uid://bj1dy7d72csco" path="res://assets/models/trash_bin.gltf" id="bin"]
+[ext_resource type="PackedScene" uid="uid://dilorlk8hfa4u" path="res://assets/models/drift_long.gltf" id="dl"]
+[ext_resource type="PackedScene" uid="uid://dsu3ennqf57fn" path="res://assets/models/drift_round.gltf" id="dr"]
+[ext_resource type="PackedScene" uid="uid://cffye3bnv42lo" path="res://assets/models/fence.gltf" id="fen"]
+[ext_resource type="PackedScene" uid="uid://c8c5wj0pek0ku" path="res://assets/models/garages.gltf" id="gar"]
+[ext_resource type="PackedScene" uid="uid://cng7ouengt3ec" path="res://assets/models/kiosk.gltf" id="kio"]
+[ext_resource type="PackedScene" uid="uid://cboshm2g4ejm1" path="res://assets/models/street_lamp.gltf" id="lamp"]
+[ext_resource type="Shader" uid="uid://507jlrfn4qwu" path="res://shaders/ps2_post.gdshader" id="post"]
+[ext_resource type="Texture2D" uid="uid://yuh20eu6en4x" path="res://assets/textures/slush.png" id="slush"]
+[ext_resource type="Texture2D" uid="uid://d4fysl50vmh5r" path="res://assets/textures/snow.png" id="snow"]
+[ext_resource type="PackedScene" uid="uid://dagcqiyumf5bl" path="res://assets/models/tree_a.gltf" id="ta"]
+[ext_resource type="PackedScene" uid="uid://rbksdn78awq5" path="res://assets/models/tree_b.gltf" id="tb"]
+[ext_resource type="PackedScene" uid="uid://51qn4bwlr2w0" path="res://assets/models/turnik.gltf" id="tur"]
+
+[ext_resource type="Script" path="res://scripts/levels/yard.gd" id="lvl"]
+[ext_resource type="PackedScene" path="res://scenes/characters/enemy.tscn" id="enemy"]
+[ext_resource type="PackedScene" path="res://scenes/characters/sergey.tscn" id="sergey"]
+[ext_resource type="Script" path="res://scripts/world/interactable.gd" id="inter"]
+[ext_resource type="Script" path="res://scripts/world/pickup.gd" id="pick"]
+[ext_resource type="PackedScene" path="res://assets/models/garage_yur.gltf" id="gyur"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bjkw8"]
+shader = ExtResource("1_gt6fp")
+shader_parameter/zenith_color = Color(0.012, 0.016, 0.03, 1)
+shader_parameter/mid_color = Color(0.07, 0.065, 0.07, 1)
+shader_parameter/horizon_color = Color(0.42, 0.25, 0.14, 1)
+shader_parameter/ground_color = Color(0.05, 0.04, 0.035, 1)
+shader_parameter/glow_height = 0.28
+shader_parameter/glow_energy = 1.3
+shader_parameter/cloud_amount = 0.6
+shader_parameter/cloud_speed = 0.004
+
+[sub_resource type="Sky" id="Sky_td7hf"]
+sky_material = SubResource("ShaderMaterial_bjkw8")
+radiance_size = 0
+
+[sub_resource type="Environment" id="env"]
+background_mode = 2
+background_color = Color(0.015, 0.02, 0.035, 1)
+sky = SubResource("Sky_td7hf")
+ambient_light_source = 2
+ambient_light_color = Color(0.3, 0.42, 0.6, 1)
+ambient_light_energy = 0.3
+tonemap_mode = 2
+tonemap_exposure = 1.15
+glow_enabled = true
+glow_intensity = 1.3
+glow_strength = 1.2
+glow_bloom = 0.08
+glow_hdr_threshold = 0.75
+fog_enabled = true
+fog_light_color = Color(0.13, 0.1, 0.085, 1)
+fog_density = 0.012
+fog_aerial_perspective = 0.75
+fog_sky_affect = 0.2
+volumetric_fog_enabled = true
+volumetric_fog_density = 0.018
+volumetric_fog_albedo = Color(0.85, 0.85, 0.9, 1)
+volumetric_fog_anisotropy = 0.55
+volumetric_fog_length = 60.0
+volumetric_fog_ambient_inject = 0.12
+volumetric_fog_sky_affect = 0.0
+
+[sub_resource type="StandardMaterial3D" id="mat_snow"]
+albedo_texture = ExtResource("snow")
+roughness = 0.9
+uv1_scale = Vector3(40, 40, 1)
+
+[sub_resource type="PlaneMesh" id="mesh_ground"]
+material = SubResource("mat_snow")
+size = Vector2(160, 160)
+
+[sub_resource type="StandardMaterial3D" id="mat_slush"]
+albedo_texture = ExtResource("slush")
+metallic_specular = 0.8
+roughness = 0.3
+uv1_scale = Vector3(1, 16, 1)
+
+[sub_resource type="PlaneMesh" id="mesh_road"]
+material = SubResource("mat_slush")
+size = Vector2(5, 80)
+
+[sub_resource type="PlaneMesh" id="mesh_walk"]
+material = SubResource("mat_slush")
+size = Vector2(2.5, 12)
+
+[sub_resource type="Gradient" id="Gradient_wmyyq"]
+offsets = PackedFloat32Array(0, 0.15, 1)
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0.55, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_u8r6j"]
+gradient = SubResource("Gradient_wmyyq")
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8kxpv"]
+transparency = 1
+blend_mode = 1
+shading_mode = 0
+albedo_color = Color(1, 0.8, 0.55, 0.45)
+albedo_texture = SubResource("GradientTexture2D_u8r6j")
+disable_receive_shadows = true
+billboard_mode = 1
+
+[sub_resource type="QuadMesh" id="QuadMesh_kdxkx"]
+material = SubResource("StandardMaterial3D_8kxpv")
+size = Vector2(0.6, 0.6)
+
+[sub_resource type="QuadMesh" id="QuadMesh_p153r"]
+material = ExtResource("7_qst3w")
+size = Vector2(2.6, 2.6)
+
+[sub_resource type="QuadMesh" id="QuadMesh_d7g3w"]
+material = ExtResource("7_qst3w")
+size = Vector2(2.6, 2.6)
+
+[sub_resource type="ParticleProcessMaterial" id="pm_snow"]
+emission_shape = 3
+emission_box_extents = Vector3(35, 1, 35)
+direction = Vector3(0, -1, 0)
+spread = 20.0
+initial_velocity_min = 0.6
+initial_velocity_max = 1.2
+gravity = Vector3(0.35, -0.5, 0.1)
+turbulence_enabled = true
+turbulence_noise_strength = 0.4
+turbulence_noise_scale = 6.0
+
+[sub_resource type="StandardMaterial3D" id="mat_flake"]
+albedo_color = Color(0.95, 0.97, 1, 1)
+billboard_mode = 3
+particles_anim_h_frames = 1
+particles_anim_v_frames = 1
+particles_anim_loop = false
+
+[sub_resource type="QuadMesh" id="mesh_flake"]
+material = SubResource("mat_flake")
+size = Vector2(0.05, 0.05)
+
+[sub_resource type="ShaderMaterial" id="mat_post"]
+shader = ExtResource("post")
+shader_parameter/blur_px = 0.55
+shader_parameter/color_levels = 32.0
+shader_parameter/dither_strength = 1.0
+shader_parameter/black_crush = 0.06
+shader_parameter/s_curve = 0.55
+shader_parameter/saturation = 0.78
+shader_parameter/exposure = 1.1
+shader_parameter/shadow_tint = Color(0.03, 0.05, 0.09, 1)
+shader_parameter/highlight_tint = Color(1, 0.94, 0.86, 1)
+shader_parameter/halo = 0.25
+shader_parameter/grain = 0.045
+shader_parameter/vignette = 0.55
+
+[sub_resource type="BoxShape3D" id="WorldBoundaryShape3D_bjkw8"]
+size = Vector3(200, 1, 200)
+
+[sub_resource type="BoxShape3D" id="wall_ns"]
+size = Vector3(60, 5, 1)
+
+[sub_resource type="BoxShape3D" id="wall_ew"]
+size = Vector3(1, 5, 42)
+
+[sub_resource type="BoxShape3D" id="wall_gn"]
+size = Vector3(7, 5, 3.8)
+
+[sub_resource type="BoxShape3D" id="wall_gs"]
+size = Vector3(7, 5, 13.6)
+
+[sub_resource type="StandardMaterial3D" id="mat_counter"]
+albedo_color = Color(0.13, 0.13, 0.14, 1)
+metallic = 0.6
+roughness = 0.5
+
+[sub_resource type="BoxMesh" id="mesh_counter"]
+material = SubResource("mat_counter")
+size = Vector3(1.5, 0.05, 0.34)
+
+[node name="Yard" type="Node3D"]
+script = ExtResource("lvl")
+sergey_scene = ExtResource("sergey")
+enemy_scene = ExtResource("enemy")
+nav_bounds = AABB(-30, -1, -10, 62, 6, 44)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("env")
+
+[node name="Moon" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.894, -0.293, 0.338, 0, 0.756, 0.655, -0.447, -0.586, 0.676, 0, 30, 0)
+light_color = Color(0.5, 0.65, 0.95, 1)
+light_energy = 0.2
+shadow_enabled = true
+
+[node name="Ground" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh_ground")
+
+[node name="Road" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0.01, -3.6)
+mesh = SubResource("mesh_road")
+
+[node name="Walk1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.05, 0.012, 3)
+mesh = SubResource("mesh_walk")
+
+[node name="BuildingA" parent="." instance=ExtResource("b")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -14)
+
+[node name="EntranceLight" type="OmniLight3D" parent="BuildingA" node_paths=PackedStringArray("glow_mesh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.05, 2.35, 7.2)
+light_color = Color(1, 0.82, 0.55, 1)
+light_energy = 1.8
+light_volumetric_fog_energy = 1.5
+shadow_enabled = true
+omni_range = 7.0
+omni_attenuation = 1.3
+script = ExtResource("5_t5v6d")
+flicker_chance = 0.5
+glow_mesh = NodePath("../EntranceHalo")
+
+[node name="EntranceHalo" type="MeshInstance3D" parent="BuildingA"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.05, 2.3999999, 7.0499997)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_kdxkx")
+
+[node name="BuildingB" parent="." instance=ExtResource("b")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -32, 0, 8)
+
+[node name="BuildingC" parent="." instance=ExtResource("b")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 4, 0, 36)
+
+[node name="Lamp1" parent="." instance=ExtResource("lamp")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -1, 0, -0.6)
+
+[node name="Spot" type="SpotLight3D" parent="Lamp1"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 7.8, 2.05)
+light_color = Color(1, 0.52, 0.18, 1)
+light_energy = 42.0
+light_volumetric_fog_energy = 2.0
+shadow_enabled = true
+spot_range = 15.0
+spot_angle = 48.0
+spot_angle_attenuation = 1.6
+
+[node name="Fill" type="OmniLight3D" parent="Lamp1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.4, 2.05)
+light_color = Color(1, 0.55, 0.22, 1)
+light_energy = 1.2
+light_volumetric_fog_energy = 1.5
+omni_range = 6.0
+
+[node name="Halo" type="MeshInstance3D" parent="Lamp1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.8, 2.05)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_p153r")
+
+[node name="Lamp2" parent="." instance=ExtResource("lamp")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 15, 0, 12)
+
+[node name="Spot" type="SpotLight3D" parent="Lamp2" node_paths=PackedStringArray("glow_mesh")]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 7.8, 2.05)
+light_color = Color(1, 0.52, 0.18, 1)
+light_energy = 42.0
+light_volumetric_fog_energy = 2.0
+shadow_enabled = true
+spot_range = 15.0
+spot_angle = 48.0
+spot_angle_attenuation = 1.6
+script = ExtResource("5_t5v6d")
+flicker_chance = 0.12
+min_factor = 0.0
+glow_mesh = NodePath("../Halo")
+
+[node name="Fill" type="OmniLight3D" parent="Lamp2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.4, 2.05)
+light_color = Color(1, 0.55, 0.22, 1)
+light_energy = 1.2
+light_volumetric_fog_energy = 1.5
+omni_range = 6.0
+
+[node name="Halo" type="MeshInstance3D" parent="Lamp2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.8, 2.05)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_d7g3w")
+
+[node name="Garages" parent="." instance=ExtResource("gar")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 24, 0, -4)
+
+[node name="Kiosk" parent="." instance=ExtResource("kio")]
+transform = Transform3D(0.94, 0, 0.342, 0, 1, 0, -0.342, 0, 0.94, -13, 0, -0.5)
+
+[node name="KioskLight" type="OmniLight3D" parent="Kiosk"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 1.8)
+light_color = Color(1, 0.8, 0.5, 1)
+light_energy = 1.5
+
+[node name="TreeA1" parent="." instance=ExtResource("ta")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 0, 4)
+
+[node name="TreeB1" parent="." instance=ExtResource("tb")]
+transform = Transform3D(0.5, 0, 0.866, 0, 1, 0, -0.866, 0, 0.5, 8, 0, 17)
+
+[node name="TreeA2" parent="." instance=ExtResource("ta")]
+transform = Transform3D(-0.766, 0, 0.643, 0, 1.15, 0, -0.643, 0, -0.766, 10, 0, 1)
+
+[node name="TreeB2" parent="." instance=ExtResource("tb")]
+transform = Transform3D(1, 0, 0, 0, 0.9, 0, 0, 0, 1, -22, 0, -2)
+
+[node name="Bench" parent="." instance=ExtResource("ben")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -8.5, 0, -1.2)
+
+[node name="Bin1" parent="." instance=ExtResource("bin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 0, -1.5)
+
+[node name="Bin2" parent="." instance=ExtResource("bin")]
+transform = Transform3D(0.985, 0, -0.174, 0, 1, 0, 0.174, 0, 0.985, 9.1, 0, -1.4)
+
+[node name="Turnik" parent="." instance=ExtResource("tur")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 9)
+
+[node name="Fence1" parent="." instance=ExtResource("fen")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0, -6.4)
+
+[node name="Fence2" parent="." instance=ExtResource("fen")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, -6.4)
+
+[node name="DriftA" parent="." instance=ExtResource("dl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 0, -7)
+
+[node name="DriftB" parent="." instance=ExtResource("dl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, 0, -7)
+
+[node name="DriftC" parent="." instance=ExtResource("dr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, 4)
+
+[node name="DriftD" parent="." instance=ExtResource("dr")]
+transform = Transform3D(1.3, 0, 0, 0, 1, 0, 0, 0, 1.3, -18, 0, 12)
+
+[node name="DriftE" parent="." instance=ExtResource("dl")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 21.5, 0, 2)
+
+[node name="Snowfall" type="GPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 18, 5)
+amount = 6000
+lifetime = 16.0
+preprocess = 16.0
+visibility_aabb = AABB(-40, -25, -40, 80, 30, 80)
+process_material = SubResource("pm_snow")
+draw_pass_1 = SubResource("mesh_flake")
+
+[node name="PS2Post" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="Filter" type="ColorRect" parent="PS2Post"]
+material = SubResource("mat_post")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="GroundBody" type="StaticBody3D" parent="."]
+
+[node name="GroundShape" type="CollisionShape3D" parent="GroundBody"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+shape = SubResource("WorldBoundaryShape3D_bjkw8")
+
+[node name="Player" type="CharacterBody3D" parent="." instance=ExtResource("19_t5v6d")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 24)
+
+[node name="GarageYur" parent="." instance=ExtResource("gyur")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 24, 0, 12.4)
+
+[node name="GarageLight" type="OmniLight3D" parent="GarageYur"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 1.95, -0.4)
+light_color = Color(1, 0.8, 0.55, 1)
+light_energy = 1.6
+shadow_enabled = true
+omni_range = 7.0
+omni_attenuation = 1.3
+
+[node name="KeyHome" type="Node3D" parent="GarageYur"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 0.87, -2.4)
+script = ExtResource("pick")
+item_id = "key_home"
+
+[node name="Medkit" type="Node3D" parent="GarageYur"]
+transform = Transform3D(0.9781, 0, 0.2079, 0, 1, 0, -0.2079, 0, 0.9781, 0.9, 0.87, -2.45)
+script = ExtResource("pick")
+item_id = "medkit"
+
+[node name="GarageBottle" type="Node3D" parent="GarageYur"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.75, 0.87, -2.5)
+script = ExtResource("pick")
+item_id = "bottle"
+
+[node name="Counter" type="MeshInstance3D" parent="Kiosk"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 1.15)
+mesh = SubResource("mesh_counter")
+
+[node name="KeyGarage" type="Node3D" parent="Kiosk"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3, 1.03, 1.17)
+script = ExtResource("pick")
+item_id = "key_garage"
+
+[node name="Shawarma" type="Node3D" parent="Kiosk"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, 1.03, 1.17)
+script = ExtResource("pick")
+item_id = "shawarma"
+
+[node name="HomeDoor" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.05, 1, -7.3)
+script = ExtResource("inter")
+prompt = "Открыть дверь подъезда"
+radius = 2.3
+need_item = "key_home"
+locked_text = "Заперто. Ключей в кармане нет — остались в гараже, в куртке."
+
+[node name="GarageLock" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.7, 1, 14.2)
+script = ExtResource("inter")
+prompt = "Открыть гараж"
+radius = 2.0
+need_item = "key_garage"
+locked_text = "Навесной замок. Ключ от гаража остался у ларька «Продукты» — на прилавке."
+one_shot = true
+
+[node name="OtherDoor" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.05, 1, -7.3)
+script = ExtResource("inter")
+prompt = "Дёрнуть дверь"
+radius = 2.0
+need_item = "key_none"
+locked_text = "Чужой подъезд. Заперто."
+
+[node name="Items" type="Node3D" parent="."]
+
+[node name="Bottle1" type="Node3D" parent="Items"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, 20.5)
+script = ExtResource("pick")
+item_id = "bottle"
+
+[node name="Brick1" type="Node3D" parent="Items"]
+transform = Transform3D(0.866, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866, 2.2, 0, 21.5)
+script = ExtResource("pick")
+item_id = "brick"
+
+[node name="Bottle2" type="Node3D" parent="Items"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.3, 0, 9.7)
+script = ExtResource("pick")
+item_id = "bottle"
+
+[node name="Bottle3" type="Node3D" parent="Items"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.6, 0, -0.5)
+script = ExtResource("pick")
+item_id = "bottle"
+
+[node name="Bandage1" type="Node3D" parent="Items"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.4, 0.03, -0.6)
+script = ExtResource("pick")
+item_id = "bandage"
+
+[node name="Bottle4" type="Node3D" parent="Items"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.3, 0, -0.7)
+script = ExtResource("pick")
+item_id = "bottle"
+
+[node name="Brick2" type="Node3D" parent="Items"]
+transform = Transform3D(0.9397, 0, -0.342, 0, 1, 0, 0.342, 0, 0.9397, 19.6, 0, -2.6)
+script = ExtResource("pick")
+item_id = "brick"
+
+[node name="Bandage2" type="Node3D" parent="Items"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.5, 0.03, 9.5)
+script = ExtResource("pick")
+item_id = "bandage"
+
+[node name="Enemies" type="Node3D" parent="."]
+
+[node name="OfnikFirst" parent="Enemies" instance=ExtResource("enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 14)
+variant = "a"
+wander_radius = 0.0
+
+[node name="OfnikLamp" parent="Enemies" instance=ExtResource("enemy")]
+transform = Transform3D(-0.9397, 0, -0.342, 0, 1, 0, 0.342, 0, -0.9397, -6.5, 0, 0.8)
+variant = "b"
+wander_radius = 0.0
+
+[node name="OfnikRoad" parent="Enemies" instance=ExtResource("enemy")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 9, 0, -3.4)
+variant = "c"
+wander_radius = 5.0
+
+[node name="OfnikKiosk1" parent="Enemies" instance=ExtResource("enemy")]
+transform = Transform3D(-0.866, 0, 0.5, 0, 1, 0, -0.5, 0, -0.866, -11.4, 0, 2.2)
+variant = "c"
+wander_radius = 0.0
+
+[node name="OfnikKiosk2" parent="Enemies" instance=ExtResource("enemy")]
+transform = Transform3D(0.866, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866, -14.8, 0, 2.8)
+variant = "a"
+wander_radius = 2.5
+
+[node name="OfnikGarage" parent="Enemies" instance=ExtResource("enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, 5)
+variant = "b"
+wander_radius = 4.0
+
+[node name="OfnikFar" parent="Enemies" instance=ExtResource("enemy")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 13.5, 0, 16)
+variant = "c"
+wander_radius = 3.0
+
+[node name="SergeySpawn" type="Marker3D" parent="."]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 9, 0, 11)
+
+[node name="AmbushA" type="Marker3D" parent="."]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -10, 0, -4)
+
+[node name="AmbushB" type="Marker3D" parent="."]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 2.5, 0, -4.6)
+
+[node name="Bounds" type="StaticBody3D" parent="."]
+
+[node name="N" type="CollisionShape3D" parent="Bounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -8.5)
+shape = SubResource("wall_ns")
+
+[node name="S" type="CollisionShape3D" parent="Bounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 30.5)
+shape = SubResource("wall_ns")
+
+[node name="W" type="CollisionShape3D" parent="Bounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.5, 2, 11)
+shape = SubResource("wall_ew")
+
+[node name="E" type="CollisionShape3D" parent="Bounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.6, 2, 11)
+shape = SubResource("wall_ew")
+
+[node name="GN" type="CollisionShape3D" parent="Bounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.5, 2, -6.1)
+shape = SubResource("wall_gn")
+
+[node name="GS" type="CollisionShape3D" parent="Bounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.5, 2, 23)
+shape = SubResource("wall_gs")
