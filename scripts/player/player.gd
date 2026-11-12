@@ -10,7 +10,7 @@ extends CharacterBody3D
 enum State { NORMAL, AIM, ATTACK, QUICKTURN }
 
 @export_group("Движение")
-@export var walk_speed := 2.2
+@export var walk_speed := 1.7         ## под клип ходьбы: быстрее — ноги начинают семенить/скользить
 @export var sprint_speed := 4.6
 @export var aim_walk_speed := 1.2
 @export var acceleration := 5.5        ## м/с² — разгон
@@ -38,8 +38,9 @@ enum State { NORMAL, AIM, ATTACK, QUICKTURN }
 @export var head_bob := 0.022
 
 @export_group("Бой")
-@export var attack_time := 0.62
-@export var attack_lunge := 1.4
+@export var attack_time := 0.83        ## берётся из длины клипа удара, если он есть
+@export var attack_lunge := 1.2
+@export var lunge_window := Vector2(0.5, 0.72)  ## доля удара, когда герой подаётся вперёд (удар — ~0.68)
 
 var state := State.NORMAL
 var cam_yaw := 0.0
@@ -137,7 +138,7 @@ func _physics_process(delta: float) -> void:
 		State.ATTACK:
 			_timer -= delta
 			var t := 1.0 - _timer / attack_time
-			var target_speed := attack_lunge if (t > 0.3 and t < 0.5) else 0.0
+			var target_speed := attack_lunge if (t > lunge_window.x and t < lunge_window.y) else 0.0
 			move_speed = move_toward(move_speed, target_speed, 12.0 * delta)
 			hv = -global_basis.z * move_speed
 			if _timer <= 0.0:
@@ -204,6 +205,8 @@ func _face_towards(yaw: float, delta: float, response: float, max_rate: float) -
 
 func _start_attack() -> void:
 	state = State.ATTACK
+	if model.has_method("attack_length"):
+		attack_time = model.attack_length()
 	_timer = attack_time
 	if Input.is_action_pressed("ready_weapon"):
 		rotation.y = cam_yaw
