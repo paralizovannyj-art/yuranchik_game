@@ -1,0 +1,392 @@
+[
+ {
+  "id": "terrain_northfacades",
+  "zone": "Terrain",
+  "name": "NorthFacades",
+  "type": "north",
+  "cx": -80.0,
+  "cz": -106.0,
+  "y": 6.0,
+  "L": 40,
+  "D": 12,
+  "h": 27.0,
+  "yaw": 0,
+  "arches": [],
+  "entrances": null
+ },
+ {
+  "id": "terrain_northfacades2",
+  "zone": "Terrain",
+  "name": "NorthFacades",
+  "type": "north",
+  "cx": 25.0,
+  "cz": -106.0,
+  "y": 6.0,
+  "L": 150,
+  "D": 12,
+  "h": 27.0,
+  "yaw": 0,
+  "arches": [],
+  "entrances": null
+ },
+ {
+  "id": "terrain_northfacades3",
+  "zone": "Terrain",
+  "name": "NorthFacades",
+  "type": "north",
+  "cx": -55.0,
+  "cz": -112.0,
+  "y": 6.0,
+  "L": 10,
+  "D": 4,
+  "h": 27.0,
+  "yaw": 0,
+  "arches": [],
+  "entrances": null
+ },
+ {
+  "id": "homeyard_homebuilding",
+  "zone": "HomeYard",
+  "name": "HomeBuilding",
+  "type": "panel",
+  "cx": -15.0,
+  "cz": -71.0,
+  "y": 3.0,
+  "L": 46,
+  "D": 12,
+  "h": 26.0,
+  "yaw": 0,
+  "arches": [],
+  "entrances": [
+   -10.25,
+   -0.75,
+   8.75,
+   18.25
+  ]
+ },
+ {
+  "id": "homeyard_westwing",
+  "zone": "HomeYard",
+  "name": "WestWing",
+  "type": "panel",
+  "cx": -36.0,
+  "cz": -46.0,
+  "y": 3.0,
+  "L": 38,
+  "D": 12,
+  "h": 26.0,
+  "yaw": 90,
+  "arches": [
+   [
+    -0.0,
+    4.0
+   ]
+  ],
+  "entrances": null
+ },
+ {
+  "id": "homeyard_southrow",
+  "zone": "HomeYard",
+  "name": "SouthRow",
+  "type": "panel",
+  "cx": -11.0,
+  "cz": -32.5,
+  "y": 3.0,
+  "L": 38,
+  "D": 11,
+  "h": 26.0,
+  "yaw": 180,
+  "arches": [
+   [
+    -1.0,
+    3.0
+   ]
+  ],
+  "entrances": null
+ },
+ {
+  "id": "homeyard_eastkhr",
+  "zone": "HomeYard",
+  "name": "EastKhr",
+  "type": "khr",
+  "cx": 11.0,
+  "cz": -51.0,
+  "y": 3.0,
+  "L": 18,
+  "D": 10,
+  "h": 15.0,
+  "yaw": -90,
+  "arches": [],
+  "entrances": null
+ },
+ {
+  "id": "westyard_tower",
+  "zone": "WestYard",
+  "name": "Tower",
+  "type": "tower",
+  "cx": -92.0,
+  "cz": -70.0,
+  "y": 3.0,
+  "L": 16,
+  "D": 16,
+  "h": 46.0,
+  "yaw": 0,
+  "arches": [],
+  "entrances": null
+ },
+ {
+  "id": "westyard_northrow",
+  "zone": "WestYard",
+  "name": "NorthRow",
+  "type": "panel",
+  "cx": -71.0,
+  "cz": -72.0,
+  "y": 3.0,
+  "L": 18,
+  "D": 12,
+  "h": 26.0,
+  "yaw": 0,
+  "arches": [],
+  "entrances": null
+ },
+ {
+  "id": "westyard_eastrow",
+  "zone": "WestYard",
+  "name": "EastRow",
+  "type": "panel",
+  "cx": -68.0,
+  "cz": -50.0,
+  "y": 3.0,
+  "L": 24,
+  "D": 12,
+  "h": 26.0,
+  "yaw": -90,
+  "arches": [],
+  "entrances": null
+ },
+ {
+  "id": "westyard_westrow",
+  "zone": "WestYard",
+  "name": "WestRow",
+  "type": "panel",
+  "cx": -94.0,
+  "cz": -39.0,
+  "y": 3.0,
+  "L": 38,
+  "D": 12,
+  "h": 26.0,
+  "yaw": 90,
+  "arches": [
+   [
+    -1.0,
+    3.0
+   ]
+  ],
+  "entrances": null
+ },
+ {
+  "id": "westyard_southrow",
+  "zone": "WestYard",
+  "name": "SouthRow",
+  "type": "panel",
+  "cx": -75.0,
+  "cz": -26.0,
+  "y": 3.0,
+  "L": 26,
+  "D": 12,
+  "h": 26.0,
+  "yaw": 180,
+  "arches": [
+   [
+    -1.0,
+    3.0
+   ]
+  ],
+  "entrances": null
+ },
+ {
+  "id": "school_eastwall",
+  "zone": "School",
+  "name": "EastWall",
+  "type": "panel",
+  "cx": 94.5,
+  "cz": -47.5,
+  "y": 3.0,
+  "L": 61,
+  "D": 11,
+  "h": 26.0,
+  "yaw": -90,
+  "arches": [],
+  "entrances": null
+ },
+ {
+  "id": "school_schoolmain",
+  "zone": "School",
+  "name": "SchoolMain",
+  "type": "school_main",
+  "cx": 57.0,
+  "cz": -69.5,
+  "y": 3.0,
+  "L": 46,
+  "D": 11,
+  "h": 11.0,
+  "yaw": 0,
+  "arches": [],
+  "entrances": null
+ },
+ {
+  "id": "school_schoolwing",
+  "zone": "School",
+  "name": "SchoolWing",
+  "type": "school_wing",
+  "cx": 39.0,
+  "cz": -58.0,
+  "y": 3.0,
+  "L": 12,
+  "D": 10,
+  "h": 11.0,
+  "yaw": 90,
+  "arches": [],
+  "entrances": null
+ },
+ {
+  "id": "school_schoolwing2",
+  "zone": "School",
+  "name": "SchoolWing",
+  "type": "school_wing",
+  "cx": 75.0,
+  "cz": -58.0,
+  "y": 3.0,
+  "L": 12,
+  "D": 10,
+  "h": 11.0,
+  "yaw": -90,
+  "arches": [],
+  "entrances": null
+ },
+ {
+  "id": "southyards_khrnorth",
+  "zone": "SouthYards",
+  "name": "KhrNorth",
+  "type": "khr",
+  "cx": -15.0,
+  "cz": 0.5,
+  "y": 0.0,
+  "L": 54,
+  "D": 11,
+  "h": 15.0,
+  "yaw": 0,
+  "arches": [
+   [
+    -5.0,
+    -1.0
+   ]
+  ],
+  "entrances": null
+ },
+ {
+  "id": "southyards_khrwest",
+  "zone": "SouthYards",
+  "name": "KhrWest",
+  "type": "khr",
+  "cx": -36.5,
+  "cz": 22.0,
+  "y": 0.0,
+  "L": 32,
+  "D": 11,
+  "h": 15.0,
+  "yaw": 90,
+  "arches": [
+   [
+    -2.0,
+    2.0
+   ]
+  ],
+  "entrances": null
+ },
+ {
+  "id": "southyards_khrsouth",
+  "zone": "SouthYards",
+  "name": "KhrSouth",
+  "type": "khr",
+  "cx": -9.5,
+  "cz": 32.5,
+  "y": 0.0,
+  "L": 43,
+  "D": 11,
+  "h": 15.0,
+  "yaw": 180,
+  "arches": [
+   [
+    -8.5,
+    -4.5
+   ]
+  ],
+  "entrances": null
+ },
+ {
+  "id": "boilerhouse_khr1",
+  "zone": "BoilerHouse",
+  "name": "Khr1",
+  "type": "khr",
+  "cx": 43.0,
+  "cz": -0.5,
+  "y": 0.0,
+  "L": 28,
+  "D": 11,
+  "h": 15.0,
+  "yaw": 0,
+  "arches": [
+   [
+    -2.0,
+    2.0
+   ]
+  ],
+  "entrances": null
+ },
+ {
+  "id": "boilerhouse_khr2",
+  "zone": "BoilerHouse",
+  "name": "Khr2",
+  "type": "khr",
+  "cx": 43.0,
+  "cz": 21.5,
+  "y": 0.0,
+  "L": 28,
+  "D": 11,
+  "h": 15.0,
+  "yaw": 180,
+  "arches": [],
+  "entrances": null
+ },
+ {
+  "id": "boilerhouse_boiler",
+  "zone": "BoilerHouse",
+  "name": "Boiler",
+  "type": "boiler",
+  "cx": 79.0,
+  "cz": 1.0,
+  "y": 0.0,
+  "L": 26,
+  "D": 18,
+  "h": 10.0,
+  "yaw": 180,
+  "arches": [],
+  "entrances": null
+ },
+ {
+  "id": "boilerhouse_chimney",
+  "zone": "BoilerHouse",
+  "name": "Chimney",
+  "type": "chimney",
+  "cx": 92.0,
+  "cz": 30.0,
+  "y": 0.0,
+  "L": 4,
+  "D": 4,
+  "h": 45.0,
+  "yaw": 0,
+  "arches": [],
+  "entrances": null
+ }
+]

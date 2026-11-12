@@ -27,6 +27,8 @@ PIT_TINT = "Color(0.34, 0.31, 0.28, 1)"
 KHR_TINT = "Color(0.5, 0.42, 0.38, 1)"     # хрущёвки — кирпич
 
 SOLIDS = []   # (x0, x1, y0, y1, z0, z1, kind, name) — для проверки пересечений
+BUILDINGS = []   # дома для tools/blender/build_district.py (tools/district_buildings.json)
+WRITE = "--json-only" not in sys.argv   # --json-only: только обновить список домов, сцены и карту не трогать
 FLAT = []     # (x0, x1, z0, z1, top, kind, label, tint) — всё, что рисуется на карте docs/city_map.svg
 
 
@@ -39,6 +41,23 @@ def xform(x, y, z, yaw=0.0):
     c, s = math.cos(math.radians(yaw)), math.sin(math.radians(yaw))
     # в .tscn базис записывается по строкам: поворот на yaw против часовой (если смотреть сверху)
     return "Transform3D(%s, 0, %s, 0, 1, 0, %s, 0, %s, %s, %s, %s)" % (f(c), f(s), f(-s), f(c), f(x), f(y), f(z))
+
+
+def record_building(zone, name, btype, x0, x1, z0, z1, y, h, front="S", arches=(), entrances=None):
+    """Запомнить дом для сборки модели: длина L идёт вдоль фасада, локальная ось X модели — вдоль дома."""
+    cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
+    along_x = front in "NS"
+    L, D = (x1 - x0, z1 - z0) if along_x else (z1 - z0, x1 - x0)
+    c = cx if along_x else cz
+    sign = {"S": 1, "N": -1, "E": -1, "W": 1}[front]
+    loc = lambda w: round(sign * (w - c), 3)
+    n = sum(1 for b in BUILDINGS if b["zone"] == zone and b["name"] == name)
+    BUILDINGS.append({
+        "id": "%s_%s%s" % (zone.lower(), name.lower(), "" if n == 0 else str(n + 1)), "zone": zone, "name": name,
+        "type": btype, "cx": cx, "cz": cz, "y": y, "L": L, "D": D, "h": h,
+        "yaw": {"S": 0, "N": 180, "E": 90, "W": -90}[front],
+        "arches": [sorted((loc(a), loc(b))) for a, b in arches],
+        "entrances": None if entrances is None else sorted(loc(e) for e in entrances)})
 
 
 class Scene:
@@ -81,9 +100,13 @@ class Scene:
     def ground(self, name, x0, x1, z0, z1, top, tint=None, label=""):
         self.box(name, x0, x1, z0, z1, BOTTOM, top - BOTTOM, "ground", label, tint=tint or TINT[top])
 
-    def bld(self, name, x0, x1, z0, z1, y, h, label="", arches=(), kind="building", tint=None, ah=4.0):
-        """Дом с арками-проходами сквозь первый этаж. arches — отрезки вдоль длинной стороны дома (ширина ~4 м)."""
-        along_x = (x1 - x0) >= (z1 - z0)
+    def bld(self, name, x0, x1, z0, z1, y, h, label="", arches=(), kind="building", tint=None, ah=4.0,
+            front="S", btype=None, entrances=None):
+        """Дом с арками-проходами сквозь первый этаж. arches — отрезки вдоль длинной стороны дома (ширина ~4 м).
+        front — куда смотрит фасад с подъездами (N/S/E/W); entrances — координаты подъездов вдоль дома (иначе авто)."""
+        along_x = front in "NS"
+        record_building(self.root, name, btype or ("khr" if tint == KHR_TINT else "tower" if h > 40 else "panel"),
+                        x0, x1, z0, z1, y, h, front, arches, entrances)
         lo, hi = (x0, x1) if along_x else (z0, z1)
         cur = lo
         for a, b in sorted(arches) + [(hi, hi)]:
@@ -139,6 +162,8 @@ class Scene:
     def write(self, path):
         head = '[gd_scene format=3]\n\n[ext_resource type="Script" path="res://scripts/tools/blockout_box.gd" id="bb"]\n\n'
         body = '[node name="%s" type="Node3D"]\n\n' % self.root + "\n".join(self.lines)
+        if not WRITE:
+            return
         full = os.path.join(ROOT, path)
         os.makedirs(os.path.dirname(full), exist_ok=True)
         open(full, "w", encoding="utf-8", newline="\n").write(head + body)
@@ -209,9 +234,9 @@ for z0, z1, y in ((-70, -15, HUB), (-5, 47, SOUTH)) + tuple((z + 10, z + 18, lo)
     t.box("Road", SPINE[0], SPINE[1], z0, z1, y, 0.03, "road", solid=False)
 
 # границы района (позже — дома, заборы и завалы)
-t.box("NorthFacades", -100, -60, -112, -100, PROSPECT, 27.0, "building", "Дома северной стороны проспекта (стена)")
-t.box("NorthFacades", -50, 100, -112, -100, PROSPECT, 27.0, "building", "Дома северной стороны проспекта (стена)")
-t.box("NorthFacades", -60, -50, -114, -110, PROSPECT, 27.0, "building")
+t.bld("NorthFacades", -100, -60, -112, -100, PROSPECT, 27.0, "Дома северной стороны проспекта (стена)", btype="north")
+t.bld("NorthFacades", -50, 100, -112, -100, PROSPECT, 27.0, "Дома северной стороны проспекта (стена)", btype="north")
+t.bld("NorthFacades", -60, -50, -114, -110, PROSPECT, 27.0, btype="north")
 t.box("Edge", -101, -100, -100, -80, PROSPECT, 5.0, "boundary", "Завал: трамвай поперёк + машины")
 t.box("Edge", 100, 101, -100, -80, PROSPECT, 5.0, "boundary", "Завал: маршрутка + фура")
 t.box("Edge", -101, -100, -80, -15, HUB, 3.5, "boundary", "Забор / торцы домов")
@@ -267,16 +292,17 @@ p.write("scenes/district/z1_prospect.tscn")
 # =====================================================================================================
 h = Scene("HomeYard")
 y = HUB
-h.bld("HomeBuilding", -38, 8, -77, -65, y, 26.0, "Дом Юрчика · 9 эт., 4 подъезда")
+h.bld("HomeBuilding", -38, 8, -77, -65, y, 26.0, "Дом Юрчика · 9 эт., 4 подъезда",
+      entrances=[-30 + 38 * (i + 0.5) / 4 for i in range(4)])
 for i in range(4):
     x = -30 + 38 * (i + 0.5) / 4       # подъезды выходят во двор (западный край дома закрыт крылом)
     h.box("Porch", x - 1.3, x + 1.3, -65, -63.4, y, 0.3, "prop", "Подъезд Юрчика" if i == 1 else "")
     h.box("Canopy", x - 1.5, x + 1.5, -65, -63.2, y + 2.6, 0.15, "prop", solid=False)
     if i == 1:
         h.light("EntranceLight", x, y + 2.4, -63.6, "Color(1, 0.75, 0.45, 1)", 1.5, 8.0)
-h.bld("WestWing", -42, -30, -65, -27, y, 26.0, "9 эт.", arches=[(-50, -46)])
-h.bld("SouthRow", -30, 8, -38, -27, y, 26.0, "9 эт.", arches=[(-14, -10)])
-h.bld("EastKhr", 6, 16, -60, -42, y, 15.0, "Хрущёвка · 5 эт.", tint=KHR_TINT)
+h.bld("WestWing", -42, -30, -65, -27, y, 26.0, "9 эт.", arches=[(-50, -46)], front="E")
+h.bld("SouthRow", -30, 8, -38, -27, y, 26.0, "9 эт.", arches=[(-14, -10)], front="N")
+h.bld("EastKhr", 6, 16, -60, -42, y, 15.0, "Хрущёвка · 5 эт.", tint=KHR_TINT, front="W")
 # во дворе
 h.box("Slide", -27, -25.5, -59, -56, y, 2.0, "prop", "Детплощадка")
 h.box("Swing", -21, -18, -58.5, -57.5, y, 2.2, "prop")
@@ -310,9 +336,9 @@ w = Scene("WestYard")
 y = HUB
 w.bld("Tower", -100, -84, -78, -62, y, 46.0, "Свечка · 16 эт.")
 w.bld("NorthRow", -80, -62, -78, -66, y, 26.0, "9 эт.")
-w.bld("EastRow", -74, -62, -62, -38, y, 26.0, "9 эт.")
-w.bld("WestRow", -100, -88, -58, -20, y, 26.0, "9 эт.", arches=[(-42, -38)])
-w.bld("SouthRow", -88, -62, -32, -20, y, 26.0, "9 эт.", arches=[(-78, -74)])
+w.bld("EastRow", -74, -62, -62, -38, y, 26.0, "9 эт.", front="W")
+w.bld("WestRow", -100, -88, -58, -20, y, 26.0, "9 эт.", arches=[(-42, -38)], front="E")
+w.bld("SouthRow", -88, -62, -32, -20, y, 26.0, "9 эт.", arches=[(-78, -74)], front="N")
 for x, z in ((-85, -55), (-85, -49), (-77, -52), (-77, -44)):
     w.car(x, z, y, 0)
 w.drift(-81, -36, y, 6, 2, 1.4)
@@ -332,8 +358,11 @@ s.line_z("Fence", 28, -78, -17, y, 2.2, "fence", gaps=[(-50, -44)], thick=0.15, 
 s.line_x("Fence", -78, 28, 86, y, 2.2, "fence", thick=0.15)
 s.line_z("Fence", 86, -78, -17, y, 2.2, "fence", thick=0.15)
 s.line_x("Fence", -17, 28, 86, y, 2.2, "fence", gaps=[(49, 57)], thick=0.15)
-s.bld("EastWall", 89, 100, -78, -17, y, 26.0, "9 эт.")
+s.bld("EastWall", 89, 100, -78, -17, y, 26.0, "9 эт.", front="W")
 s.box("SchoolMain", 34, 80, -75, -64, y, 11.0, "school", "Школа · 3 эт.")
+record_building("School", "SchoolMain", "school_main", 34, 80, -75, -64, y, 11.0)
+record_building("School", "SchoolWing", "school_wing", 34, 44, -64, -52, y, 11.0, "E")
+record_building("School", "SchoolWing", "school_wing", 70, 80, -64, -52, y, 11.0, "W")
 s.box("SchoolWing", 34, 44, -64, -52, y, 11.0, "school")
 s.box("SchoolWing", 70, 80, -64, -52, y, 11.0, "school")
 s.box("Porch", 53, 61, -64, -62.5, y, 0.45, "prop", "Крыльцо")
@@ -355,8 +384,8 @@ s.write("scenes/district/z3_school.tscn")
 so = Scene("SouthYards")
 y = SOUTH
 so.bld("KhrNorth", -42, 12, -5, 6, y, 15.0, "Хрущёвка · 5 эт.", arches=[(-20, -16)], tint=KHR_TINT)
-so.bld("KhrWest", -42, -31, 6, 38, y, 15.0, "Хрущёвка · 5 эт.", arches=[(20, 24)], tint=KHR_TINT)
-so.bld("KhrSouth", -31, 12, 27, 38, y, 15.0, "Хрущёвка · 5 эт.", arches=[(-5, -1)], tint=KHR_TINT)
+so.bld("KhrWest", -42, -31, 6, 38, y, 15.0, "Хрущёвка · 5 эт.", arches=[(20, 24)], tint=KHR_TINT, front="E")
+so.bld("KhrSouth", -31, 12, 27, 38, y, 15.0, "Хрущёвка · 5 эт.", arches=[(-5, -1)], tint=KHR_TINT, front="N")
 so.box("Dovecote", -28, -24, 9, 13, y, 5.0, "garage", "Голубятня")
 so.box("Sheds", -18, 4, 15, 18, y, 2.5, "garage", "Сараи")
 so.box("Dryer", -12, -8, 10.95, 11.05, y, 2.0, "prop", "Сушилка")
@@ -377,13 +406,15 @@ b = Scene("BoilerHouse")
 y = SOUTH
 b.bld("Khr1", 29, 57, -6, 5, y, 15.0, "Хрущёвка · 5 эт.", arches=[(41, 45)], tint=KHR_TINT)
 b.box("ShellRow", 31, 55, 8, 11, y, 2.2, "garage", "Гаражи-«ракушки»")
-b.bld("Khr2", 29, 57, 16, 27, y, 15.0, "Хрущёвка · 5 эт.", tint=KHR_TINT)
+b.bld("Khr2", 29, 57, 16, 27, y, 15.0, "Хрущёвка · 5 эт.", tint=KHR_TINT, front="N")
 b.car(35, 33, y, 90)
 b.drift(48, 31, y, 6, 2, 1.3)
 b.line_z("Fence", 60, -12, 41, y, 2.5, "fence", gaps=[(18, 24)], thick=0.3, label="Бетонный забор котельной")
 b.line_x("Fence", -12, 60, 100, y, 2.5, "fence", thick=0.3)
 b.line_x("Fence", 41, 60, 100, y, 2.5, "fence", thick=0.3)
 b.box("Boiler", 66, 92, -8, 10, y, 10.0, "industrial", "Котельная")
+record_building("BoilerHouse", "Boiler", "boiler", 66, 92, -8, 10, y, 10.0, "N")
+record_building("BoilerHouse", "Chimney", "chimney", 90, 94, 28, 32, y, 45.0)
 b.box("Chimney", 90, 94, 28, 32, y, 45.0, "industrial", "Труба котельной · 45 м")
 b.light("ChimneyRed", 92, 44.5, 30, "Color(1, 0.1, 0.05, 1)", 6.0, 18.0)
 b.light("ChimneyRed", 92, 30.0, 30, "Color(1, 0.1, 0.05, 1)", 4.0, 12.0)
@@ -612,8 +643,9 @@ for i, (x, yy, z, yaw) in enumerate(TELEPORTS):
     nodes.append('[node name="Tp%d" type="Marker3D" parent="Teleports"]\ntransform = %s\n' % (i + 1, xform(x, yy + 0.1, z, yaw)))
 
 out = "[gd_scene format=3]\n\n" + "\n".join(ext) + "\n\n" + SUBS + "\n" + "\n".join(nodes)
-open(os.path.join(ROOT, "scenes", "levels", "district.tscn"), "w", encoding="utf-8", newline="\n").write(out)
-print("written scenes/levels/district.tscn")
+if WRITE:
+    open(os.path.join(ROOT, "scenes", "levels", "district.tscn"), "w", encoding="utf-8", newline="\n").write(out)
+    print("written scenes/levels/district.tscn")
 
 # =====================================================================================================
 # КАРТА docs/city_map.svg — рисуется из тех же данных, что и сцены (1 единица = 1 метр, север вверху)
@@ -684,8 +716,13 @@ for k, (col, txt) in enumerate(LEG):
 svg.append('<text x="0" y="%d" font-size="3.4" fill="#9fb0d0">Арки — проходы сквозь первый этаж домов (подпись «Арка» в игре).</text>' % (22 + len(LEG) * 7 + 4))
 svg.append('<text x="0" y="%d" font-size="3.4" fill="#9fb0d0">Север — вверху. 10 м ≈ 6 с шагом, ≈ 2 с бегом.</text>' % (22 + len(LEG) * 7 + 10))
 svg.append('</g></svg>')
-open(os.path.join(ROOT, "docs", "city_map.svg"), "w", encoding="utf-8", newline="\n").write("\n".join(svg) + "\n")
-print("written docs/city_map.svg")
+if WRITE:
+    open(os.path.join(ROOT, "docs", "city_map.svg"), "w", encoding="utf-8", newline="\n").write("\n".join(svg) + "\n")
+    print("written docs/city_map.svg")
+import json
+open(os.path.join(ROOT, "tools", "district_buildings.json"), "w", encoding="utf-8", newline="\n").write(
+    json.dumps(BUILDINGS, ensure_ascii=False, indent=1) + "\n")
+print("written tools/district_buildings.json -", len(BUILDINGS), "buildings")
 
 # =====================================================================================================
 # ПРОВЕРКИ
