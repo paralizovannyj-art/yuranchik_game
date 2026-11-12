@@ -1,4 +1,4 @@
-## Процедурная анимация временной модели Юрчика (сегментированный манекен) — с весом и инерцией.
+## Процедурная анимация модели Юрчика (скелет из Blender, tools/blender/build_yurchik_v3.py) — с весом и инерцией.
 ## Модель смотрит в +Z; узел Model повёрнут на 180°.
 ## Знаки (вокруг X): отрицательный — конечность вперёд, положительный — назад; Spine.x > 0 — наклон вперёд.
 extends Node3D
@@ -8,6 +8,7 @@ extends Node3D
 @export var smoothing := 10.0
 @export var lean_turn := 0.05      ## крен в повороте
 @export var lean_accel := 0.035    ## наклон при разгоне/торможении
+@export var arm_rest := 0.40       ## модель стоит в A-позе (руки в стороны) — на столько радиан опускаем руки к телу
 
 var step_phase := 0.0             ## читает камера для покачивания
 
@@ -144,6 +145,12 @@ func update_anim(delta: float, speed: float, sprint: float, state: int, yaw_rate
 			instant = true
 		elif t >= 1.0:
 			_attack_t = -1.0
+
+	# руки из A-позы — вниз, к телу (в любой позе: стойка, шаг, замах)
+	if target.has("UpperArmL"):
+		target["UpperArmL"] += Vector3(0, 0, -arm_rest)
+	if target.has("UpperArmR"):
+		target["UpperArmR"] += Vector3(0, 0, arm_rest)
 
 	var w := 1.0 if instant else 1.0 - exp(-smoothing * delta)
 	for k in _bones:
