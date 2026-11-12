@@ -167,7 +167,8 @@
       "mcp__godot-mcp-pro__run_test_scenario",
       "mcp__godot-mcp-pro__assert_node_state",
       "mcp__godot-mcp-pro__assert_screen_text",
-      "mcp__godot-mcp-pro__run_stress_test"
+      "mcp__godot-mcp-pro__run_stress_test",
+      "mcp__godot-mcp-pro__execute_editor_script"
     ]
   },
   "enabledMcpjsonServers": [
