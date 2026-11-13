@@ -1,0 +1,9 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/backdrop.gd" id="bd"]
+[ext_resource type="PackedScene" path="res://assets/models/district/backdrop.gltf" id="mdl"]
+
+[node name="Backdrop" type="Node3D"]
+script = ExtResource("bd")
+
+[node name="Model" parent="." instance=ExtResource("mdl")]

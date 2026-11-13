@@ -306,17 +306,17 @@ kind = "road"
 solid = false
 
 [node name="OuterW" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -400.5, -20, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -400.5, -20, -299)
 script = ExtResource("bb")
-size = Vector3(599, 20, 1400)
+size = Vector3(599, 20, 802)
 kind = "ground"
 tint = Color(0.53, 0.51, 0.47, 1)
 solid = false
 
 [node name="OuterE" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 400.5, -20, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 400.5, -20, -299)
 script = ExtResource("bb")
-size = Vector3(599, 20, 1400)
+size = Vector3(599, 20, 802)
 kind = "ground"
 tint = Color(0.53, 0.51, 0.47, 1)
 solid = false
@@ -334,6 +334,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -20, 401)
 script = ExtResource("bb")
 size = Vector3(202, 8, 598)
 kind = "ground"
+show_mesh = false
 tint = Color(0.38, 0.36, 0.33, 1)
 solid = false
 

@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" path="res://scenes/district/z6_garages.tscn" id="z6_garages"]
 [ext_resource type="PackedScene" path="res://scenes/district/z7_wasteland.tscn" id="z7_wasteland"]
 [ext_resource type="PackedScene" path="res://scenes/district/z8_west_yard.tscn" id="z8_west_yard"]
+[ext_resource type="PackedScene" path="res://scenes/district/backdrop.tscn" id="backdrop"]
 
 [sub_resource type="ShaderMaterial" id="sky_mat"]
 shader = ExtResource("sky")
@@ -179,3 +180,5 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -81, 3.1, -48)
 
 [node name="LightBudget" type="Node" parent="."]
 script = ExtResource("budget")
+
+[node name="Backdrop" parent="." instance=ExtResource("backdrop")]
