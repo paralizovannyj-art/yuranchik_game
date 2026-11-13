@@ -710,7 +710,7 @@ BUILDERS = {
     "Parapet": (railing, 1, False), "TunnelRail": (railing, 1, False),
     "Pipe": (pipe_run, 1, False), "PipeBranch": (pipe_run, 1, False), "PipePost": (pipe_post, 1, False),
     "PipeEnd": (pipe_block, 1, False), "PipeJoint": (pipe_block, 1, False), "ArchPost": (arch_post, 1, False),
-    "ArchTop": (arch_top, 1, False), "PipeBridge": (pipe_bridge, 1, False),
+    "ArchTop": (arch_top, 1, False), "PipeBridge": (pipe_bridge, 1, True),
     "PipeStepN": (stairs_metal, 1, True), "PipeStepS": (stairs_metal, 1, True),
     "StairsProspect": (stairs_concrete, 1, True), "StairsSchool": (stairs_concrete, 1, True),
     "StairsWest": (stairs_concrete, 1, True), "StairsWide": (stairs_concrete, 1, True),

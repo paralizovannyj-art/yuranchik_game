@@ -975,9 +975,9 @@
 {
 "zone": "BoilerHouse",
 "node": "PipeBridge",
-"model": "res://assets/models/district/props/pipebridge_pipe_bridge_1_6x0_2x1_8.gltf",
+"model": "res://assets/models/district/props/pipebridge_pipe_bridge_1_6x0_2x1_8_nocol.gltf",
 "yaw": 0,
-"nocol": false
+"nocol": true
 },
 {
 "zone": "BoilerHouse",
@@ -996,9 +996,9 @@
 {
 "zone": "BoilerHouse",
 "node": "PipeBridge2",
-"model": "res://assets/models/district/props/pipebridge_pipe_bridge_1_6x0_2x1_8.gltf",
+"model": "res://assets/models/district/props/pipebridge_pipe_bridge_1_6x0_2x1_8_nocol.gltf",
 "yaw": 0,
-"nocol": false
+"nocol": true
 },
 {
 "zone": "BoilerHouse",
