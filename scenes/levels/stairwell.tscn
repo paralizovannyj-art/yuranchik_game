@@ -57,7 +57,7 @@ ambience_sound = "amb_room"
 ambience_db = -16.0
 step_sound = "step_floor"
 step_variants = 3
-flashlight_energy = 7.0
+flashlight_energy = 3.0
 nav_agent_radius = 0.375
 nav_cell = 0.125
 

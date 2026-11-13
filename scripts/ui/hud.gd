@@ -8,6 +8,9 @@ const W := 854.0
 const H := 480.0
 const C_TEXT := Color(0.86, 0.85, 0.80)
 const C_ACCENT := Color(1.0, 0.62, 0.25)
+const CROSS_SIZE := 20.0
+const CROSS_SPRING := 260.0   ## жёсткость «жидкой» пружины прицела
+const CROSS_BOUNCE := 0.45    ## < 1 — форма чуть перелетает и покачивается, как капля
 
 var player: Player
 var inventory: InventoryUI
@@ -21,6 +24,7 @@ var _prompt: Label
 var _title: Label
 var _sub: Label
 var _cross: ColorRect
+var _cross_mat: ShaderMaterial
 var _hp_fill: ColorRect
 var _st_fill: ColorRect
 var _hp_text: Label
@@ -36,6 +40,9 @@ var _flash := 0.0
 var _last_hp := 100.0
 var _beat := 0.0
 var _obj_t := 0.0
+var _cross_open := 0.0
+var _cross_vel := 0.0
+var _cross_alpha := 0.0
 
 
 func _ready() -> void:
@@ -135,7 +142,11 @@ func _build() -> void:
 	_vignette.modulate.a = 0.0
 	_root.add_child(_vignette)
 
-	_cross = _rect(_root, Color(1, 1, 1, 0.75), Rect2(W / 2 - 1.5, H / 2 - 1.5, 3, 3))
+	# прицел из «жидкого стекла» (shaders/glass_crosshair.gdshader): капля, при замахе — кольцо
+	_cross = _rect(_root, Color.WHITE, Rect2(W / 2 - CROSS_SIZE / 2, H / 2 - CROSS_SIZE / 2, CROSS_SIZE, CROSS_SIZE))
+	_cross_mat = ShaderMaterial.new()
+	_cross_mat.shader = preload("res://shaders/glass_crosshair.gdshader")
+	_cross.material = _cross_mat
 
 	mk_label(_root, "ЦЕЛЬ", 10, C_ACCENT, Rect2(18, 12, 200, 14))
 	_objective = mk_label(_root, "", 13, C_TEXT, Rect2(18, 25, 380, 40))
@@ -210,7 +221,7 @@ func _process(delta: float) -> void:
 	_st_fill.size.x = 120.0 * player.stamina / player.max_stamina
 	_st_fill.color = Color(0.9, 0.3, 0.2) if player.exhausted else Color(0.75, 0.78, 0.85)
 	var playing := not paused and not player.is_dead() and _menu_kind == ""
-	_cross.visible = playing and player.is_aiming()
+	_update_cross(delta, playing)
 	_prompt.text = "[E]  %s" % player.focus.prompt if playing and player.focus else ""
 	_grab_box.visible = playing and player.state == Player.State.GRABBED
 	_grab_fill.size.x = 180.0 * clampf(player.escape, 0.0, 1.0)
@@ -220,6 +231,24 @@ func _process(delta: float) -> void:
 		if _beat <= 0.0:
 			_beat = 1.0
 			Game.sfx("heartbeat", null, -8.0 + low * 6.0, 0.0)
+
+
+## Капля в обычном режиме, большое кольцо — когда взгляд на предмете, с которым можно взаимодействовать,
+## кольцо поуже — при замахе. Форма ведётся недодемпфированной пружиной, поэтому переливается с «бульком».
+func _update_cross(delta: float, playing: bool) -> void:
+	var goal := 0.0
+	if player.focus:
+		goal = 1.0
+	elif player.is_aiming():
+		goal = 0.7
+	_cross_vel += ((goal - _cross_open) * CROSS_SPRING - _cross_vel * 2.0 * sqrt(CROSS_SPRING) * CROSS_BOUNCE) * delta
+	_cross_open = clampf(_cross_open + _cross_vel * delta, 0.0, 1.2)
+	var sprinting := player.move_speed > player.walk_speed * 1.3
+	var a_goal := (0.35 if sprinting else 1.0) if playing else 0.0
+	_cross_alpha = move_toward(_cross_alpha, a_goal, delta * 5.0)
+	_cross.visible = _cross_alpha > 0.01
+	_cross_mat.set_shader_parameter("open", _cross_open)
+	_cross_mat.set_shader_parameter("alpha", _cross_alpha)
 
 
 func _input(event: InputEvent) -> void:
