@@ -115,7 +115,7 @@ func _rebuild() -> void:
 		body.add_child(cs)
 		_add(body)
 
-	if label != "" and show_mesh:
+	if label != "" and show_mesh and Engine.is_editor_hint():   # в игре подписей нет — только в редакторе
 		var l := Label3D.new()
 		l.text = label
 		l.billboard = BaseMaterial3D.BILLBOARD_ENABLED

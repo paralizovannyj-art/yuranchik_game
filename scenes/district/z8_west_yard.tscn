@@ -26,21 +26,9 @@
 
 [ext_resource type="PackedScene" path="res://assets/models/district/props/lamppole_lamp_pole_0_24x6_5x0_24.gltf" id="m14"]
 
+[ext_resource type="PackedScene" path="res://scenes/props/street_light.tscn" id="L1"]
+
 [node name="WestYard" type="Node3D"]
-
-[node name="LampLight" type="OmniLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -81, 9.2, -45)
-light_color = Color(1, 0.62, 0.3, 1)
-light_energy = 2
-omni_range = 13
-omni_attenuation = 1.2
-
-[node name="LampLight2" type="OmniLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58, 9.2, -68)
-light_color = Color(1, 0.62, 0.3, 1)
-light_energy = 2
-omni_range = 13
-omni_attenuation = 1.2
 
 [node name="Tower_mdl" parent="." instance=ExtResource("m2")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -92, 3, -70)
@@ -85,4 +73,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -53, 3, -60)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -81, 3, -45)
 
 [node name="LampPole2_mdl" parent="." instance=ExtResource("m14")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58, 3, -68)
+
+[node name="StreetLight10" parent="." instance=ExtResource("L1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -81, 3, -45)
+
+[node name="StreetLight11" parent="." instance=ExtResource("L1")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58, 3, -68)

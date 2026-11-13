@@ -44,6 +44,8 @@
 
 [ext_resource type="PackedScene" path="res://assets/models/district/props/lamppole_lamp_pole_0_24x6_5x0_24.gltf" id="m22"]
 
+[ext_resource type="PackedScene" path="res://scenes/props/street_light.tscn" id="L1"]
+
 [node name="Wasteland" type="Node3D"]
 
 [node name="Flight" type="Node3D" parent="."]
@@ -87,19 +89,13 @@ kind = "construction"
 solid = false
 show_mesh = false
 
-[node name="CraneLamp" type="OmniLight3D" parent="."]
+[node name="CraneLamp" type="OmniLight3D" parent="." groups=["landmark"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -50, 34, 21)
 light_color = Color(1, 0.85, 0.35, 1)
 light_energy = 6
 omni_range = 40
 omni_attenuation = 1.2
-
-[node name="LampLight" type="OmniLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 6.2, -7.5)
-light_color = Color(1, 0.62, 0.3, 1)
-light_energy = 2
-omni_range = 13
-omni_attenuation = 1.2
+metadata/halo_size = 4
 
 [node name="Slab_mdl" parent="." instance=ExtResource("m2")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60.5, 2.7, 33)
@@ -220,3 +216,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -75, 0, 26)
 
 [node name="LampPole_mdl" parent="." instance=ExtResource("m22")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 0, -7.5)
+
+[node name="StreetLight9" parent="." instance=ExtResource("L1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 0, -7.5)
+flicker = true

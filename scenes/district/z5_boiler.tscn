@@ -48,28 +48,27 @@
 
 [ext_resource type="PackedScene" path="res://assets/models/district/props/pipebridge_pipe_bridge_1_6x0_2x1_8_nocol.gltf" id="m25"]
 
+[ext_resource type="PackedScene" path="res://scenes/props/street_light.tscn" id="L1"]
+
+[ext_resource type="PackedScene" path="res://scenes/props/steam.tscn" id="L2"]
+
 [node name="BoilerHouse" type="Node3D"]
 
-[node name="ChimneyRed" type="OmniLight3D" parent="."]
+[node name="ChimneyRed" type="OmniLight3D" parent="." groups=["landmark"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 92, 44.5, 30)
 light_color = Color(1, 0.1, 0.05, 1)
 light_energy = 6
 omni_range = 18
 omni_attenuation = 1.2
+metadata/halo_size = 3
 
-[node name="ChimneyRed2" type="OmniLight3D" parent="."]
+[node name="ChimneyRed2" type="OmniLight3D" parent="." groups=["landmark"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 92, 30, 30)
 light_color = Color(1, 0.1, 0.05, 1)
 light_energy = 4
 omni_range = 12
 omni_attenuation = 1.2
-
-[node name="LampLight" type="OmniLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 63, 6.2, 15)
-light_color = Color(1, 0.62, 0.3, 1)
-light_energy = 2
-omni_range = 13
-omni_attenuation = 1.2
+metadata/halo_size = 2.2
 
 [node name="PipeStepN" type="Node3D" parent="."]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 15, 0, 40.1)
@@ -219,3 +218,21 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 1.5, 43)
 
 [node name="PipeBridge2_mdl" parent="." instance=ExtResource("m25")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 1.5, 43)
+
+[node name="StreetLight8" parent="." instance=ExtResource("L1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 63, 0, 15)
+
+[node name="SteamJoint" parent="." instance=ExtResource("L2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 59, 4, 43)
+
+[node name="SteamEnd" parent="." instance=ExtResource("L2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -45.5, 2, 43)
+
+[node name="SteamArch" parent="." instance=ExtResource("L2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, 5.7, 43)
+
+[node name="SteamLeak1" parent="." instance=ExtResource("L2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 1.5, 43)
+
+[node name="SteamLeak2" parent="." instance=ExtResource("L2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 70, 1.5, 43)

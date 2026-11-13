@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/levels/district.gd" id="lvl"]
+[ext_resource type="Script" path="res://scripts/world/light_budget.gd" id="budget"]
 [ext_resource type="PackedScene" path="res://scenes/characters/player.tscn" id="player"]
 [ext_resource type="Shader" path="res://shaders/city_night_sky.gdshader" id="sky"]
 [ext_resource type="Shader" path="res://shaders/ps2_post.gdshader" id="post"]
@@ -35,7 +36,7 @@ background_color = Color(0.015, 0.02, 0.035, 1)
 sky = SubResource("sky_res")
 ambient_light_source = 2
 ambient_light_color = Color(0.3, 0.42, 0.6, 1)
-ambient_light_energy = 0.55
+ambient_light_energy = 0.3
 tonemap_mode = 2
 tonemap_exposure = 1.15
 glow_enabled = true
@@ -104,7 +105,7 @@ environment = SubResource("env")
 [node name="Moon" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.894, -0.293, 0.338, 0, 0.756, 0.655, -0.447, -0.586, 0.676, 0, 60, 0)
 light_color = Color(0.5, 0.65, 0.95, 1)
-light_energy = 0.35
+light_energy = 0.22
 shadow_enabled = true
 directional_shadow_max_distance = 80.0
 
@@ -175,3 +176,6 @@ transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -70, 0.1, 1.5)
 
 [node name="Tp8" type="Marker3D" parent="Teleports"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -81, 3.1, -48)
+
+[node name="LightBudget" type="Node" parent="."]
+script = ExtResource("budget")

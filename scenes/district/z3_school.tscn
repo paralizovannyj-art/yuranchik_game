@@ -36,6 +36,8 @@
 
 [ext_resource type="PackedScene" path="res://assets/models/district/props/drift_drift_2x1_4x6_2.gltf" id="m18"]
 
+[ext_resource type="Script" path="res://scripts/world/flicker_light.gd" id="L1"]
+
 [node name="School" type="Node3D"]
 
 [node name="Field" type="Node3D" parent="."]
@@ -56,12 +58,16 @@ shape = "stairs"
 label = "Трибуна"
 show_mesh = false
 
-[node name="FloodLight" type="OmniLight3D" parent="."]
+[node name="FloodLight" type="OmniLight3D" parent="." groups=["landmark"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 75, 16.5, -49)
 light_color = Color(0.82, 0.9, 1, 1)
 light_energy = 4
 omni_range = 35
 omni_attenuation = 1.2
+metadata/halo_size = 5
+script = ExtResource("L1")
+flicker_chance = 0.35
+min_factor = 0.1
 
 [node name="Eastwall_mdl" parent="." instance=ExtResource("m2")]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 94.5, 3, -47.5)

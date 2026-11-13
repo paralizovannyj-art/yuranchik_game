@@ -46,6 +46,8 @@
 
 [ext_resource type="PackedScene" path="res://assets/models/district/props/lamppole_lamp_pole_0_24x6_5x0_24.gltf" id="m24"]
 
+[ext_resource type="PackedScene" path="res://scenes/props/street_light.tscn" id="L1"]
+
 [node name="HomeYard" type="Node3D"]
 
 [node name="EntranceLight" type="OmniLight3D" parent="."]
@@ -60,27 +62,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 5, -52.8)
 light_color = Color(1, 0.75, 0.5, 1)
 light_energy = 1.3
 omni_range = 7
-omni_attenuation = 1.2
-
-[node name="LampLight" type="OmniLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 9.2, -62.5)
-light_color = Color(1, 0.62, 0.3, 1)
-light_energy = 2
-omni_range = 13
-omni_attenuation = 1.2
-
-[node name="LampLight2" type="OmniLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 9.2, -62.5)
-light_color = Color(1, 0.62, 0.3, 1)
-light_energy = 2
-omni_range = 13
-omni_attenuation = 1.2
-
-[node name="LampLight3" type="OmniLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -35, 9.2, -20)
-light_color = Color(1, 0.62, 0.3, 1)
-light_energy = 2
-omni_range = 13
 omni_attenuation = 1.2
 
 [node name="Homebuilding_mdl" parent="." instance=ExtResource("m2")]
@@ -166,3 +147,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -35, 3, -20)
 
 [node name="LampPole5_mdl" parent="." instance=ExtResource("m24")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 3, -30)
+
+[node name="StreetLight3" parent="." instance=ExtResource("L1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 3, -62.5)
+flicker = true
+
+[node name="StreetLight4" parent="." instance=ExtResource("L1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 3, -62.5)
+
+[node name="StreetLight5" parent="." instance=ExtResource("L1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -35, 3, -20)
