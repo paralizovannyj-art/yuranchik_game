@@ -51,6 +51,10 @@ const COLORS := {
 	set(v):
 		solid = v
 		_rebuild()
+@export var show_mesh := true:  ## видна ли коробка; выключено — остаётся только невидимая коллизия (под лестницами-моделями)
+	set(v):
+		show_mesh = v
+		_rebuild()
 
 static var _materials := {}
 var _built: Array[Node] = []
@@ -87,7 +91,10 @@ func _rebuild() -> void:
 			bm.material = mat
 			mi.mesh = bm
 			mi.position.y = size.y / 2.0
-	_add(mi)
+	if show_mesh:
+		_add(mi)
+	else:
+		mi.free()
 
 	if solid:
 		var body := StaticBody3D.new()
@@ -108,7 +115,7 @@ func _rebuild() -> void:
 		body.add_child(cs)
 		_add(body)
 
-	if label != "":
+	if label != "" and show_mesh:
 		var l := Label3D.new()
 		l.text = label
 		l.billboard = BaseMaterial3D.BILLBOARD_ENABLED

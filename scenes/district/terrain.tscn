@@ -2,6 +2,54 @@
 
 [ext_resource type="Script" path="res://scripts/tools/blockout_box.gd" id="bb"]
 
+[ext_resource type="PackedScene" path="res://assets/models/district/terrain_northfacades.gltf" id="m2"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/terrain_northfacades2.gltf" id="m3"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/terrain_northfacades3.gltf" id="m4"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/tunnelstairsn_stairs_concrete_6x4x7_nocol.gltf" id="m5"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/tunnelrail_railing_0_2x1x7.gltf" id="m6"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/tunnelrail_railing_6x1x0_2.gltf" id="m7"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/stairsprospect_stairs_concrete_8x3x5_5_nocol.gltf" id="m8"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/stairswide_stairs_concrete_10x3x5_5_nocol.gltf" id="m9"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/stairswest_stairs_concrete_6x3x5_5_nocol.gltf" id="m10"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/stairsschool_stairs_concrete_6x3x5_5_nocol.gltf" id="m11"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/stairsgarages_stairs_concrete_2x2_5x4_5_nocol.gltf" id="m12"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/parapet_railing_110x1x0_2.gltf" id="m13"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/parapet_railing_2x1x0_2.gltf" id="m14"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/parapet_railing_74x1x0_2.gltf" id="m15"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/parapet_railing_40x1x0_2.gltf" id="m16"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/parapet_railing_14x1x0_2.gltf" id="m17"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/parapet_railing_50x1x0_2.gltf" id="m18"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/parapet_railing_24x1x0_2.gltf" id="m19"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/parapet_railing_44x1x0_2.gltf" id="m20"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/edge_fence_panel_1x5x20.gltf" id="m21"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/edge_fence_panel_1x3_5x65.gltf" id="m22"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/edge_fence_panel_1x3_5x62.gltf" id="m23"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/edge_fence_panel_1x11x54.gltf" id="m24"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/edge_fence_panel_200x3_5x1.gltf" id="m25"]
+
 [node name="Terrain" type="Node3D"]
 
 [node name="Prospect" type="Node3D" parent="."]
@@ -61,6 +109,7 @@ size = Vector3(6, 4, 7)
 kind = "ground"
 shape = "stairs"
 tint = Color(0.66, 0.64, 0.6, 1)
+show_mesh = false
 
 [node name="TunnelRampS" type="Node3D" parent="."]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -55, 2, -77)
@@ -69,24 +118,6 @@ size = Vector3(6, 1, 6)
 kind = "ground"
 shape = "ramp"
 tint = Color(0.6, 0.58, 0.54, 1)
-
-[node name="TunnelRail" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58.1, 6, -103.5)
-script = ExtResource("bb")
-size = Vector3(0.2, 1, 7)
-kind = "rail"
-
-[node name="TunnelRail2" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -51.9, 6, -103.5)
-script = ExtResource("bb")
-size = Vector3(0.2, 1, 7)
-kind = "rail"
-
-[node name="TunnelRail3" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -55, 6, -99.9)
-script = ExtResource("bb")
-size = Vector3(6, 1, 0.2)
-kind = "rail"
 
 [node name="Hub" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -79, -20, -47.5)
@@ -182,6 +213,7 @@ kind = "ground"
 shape = "stairs"
 label = "Лестница на проспект"
 tint = Color(0.6, 0.58, 0.54, 1)
+show_mesh = false
 
 [node name="RampProspect" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, 3, -75)
@@ -198,6 +230,7 @@ kind = "ground"
 shape = "stairs"
 label = "Лестница вниз"
 tint = Color(0.53, 0.51, 0.47, 1)
+show_mesh = false
 
 [node name="StairsWest" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -57, 0, -12.25)
@@ -206,6 +239,7 @@ size = Vector3(6, 3, 5.5)
 kind = "ground"
 shape = "stairs"
 tint = Color(0.53, 0.51, 0.47, 1)
+show_mesh = false
 
 [node name="StairsSchool" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 53, 0, -12.25)
@@ -214,6 +248,7 @@ size = Vector3(6, 3, 5.5)
 kind = "ground"
 shape = "stairs"
 tint = Color(0.53, 0.51, 0.47, 1)
+show_mesh = false
 
 [node name="RampSouth" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, 0, -10)
@@ -236,6 +271,7 @@ size = Vector3(2, 2.5, 4.5)
 kind = "ground"
 shape = "stairs"
 tint = Color(0.48, 0.46, 0.42, 1)
+show_mesh = false
 
 [node name="RampGarages2" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, -5, 70)
@@ -251,6 +287,7 @@ size = Vector3(2, 2.5, 4.5)
 kind = "ground"
 shape = "stairs"
 tint = Color(0.43, 0.41, 0.38, 1)
+show_mesh = false
 
 [node name="RampGarages3" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, -7.5, 88)
@@ -266,54 +303,7 @@ size = Vector3(2, 2.5, 4.5)
 kind = "ground"
 shape = "stairs"
 tint = Color(0.38, 0.36, 0.33, 1)
-
-[node name="Parapet" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -45, 6, -80.1)
-script = ExtResource("bb")
-size = Vector3(110, 1, 0.2)
-kind = "rail"
-
-[node name="Parapet2" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19, 6, -80.1)
-script = ExtResource("bb")
-size = Vector3(2, 1, 0.2)
-kind = "rail"
-
-[node name="Parapet3" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 63, 6, -80.1)
-script = ExtResource("bb")
-size = Vector3(74, 1, 0.2)
-kind = "rail"
-
-[node name="Parapet4" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 3, -15.1)
-script = ExtResource("bb")
-size = Vector3(40, 1, 0.2)
-kind = "rail"
-
-[node name="Parapet5" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -47, 3, -15.1)
-script = ExtResource("bb")
-size = Vector3(14, 1, 0.2)
-kind = "rail"
-
-[node name="Parapet6" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 3, -15.1)
-script = ExtResource("bb")
-size = Vector3(50, 1, 0.2)
-kind = "rail"
-
-[node name="Parapet7" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 38, 3, -15.1)
-script = ExtResource("bb")
-size = Vector3(24, 1, 0.2)
-kind = "rail"
-
-[node name="Parapet8" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 78, 3, -15.1)
-script = ExtResource("bb")
-size = Vector3(44, 1, 0.2)
-kind = "rail"
+show_mesh = false
 
 [node name="Road" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, 3, -42.5)
@@ -350,89 +340,6 @@ size = Vector3(6, 0.03, 8)
 kind = "road"
 solid = false
 
-[node name="NorthFacades" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 6, -106)
-script = ExtResource("bb")
-size = Vector3(40, 27, 12)
-kind = "building"
-label = "Дома северной стороны проспекта (стена)"
-
-[node name="NorthFacades2" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 6, -106)
-script = ExtResource("bb")
-size = Vector3(150, 27, 12)
-kind = "building"
-label = "Дома северной стороны проспекта (стена)"
-
-[node name="NorthFacades3" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -55, 6, -112)
-script = ExtResource("bb")
-size = Vector3(10, 27, 4)
-kind = "building"
-
-[node name="Edge" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -100.5, 6, -90)
-script = ExtResource("bb")
-size = Vector3(1, 5, 20)
-kind = "boundary"
-label = "Завал: трамвай поперёк + машины"
-
-[node name="Edge2" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100.5, 6, -90)
-script = ExtResource("bb")
-size = Vector3(1, 5, 20)
-kind = "boundary"
-label = "Завал: маршрутка + фура"
-
-[node name="Edge3" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -100.5, 3, -47.5)
-script = ExtResource("bb")
-size = Vector3(1, 3.5, 65)
-kind = "boundary"
-label = "Забор / торцы домов"
-
-[node name="Edge4" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -100.5, 0, 16)
-script = ExtResource("bb")
-size = Vector3(1, 3.5, 62)
-kind = "boundary"
-label = "Стройзабор"
-
-[node name="Edge5" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -100.5, -7.5, 74)
-script = ExtResource("bb")
-size = Vector3(1, 11, 54)
-kind = "boundary"
-label = "Забор"
-
-[node name="Edge6" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100.5, 3, -47.5)
-script = ExtResource("bb")
-size = Vector3(1, 3.5, 65)
-kind = "boundary"
-label = "Забор"
-
-[node name="Edge7" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100.5, 0, 16)
-script = ExtResource("bb")
-size = Vector3(1, 3.5, 62)
-kind = "boundary"
-label = "Бетонный забор «ёлочка»"
-
-[node name="Edge8" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100.5, -7.5, 74)
-script = ExtResource("bb")
-size = Vector3(1, 11, 54)
-kind = "boundary"
-label = "Забор"
-
-[node name="Edge9" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -7.5, 101.5)
-script = ExtResource("bb")
-size = Vector3(200, 3.5, 1)
-kind = "boundary"
-label = "Забор над обрывом балки"
-
 [node name="OuterW" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -400.5, -20, 0)
 script = ExtResource("bb")
@@ -464,3 +371,96 @@ size = Vector3(202, 8, 598)
 kind = "ground"
 tint = Color(0.38, 0.36, 0.33, 1)
 solid = false
+
+[node name="Northfacades_mdl" parent="." instance=ExtResource("m2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 6, -106)
+
+[node name="Northfacades2_mdl" parent="." instance=ExtResource("m3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 6, -106)
+
+[node name="Northfacades3_mdl" parent="." instance=ExtResource("m4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -55, 6, -112)
+
+[node name="TunnelStairsN_mdl" parent="." instance=ExtResource("m5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -55, 2, -103.5)
+
+[node name="TunnelRail_mdl" parent="." instance=ExtResource("m6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58.1, 6, -103.5)
+
+[node name="TunnelRail2_mdl" parent="." instance=ExtResource("m6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -51.9, 6, -103.5)
+
+[node name="TunnelRail3_mdl" parent="." instance=ExtResource("m7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -55, 6, -99.9)
+
+[node name="StairsProspect_mdl" parent="." instance=ExtResource("m8")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 3, -77.25)
+
+[node name="StairsWide_mdl" parent="." instance=ExtResource("m9")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -35, 0, -12.25)
+
+[node name="StairsWest_mdl" parent="." instance=ExtResource("m10")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -57, 0, -12.25)
+
+[node name="StairsSchool_mdl" parent="." instance=ExtResource("m11")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 53, 0, -12.25)
+
+[node name="StairsGarages_mdl" parent="." instance=ExtResource("m12")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60.5, -2.5, 49.25)
+
+[node name="StairsGarages2_mdl" parent="." instance=ExtResource("m12")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60.5, -5, 67.25)
+
+[node name="StairsGarages3_mdl" parent="." instance=ExtResource("m12")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60.5, -7.5, 85.25)
+
+[node name="Parapet_mdl" parent="." instance=ExtResource("m13")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -45, 6, -80.1)
+
+[node name="Parapet2_mdl" parent="." instance=ExtResource("m14")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19, 6, -80.1)
+
+[node name="Parapet3_mdl" parent="." instance=ExtResource("m15")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 63, 6, -80.1)
+
+[node name="Parapet4_mdl" parent="." instance=ExtResource("m16")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 3, -15.1)
+
+[node name="Parapet5_mdl" parent="." instance=ExtResource("m17")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -47, 3, -15.1)
+
+[node name="Parapet6_mdl" parent="." instance=ExtResource("m18")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 3, -15.1)
+
+[node name="Parapet7_mdl" parent="." instance=ExtResource("m19")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 38, 3, -15.1)
+
+[node name="Parapet8_mdl" parent="." instance=ExtResource("m20")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 78, 3, -15.1)
+
+[node name="Edge_mdl" parent="." instance=ExtResource("m21")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -100.5, 6, -90)
+
+[node name="Edge2_mdl" parent="." instance=ExtResource("m21")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100.5, 6, -90)
+
+[node name="Edge3_mdl" parent="." instance=ExtResource("m22")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -100.5, 3, -47.5)
+
+[node name="Edge4_mdl" parent="." instance=ExtResource("m23")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -100.5, 0, 16)
+
+[node name="Edge5_mdl" parent="." instance=ExtResource("m24")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -100.5, -7.5, 74)
+
+[node name="Edge6_mdl" parent="." instance=ExtResource("m22")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100.5, 3, -47.5)
+
+[node name="Edge7_mdl" parent="." instance=ExtResource("m23")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100.5, 0, 16)
+
+[node name="Edge8_mdl" parent="." instance=ExtResource("m24")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100.5, -7.5, 74)
+
+[node name="Edge9_mdl" parent="." instance=ExtResource("m25")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -7.5, 101.5)

@@ -21,7 +21,7 @@
 	"nodes":[
 		{
 			"mesh":0,
-			"name":"pipebridge_pipe_bridge_1_6x0_2x1_8"
+			"name":"pipebridge_pipe_bridge_1_6x0_2x1_8_nocol"
 		}
 	],
 	"materials":[
@@ -39,7 +39,7 @@
 	],
 	"meshes":[
 		{
-			"name":"pipebridge_pipe_bridge_1_6x0_2x1_8",
+			"name":"pipebridge_pipe_bridge_1_6x0_2x1_8_nocol",
 			"primitives":[
 				{
 					"attributes":{
@@ -137,7 +137,7 @@
 	"buffers":[
 		{
 			"byteLength":6440,
-			"uri":"pipebridge_pipe_bridge_1_6x0_2x1_8.bin"
+			"uri":"pipebridge_pipe_bridge_1_6x0_2x1_8_nocol.bin"
 		}
 	]
 }

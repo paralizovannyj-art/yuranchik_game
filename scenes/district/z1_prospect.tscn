@@ -2,6 +2,40 @@
 
 [ext_resource type="Script" path="res://scripts/tools/blockout_box.gd" id="bb"]
 
+[ext_resource type="PackedScene" path="res://assets/models/district/props/trampole_tram_pole_0_36x9x0_4.gltf" id="m2"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/stopwall_stop_wall_16x2_6x0_2.gltf" id="m3"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/stoproof_stop_roof_16x0_2x2_4_nocol.gltf" id="m4"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/kiosk_kiosk_4x2_6x2.gltf" id="m5"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/tunnelsign_sign_post_0_5x2_4x0_5.gltf" id="m6"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/tram_tram_2_6x3_6x15.gltf" id="m7"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/car_car_1_7x1_45x4_2_v0.gltf" id="m8"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/car_car_1_7x1_45x4_2_v1.gltf" id="m9"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/drift_drift_4x1_6x3_0.gltf" id="m10"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/minibus_minibus_2_2x2_6x6.gltf" id="m11"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/truck_truck_2_5x3_8x13.gltf" id="m12"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/car_car_1_7x1_45x4_2_v2.gltf" id="m13"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/car_car_1_7x1_45x4_2_v3.gltf" id="m14"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/drift_drift_4x1x1_2_1.gltf" id="m15"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/drift_drift_4x1x1_2_2.gltf" id="m16"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/drift_drift_4x1x1_2_0.gltf" id="m17"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/props/lamppole_lamp_pole_0_24x6_5x0_24.gltf" id="m18"]
+
 [node name="Prospect" type="Node3D"]
 
 [node name="Roadway" type="Node3D" parent="."]
@@ -32,73 +66,6 @@ size = Vector3(200, 0.12, 0.1)
 kind = "rail"
 solid = false
 
-[node name="TramPole" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -90, 6, -91)
-script = ExtResource("bb")
-size = Vector3(0.36, 9, 0.4)
-kind = "prop"
-
-[node name="TramPole2" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -70, 6, -91)
-script = ExtResource("bb")
-size = Vector3(0.36, 9, 0.4)
-kind = "prop"
-
-[node name="TramPole3" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -50, 6, -91)
-script = ExtResource("bb")
-size = Vector3(0.36, 9, 0.4)
-kind = "prop"
-
-[node name="TramPole4" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 6, -91)
-script = ExtResource("bb")
-size = Vector3(0.36, 9, 0.4)
-kind = "prop"
-
-[node name="TramPole5" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 6, -91)
-script = ExtResource("bb")
-size = Vector3(0.36, 9, 0.4)
-kind = "prop"
-label = "Опора трамвая"
-
-[node name="TramPole6" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 6, -91)
-script = ExtResource("bb")
-size = Vector3(0.36, 9, 0.4)
-kind = "prop"
-
-[node name="TramPole7" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 6, -91)
-script = ExtResource("bb")
-size = Vector3(0.36, 9, 0.4)
-kind = "prop"
-
-[node name="TramPole8" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, 6, -91)
-script = ExtResource("bb")
-size = Vector3(0.36, 9, 0.4)
-kind = "prop"
-
-[node name="TramPole9" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 70, 6, -91)
-script = ExtResource("bb")
-size = Vector3(0.36, 9, 0.4)
-kind = "prop"
-
-[node name="TramPole10" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 90, 6, -91)
-script = ExtResource("bb")
-size = Vector3(0.36, 9, 0.4)
-kind = "prop"
-
-[node name="StopWall" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, -82.2)
-script = ExtResource("bb")
-size = Vector3(16, 2.6, 0.2)
-kind = "prop"
-
 [node name="StopRoof" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.6, -83.3)
 script = ExtResource("bb")
@@ -106,14 +73,7 @@ size = Vector3(16, 0.2, 2.4)
 kind = "prop"
 label = "Остановка трамвая"
 solid = false
-
-[node name="Kiosk" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -38, 6, -83.5)
-script = ExtResource("bb")
-size = Vector3(4, 2.6, 2)
-kind = "prop"
-label = "Ларьки"
-tint = Color(0.7, 0.3, 0.2, 1)
+show_mesh = false
 
 [node name="KioskLight" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -38, 8, -81.8)
@@ -122,26 +82,12 @@ light_energy = 1.2
 omni_range = 6
 omni_attenuation = 1.2
 
-[node name="Kiosk2" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32, 6, -83.5)
-script = ExtResource("bb")
-size = Vector3(4, 2.6, 2)
-kind = "prop"
-tint = Color(0.75, 0.6, 0.25, 1)
-
 [node name="KioskLight2" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32, 8, -81.8)
 light_color = Color(1, 0.75, 0.5, 1)
 light_energy = 1.2
 omni_range = 6
 omni_attenuation = 1.2
-
-[node name="Kiosk3" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32, 6, -83.5)
-script = ExtResource("bb")
-size = Vector3(4, 2.6, 2)
-kind = "prop"
-tint = Color(0.3, 0.55, 0.35, 1)
 
 [node name="KioskLight3" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32, 8, -81.8)
@@ -150,125 +96,12 @@ light_energy = 1.2
 omni_range = 6
 omni_attenuation = 1.2
 
-[node name="Kiosk4" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 38, 6, -83.5)
-script = ExtResource("bb")
-size = Vector3(4, 2.6, 2)
-kind = "prop"
-tint = Color(0.7, 0.3, 0.2, 1)
-
 [node name="KioskLight4" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 38, 8, -81.8)
 light_color = Color(1, 0.75, 0.5, 1)
 light_energy = 1.2
 omni_range = 6
 omni_attenuation = 1.2
-
-[node name="TunnelSign" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -59.25, 6, -109.25)
-script = ExtResource("bb")
-size = Vector3(0.5, 2.4, 0.5)
-kind = "prop"
-label = "Выход из перехода"
-
-[node name="Tram" type="Node3D" parent="."]
-transform = Transform3D(0.342, 0, 0.94, 0, 1, 0, -0.94, 0, 0.342, -92, 6, -91)
-script = ExtResource("bb")
-size = Vector3(2.6, 3.6, 15)
-kind = "car"
-label = "Трамвай"
-
-[node name="Car" type="Node3D" parent="."]
-transform = Transform3D(0.94, 0, 0.342, 0, 1, 0, -0.342, 0, 0.94, -85, 6, -86.5)
-script = ExtResource("bb")
-size = Vector3(1.7, 1.45, 4.2)
-kind = "car"
-
-[node name="Car2" type="Node3D" parent="."]
-transform = Transform3D(0.819, 0, -0.574, 0, 1, 0, 0.574, 0, 0.819, -84, 6, -95.5)
-script = ExtResource("bb")
-size = Vector3(1.7, 1.45, 4.2)
-kind = "car"
-
-[node name="Drift" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -97.5, 6, -82)
-script = ExtResource("bb")
-size = Vector3(4, 1.6, 3)
-kind = "snow"
-
-[node name="Minibus" type="Node3D" parent="."]
-transform = Transform3D(0.866, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866, 90, 6, -93)
-script = ExtResource("bb")
-size = Vector3(2.2, 2.6, 6)
-kind = "car"
-label = "Маршрутка"
-
-[node name="Truck" type="Node3D" parent="."]
-transform = Transform3D(0.966, 0, -0.259, 0, 1, 0, 0.259, 0, 0.966, 94, 6, -88)
-script = ExtResource("bb")
-size = Vector3(2.5, 3.8, 13)
-kind = "car"
-label = "Фура"
-
-[node name="Car3" type="Node3D" parent="."]
-transform = Transform3D(0.174, 0, 0.985, 0, 1, 0, -0.985, 0, 0.174, 84, 6, -90)
-script = ExtResource("bb")
-size = Vector3(1.7, 1.45, 4.2)
-kind = "car"
-
-[node name="Car4" type="Node3D" parent="."]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -70, 6, -86.2)
-script = ExtResource("bb")
-size = Vector3(1.7, 1.45, 4.2)
-kind = "car"
-
-[node name="Car5" type="Node3D" parent="."]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -20, 6, -86.2)
-script = ExtResource("bb")
-size = Vector3(1.7, 1.45, 4.2)
-kind = "car"
-
-[node name="Car6" type="Node3D" parent="."]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 50, 6, -86.2)
-script = ExtResource("bb")
-size = Vector3(1.7, 1.45, 4.2)
-kind = "car"
-
-[node name="Car7" type="Node3D" parent="."]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 70, 6, -86.2)
-script = ExtResource("bb")
-size = Vector3(1.7, 1.45, 4.2)
-kind = "car"
-
-[node name="Drift2" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -65, 6, -81.2)
-script = ExtResource("bb")
-size = Vector3(4, 1, 1.2)
-kind = "snow"
-
-[node name="Drift3" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 6, -81.2)
-script = ExtResource("bb")
-size = Vector3(4, 1, 1.2)
-kind = "snow"
-
-[node name="Drift4" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 56, 6, -81.2)
-script = ExtResource("bb")
-size = Vector3(4, 1, 1.2)
-kind = "snow"
-
-[node name="Drift5" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 6, -81.2)
-script = ExtResource("bb")
-size = Vector3(4, 1, 1.2)
-kind = "snow"
-
-[node name="LampPole" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -75, 6, -81)
-script = ExtResource("bb")
-size = Vector3(0.24, 6.5, 0.24)
-kind = "prop"
 
 [node name="LampLight" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -75, 12.2, -81)
@@ -277,18 +110,6 @@ light_energy = 2
 omni_range = 13
 omni_attenuation = 1.2
 
-[node name="LampPole2" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 6, -81)
-script = ExtResource("bb")
-size = Vector3(0.24, 6.5, 0.24)
-kind = "prop"
-
-[node name="LampPole3" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 6, -81)
-script = ExtResource("bb")
-size = Vector3(0.24, 6.5, 0.24)
-kind = "prop"
-
 [node name="LampLight2" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 12.2, -81)
 light_color = Color(1, 0.62, 0.3, 1)
@@ -296,8 +117,110 @@ light_energy = 2
 omni_range = 13
 omni_attenuation = 1.2
 
-[node name="LampPole4" type="Node3D" parent="."]
+[node name="TramPole_mdl" parent="." instance=ExtResource("m2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -90, 6, -91)
+
+[node name="TramPole2_mdl" parent="." instance=ExtResource("m2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -70, 6, -91)
+
+[node name="TramPole3_mdl" parent="." instance=ExtResource("m2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -50, 6, -91)
+
+[node name="TramPole4_mdl" parent="." instance=ExtResource("m2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 6, -91)
+
+[node name="TramPole5_mdl" parent="." instance=ExtResource("m2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 6, -91)
+
+[node name="TramPole6_mdl" parent="." instance=ExtResource("m2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 6, -91)
+
+[node name="TramPole7_mdl" parent="." instance=ExtResource("m2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 6, -91)
+
+[node name="TramPole8_mdl" parent="." instance=ExtResource("m2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, 6, -91)
+
+[node name="TramPole9_mdl" parent="." instance=ExtResource("m2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 70, 6, -91)
+
+[node name="TramPole10_mdl" parent="." instance=ExtResource("m2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 90, 6, -91)
+
+[node name="StopWall_mdl" parent="." instance=ExtResource("m3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, -82.2)
+
+[node name="StopRoof_mdl" parent="." instance=ExtResource("m4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.6, -83.3)
+
+[node name="Kiosk_mdl" parent="." instance=ExtResource("m5")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -38, 6, -83.5)
+
+[node name="Kiosk2_mdl" parent="." instance=ExtResource("m5")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -32, 6, -83.5)
+
+[node name="Kiosk3_mdl" parent="." instance=ExtResource("m5")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 32, 6, -83.5)
+
+[node name="Kiosk4_mdl" parent="." instance=ExtResource("m5")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 38, 6, -83.5)
+
+[node name="TunnelSign_mdl" parent="." instance=ExtResource("m6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -59.25, 6, -109.25)
+
+[node name="Tram_mdl" parent="." instance=ExtResource("m7")]
+transform = Transform3D(0.342, 0, 0.94, 0, 1, 0, -0.94, 0, 0.342, -92, 6, -91)
+
+[node name="Car_mdl" parent="." instance=ExtResource("m8")]
+transform = Transform3D(0.94, 0, 0.342, 0, 1, 0, -0.342, 0, 0.94, -85, 6, -86.5)
+
+[node name="Car2_mdl" parent="." instance=ExtResource("m9")]
+transform = Transform3D(0.819, 0, -0.574, 0, 1, 0, 0.574, 0, 0.819, -84, 6, -95.5)
+
+[node name="Drift_mdl" parent="." instance=ExtResource("m10")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -97.5, 6, -82)
+
+[node name="Minibus_mdl" parent="." instance=ExtResource("m11")]
+transform = Transform3D(0.866, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866, 90, 6, -93)
+
+[node name="Truck_mdl" parent="." instance=ExtResource("m12")]
+transform = Transform3D(0.966, 0, -0.259, 0, 1, 0, 0.259, 0, 0.966, 94, 6, -88)
+
+[node name="Car3_mdl" parent="." instance=ExtResource("m13")]
+transform = Transform3D(0.174, 0, 0.985, 0, 1, 0, -0.985, 0, 0.174, 84, 6, -90)
+
+[node name="Car4_mdl" parent="." instance=ExtResource("m14")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -70, 6, -86.2)
+
+[node name="Car5_mdl" parent="." instance=ExtResource("m8")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -20, 6, -86.2)
+
+[node name="Car6_mdl" parent="." instance=ExtResource("m9")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 50, 6, -86.2)
+
+[node name="Car7_mdl" parent="." instance=ExtResource("m13")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 70, 6, -86.2)
+
+[node name="Drift2_mdl" parent="." instance=ExtResource("m15")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -65, 6, -81.2)
+
+[node name="Drift3_mdl" parent="." instance=ExtResource("m16")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 6, -81.2)
+
+[node name="Drift4_mdl" parent="." instance=ExtResource("m17")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 56, 6, -81.2)
+
+[node name="Drift5_mdl" parent="." instance=ExtResource("m15")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 6, -81.2)
+
+[node name="LampPole_mdl" parent="." instance=ExtResource("m18")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -75, 6, -81)
+
+[node name="LampPole2_mdl" parent="." instance=ExtResource("m18")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 6, -81)
+
+[node name="LampPole3_mdl" parent="." instance=ExtResource("m18")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 6, -81)
+
+[node name="LampPole4_mdl" parent="." instance=ExtResource("m18")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 75, 6, -81)
-script = ExtResource("bb")
-size = Vector3(0.24, 6.5, 0.24)
-kind = "prop"

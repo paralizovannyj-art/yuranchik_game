@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://bfqnrxsowngv5"
-path="res://.godot/imported/pipebridge_pipe_bridge_1_6x0_2x1_8.gltf-92ef7fdf59cc3f311824a5bb00e38577.scn"
+uid="uid://d07lfesc8btt4"
+path="res://.godot/imported/pipebridge_pipe_bridge_1_6x0_2x1_8_nocol.gltf-6b9f49405d0518d907064cf7496542c2.scn"
 
 [deps]
 
-source_file="res://assets/models/district/props/pipebridge_pipe_bridge_1_6x0_2x1_8.gltf"
-dest_files=["res://.godot/imported/pipebridge_pipe_bridge_1_6x0_2x1_8.gltf-92ef7fdf59cc3f311824a5bb00e38577.scn"]
+source_file="res://assets/models/district/props/pipebridge_pipe_bridge_1_6x0_2x1_8_nocol.gltf"
+dest_files=["res://.godot/imported/pipebridge_pipe_bridge_1_6x0_2x1_8_nocol.gltf-6b9f49405d0518d907064cf7496542c2.scn"]
 
 [params]
 
