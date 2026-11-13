@@ -30,7 +30,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.62, 0)
 current = true
 fov = 72.0
 near = 0.05
-far = 250.0
+far = 1200.0
 
 [node name="Flashlight" type="SpotLight3D" parent="CamPivot/Camera"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.18, -0.22, -0.05)
