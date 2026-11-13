@@ -1,0 +1,1654 @@
+[
+{
+"zone": "Terrain",
+"node": "TunnelStairsN",
+"model": "res://assets/models/district/props/tunnelstairsn_stairs_concrete_6x4x7_nocol.gltf",
+"yaw": 0,
+"nocol": true
+},
+{
+"zone": "Terrain",
+"node": "TunnelRail",
+"model": "res://assets/models/district/props/tunnelrail_railing_0_2x1x7.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Terrain",
+"node": "TunnelRail2",
+"model": "res://assets/models/district/props/tunnelrail_railing_0_2x1x7.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Terrain",
+"node": "TunnelRail3",
+"model": "res://assets/models/district/props/tunnelrail_railing_6x1x0_2.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Terrain",
+"node": "StairsProspect",
+"model": "res://assets/models/district/props/stairsprospect_stairs_concrete_8x3x5_5_nocol.gltf",
+"yaw": 0,
+"nocol": true
+},
+{
+"zone": "Terrain",
+"node": "StairsWide",
+"model": "res://assets/models/district/props/stairswide_stairs_concrete_10x3x5_5_nocol.gltf",
+"yaw": 0,
+"nocol": true
+},
+{
+"zone": "Terrain",
+"node": "StairsWest",
+"model": "res://assets/models/district/props/stairswest_stairs_concrete_6x3x5_5_nocol.gltf",
+"yaw": 0,
+"nocol": true
+},
+{
+"zone": "Terrain",
+"node": "StairsSchool",
+"model": "res://assets/models/district/props/stairsschool_stairs_concrete_6x3x5_5_nocol.gltf",
+"yaw": 0,
+"nocol": true
+},
+{
+"zone": "Terrain",
+"node": "StairsGarages",
+"model": "res://assets/models/district/props/stairsgarages_stairs_concrete_2x2_5x4_5_nocol.gltf",
+"yaw": 0,
+"nocol": true
+},
+{
+"zone": "Terrain",
+"node": "StairsGarages2",
+"model": "res://assets/models/district/props/stairsgarages_stairs_concrete_2x2_5x4_5_nocol.gltf",
+"yaw": 0,
+"nocol": true
+},
+{
+"zone": "Terrain",
+"node": "StairsGarages3",
+"model": "res://assets/models/district/props/stairsgarages_stairs_concrete_2x2_5x4_5_nocol.gltf",
+"yaw": 0,
+"nocol": true
+},
+{
+"zone": "Terrain",
+"node": "Parapet",
+"model": "res://assets/models/district/props/parapet_railing_110x1x0_2.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Terrain",
+"node": "Parapet2",
+"model": "res://assets/models/district/props/parapet_railing_2x1x0_2.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Terrain",
+"node": "Parapet3",
+"model": "res://assets/models/district/props/parapet_railing_74x1x0_2.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Terrain",
+"node": "Parapet4",
+"model": "res://assets/models/district/props/parapet_railing_40x1x0_2.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Terrain",
+"node": "Parapet5",
+"model": "res://assets/models/district/props/parapet_railing_14x1x0_2.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Terrain",
+"node": "Parapet6",
+"model": "res://assets/models/district/props/parapet_railing_50x1x0_2.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Terrain",
+"node": "Parapet7",
+"model": "res://assets/models/district/props/parapet_railing_24x1x0_2.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Terrain",
+"node": "Parapet8",
+"model": "res://assets/models/district/props/parapet_railing_44x1x0_2.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Terrain",
+"node": "Edge",
+"model": "res://assets/models/district/props/edge_fence_panel_1x5x20.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Terrain",
+"node": "Edge2",
+"model": "res://assets/models/district/props/edge_fence_panel_1x5x20.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Terrain",
+"node": "Edge3",
+"model": "res://assets/models/district/props/edge_fence_panel_1x3_5x65.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Terrain",
+"node": "Edge4",
+"model": "res://assets/models/district/props/edge_fence_panel_1x3_5x62.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Terrain",
+"node": "Edge5",
+"model": "res://assets/models/district/props/edge_fence_panel_1x11x54.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Terrain",
+"node": "Edge6",
+"model": "res://assets/models/district/props/edge_fence_panel_1x3_5x65.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Terrain",
+"node": "Edge7",
+"model": "res://assets/models/district/props/edge_fence_panel_1x3_5x62.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Terrain",
+"node": "Edge8",
+"model": "res://assets/models/district/props/edge_fence_panel_1x11x54.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Terrain",
+"node": "Edge9",
+"model": "res://assets/models/district/props/edge_fence_panel_200x3_5x1.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "TramPole",
+"model": "res://assets/models/district/props/trampole_tram_pole_0_36x9x0_4.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "TramPole2",
+"model": "res://assets/models/district/props/trampole_tram_pole_0_36x9x0_4.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "TramPole3",
+"model": "res://assets/models/district/props/trampole_tram_pole_0_36x9x0_4.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "TramPole4",
+"model": "res://assets/models/district/props/trampole_tram_pole_0_36x9x0_4.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "TramPole5",
+"model": "res://assets/models/district/props/trampole_tram_pole_0_36x9x0_4.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "TramPole6",
+"model": "res://assets/models/district/props/trampole_tram_pole_0_36x9x0_4.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "TramPole7",
+"model": "res://assets/models/district/props/trampole_tram_pole_0_36x9x0_4.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "TramPole8",
+"model": "res://assets/models/district/props/trampole_tram_pole_0_36x9x0_4.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "TramPole9",
+"model": "res://assets/models/district/props/trampole_tram_pole_0_36x9x0_4.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "TramPole10",
+"model": "res://assets/models/district/props/trampole_tram_pole_0_36x9x0_4.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "StopWall",
+"model": "res://assets/models/district/props/stopwall_stop_wall_16x2_6x0_2.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "StopRoof",
+"model": "res://assets/models/district/props/stoproof_stop_roof_16x0_2x2_4_nocol.gltf",
+"yaw": 0,
+"nocol": true
+},
+{
+"zone": "Prospect",
+"node": "Kiosk",
+"model": "res://assets/models/district/props/kiosk_kiosk_4x2_6x2.gltf",
+"yaw": 180,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "Kiosk2",
+"model": "res://assets/models/district/props/kiosk_kiosk_4x2_6x2.gltf",
+"yaw": 180,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "Kiosk3",
+"model": "res://assets/models/district/props/kiosk_kiosk_4x2_6x2.gltf",
+"yaw": 180,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "Kiosk4",
+"model": "res://assets/models/district/props/kiosk_kiosk_4x2_6x2.gltf",
+"yaw": 180,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "TunnelSign",
+"model": "res://assets/models/district/props/tunnelsign_sign_post_0_5x2_4x0_5.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "Tram",
+"model": "res://assets/models/district/props/tram_tram_2_6x3_6x15.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "Car",
+"model": "res://assets/models/district/props/car_car_1_7x1_45x4_2_v0.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "Car2",
+"model": "res://assets/models/district/props/car_car_1_7x1_45x4_2_v1.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "Drift",
+"model": "res://assets/models/district/props/drift_drift_4x1_6x3_0.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "Minibus",
+"model": "res://assets/models/district/props/minibus_minibus_2_2x2_6x6.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "Truck",
+"model": "res://assets/models/district/props/truck_truck_2_5x3_8x13.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "Car3",
+"model": "res://assets/models/district/props/car_car_1_7x1_45x4_2_v2.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "Car4",
+"model": "res://assets/models/district/props/car_car_1_7x1_45x4_2_v3.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "Car5",
+"model": "res://assets/models/district/props/car_car_1_7x1_45x4_2_v0.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "Car6",
+"model": "res://assets/models/district/props/car_car_1_7x1_45x4_2_v1.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "Car7",
+"model": "res://assets/models/district/props/car_car_1_7x1_45x4_2_v2.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "Drift2",
+"model": "res://assets/models/district/props/drift_drift_4x1x1_2_1.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "Drift3",
+"model": "res://assets/models/district/props/drift_drift_4x1x1_2_2.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "Drift4",
+"model": "res://assets/models/district/props/drift_drift_4x1x1_2_0.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "Drift5",
+"model": "res://assets/models/district/props/drift_drift_4x1x1_2_1.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "LampPole",
+"model": "res://assets/models/district/props/lamppole_lamp_pole_0_24x6_5x0_24.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "LampPole2",
+"model": "res://assets/models/district/props/lamppole_lamp_pole_0_24x6_5x0_24.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "LampPole3",
+"model": "res://assets/models/district/props/lamppole_lamp_pole_0_24x6_5x0_24.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Prospect",
+"node": "LampPole4",
+"model": "res://assets/models/district/props/lamppole_lamp_pole_0_24x6_5x0_24.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "HomeYard",
+"node": "Slide",
+"model": "res://assets/models/district/props/slide_slide_1_5x2x3.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "HomeYard",
+"node": "Swing",
+"model": "res://assets/models/district/props/swing_swing_3x2_2x1.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "HomeYard",
+"node": "Carousel",
+"model": "res://assets/models/district/props/carousel_carousel_2x0_6x2.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "HomeYard",
+"node": "Sandbox",
+"model": "res://assets/models/district/props/sandbox_sandbox_3x0_3x3.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "HomeYard",
+"node": "Sheds",
+"model": "res://assets/models/district/props/sheds_sheds_18x2_5x3.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "HomeYard",
+"node": "Kiosk",
+"model": "res://assets/models/district/props/kiosk_kiosk_4x2_6x2_5.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "HomeYard",
+"node": "Turnik",
+"model": "res://assets/models/turnik.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "HomeYard",
+"node": "Bench",
+"model": "res://assets/models/bench.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "HomeYard",
+"node": "Bench2",
+"model": "res://assets/models/bench.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "HomeYard",
+"node": "Car",
+"model": "res://assets/models/district/props/car_car_1_7x1_45x4_2_v3.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "HomeYard",
+"node": "Car2",
+"model": "res://assets/models/district/props/car_car_1_7x1_45x4_2_v0.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "HomeYard",
+"node": "Drift",
+"model": "res://assets/models/district/props/drift_drift_6x1_3x2_2.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "HomeYard",
+"node": "Drift2",
+"model": "res://assets/models/district/props/drift_drift_4x1_2x2_0.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "HomeYard",
+"node": "Tree",
+"model": "res://assets/models/tree_a.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "HomeYard",
+"node": "Tree2",
+"model": "res://assets/models/tree_b.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "HomeYard",
+"node": "Transformer",
+"model": "res://assets/models/district/props/transformer_transformer_5x3x4.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "HomeYard",
+"node": "ShellGarages",
+"model": "res://assets/models/district/props/shellgarages_shell_row_14x2_2x5.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "HomeYard",
+"node": "Car3",
+"model": "res://assets/models/district/props/car_car_1_7x1_45x4_2_v1.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "HomeYard",
+"node": "Drift3",
+"model": "res://assets/models/district/props/drift_drift_6x1_2x2_1.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "HomeYard",
+"node": "LampPole",
+"model": "res://assets/models/district/props/lamppole_lamp_pole_0_24x6_5x0_24.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "HomeYard",
+"node": "LampPole2",
+"model": "res://assets/models/district/props/lamppole_lamp_pole_0_24x6_5x0_24.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "HomeYard",
+"node": "LampPole3",
+"model": "res://assets/models/district/props/lamppole_lamp_pole_0_24x6_5x0_24.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "HomeYard",
+"node": "LampPole4",
+"model": "res://assets/models/district/props/lamppole_lamp_pole_0_24x6_5x0_24.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "HomeYard",
+"node": "LampPole5",
+"model": "res://assets/models/district/props/lamppole_lamp_pole_0_24x6_5x0_24.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "WestYard",
+"node": "Car",
+"model": "res://assets/models/district/props/car_car_1_7x1_45x4_2_v2.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "WestYard",
+"node": "Car2",
+"model": "res://assets/models/district/props/car_car_1_7x1_45x4_2_v3.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "WestYard",
+"node": "Car3",
+"model": "res://assets/models/district/props/car_car_1_7x1_45x4_2_v0.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "WestYard",
+"node": "Car4",
+"model": "res://assets/models/district/props/car_car_1_7x1_45x4_2_v1.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "WestYard",
+"node": "Drift",
+"model": "res://assets/models/district/props/drift_drift_6x1_4x2_2.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "WestYard",
+"node": "ShellRow",
+"model": "res://assets/models/district/props/shellrow_shell_row_4x2_2x30.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "WestYard",
+"node": "ShellRow2",
+"model": "res://assets/models/district/props/shellrow_shell_row_4x2_2x30.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "WestYard",
+"node": "Drift2",
+"model": "res://assets/models/district/props/drift_drift_4x1_3x2_5_0.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "WestYard",
+"node": "LampPole",
+"model": "res://assets/models/district/props/lamppole_lamp_pole_0_24x6_5x0_24.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "WestYard",
+"node": "LampPole2",
+"model": "res://assets/models/district/props/lamppole_lamp_pole_0_24x6_5x0_24.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "School",
+"node": "Fence",
+"model": "res://assets/models/district/props/fence_fence_metal_0_15x2_2x28.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "School",
+"node": "Fence2",
+"model": "res://assets/models/district/props/fence_fence_metal_0_15x2_2x27.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "School",
+"node": "Fence3",
+"model": "res://assets/models/district/props/fence_fence_metal_58x2_2x0_15.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "School",
+"node": "Fence4",
+"model": "res://assets/models/district/props/fence_fence_metal_0_15x2_2x61.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "School",
+"node": "Fence5",
+"model": "res://assets/models/district/props/fence_fence_metal_21x2_2x0_15.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "School",
+"node": "Fence6",
+"model": "res://assets/models/district/props/fence_fence_metal_29x2_2x0_15.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "School",
+"node": "Tribune",
+"model": "res://assets/models/district/props/tribune_tribune_25x2_5x6_nocol.gltf",
+"yaw": 0,
+"nocol": true
+},
+{
+"zone": "School",
+"node": "Obstacles",
+"model": "res://assets/models/district/props/obstacles_obstacles_22x1_2x1_5.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "School",
+"node": "FloodPole",
+"model": "res://assets/models/district/props/floodpole_flood_pole_0_4x14x0_4.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "School",
+"node": "Tree",
+"model": "res://assets/models/tree_a.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "School",
+"node": "Tree2",
+"model": "res://assets/models/tree_b.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "School",
+"node": "Drift",
+"model": "res://assets/models/district/props/drift_drift_6x1_3x2_1.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "School",
+"node": "Drift2",
+"model": "res://assets/models/district/props/drift_drift_2x1_4x6_2.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "SouthYards",
+"node": "Dovecote",
+"model": "res://assets/models/district/props/dovecote_dovecote_4x5x4.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "SouthYards",
+"node": "Sheds",
+"model": "res://assets/models/district/props/sheds_sheds_22x2_5x3.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "SouthYards",
+"node": "Dryer",
+"model": "res://assets/models/district/props/dryer_dryer_4x2x0_1.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "SouthYards",
+"node": "Dryer2",
+"model": "res://assets/models/district/props/dryer_dryer_4x2x0_1.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "SouthYards",
+"node": "Car",
+"model": "res://assets/models/district/props/car_car_1_7x1_45x4_2_v2.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "SouthYards",
+"node": "Drift",
+"model": "res://assets/models/district/props/drift_drift_6x1_4x2_0.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "SouthYards",
+"node": "Car2",
+"model": "res://assets/models/district/props/car_car_1_7x1_45x4_2_v3.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "SouthYards",
+"node": "Drift2",
+"model": "res://assets/models/district/props/drift_drift_3x1_4x6_1.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "SouthYards",
+"node": "Tree",
+"model": "res://assets/models/tree_a.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "SouthYards",
+"node": "LampPole",
+"model": "res://assets/models/district/props/lamppole_lamp_pole_0_24x6_5x0_24.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "SouthYards",
+"node": "LampPole2",
+"model": "res://assets/models/district/props/lamppole_lamp_pole_0_24x6_5x0_24.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "SouthYards",
+"node": "LampPole3",
+"model": "res://assets/models/district/props/lamppole_lamp_pole_0_24x6_5x0_24.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "BoilerHouse",
+"node": "ShellRow",
+"model": "res://assets/models/district/props/shellrow_shell_row_24x2_2x3.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "BoilerHouse",
+"node": "Car",
+"model": "res://assets/models/district/props/car_car_1_7x1_45x4_2_v0.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "BoilerHouse",
+"node": "Drift",
+"model": "res://assets/models/district/props/drift_drift_6x1_3x2_2.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "BoilerHouse",
+"node": "Fence",
+"model": "res://assets/models/district/props/fence_fence_panel_0_3x2_5x30.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "BoilerHouse",
+"node": "Fence2",
+"model": "res://assets/models/district/props/fence_fence_panel_0_3x2_5x17.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "BoilerHouse",
+"node": "Fence3",
+"model": "res://assets/models/district/props/fence_fence_panel_40x2_5x0_3.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "BoilerHouse",
+"node": "Fence4",
+"model": "res://assets/models/district/props/fence_fence_panel_40x2_5x0_3.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "BoilerHouse",
+"node": "Coal",
+"model": "res://assets/models/district/props/coal_coal_8x1_6x8.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "BoilerHouse",
+"node": "LampPole",
+"model": "res://assets/models/district/props/lamppole_lamp_pole_0_24x6_5x0_24.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "BoilerHouse",
+"node": "Pipe",
+"model": "res://assets/models/district/props/pipe_pipe_run_64_4x1_5x1_4.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "BoilerHouse",
+"node": "Pipe2",
+"model": "res://assets/models/district/props/pipe_pipe_run_71_4x1_5x1_4.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "BoilerHouse",
+"node": "PipeEnd",
+"model": "res://assets/models/district/props/pipeend_pipe_block_1x2x3.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "BoilerHouse",
+"node": "ArchPost",
+"model": "res://assets/models/district/props/archpost_arch_post_0_6x5_7x1_4.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "BoilerHouse",
+"node": "ArchPost2",
+"model": "res://assets/models/district/props/archpost_arch_post_0_6x5_7x1_4.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "BoilerHouse",
+"node": "ArchTop",
+"model": "res://assets/models/district/props/archtop_arch_top_7_2x1_2x1_4.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "BoilerHouse",
+"node": "PipeStepN",
+"model": "res://assets/models/district/props/pipestepn_stairs_metal_1_6x1_7x4_nocol.gltf",
+"yaw": 0,
+"nocol": true
+},
+{
+"zone": "BoilerHouse",
+"node": "PipeBridge",
+"model": "res://assets/models/district/props/pipebridge_pipe_bridge_1_6x0_2x1_8.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "BoilerHouse",
+"node": "PipeStepS",
+"model": "res://assets/models/district/props/pipesteps_stairs_metal_1_6x1_7x4_nocol.gltf",
+"yaw": 0,
+"nocol": true
+},
+{
+"zone": "BoilerHouse",
+"node": "PipeStepN2",
+"model": "res://assets/models/district/props/pipestepn_stairs_metal_1_6x1_7x4_nocol.gltf",
+"yaw": 0,
+"nocol": true
+},
+{
+"zone": "BoilerHouse",
+"node": "PipeBridge2",
+"model": "res://assets/models/district/props/pipebridge_pipe_bridge_1_6x0_2x1_8.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "BoilerHouse",
+"node": "PipeStepS2",
+"model": "res://assets/models/district/props/pipesteps_stairs_metal_1_6x1_7x4_nocol.gltf",
+"yaw": 0,
+"nocol": true
+},
+{
+"zone": "BoilerHouse",
+"node": "PipeBranch",
+"model": "res://assets/models/district/props/pipebranch_pipe_run_1_4x0_8x63_3.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "BoilerHouse",
+"node": "PipePost",
+"model": "res://assets/models/district/props/pipepost_pipe_post_0_4x3_2x0_4.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "BoilerHouse",
+"node": "PipePost2",
+"model": "res://assets/models/district/props/pipepost_pipe_post_0_4x3_2x0_4.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "BoilerHouse",
+"node": "PipePost3",
+"model": "res://assets/models/district/props/pipepost_pipe_post_0_4x3_2x0_4.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "BoilerHouse",
+"node": "PipePost4",
+"model": "res://assets/models/district/props/pipepost_pipe_post_0_4x3_2x0_4.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "BoilerHouse",
+"node": "PipePost5",
+"model": "res://assets/models/district/props/pipepost_pipe_post_0_4x3_2x0_4.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "BoilerHouse",
+"node": "PipePost6",
+"model": "res://assets/models/district/props/pipepost_pipe_post_0_4x3_2x0_4.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "BoilerHouse",
+"node": "PipePost7",
+"model": "res://assets/models/district/props/pipepost_pipe_post_0_4x3_2x0_4.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "BoilerHouse",
+"node": "PipeJoint",
+"model": "res://assets/models/district/props/pipejoint_pipe_block_2x4x3.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow",
+"model": "res://assets/models/district/props/garagerow_garage_row_36x2_5x6.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow2",
+"model": "res://assets/models/district/props/garagerow_garage_row_36x2_5x6.gltf",
+"yaw": 180,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow3",
+"model": "res://assets/models/district/props/garagerow_garage_row_36x2_5x6.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow4",
+"model": "res://assets/models/district/props/garagerow_garage_row_36x2_5x6.gltf",
+"yaw": 180,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow5",
+"model": "res://assets/models/district/props/garagerow_garage_row_37x2_5x6.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow6",
+"model": "res://assets/models/district/props/garagerow_garage_row_37x2_5x6.gltf",
+"yaw": 180,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow7",
+"model": "res://assets/models/district/props/garagerow_garage_row_33x2_5x6.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow8",
+"model": "res://assets/models/district/props/garagerow_garage_row_33x2_5x6.gltf",
+"yaw": 180,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow9",
+"model": "res://assets/models/district/props/garagerow_garage_row_33x2_5x6.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow10",
+"model": "res://assets/models/district/props/garagerow_garage_row_33x2_5x6.gltf",
+"yaw": 180,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow11",
+"model": "res://assets/models/district/props/garagerow_garage_row_36x2_5x6.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow12",
+"model": "res://assets/models/district/props/garagerow_garage_row_36x2_5x6.gltf",
+"yaw": 180,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow13",
+"model": "res://assets/models/district/props/garagerow_garage_row_36x2_5x6.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow14",
+"model": "res://assets/models/district/props/garagerow_garage_row_36x2_5x6.gltf",
+"yaw": 180,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow15",
+"model": "res://assets/models/district/props/garagerow_garage_row_37x2_5x6.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow16",
+"model": "res://assets/models/district/props/garagerow_garage_row_37x2_5x6.gltf",
+"yaw": 180,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow17",
+"model": "res://assets/models/district/props/garagerow_garage_row_33x2_5x6.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow18",
+"model": "res://assets/models/district/props/garagerow_garage_row_33x2_5x6.gltf",
+"yaw": 180,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow19",
+"model": "res://assets/models/district/props/garagerow_garage_row_33x2_5x6.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow20",
+"model": "res://assets/models/district/props/garagerow_garage_row_33x2_5x6.gltf",
+"yaw": 180,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow21",
+"model": "res://assets/models/district/props/garagerow_garage_row_36x2_5x6.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow22",
+"model": "res://assets/models/district/props/garagerow_garage_row_36x2_5x6.gltf",
+"yaw": 180,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow23",
+"model": "res://assets/models/district/props/garagerow_garage_row_36x2_5x6.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow24",
+"model": "res://assets/models/district/props/garagerow_garage_row_36x2_5x6.gltf",
+"yaw": 180,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow25",
+"model": "res://assets/models/district/props/garagerow_garage_row_37x2_5x6.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow26",
+"model": "res://assets/models/district/props/garagerow_garage_row_37x2_5x6.gltf",
+"yaw": 180,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow27",
+"model": "res://assets/models/district/props/garagerow_garage_row_33x2_5x6.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow28",
+"model": "res://assets/models/district/props/garagerow_garage_row_33x2_5x6.gltf",
+"yaw": 180,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow29",
+"model": "res://assets/models/district/props/garagerow_garage_row_33x2_5x6.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "GarageRow30",
+"model": "res://assets/models/district/props/garagerow_garage_row_33x2_5x6.gltf",
+"yaw": 180,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "Guardhouse",
+"model": "res://assets/models/district/props/guardhouse_guardhouse_3x2_6x2_8.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "Barrier",
+"model": "res://assets/models/district/props/barrier_barrier_6x0_12x0_2_nocol.gltf",
+"yaw": 0,
+"nocol": true
+},
+{
+"zone": "Garages",
+"node": "Drift",
+"model": "res://assets/models/district/props/drift_drift_6x3x5_0.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "Car",
+"model": "res://assets/models/district/props/car_car_1_7x1_45x4_2_v1.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "Drift2",
+"model": "res://assets/models/district/props/drift_drift_5x1_3x2_1.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "Drift3",
+"model": "res://assets/models/district/props/drift_drift_5x1_3x2_2.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "Drift4",
+"model": "res://assets/models/district/props/drift_drift_5x1_3x2_0.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "Drift5",
+"model": "res://assets/models/district/props/drift_drift_5x1_3x2_1.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "Drift6",
+"model": "res://assets/models/district/props/drift_drift_5x1_3x2_2.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "Drift7",
+"model": "res://assets/models/district/props/drift_drift_5x1_3x2_0.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "Car2",
+"model": "res://assets/models/district/props/car_car_1_7x1_45x4_2_v2.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "Car3",
+"model": "res://assets/models/district/props/car_car_1_7x1_45x4_2_v3.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Garages",
+"node": "Car4",
+"model": "res://assets/models/district/props/car_car_1_7x1_45x4_2_v0.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Slab",
+"model": "res://assets/models/district/props/slab_slab_27x0_3x6.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Slab2",
+"model": "res://assets/models/district/props/slab_slab_23x0_3x7.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Slab3",
+"model": "res://assets/models/district/props/slab_slab_27x0_3x6.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Slab4",
+"model": "res://assets/models/district/props/slab_slab_22x0_3x7.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Slab5",
+"model": "res://assets/models/district/props/slab_slab_2x0_3x7.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Slab6",
+"model": "res://assets/models/district/props/slab_slab_27x0_3x6.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Slab7",
+"model": "res://assets/models/district/props/slab_slab_23x0_3x7.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Slab8",
+"model": "res://assets/models/district/props/slab_slab_27x0_3x13.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Flight",
+"model": "res://assets/models/district/props/flight_flight_3x3x5_nocol.gltf",
+"yaw": 0,
+"nocol": true
+},
+{
+"zone": "Wasteland",
+"node": "Flight2",
+"model": "res://assets/models/district/props/flight_flight_3x3x5_nocol.gltf",
+"yaw": 0,
+"nocol": true
+},
+{
+"zone": "Wasteland",
+"node": "Flight3",
+"model": "res://assets/models/district/props/flight_flight_3x3x5_nocol.gltf",
+"yaw": 0,
+"nocol": true
+},
+{
+"zone": "Wasteland",
+"node": "Column",
+"model": "res://assets/models/district/props/column_column_0_5x11_7x0_5.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Column2",
+"model": "res://assets/models/district/props/column_column_0_5x11_7x0_5.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Column3",
+"model": "res://assets/models/district/props/column_column_0_5x11_7x0_5.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Column4",
+"model": "res://assets/models/district/props/column_column_0_5x11_7x0_5.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Column5",
+"model": "res://assets/models/district/props/column_column_0_5x11_7x0_5.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Column6",
+"model": "res://assets/models/district/props/column_column_0_5x11_7x0_5.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Column7",
+"model": "res://assets/models/district/props/column_column_0_5x11_7x0_5.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Column8",
+"model": "res://assets/models/district/props/column_column_0_5x11_7x0_5.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "CraneTower",
+"model": "res://assets/models/district/props/cranetower_crane_tower_2x35x2.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "CraneJib",
+"model": "res://assets/models/district/props/cranejib_crane_jib_45x1_5x1_nocol.gltf",
+"yaw": 0,
+"nocol": true
+},
+{
+"zone": "Wasteland",
+"node": "CraneCab",
+"model": "res://assets/models/district/props/cranecab_crane_cab_4x2x4_nocol.gltf",
+"yaw": 0,
+"nocol": true
+},
+{
+"zone": "Wasteland",
+"node": "Cabin",
+"model": "res://assets/models/district/props/cabin_cabin_6x2_6x2_5_v0.gltf",
+"yaw": 180,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Cabin2",
+"model": "res://assets/models/district/props/cabin_cabin_6x2_6x2_5_v1.gltf",
+"yaw": 180,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Cabin3",
+"model": "res://assets/models/district/props/cabin_cabin_6x2_6x2_5_v0.gltf",
+"yaw": 180,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Cabin4",
+"model": "res://assets/models/district/props/cabin_cabin_6x2_6x2_5_v1.gltf",
+"yaw": 180,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Cabin5",
+"model": "res://assets/models/district/props/cabin_cabin_6x2_6x2_5_v0.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Cabin6",
+"model": "res://assets/models/district/props/cabin_cabin_6x2_6x2_5_v1.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Cabin7",
+"model": "res://assets/models/district/props/cabin_cabin_6x2_6x2_5_v0.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Cabin8",
+"model": "res://assets/models/district/props/cabin_cabin_6x2_6x2_5_v1.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Slabs",
+"model": "res://assets/models/district/props/slabs_slab_stack_6x1_2x1_6.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Slabs2",
+"model": "res://assets/models/district/props/slabs_slab_stack_6x1_8x1_6.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Slabs3",
+"model": "res://assets/models/district/props/slabs_slab_stack_6x1_2x1_6.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Slabs4",
+"model": "res://assets/models/district/props/slabs_slab_stack_6x2x1_6.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Slabs5",
+"model": "res://assets/models/district/props/slabs_slab_stack_6x1_4x1_6.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "BuildFence",
+"model": "res://assets/models/district/props/buildfence_fence_wood_0_2x2_5x17.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "BuildFence2",
+"model": "res://assets/models/district/props/buildfence_fence_wood_0_2x2_5x22.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Drift",
+"model": "res://assets/models/district/props/drift_drift_4x1_3x2_1.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "Drift2",
+"model": "res://assets/models/district/props/drift_drift_3x1_4x5_2.gltf",
+"yaw": 0,
+"nocol": false
+},
+{
+"zone": "Wasteland",
+"node": "LampPole",
+"model": "res://assets/models/district/props/lamppole_lamp_pole_0_24x6_5x0_24.gltf",
+"yaw": 0,
+"nocol": false
+}
+]

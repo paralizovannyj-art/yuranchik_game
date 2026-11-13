@@ -29,6 +29,7 @@ KHR_TINT = "Color(0.5, 0.42, 0.38, 1)"     # хрущёвки — кирпич
 SOLIDS = []   # (x0, x1, y0, y1, z0, z1, kind, name) — для проверки пересечений
 BUILDINGS = []   # дома для tools/blender/build_district.py (tools/district_buildings.json)
 WRITE = "--json-only" not in sys.argv   # --json-only: только обновить список домов, сцены и карту не трогать
+BLOCKS = []      # все блоки для tools/blender/build_district_props.py (tools/district_blocks.json)
 FLAT = []     # (x0, x1, z0, z1, top, kind, label, tint) — всё, что рисуется на карте docs/city_map.svg
 
 
@@ -70,7 +71,11 @@ class Scene:
         return name if n == 0 else "%s%d" % (name, n + 1)
 
     def boxc(self, name, cx, cz, y, sx, sy, sz, kind, label="", shape="box", yaw=0.0, tint=None, solid=True, parent="."):
+        base = name
         name = self.uniq(name)
+        BLOCKS.append({"zone": self.root, "node": name, "base": base, "kind": kind, "shape": shape, "solid": solid,
+                       "cx": round(cx, 3), "cz": round(cz, 3), "y": round(y, 3), "sx": round(sx, 3), "sy": round(sy, 3),
+                       "sz": round(sz, 3), "yaw": yaw})
         L = ['[node name="%s" type="Node3D" parent="%s"]' % (name, parent), "transform = " + xform(cx, y, cz, yaw),
              'script = ExtResource("bb")', "size = Vector3(%s, %s, %s)" % (f(sx), f(sy), f(sz)), 'kind = "%s"' % kind]
         if shape != "box":
@@ -723,6 +728,9 @@ import json
 open(os.path.join(ROOT, "tools", "district_buildings.json"), "w", encoding="utf-8", newline="\n").write(
     json.dumps(BUILDINGS, ensure_ascii=False, indent=1) + "\n")
 print("written tools/district_buildings.json -", len(BUILDINGS), "buildings")
+open(os.path.join(ROOT, "tools", "district_blocks.json"), "w", encoding="utf-8", newline="\n").write(
+    json.dumps(BLOCKS, ensure_ascii=False, indent=0) + "\n")
+print("written tools/district_blocks.json -", len(BLOCKS), "blocks")
 
 # =====================================================================================================
 # ПРОВЕРКИ

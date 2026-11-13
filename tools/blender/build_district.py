@@ -402,6 +402,8 @@ def main():
         ob.rotation_euler = (0, 0, math.radians(s["yaw"]))
     if not bpy.app.background:
         bpy.ops.wm.save_as_mainfile(filepath=os.path.join(HERE, "district.blend"))
+        bpy.ops.file.make_paths_relative()      # пути к текстурам — относительные, иначе модель не откроется на другом компьютере
+        bpy.ops.wm.save_mainfile()
     return {"buildings": len(stats), "polys": sum(stats.values()), "max": max(stats.items(), key=lambda kv: kv[1])}
 
 
