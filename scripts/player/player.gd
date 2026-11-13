@@ -1,8 +1,10 @@
-## Юрчик: управление от третьего лица в духе RE4 Remake / Fleshbite — с инерцией.
-## - Камера близко у правого плеча, свободная (мышь / правый стик), на «пружине».
-## - Движение относительно камеры. Герой поворачивается дугой, скорость набирается и гасится плавно.
-## - Shift / B — спринт (тратит выносливость). Назад + спринт — быстрый разворот вместе с камерой.
-## - ПКМ / LT — замах: камера у плеча, медленная ходьба и стрейф.
+## Юрчик: управление от первого лица, с инерцией.
+## - Камера в голове героя (мышь / правый стик), тело смотрит туда же, куда камера.
+##   Своё тело видно (посмотри вниз — ноги), голова спрятана только для камеры, тень — полная.
+## - WASD / левый стик — шаг и стрейф относительно взгляда. Скорость идёт к цели по прямой,
+##   без дуг и разворотов: вперёд → назад — просто остановился и пошёл назад.
+## - Shift / B — бег вперёд (тратит выносливость), разгоняется до бега за долю секунды.
+## - ПКМ / LT — замах: камера приближается, медленная ходьба.
 ## - ЛКМ / RT — удар молотком. С замахом (ПКМ) — сильный: целься выше — в голову, ниже — по ногам.
 ## - G / RB — бросить бутылку или кирпич. E / A — подобрать, открыть, вырваться из захвата.
 ## - F / Y — фонарик.
@@ -11,35 +13,36 @@ extends CharacterBody3D
 
 signal died
 
-enum State { NORMAL, AIM, ATTACK, QUICKTURN, HURT, GRABBED, THROW, BUSY, DEAD }
+enum State { NORMAL, AIM, ATTACK, HURT, GRABBED, THROW, BUSY, DEAD }
 
 @export_group("Движение")
 @export var walk_speed := 1.7         ## под клип ходьбы: быстрее — ноги начинают семенить/скользить
 @export var sprint_speed := 4.6
 @export var aim_walk_speed := 1.2
-@export var acceleration := 5.5        ## м/с² — разгон
-@export var sprint_acceleration := 3.5
-@export var deceleration := 7.0        ## м/с² — торможение
-@export var turn_speed := 6.5          ## рад/с — максимальная скорость поворота шагом
-@export var sprint_turn_speed := 3.8   ## на спринте поворачивает шире
-@export var turn_response := 9.0       ## «мягкость» доворота
-@export var quick_turn_time := 0.34
+@export var back_factor := 0.75        ## назад медленнее
+@export var strafe_factor := 0.85      ## вбок чуть медленнее
+@export var move_response := 12.0      ## отклик шага: больше — резче разгон и смена направления
+@export var stop_response := 16.0      ## отклик остановки, когда отпустил клавиши
+@export var run_ramp := 2.2            ## 1/с — как быстро шаг переходит в бег
+@export var deceleration := 7.0        ## м/с² — торможение в ударе, броске, анимациях
 @export var gravity := 18.0
 
 @export_group("Камера")
 @export var mouse_sensitivity := 0.0022
 @export var stick_sensitivity := 2.6
-@export var look_smoothing := 22.0     ## сглаживание обзора
-@export var pitch_min := -0.9
-@export var pitch_max := 0.5
-@export var spring_stiffness := 55.0   ## пружина следования камеры
-@export var look_ahead := 0.18         ## камера чуть «смотрит» вперёд по ходу
-@export var normal_cam := Vector3(0.62, 1.55, 1.75)  ## (вправо, высота, дистанция)
-@export var aim_cam := Vector3(0.58, 1.52, 0.95)
-@export var normal_fov := 60.0
-@export var sprint_fov_add := 6.0
-@export var aim_fov := 48.0
-@export var head_bob := 0.022
+@export var look_smoothing := 30.0     ## сглаживание обзора
+@export var pitch_min := -1.4
+@export var pitch_max := 1.4
+@export var eye_height := 1.62         ## высота глаз над полом
+@export var eye_follow := 18.0         ## как быстро камера догоняет героя по высоте (ступеньки)
+@export var normal_fov := 72.0
+@export var sprint_fov_add := 5.0
+@export var aim_fov := 58.0
+@export var head_bob := 0.03
+@export var strafe_roll := 0.008       ## крен камеры при шаге вбок
+@export var head_forward := 0.14       ## м — камера чуть впереди кости головы, чтобы плечи и спина оставались сзади
+@export var look_down_forward := 0.3   ## м — глядя вниз, камера выносится вперёд, чтобы видеть ноги, а не грудь
+@export var focus_size := 0.45         ## м — насколько можно промахнуться взглядом мимо предмета, чтобы он подсветился
 
 @export_group("Выносливость")
 @export var max_stamina := 100.0
@@ -78,17 +81,18 @@ var escape := 0.0                      ## прогресс вырывания и
 var _yaw_target := 0.0
 var _pitch_target := -0.12
 var _timer := 0.0
-var _turn_left := 0.0
 var _aim_blend := 0.0
 var _sprint_blend := 0.0
 var _attack_buffer := 0.0
-var _turn_buffer := 0.0
 var _throw_buffer := 0.0
 var _prev_yaw := 0.0
 var _yaw_rate := 0.0
 var _prev_speed := 0.0
 var _cam_pos := Vector3.ZERO
-var _cam_vel := Vector3.ZERO
+var _cam_roll := 0.0
+var _head_lead := 0.0
+var _skel: Skeleton3D
+var _head_bone := -1
 var _stam_cd := 0.0
 var _attack_heavy := false
 var _hit_done := false
@@ -101,12 +105,18 @@ var _throw_id := ""
 var _thrown := false
 var _last_step := 0
 var _sprinting := false
+var _run := 0.0                        ## 0 — шаг, 1 — полный бег
 
 @onready var model: Node3D = $Model
 @onready var cam_pivot: Node3D = $CamPivot
-@onready var spring: SpringArm3D = $CamPivot/SpringArm
-@onready var camera: Camera3D = $CamPivot/SpringArm/Camera
-@onready var flashlight: SpotLight3D = $Flashlight
+@onready var camera: Camera3D = $CamPivot/Camera
+@onready var flashlight: SpotLight3D = $CamPivot/Camera/Flashlight
+
+## Слой отрисовки тела героя. Фонарик в голове не отбрасывает от него тень (shadow_caster_mask
+## в player.tscn), иначе тень от собственных плеч и рук падала бы прямо перед глазами.
+const BODY_LAYER := 1 << 19
+## Кости, которые камера не должна видеть: иначе голова изнутри закрывает обзор.
+const HIDDEN_BONES := ["Head"]
 
 
 func _ready() -> void:
@@ -115,11 +125,40 @@ func _ready() -> void:
 	cam_yaw = rotation.y
 	_yaw_target = cam_yaw
 	_prev_yaw = rotation.y
-	_cam_pos = global_position + Vector3(0, normal_cam.y, 0)
+	_cam_pos = global_position + Vector3.UP * eye_height
 	cam_pivot.global_position = _cam_pos
-	spring.add_excluded_object(get_rid())
-	spring.collision_mask = 1
+	for v: Node in model.find_children("*", "VisualInstance3D", true, false):
+		(v as VisualInstance3D).layers = BODY_LAYER
+	_make_first_person_body()
+	var sk := model.find_children("*", "Skeleton3D", true, false)
+	if sk.size() > 0:
+		_skel = sk[0] as Skeleton3D
+		_head_bone = _skel.find_bone("Head")
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+
+## Тело от первого лица: у каждого меша со скелетом делаем копию для камеры, в которой вершины
+## головы стянуты в точку шеи (через bind pose копии Skin). Оригинал остаётся только для теней —
+## поэтому тень у Юрчика с головой, а камера не упирается в затылок изнутри.
+func _make_first_person_body() -> void:
+	for m: Node in model.find_children("*", "MeshInstance3D", true, false):
+		var mi := m as MeshInstance3D
+		if mi.skin == null:
+			continue
+		var sk := mi.get_node_or_null(mi.skeleton) as Skeleton3D
+		var skin := mi.skin.duplicate() as Skin
+		for i in skin.get_bind_count():
+			var bone := skin.get_bind_name(i)
+			if bone == &"" and sk and skin.get_bind_bone(i) >= 0:
+				bone = sk.get_bone_name(skin.get_bind_bone(i))
+			if bone in HIDDEN_BONES:
+				skin.set_bind_pose(i, Transform3D(Basis.from_scale(Vector3.ONE * 0.001), Vector3.ZERO) * skin.get_bind_pose(i))
+		var view := mi.duplicate() as MeshInstance3D
+		view.name = mi.name + "FirstPerson"
+		view.skin = skin
+		view.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+		mi.add_sibling(view)
 
 
 func is_dead() -> bool:
@@ -144,8 +183,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		_attack_buffer = 0.2
 	if event.is_action_pressed("throw"):
 		_throw_buffer = 0.2
-	if event.is_action_pressed("run") and Input.is_action_pressed("move_back"):
-		_turn_buffer = 0.15
 	if event.is_action_pressed("flashlight"):
 		flashlight.visible = not flashlight.visible
 		Game.sfx("click", null, -6.0)
@@ -158,7 +195,6 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 	_attack_buffer = maxf(_attack_buffer - delta, 0.0)
-	_turn_buffer = maxf(_turn_buffer - delta, 0.0)
 	_throw_buffer = maxf(_throw_buffer - delta, 0.0)
 	_invuln = maxf(_invuln - delta, 0.0)
 	_grab_immune = maxf(_grab_immune - delta, 0.0)
@@ -171,9 +207,8 @@ func _physics_process(delta: float) -> void:
 	cam_pitch = lerpf(cam_pitch, _pitch_target, ls)
 
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back") if control else Vector2.ZERO
-	var wish := Basis(Vector3.UP, cam_yaw) * Vector3(input.x, 0.0, input.y)
-	var amount := minf(input.length(), 1.0)
-	_sprinting = control and Input.is_action_pressed("run") and amount > 0.3 and state == State.NORMAL and not exhausted
+	_sprinting = control and Input.is_action_pressed("run") and input.y < -0.3 and state == State.NORMAL and not exhausted
+	_run = move_toward(_run, 1.0 if _sprinting else 0.0, delta * (run_ramp if _sprinting else run_ramp * 2.0))
 	var readied := control and Input.is_action_pressed("ready_weapon")
 	var hv := Vector3(velocity.x, 0.0, velocity.z)
 
@@ -181,21 +216,15 @@ func _physics_process(delta: float) -> void:
 		State.NORMAL:
 			if readied:
 				state = State.AIM
-			elif _turn_buffer > 0.0:
-				_turn_buffer = 0.0
-				_start_quick_turn()
 			elif _attack_buffer > 0.0:
 				_attack_buffer = 0.0
 				_start_attack()
 			elif _throw_buffer > 0.0:
 				_throw_buffer = 0.0
 				_start_throw()
-			hv = _locomotion(delta, wish, amount, _sprinting)
+			hv = _move(hv, input, walk_speed, delta)
 		State.AIM:
-			_face_towards(cam_yaw, delta, 12.0, 9.0)
-			var target := wish * aim_walk_speed
-			hv = hv.move_toward(target, (acceleration if target.length() > hv.length() else deceleration) * delta)
-			move_speed = hv.length()
+			hv = _move(hv, input, aim_walk_speed, delta)
 			if not readied:
 				state = State.NORMAL
 			elif _attack_buffer > 0.0:
@@ -215,16 +244,6 @@ func _physics_process(delta: float) -> void:
 				_do_hit()
 			if _timer <= 0.0:
 				state = State.AIM if readied else State.NORMAL
-		State.QUICKTURN:
-			var step := minf(PI / quick_turn_time * delta, _turn_left)
-			_turn_left -= step
-			rotation.y += step
-			cam_yaw += step
-			_yaw_target += step
-			move_speed = move_toward(move_speed, 0.0, deceleration * 2.0 * delta)
-			hv = -global_basis.z * move_speed
-			if _turn_left <= 0.001:
-				state = State.NORMAL
 		State.HURT:
 			_timer -= delta
 			_knock = _knock.move_toward(Vector3.ZERO, 9.0 * delta)
@@ -240,12 +259,10 @@ func _physics_process(delta: float) -> void:
 				grab_release()
 			else:
 				var to := _grabber.global_position - global_position
-				_face_towards(atan2(-to.x, -to.z), delta, 10.0, 8.0)
+				_yaw_target = lerp_angle(_yaw_target, atan2(-to.x, -to.z), 1.0 - exp(-6.0 * delta))
 		State.THROW:
 			_timer -= delta
-			_face_towards(cam_yaw, delta, 14.0, 10.0)
-			hv = hv.move_toward(wish * aim_walk_speed * 0.6, deceleration * delta)
-			move_speed = hv.length()
+			hv = _move(hv, input, aim_walk_speed * 0.6, delta)
 			if not _thrown and _timer <= 0.42:
 				_thrown = true
 				_release_throw()
@@ -261,6 +278,8 @@ func _physics_process(delta: float) -> void:
 			hv = hv.move_toward(Vector3.ZERO, deceleration * delta)
 			move_speed = 0.0
 
+	if state != State.DEAD:
+		rotation.y = cam_yaw
 	velocity.x = hv.x
 	velocity.z = hv.z
 	if not is_on_floor():
@@ -281,37 +300,25 @@ func _physics_process(delta: float) -> void:
 	_prev_speed = move_speed
 	var planar := Vector3(velocity.x, 0.0, velocity.z)
 	var signed := planar.length() * (-1.0 if planar.dot(-global_basis.z) < -0.3 * planar.length() else 1.0)
-	_sprint_blend = move_toward(_sprint_blend, 1.0 if _sprinting and move_speed > walk_speed else 0.0, delta * 3.0)
+	_sprint_blend = _run
 	model.update_anim(delta, signed, _sprint_blend, _anim_state(), _yaw_rate, accel)
 	_footsteps()
 	_update_camera(delta)
 
 
-## Обычная ходьба: поворот дугой с ограниченной скоростью, скорость с инерцией.
-func _locomotion(delta: float, wish: Vector3, amount: float, sprinting: bool) -> Vector3:
-	var target_speed := 0.0
-	if amount > 0.1 and state == State.NORMAL:
-		var target_yaw := atan2(-wish.x, -wish.z)
-		var diff := wrapf(target_yaw - rotation.y, -PI, PI)
-		var max_turn := sprint_turn_speed if sprinting else turn_speed
-		if move_speed < 0.6:
-			max_turn *= 1.6  # с места разворачивается охотнее
-		_face_towards(target_yaw, delta, turn_response, max_turn)
-		target_speed = (sprint_speed if sprinting else walk_speed) * amount
-		# чем круче поворот — тем сильнее сбрасываем скорость
-		target_speed *= lerpf(1.0, 0.25, clampf((absf(diff) - 0.4) / 2.2, 0.0, 1.0))
-	var rate := deceleration
-	if target_speed > move_speed:
-		rate = sprint_acceleration if sprinting and move_speed > walk_speed * 0.9 else acceleration
-	move_speed = move_toward(move_speed, target_speed, rate * delta)
-	return -global_basis.z * move_speed
-
-
-func _face_towards(yaw: float, delta: float, response: float, max_rate: float) -> void:
-	var diff := wrapf(yaw - rotation.y, -PI, PI)
-	var step := diff * (1.0 - exp(-response * delta))
-	var limit := max_rate * delta
-	rotation.y += clampf(step, -limit, limit)
+## Шаг от первого лица. input — WASD в осях взгляда, base — скорость шага в этом состоянии.
+## Цель скорости считается в осях взгляда (назад и вбок медленнее), а текущая скорость догоняет её
+## по прямой: при смене направления герой замедляется и идёт в новую сторону, без дуг и заноса.
+## Бег (только вперёд) набирается отдельно через _run в _physics_process, поэтому направление не «плывёт».
+func _move(hv: Vector3, input: Vector2, base: float, delta: float) -> Vector3:
+	var fwd := -input.y
+	var local := Vector3(input.x * strafe_factor, 0.0, -fwd * (1.0 if fwd >= 0.0 else back_factor))
+	var speed := lerpf(base, sprint_speed, _run) if state == State.NORMAL else base
+	var target := Basis(Vector3.UP, cam_yaw) * local * speed
+	var k := move_response if target.length() > 0.01 else stop_response
+	hv = hv.lerp(target, 1.0 - exp(-k * delta))
+	move_speed = hv.length()
+	return hv
 
 
 # ----------------------------------------------------------------------------- выносливость
@@ -466,7 +473,7 @@ func take_grab_damage(amount: float) -> void:
 
 
 func can_be_grabbed() -> bool:
-	return _grab_immune <= 0.0 and state in [State.NORMAL, State.AIM, State.HURT, State.THROW, State.QUICKTURN]
+	return _grab_immune <= 0.0 and state in [State.NORMAL, State.AIM, State.HURT, State.THROW]
 
 
 func grab_start(enemy: Enemy) -> bool:
@@ -524,8 +531,10 @@ func _update_focus() -> void:
 	focus = null
 	if not control or not (state == State.NORMAL or state == State.AIM):
 		return
+	# фокус — то, на что смотрит камера: предмет в радиусе и близко к линии взгляда
 	var best := 1e9
-	var fwd := -global_basis.z
+	var eye := camera.global_position
+	var look := -camera.global_basis.z
 	for it: Node in get_tree().get_nodes_in_group("interactable"):
 		var i := it as Interactable
 		if i == null or not i.enabled:
@@ -533,13 +542,15 @@ func _update_focus() -> void:
 		var to := i.global_position - global_position
 		var dy := absf(to.y - 0.9)
 		to.y = 0.0
-		var d := to.length()
-		if d > i.radius or dy > 1.6:
+		if to.length() > i.radius or dy > 1.6:
 			continue
-		if d > 0.7 and fwd.dot(to.normalized()) < 0.15:
+		var ray := i.global_position - eye
+		var dist := ray.length()
+		var miss := look.angle_to(ray) if dist > 0.01 else 0.0
+		if miss > maxf(atan2(focus_size, dist), deg_to_rad(8.0)):
 			continue
-		if d < best:
-			best = d
+		if miss < best:
+			best = miss
 			focus = i
 
 
@@ -558,11 +569,6 @@ func _footsteps() -> void:
 		Game.emit_noise(global_position, 2.5)
 
 
-func _start_quick_turn() -> void:
-	state = State.QUICKTURN
-	_turn_left = PI
-
-
 func _anim_state() -> int:
 	match state:
 		State.AIM: return 1
@@ -574,25 +580,35 @@ func _update_camera(delta: float) -> void:
 	var aiming := state == State.AIM or (state == State.ATTACK and _attack_heavy) or state == State.THROW
 	_aim_blend = move_toward(_aim_blend, 1.0 if aiming else 0.0, delta * 4.5)
 	var t := _aim_blend * _aim_blend * (3.0 - 2.0 * _aim_blend)
-	var c := normal_cam.lerp(aim_cam, t)
 
 	# покачивание от шагов
 	var phase: float = model.get("step_phase")
 	var bob_amt := clampf(move_speed / walk_speed, 0.0, 1.6) * head_bob * (1.0 - t * 0.7)
-	var bob := Vector3(cos(phase) * bob_amt * 0.5, absf(sin(phase)) * bob_amt, 0.0)
+	var bob := Vector3(cos(phase) * bob_amt * 0.5, -absf(sin(phase)) * bob_amt, 0.0)
 
-	# камера-пружина (критически демпфированная) + небольшой вынос вперёд по ходу
-	var goal := global_position + Vector3(0.0, c.y, 0.0) + (-global_basis.z) * move_speed * look_ahead * (1.0 - t)
-	var k := spring_stiffness * (2.2 if aiming else 1.0)
-	var damp := 2.0 * sqrt(k)
-	_cam_vel += ((goal - _cam_pos) * k - _cam_vel * damp) * delta
-	_cam_pos += _cam_vel * delta
-	cam_pivot.global_position = _cam_pos + Basis(Vector3.UP, cam_yaw) * bob
-	cam_pivot.rotation = Vector3(cam_pitch, cam_yaw, -_yaw_rate * 0.004 * move_speed)
-	spring.position.x = c.x
-	spring.spring_length = c.z
+	# камера в голове: по горизонтали жёстко, по высоте сглаженно (ступеньки); после смерти — к полу
+	var dead := state == State.DEAD
+	var eye := eye_height
+	if _skel and _head_bone >= 0:
+		var head_y := (_skel.global_transform * _skel.get_bone_global_pose(_head_bone).origin).y - global_position.y
+		eye = minf(eye_height, head_y + 0.17)   # голова наклонилась (бег, удар) — глаза ниже
+	var goal := global_position + Vector3.UP * (0.35 if dead else eye)
+	_cam_pos.x = goal.x
+	_cam_pos.z = goal.z
+	_cam_pos.y = lerpf(_cam_pos.y, goal.y, 1.0 - exp(-(3.0 if dead else eye_follow) * delta))
+	var side := velocity.dot(global_basis.x)
+	_cam_roll = lerpf(_cam_roll, 0.6 if dead else -side * strafe_roll, 1.0 - exp(-(2.0 if dead else 8.0) * delta))
+	# камера держится впереди головы: на бегу анимация наклоняет корпус — камера уходит вместе с головой
+	var lead := head_forward
+	if _skel and _head_bone >= 0:
+		var head := _skel.global_transform * _skel.get_bone_global_pose(_head_bone).origin
+		lead += (head - global_position).dot(Basis(Vector3.UP, cam_yaw) * Vector3.FORWARD)
+	_head_lead = lerpf(_head_lead, lead, 1.0 - exp(-12.0 * delta))
+	var down := clampf(-cam_pitch / 1.2, 0.0, 1.0)
+	var lean := Vector3(0.0, 0.0, -maxf(_head_lead, look_down_forward * down * down))
+	cam_pivot.global_position = _cam_pos + Basis(Vector3.UP, cam_yaw) * (bob + lean)
+	cam_pivot.rotation = Vector3(cam_pitch, cam_yaw, _cam_roll)
 	camera.fov = lerpf(normal_fov + sprint_fov_add * _sprint_blend, aim_fov, t)
-	flashlight.rotation.x = lerpf(-0.1, cam_pitch + 0.05, t)
 
 	# тряска от ударов
 	_shake = move_toward(_shake, 0.0, delta * 2.6)

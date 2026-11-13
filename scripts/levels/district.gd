@@ -39,4 +39,4 @@ func teleport(to: Transform3D) -> void:
 	var yaw := to.basis.get_euler().y
 	player.cam_yaw = yaw
 	player.set("_yaw_target", yaw)
-	player.set("_cam_pos", to.origin + Vector3(0, player.normal_cam.y, 0))
+	player.set("_cam_pos", to.origin + Vector3.UP * player.eye_height)
