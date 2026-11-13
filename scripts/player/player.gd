@@ -301,7 +301,9 @@ func _physics_process(delta: float) -> void:
 	var planar := Vector3(velocity.x, 0.0, velocity.z)
 	var signed := planar.length() * (-1.0 if planar.dot(-global_basis.z) < -0.3 * planar.length() else 1.0)
 	_sprint_blend = _run
-	model.update_anim(delta, signed, _sprint_blend, _anim_state(), _yaw_rate, accel)
+	var local := global_basis.inverse() * planar
+	var move_angle := atan2(-local.x, -local.z) if planar.length() > 0.2 else 0.0
+	model.update_anim(delta, signed, _sprint_blend, _anim_state(), _yaw_rate, accel, move_angle)
 	_footsteps()
 	_update_camera(delta)
 
