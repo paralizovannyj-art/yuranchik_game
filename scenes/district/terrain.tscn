@@ -10,10 +10,6 @@
 
 [ext_resource type="PackedScene" path="res://assets/models/district/props/tunnelstairsn_stairs_concrete_6x4x7_nocol.gltf" id="m5"]
 
-[ext_resource type="PackedScene" path="res://assets/models/district/props/tunnelrail_railing_0_2x1x7.gltf" id="m6"]
-
-[ext_resource type="PackedScene" path="res://assets/models/district/props/tunnelrail_railing_6x1x0_2.gltf" id="m7"]
-
 [ext_resource type="PackedScene" path="res://assets/models/district/props/stairsprospect_stairs_concrete_8x3x5_5_nocol.gltf" id="m8"]
 
 [ext_resource type="PackedScene" path="res://assets/models/district/props/stairswide_stairs_concrete_10x3x5_5_nocol.gltf" id="m9"]
@@ -49,6 +45,18 @@
 [ext_resource type="PackedScene" path="res://assets/models/district/props/edge_fence_panel_1x11x54.gltf" id="m24"]
 
 [ext_resource type="PackedScene" path="res://assets/models/district/props/edge_fence_panel_200x3_5x1.gltf" id="m25"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/infra_ramp_w6_h3.gltf" id="m26"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/infra_ramp_w6_h25.gltf" id="m27"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/infra_underpass_ramp.gltf" id="m28"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/infra_underpass_portal.gltf" id="m29"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/infra_underpass_exit.gltf" id="m30"]
+
+[ext_resource type="PackedScene" path="res://assets/models/district/infra_retwall_6x3.gltf" id="m31"]
 
 [node name="Terrain" type="Node3D"]
 
@@ -110,14 +118,6 @@ kind = "ground"
 shape = "stairs"
 tint = Color(0.66, 0.64, 0.6, 1)
 show_mesh = false
-
-[node name="TunnelRampS" type="Node3D" parent="."]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -55, 2, -77)
-script = ExtResource("bb")
-size = Vector3(6, 1, 6)
-kind = "ground"
-shape = "ramp"
-tint = Color(0.6, 0.58, 0.54, 1)
 
 [node name="Hub" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -79, -20, -47.5)
@@ -215,13 +215,6 @@ label = "Лестница на проспект"
 tint = Color(0.6, 0.58, 0.54, 1)
 show_mesh = false
 
-[node name="RampProspect" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, 3, -75)
-script = ExtResource("bb")
-size = Vector3(6, 3, 10)
-kind = "road"
-shape = "ramp"
-
 [node name="StairsWide" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -35, 0, -12.25)
 script = ExtResource("bb")
@@ -250,20 +243,6 @@ shape = "stairs"
 tint = Color(0.53, 0.51, 0.47, 1)
 show_mesh = false
 
-[node name="RampSouth" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, 0, -10)
-script = ExtResource("bb")
-size = Vector3(6, 3, 10)
-kind = "road"
-shape = "ramp"
-
-[node name="RampGarages" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, -2.5, 52)
-script = ExtResource("bb")
-size = Vector3(6, 2.5, 10)
-kind = "road"
-shape = "ramp"
-
 [node name="StairsGarages" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60.5, -2.5, 49.25)
 script = ExtResource("bb")
@@ -273,13 +252,6 @@ shape = "stairs"
 tint = Color(0.48, 0.46, 0.42, 1)
 show_mesh = false
 
-[node name="RampGarages2" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, -5, 70)
-script = ExtResource("bb")
-size = Vector3(6, 2.5, 10)
-kind = "road"
-shape = "ramp"
-
 [node name="StairsGarages2" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60.5, -5, 67.25)
 script = ExtResource("bb")
@@ -288,13 +260,6 @@ kind = "ground"
 shape = "stairs"
 tint = Color(0.43, 0.41, 0.38, 1)
 show_mesh = false
-
-[node name="RampGarages3" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, -7.5, 88)
-script = ExtResource("bb")
-size = Vector3(6, 2.5, 10)
-kind = "road"
-shape = "ramp"
 
 [node name="StairsGarages3" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60.5, -7.5, 85.25)
@@ -384,15 +349,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -55, 6, -112)
 [node name="TunnelStairsN_mdl" parent="." instance=ExtResource("m5")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -55, 2, -103.5)
 
-[node name="TunnelRail_mdl" parent="." instance=ExtResource("m6")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58.1, 6, -103.5)
-
-[node name="TunnelRail2_mdl" parent="." instance=ExtResource("m6")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -51.9, 6, -103.5)
-
-[node name="TunnelRail3_mdl" parent="." instance=ExtResource("m7")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -55, 6, -99.9)
-
 [node name="StairsProspect_mdl" parent="." instance=ExtResource("m8")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 3, -77.25)
 
@@ -464,3 +420,198 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100.5, -7.5, 74)
 
 [node name="Edge9_mdl" parent="." instance=ExtResource("m25")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -7.5, 101.5)
+
+[node name="RampProspect_infra" parent="." instance=ExtResource("m26")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, 3, -75)
+
+[node name="RampSouth_infra" parent="." instance=ExtResource("m26")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, 0, -10)
+
+[node name="RampGarages_infra" parent="." instance=ExtResource("m27")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, -2.5, 52)
+
+[node name="RampGarages2_infra" parent="." instance=ExtResource("m27")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, -5, 70)
+
+[node name="RampGarages3_infra" parent="." instance=ExtResource("m27")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, -7.5, 88)
+
+[node name="UnderpassRamp_infra" parent="." instance=ExtResource("m28")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -55, 3, -77)
+
+[node name="UnderpassPortal_infra" parent="." instance=ExtResource("m29")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -55, 3, -80)
+
+[node name="UnderpassExit_infra" parent="." instance=ExtResource("m30")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -55, 6, -103.5)
+
+[node name="RetWallN1_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(0.983, 0, 0, 0, 1, 0, 0, 0, 1, -97.05, 3, -79.98)
+
+[node name="RetWallN2_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(0.983, 0, 0, 0, 1, 0, 0, 0, 1, -91.15, 3, -79.98)
+
+[node name="RetWallN3_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(0.983, 0, 0, 0, 1, 0, 0, 0, 1, -85.25, 3, -79.98)
+
+[node name="RetWallN4_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(0.983, 0, 0, 0, 1, 0, 0, 0, 1, -79.35, 3, -79.98)
+
+[node name="RetWallN5_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(0.983, 0, 0, 0, 1, 0, 0, 0, 1, -73.45, 3, -79.98)
+
+[node name="RetWallN6_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(0.983, 0, 0, 0, 1, 0, 0, 0, 1, -67.55, 3, -79.98)
+
+[node name="RetWallN7_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(0.983, 0, 0, 0, 1, 0, 0, 0, 1, -61.65, 3, -79.98)
+
+[node name="RetWallN8_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.022, 0, 0, 0, 1, 0, 0, 0, 1, -48.235, 3, -79.98)
+
+[node name="RetWallN9_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.022, 0, 0, 0, 1, 0, 0, 0, 1, -42.105, 3, -79.98)
+
+[node name="RetWallN10_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.022, 0, 0, 0, 1, 0, 0, 0, 1, -35.975, 3, -79.98)
+
+[node name="RetWallN11_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.022, 0, 0, 0, 1, 0, 0, 0, 1, -29.845, 3, -79.98)
+
+[node name="RetWallN12_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.022, 0, 0, 0, 1, 0, 0, 0, 1, -23.715, 3, -79.98)
+
+[node name="RetWallN13_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.022, 0, 0, 0, 1, 0, 0, 0, 1, -17.585, 3, -79.98)
+
+[node name="RetWallN14_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.022, 0, 0, 0, 1, 0, 0, 0, 1, -11.455, 3, -79.98)
+
+[node name="RetWallN15_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.022, 0, 0, 0, 1, 0, 0, 0, 1, -5.325, 3, -79.98)
+
+[node name="RetWallN16_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.022, 0, 0, 0, 1, 0, 0, 0, 1, 0.805, 3, -79.98)
+
+[node name="RetWallN17_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.022, 0, 0, 0, 1, 0, 0, 0, 1, 6.935, 3, -79.98)
+
+[node name="RetWallN18_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.024, 0, 0, 0, 1, 0, 0, 0, 1, 29.371, 3, -79.98)
+
+[node name="RetWallN19_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.024, 0, 0, 0, 1, 0, 0, 0, 1, 35.513, 3, -79.98)
+
+[node name="RetWallN20_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.024, 0, 0, 0, 1, 0, 0, 0, 1, 41.654, 3, -79.98)
+
+[node name="RetWallN21_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.024, 0, 0, 0, 1, 0, 0, 0, 1, 47.796, 3, -79.98)
+
+[node name="RetWallN22_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.024, 0, 0, 0, 1, 0, 0, 0, 1, 53.938, 3, -79.98)
+
+[node name="RetWallN23_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.024, 0, 0, 0, 1, 0, 0, 0, 1, 60.079, 3, -79.98)
+
+[node name="RetWallN24_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.024, 0, 0, 0, 1, 0, 0, 0, 1, 66.221, 3, -79.98)
+
+[node name="RetWallN25_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.024, 0, 0, 0, 1, 0, 0, 0, 1, 72.362, 3, -79.98)
+
+[node name="RetWallN26_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.024, 0, 0, 0, 1, 0, 0, 0, 1, 78.504, 3, -79.98)
+
+[node name="RetWallN27_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.024, 0, 0, 0, 1, 0, 0, 0, 1, 84.646, 3, -79.98)
+
+[node name="RetWallN28_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.024, 0, 0, 0, 1, 0, 0, 0, 1, 90.787, 3, -79.98)
+
+[node name="RetWallN29_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.024, 0, 0, 0, 1, 0, 0, 0, 1, 96.929, 3, -79.98)
+
+[node name="RetWallS1_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(0.952, 0, 0, 0, 1, 0, 0, 0, 1, -97.143, 0, -14.98)
+
+[node name="RetWallS2_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(0.952, 0, 0, 0, 1, 0, 0, 0, 1, -91.429, 0, -14.98)
+
+[node name="RetWallS3_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(0.952, 0, 0, 0, 1, 0, 0, 0, 1, -85.714, 0, -14.98)
+
+[node name="RetWallS4_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(0.952, 0, 0, 0, 1, 0, 0, 0, 1, -80, 0, -14.98)
+
+[node name="RetWallS5_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(0.952, 0, 0, 0, 1, 0, 0, 0, 1, -74.286, 0, -14.98)
+
+[node name="RetWallS6_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(0.952, 0, 0, 0, 1, 0, 0, 0, 1, -68.571, 0, -14.98)
+
+[node name="RetWallS7_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(0.952, 0, 0, 0, 1, 0, 0, 0, 1, -62.857, 0, -14.98)
+
+[node name="RetWallS8_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.167, 0, 0, 0, 1, 0, 0, 0, 1, -50.5, 0, -14.98)
+
+[node name="RetWallS9_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.167, 0, 0, 0, 1, 0, 0, 0, 1, -43.5, 0, -14.98)
+
+[node name="RetWallS10_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.035, 0, 0, 0, 1, 0, 0, 0, 1, -26.894, 0, -14.98)
+
+[node name="RetWallS11_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.035, 0, 0, 0, 1, 0, 0, 0, 1, -20.681, 0, -14.98)
+
+[node name="RetWallS12_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.035, 0, 0, 0, 1, 0, 0, 0, 1, -14.469, 0, -14.98)
+
+[node name="RetWallS13_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.035, 0, 0, 0, 1, 0, 0, 0, 1, -8.256, 0, -14.98)
+
+[node name="RetWallS14_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.035, 0, 0, 0, 1, 0, 0, 0, 1, -2.044, 0, -14.98)
+
+[node name="RetWallS15_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.035, 0, 0, 0, 1, 0, 0, 0, 1, 4.169, 0, -14.98)
+
+[node name="RetWallS16_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.035, 0, 0, 0, 1, 0, 0, 0, 1, 10.381, 0, -14.98)
+
+[node name="RetWallS17_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.035, 0, 0, 0, 1, 0, 0, 0, 1, 16.594, 0, -14.98)
+
+[node name="RetWallS18_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(0.987, 0, 0, 0, 1, 0, 0, 0, 1, 29.262, 0, -14.98)
+
+[node name="RetWallS19_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(0.987, 0, 0, 0, 1, 0, 0, 0, 1, 35.188, 0, -14.98)
+
+[node name="RetWallS20_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(0.987, 0, 0, 0, 1, 0, 0, 0, 1, 41.112, 0, -14.98)
+
+[node name="RetWallS21_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(0.987, 0, 0, 0, 1, 0, 0, 0, 1, 47.038, 0, -14.98)
+
+[node name="RetWallS22_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.048, 0, 0, 0, 1, 0, 0, 0, 1, 59.143, 0, -14.98)
+
+[node name="RetWallS23_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.048, 0, 0, 0, 1, 0, 0, 0, 1, 65.429, 0, -14.98)
+
+[node name="RetWallS24_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.048, 0, 0, 0, 1, 0, 0, 0, 1, 71.714, 0, -14.98)
+
+[node name="RetWallS25_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.048, 0, 0, 0, 1, 0, 0, 0, 1, 78, 0, -14.98)
+
+[node name="RetWallS26_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.048, 0, 0, 0, 1, 0, 0, 0, 1, 84.286, 0, -14.98)
+
+[node name="RetWallS27_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.048, 0, 0, 0, 1, 0, 0, 0, 1, 90.571, 0, -14.98)
+
+[node name="RetWallS28_infra" parent="." instance=ExtResource("m31")]
+transform = Transform3D(1.048, 0, 0, 0, 1, 0, 0, 0, 1, 96.857, 0, -14.98)

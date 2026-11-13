@@ -73,7 +73,7 @@ func _rebuild() -> void:
 	_built.clear()
 
 	var mi := MeshInstance3D.new()
-	var mat := _material(tint if tint.a > 0.0 else COLORS.get(kind, Color.GRAY))
+	var mat := _surface_material()
 	match shape:
 		"ramp":
 			var pm := PrismMesh.new()
@@ -146,6 +146,44 @@ func _stairs_mesh(mat: Material) -> Mesh:
 	var mesh := st.commit()
 	mesh.surface_set_material(0, mat)
 	return mesh
+
+
+## Земля, дороги и снежные поля — уже в финальном виде (текстуры по мировым координатам),
+## всё остальное — серая клетка блокаута.
+func _surface_material() -> Material:
+	match kind:
+		"ground":
+			return _ground_material()
+		"road":
+			return _world_material("res://assets/textures/asphalt_snow.png", 6.0)
+		"snow":
+			return _world_material("res://assets/textures/snow.png", 4.0)
+	return _material(tint if tint.a > 0.0 else COLORS.get(kind, Color.GRAY))
+
+
+static func _ground_material() -> Material:
+	if _materials.has("ground"):
+		return _materials["ground"]
+	var m := ShaderMaterial.new()
+	m.shader = load("res://shaders/district_ground.gdshader")
+	m.set_shader_parameter("snow_tex", load("res://assets/textures/snow.png"))
+	m.set_shader_parameter("wall_tex", load("res://assets/textures/retwall.png"))
+	_materials["ground"] = m
+	return m
+
+
+static func _world_material(path: String, meters: float) -> Material:
+	if _materials.has(path):
+		return _materials[path]
+	var m := StandardMaterial3D.new()
+	m.albedo_texture = load(path)
+	m.uv1_triplanar = true
+	m.uv1_world_triplanar = true
+	m.uv1_scale = Vector3.ONE / meters
+	m.roughness = 0.9
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	_materials[path] = m
+	return m
 
 
 static func _material(c: Color) -> StandardMaterial3D:
