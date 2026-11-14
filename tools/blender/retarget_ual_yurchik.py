@@ -10,8 +10,8 @@
 # куда кость-источник (q0), и уже потом применяем delta:  world = delta · q0 · rest_our.
 # Ступни берём без q0 — чтобы сохранить наш разворот носков.
 #
-# Бег (клип Run) не переносится, а строится процедурно — make_run() ниже: клипы бега из UAL
-# сгорбленные, с огромным шагом и руками поперёк груди, правками их не спасти.
+# Стойка, ходьба, ходьба назад и бег (Idle, Walk, WalkBack, Run) не переносятся, а строятся
+# процедурно — make_cycle() и таблица LOCOMOTION ниже. Остальные клипы (удары, броски, смерть) — из UAL.
 #
 # Запуск (из корня проекта, Blender 5.2+):
 #   blender -b tools/blender/yurchik_v3.blend --python tools/blender/retarget_ual_yurchik.py
@@ -40,9 +40,6 @@ NO_ALIGN = {"FootL", "FootR"}
 
 # имя в игре ← (библиотека, клип-источник, задом наперёд)
 CLIPS = [
-    ("Idle", "UAL1", "Idle_Loop", False),
-    ("Walk", "UAL1", "Walk_Loop", False),
-    ("WalkBack", "UAL1", "Walk_Loop", True),
     ("Sprint", "UAL1", "Sprint_Loop", False),
     # удар молотком: из «рубки дерева» — замах (кадры 18–28) → удар (0–6) → доводка (до 14)
     ("Attack", "UAL2", "TreeChopping_Loop", False, [(18, 28), (0, 14)]),
@@ -65,40 +62,78 @@ CLIPS = [
 ]
 
 
-# ----------------------------------------------------------------------------- процедурный бег
-# Цикл задан по фазе p ∈ [0, 1) правой ноги (левая — p + 0.5): 0 — касание пяткой, 0–0.32 — опора,
-# 0.32–0.5 — полёт, 0.5–1 — мах. Углы в градусах. Юрчик смотрит в -Y, +X — его левый бок, Z — вверх.
-RUN_FRAMES = 22             # 0.733 с на цикл при ×1 — ~164 шага в минуту
-RUN = {
-    "hip_mid": 6.0, "hip_amp": 28.0,   # бедро: вперёд до 34°, назад до -22° (на отталкивании)
-    "lean": 8.0, "pelvis_lean": 4.0,   # наклон корпуса и таза вперёд
-    "pelvis_yaw": 6.0,                 # таз доворачивается за ногой, плечи — навстречу
-    "shoulder_yaw": 1.1,
-    "head_pitch": 3.0,                 # голова почти ровно — взгляд вперёд
-    "arm_mid": -8.0, "arm_amp": 27.0,  # плечо: вперёд до 19°, назад до -35° — у бегуна рука больше уходит назад
-    "hammer_arm": 0.75,                # рука с молотком машет чуть меньше
-    "elbow": 88.0, "elbow_amp": 7.0,   # локоть почти постоянно ~90°: впереди чуть сильнее, сзади чуть раскрыт
-    "arm_out": 0.46, "forearm_in": -0.1,  # плечо отведено от корпуса (~25°), предплечье чуть наружу
-    "flight": 0.03,                    # м — подъём в фазе полёта
-    "hammer_twist": 50.0,              # кисть с молотком доворачивается вокруг предплечья — рукоять вверх
-    # вторичные движения — без них бег «роботский»: всё синхронно и только в плоскости шага
-    "sway": 0.022,                     # м — таз смещается над опорной ногой
-    "pelvis_roll": 5.0,                # таз проседает на стороне маховой ноги
-    "spine_bend": 0.6,                 # корпус гасит крен таза (доля)
-    "lean_pulse": 3.0,                 # корпус «пружинит»: сильнее наклон при амортизации
-    "head_nod": 2.0, "head_follow": 0.3,  # голова чуть кивает и немного уходит за плечами
-    "arm_lag": 0.05, "elbow_lag": 0.1, # руки и локти запаздывают за ногами (доля цикла)
-    "arm_in": 0.03, "hand_in": 0.03,   # кисть впереди чуть к середине, но не дальше края груди
-    "wrist": 8.0,                      # кисть расслаблена и чуть отстаёт от маха
+# ----------------------------------------------------------------------------- процедурная локомоция
+# Стойка, ходьба, ходьба назад и бег строятся здесь, а не переносятся из UAL: у клипов библиотеки
+# сгорбленный бег и «деловая» ходьба, а нужна расслабленная походка в духе старых ПК-песочниц:
+# прямой корпус, свободный мах руками, мягкое покачивание таза; бег спортивный, руки согнуты.
+#
+# Цикл задан по фазе p ∈ [0, 1) правой ноги (левая — p + 0.5). Углы в градусах.
+# Юрчик смотрит в -Y, +X — его левый бок, Z — вверх. Параметры (k):
+#   hip_mid / hip_amp / hip_peak — бедро: среднее, размах, фаза, где нога дальше всего впереди;
+#   lean, pelvis_lean, lean_pulse — наклон корпуса и таза вперёд, «пружина» корпуса дважды за цикл;
+#   pelvis_yaw, shoulder_yaw — таз доворачивается за ногой, плечи навстречу;
+#   sway, pelvis_roll, spine_bend — таз над опорной ногой, крен таза, сколько крена гасит корпус;
+#   head_pitch, head_nod, head_follow — голова;
+#   arm_mid / arm_amp / arm_phase / arm_lag — плечо (рука в противофазе своей ноге);
+#   elbow / elbow_amp / elbow_lag — сгиб локтя; arm_out, forearm_in, arm_in, hand_in — разводка рук;
+#   hammer_arm, hammer_twist, hammer_flex — рука с молотком машет меньше, кисть доворачивает рукоять
+#   вокруг предплечья и сгибается в запястье (опущенная рука — молоток висит бойком вниз);
+#   wrist — расслабленная кисть; flight / flight_from — подлёт в фазе полёта (только бег);
+#   lean_side — постоянный перенос веса вбок (стойка: вес на правой ноге).
+# Кривые по фазе ноги: knee — сгиб колена, foot — наклон опорной стопы (+ носок вверх),
+# ankle — стопа в махе относительно голени, plant — сколько стопа держит землю (1) или идёт за голенью (0).
+BASE = {
+    "hip_mid": 0.0, "hip_amp": 0.0, "hip_peak": 0.9,
+    "lean": 0.0, "pelvis_lean": 0.0, "lean_pulse": 0.0,
+    "pelvis_yaw": 0.0, "shoulder_yaw": 1.0,
+    "sway": 0.0, "pelvis_roll": 0.0, "spine_bend": 0.6, "lean_side": 0.0,
+    "head_pitch": 0.0, "head_nod": 0.0, "head_follow": 0.3,
+    "arm_mid": 0.0, "arm_amp": 0.0, "arm_phase": 0.4, "arm_lag": 0.05,
+    "elbow": 10.0, "elbow_amp": 0.0, "elbow_lag": 0.1,
+    "arm_out": 0.15, "forearm_in": 0.0, "arm_in": 0.0, "hand_in": 0.0,
+    "hammer_arm": 0.8, "hammer_twist": 50.0, "hammer_flex": 0.0, "wrist": 0.0,
+    "flight": 0.0, "flight_from": 0.32,
 }
-# сгиб колена по фазе: мягкое касание → амортизация → толчок → мах (колено высоко) → выпрямление
-RUN_KNEE = [(0.0, 22), (0.12, 40), (0.3, 24), (0.45, 70), (0.6, 100), (0.78, 62), (0.9, 22), (0.96, 16)]
-# стопа в опоре — наклон к земле (+ — носок вверх): пятка → плоско → носок вниз на толчке
-RUN_FOOT = [(0.0, 10), (0.08, 0), (0.22, -4), (0.34, -35), (0.5, -25), (0.7, -6), (0.88, 8)]
-# стопа в махе — угол в голеностопе относительно голени (+ — носок к себе): после толчка носок вытянут
-RUN_ANKLE = [(0.0, 0), (0.3, -8), (0.45, -15), (0.6, -5), (0.8, 6), (0.92, 5)]
-# сколько стопа «держит землю» (1) или идёт за голенью (0)
-RUN_PLANT = [(0.0, 1), (0.28, 1), (0.42, 0), (0.86, 0), (0.95, 1)]
+
+LOCOMOTION = {
+    # спокойная стойка: вес на правой ноге, левое колено чуть согнуто, руки висят, лёгкое покачивание и дыхание
+    "Idle": {
+        "frames": 90,
+        "k": dict(BASE, sway=0.012, pelvis_roll=1.5, lean_side=0.018, lean=1.0, lean_pulse=1.2,
+                  head_pitch=-1.0, head_nod=1.0, arm_mid=-3.0, arm_amp=1.5, elbow=14.0, elbow_amp=2.0,
+                  arm_out=0.16, wrist=2.0, hammer_twist=0.0, hammer_flex=70.0),
+        "knee": [(0.0, 6), (0.5, 6)],
+        "foot": [(0.0, 0), (0.5, 0)],
+        "ankle": [(0.0, 0), (0.5, 0)],
+        "plant": [(0.0, 1), (0.5, 1)],
+    },
+    # прогулочный шаг: опора 0–0.6, мах 0.6–1; корпус прямой, руки свободно машут, локти чуть согнуты
+    "Walk": {
+        "frames": 34,                  # ~1.13 с на цикл — ~106 шагов в минуту, без спешки
+        "k": dict(BASE, hip_mid=2.0, hip_amp=22.0, hip_peak=0.95, lean=2.0, pelvis_lean=1.0, lean_pulse=0.8,
+                  pelvis_yaw=5.0, shoulder_yaw=1.2, sway=0.018, pelvis_roll=4.0, spine_bend=0.7,
+                  head_pitch=1.0, head_nod=1.2, arm_mid=-2.0, arm_amp=20.0, arm_phase=0.45, arm_lag=0.06,
+                  elbow=16.0, elbow_amp=10.0, elbow_lag=0.08, arm_out=0.17, hammer_arm=0.7, wrist=6.0,
+                  hammer_twist=0.0, hammer_flex=70.0),
+        "knee": [(0.0, 4), (0.12, 16), (0.35, 6), (0.55, 34), (0.7, 62), (0.85, 30), (0.96, 4)],
+        "foot": [(0.0, 16), (0.1, 0), (0.4, -2), (0.58, -28), (0.72, -10), (0.9, 12)],
+        "ankle": [(0.0, 0), (0.6, -14), (0.72, -4), (0.85, 4), (0.95, 2)],
+        "plant": [(0.0, 1), (0.55, 1), (0.66, 0), (0.92, 0), (0.98, 1)],
+    },
+    # спортивный бег: небольшой наклон вперёд, руки согнуты под прямым углом и работают перед корпусом
+    "Run": {
+        "frames": 20,                  # 0.667 с — ~180 шагов в минуту
+        "k": dict(BASE, hip_mid=6.0, hip_amp=30.0, hip_peak=0.9, lean=10.0, pelvis_lean=5.0, lean_pulse=2.5,
+                  pelvis_yaw=7.0, shoulder_yaw=1.2, sway=0.02, pelvis_roll=5.0, spine_bend=0.6,
+                  head_pitch=4.0, head_nod=1.8, arm_mid=-4.0, arm_amp=32.0, arm_phase=0.4, arm_lag=0.04,
+                  elbow=92.0, elbow_amp=12.0, elbow_lag=0.08, arm_out=0.3, forearm_in=-0.05,
+                  arm_in=0.06, hand_in=0.06, hammer_arm=0.75, wrist=6.0, flight=0.035, flight_from=0.32),
+        "knee": [(0.0, 20), (0.12, 40), (0.3, 22), (0.45, 75), (0.6, 105), (0.78, 60), (0.9, 20), (0.96, 14)],
+        "foot": [(0.0, 8), (0.08, 0), (0.22, -4), (0.34, -38), (0.5, -26), (0.7, -6), (0.88, 6)],
+        "ankle": [(0.0, 0), (0.3, -8), (0.45, -16), (0.6, -5), (0.8, 6), (0.92, 5)],
+        "plant": [(0.0, 1), (0.28, 1), (0.42, 0), (0.86, 0), (0.95, 1)],
+    },
+}
 
 
 def cyc(keys, p):
@@ -117,10 +152,13 @@ def cyc(keys, p):
     return keys[0][1]
 
 
-def make_run(dst, order):
-    """Строит клип Run на скелете Юрчика: позы по фазе, таз опускается так, чтобы опорная стопа стояла
-    на земле (плюс подлёт в фазе полёта). Возвращает статистику, как bake_clip."""
-    X, Z = Vector((1, 0, 0)), Vector((0, 0, 1))
+def make_cycle(dst, order, name, spec, reverse=False):
+    """Строит зацикленный клип name на скелете Юрчика по спецификации из LOCOMOTION: позы по фазе,
+    таз опускается так, чтобы опорная стопа стояла на земле (плюс подлёт в фазе полёта).
+    reverse — проиграть цикл задом наперёд (ходьба назад). Возвращает статистику, как bake_clip."""
+    X, Y, Z = Vector((1, 0, 0)), Vector((0, 1, 0)), Vector((0, 0, 1))
+    k = spec["k"]
+    frames = spec["frames"]
 
     def R(axis, deg):
         return Quaternion(axis, math.radians(deg))
@@ -139,37 +177,37 @@ def make_run(dst, order):
         return Vector((side * out, -math.sin(a), -math.cos(a)))
 
     def pose(p):
-        k = RUN
         ph = {-1: p % 1.0, 1: (p + 0.5) % 1.0}          # -1 — правая, +1 — левая
-        hip = {s: k["hip_mid"] + k["hip_amp"] * math.cos(2 * math.pi * (ph[s] - 0.9)) for s in ph}
-        yaw = k["pelvis_yaw"] * (hip[-1] - hip[1]) / (2 * k["hip_amp"])  # правая нога впереди → правый бок вперёд
+        hip = {s: k["hip_mid"] + k["hip_amp"] * math.cos(2 * math.pi * (ph[s] - k["hip_peak"])) for s in ph}
+        yaw = k["pelvis_yaw"] * (hip[-1] - hip[1]) / (2 * k["hip_amp"]) if k["hip_amp"] else 0.0
         syaw = -yaw * k["shoulder_yaw"]
         st = math.cos(2 * math.pi * (p - 0.15))         # +1 — середина опоры на правую, -1 — на левую
-        roll = k["pelvis_roll"] * st                     # опора на правую → левый бок таза ниже
-        sway = -k["sway"] * st                           # и таз над правой ногой (-X)
+        roll = k["pelvis_roll"] * st + k["lean_side"] * 120.0
+        sway = -k["sway"] * st - k["lean_side"]
         lean = k["lean"] + k["lean_pulse"] * math.cos(4 * math.pi * (p - 0.1))
-        Y = Vector((0, 1, 0))
         rot = {"Pelvis": R(Z, yaw) @ R(Y, roll) @ R(X, k["pelvis_lean"]) @ rest_q["Pelvis"],
                "Spine": R(Z, syaw) @ R(Y, -roll * k["spine_bend"]) @ R(X, lean) @ rest_q["Spine"],
-               "Head": R(Z, syaw * k["head_follow"])
+               "Head": R(Z, syaw * k["head_follow"]) @ R(Y, roll * 0.25)
                @ R(X, k["head_pitch"] + k["head_nod"] * math.cos(4 * math.pi * (p - 0.2))) @ rest_q["Head"]}
         for s, sfx in ((1, "L"), (-1, "R")):
             ry = R(Z, yaw)
-            knee = cyc(RUN_KNEE, ph[s])
+            knee = cyc(spec["knee"], ph[s])
+            if k["lean_side"] and s > 0:                 # стойка: ненагруженная левая нога чуть согнута
+                knee += 8.0
             rot["Thigh" + sfx] = aim("Thigh" + sfx, ry @ sag(s, hip[s], 0.04))
             rot["Shin" + sfx] = aim("Shin" + sfx, ry @ sag(s, hip[s] - knee, 0.03))
-            on_ground = ry @ R(X, -cyc(RUN_FOOT, ph[s])) @ rest_q["Foot" + sfx]
+            on_ground = ry @ R(X, -cyc(spec["foot"], ph[s])) @ rest_q["Foot" + sfx]
             sd = rot["Shin" + sfx] @ rest_q["Shin" + sfx].inverted()
-            in_air = sd @ R(X, -cyc(RUN_ANKLE, ph[s])) @ rest_q["Foot" + sfx]
-            w = min(max(cyc(RUN_PLANT, ph[s]), 0.0), 1.0)
+            in_air = sd @ R(X, -cyc(spec["ankle"], ph[s])) @ rest_q["Foot" + sfx]
+            w = min(max(cyc(spec["plant"], ph[s]), 0.0), 1.0)
             rot["Foot" + sfx] = in_air.slerp(on_ground, w)
-            # рука в противофазе своей ноге: нога сзади (фаза 0.4) — рука впереди
+            # рука в противофазе своей ноге
             amp = k["arm_amp"] * (k["hammer_arm"] if s < 0 else 1.0)
-            pa = ph[s] - 0.4 - k["arm_lag"]
+            pa = ph[s] - k["arm_phase"] - k["arm_lag"]
             c = math.cos(2 * math.pi * pa)
             fwd = max(c, 0.0)
             sh = k["arm_mid"] + amp * c
-            el = k["elbow"] + k["elbow_amp"] * math.cos(2 * math.pi * (ph[s] - 0.4 - k["elbow_lag"]))
+            el = k["elbow"] + k["elbow_amp"] * math.cos(2 * math.pi * (ph[s] - k["arm_phase"] - k["elbow_lag"]))
             rs = R(Z, syaw)
             rot["UpperArm" + sfx] = aim("UpperArm" + sfx, rs @ sag(s, sh, k["arm_out"] - k["arm_in"] * fwd))
             rot["Forearm" + sfx] = aim("Forearm" + sfx,
@@ -178,7 +216,8 @@ def make_run(dst, order):
             twist = k["hammer_twist"] if s < 0 else 0.0
             fdir = rot["Forearm" + sfx] @ Vector((0, 1, 0))
             flop = k["wrist"] * (0.5 if s < 0 else 1.0) * math.sin(2 * math.pi * (pa - 0.1))
-            rot["Hand" + sfx] = R(rs @ X, flop) @ R(fdir, twist) @ fd @ rest_q["Hand" + sfx]
+            flex = k["hammer_flex"] if s < 0 else 0.0
+            rot["Hand" + sfx] = R(rs @ X, flop + flex) @ R(fdir, twist) @ fd @ rest_q["Hand" + sfx]
         mats = {}
         for n in order:
             b = bones[n]
@@ -196,20 +235,21 @@ def make_run(dst, order):
 
         lift = -min(ground("FootL"), ground("FootR"))
         q = p % 0.5
-        if 0.32 < q < 0.5:
-            lift += k["flight"] * math.sin(math.pi * (q - 0.32) / 0.18)
+        if k["flight"] and k["flight_from"] < q < 0.5:
+            lift += k["flight"] * math.sin(math.pi * (q - k["flight_from"]) / (0.5 - k["flight_from"]))
         up = Matrix.Translation((0, 0, lift))
         return {n: up @ m for n, m in mats.items()}
 
     dad = dst.animation_data
-    ac = bpy.data.actions.new("Yur_Run")
+    ac = bpy.data.actions.new("Yur_" + name)
     ac.use_fake_user = True
     dad.action = ac
     for pb in dst.pose.bones:
         pb.rotation_mode = 'QUATERNION'
     feet = {"FootL": [], "FootR": []}
-    for i in range(RUN_FRAMES + 1):
-        mats = pose(i / RUN_FRAMES)
+    for i in range(frames + 1):
+        t = i / frames
+        mats = pose(1.0 - t if reverse else t)
         for n in order:
             b = bones[n]
             pb = dst.pose.bones[n]
@@ -226,21 +266,21 @@ def make_run(dst, order):
                 pb.keyframe_insert("location", frame=i, group=n)
         for f in feet:
             feet[f].append(mats[f].translation.copy())
-    # скорость опорной стопы: с такой скоростью должен бежать герой, чтобы ноги не скользили
+    # скорость опорной стопы: с такой скоростью должен идти герой, чтобы ноги не скользили
     speeds = []
     for pts in feet.values():
         zmin = min(v.z for v in pts)
-        for j in range(RUN_FRAMES):
+        for j in range(frames):
             if pts[j].z < zmin + 0.01 and pts[j + 1].z < zmin + 0.01:
                 speeds.append(abs(pts[j + 1].y - pts[j].y) * FPS)
     speeds.sort()
     tr = dad.nla_tracks.new()
-    tr.name = "Run"
+    tr.name = name
     tr.mute = True
     st = tr.strips.new(ac.name, 0, ac)
-    st.name = "Run"
+    st.name = name
     dad.action = None
-    return {"frames": RUN_FRAMES + 1, "len_s": round(RUN_FRAMES / FPS, 3),
+    return {"frames": frames + 1, "len_s": round(frames / FPS, 3),
             "foot_speed": round(speeds[len(speeds) // 2], 3) if speeds else 0.0}
 
 
@@ -380,7 +420,9 @@ def main():
             for d in list(blk):
                 if d.users == 0:
                     blk.remove(d)
-    stats["Run"] = make_run(dst, order)
+    for name, spec in LOCOMOTION.items():
+        stats[name] = make_cycle(dst, order, name, spec)
+    stats["WalkBack"] = make_cycle(dst, order, "WalkBack", LOCOMOTION["Walk"], reverse=True)
     return stats
 
 
