@@ -22,6 +22,9 @@ C = 64
 
 
 def save_rgba(name, arr):
+    if not os.environ.get("PS2_OFF"):
+        import ps2_style
+        arr = ps2_style.ps2_pass(arr, name)                  # PS2-обработка (альфа не меняется)
     h, w, _ = arr.shape
     img = bpy.data.images.get(name) or bpy.data.images.new(name, w, h, alpha=True)
     if img.size[0] != w or img.size[1] != h:
