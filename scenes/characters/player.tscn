@@ -1,38 +1,95 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://l6yy2wslyolu"]
 
-[ext_resource type="Script" path="res://scripts/player/player.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/player/yurchik_anim.gd" id="2"]
-[ext_resource type="PackedScene" path="res://assets/models/yurchik.gltf" id="3"]
+[ext_resource type="Script" uid="uid://biu7nmbtfy7hv" path="res://scripts/player/player.gd" id="1"]
+[ext_resource type="Script" uid="uid://ckgje07njha0j" path="res://scripts/player/yurchik_anim.gd" id="2"]
+[ext_resource type="PackedScene" uid="uid://4f8gmarv2h0" path="res://assets/models/yurchik.gltf" id="3"]
+[ext_resource type="Script" uid="uid://cw16t6nceymo5" path="res://scenes/characters/breath_particles.gd" id="4_dyp2m"]
 
 [sub_resource type="CapsuleShape3D" id="capsule"]
 radius = 0.3
 height = 1.8
 
-[node name="Player" type="CharacterBody3D"]
+[sub_resource type="Curve" id="Curve_dyp2m"]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.12, 0.022), 0.0, 0.0, 0, 0, Vector2(0.45, 0.014), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 4
+
+[sub_resource type="CurveTexture" id="CurveTexture_atpat"]
+curve = SubResource("Curve_dyp2m")
+
+[sub_resource type="Curve" id="Curve_76oj4"]
+_limits = [0.0, 1.5, 0.0, 1.0]
+_data = [Vector2(0, 0.30081296), 0.0, 0.0, 0, 0, Vector2(1, 1.5), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_kqtwu"]
+curve = SubResource("Curve_76oj4")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_76oj4"]
+emission_shape = 1
+emission_sphere_radius = 0.03
+direction = Vector3(0, -0.1, -1)
+spread = 20.0
+initial_velocity_min = 0.39999998
+initial_velocity_max = 0.79999995
+gravity = Vector3(0, 0.25, 0)
+damping_min = 1.5000001
+damping_max = 2.5
+scale_min = 0.5
+scale_max = 1.1999999
+scale_curve = SubResource("CurveTexture_kqtwu")
+color = Color(0.86, 0.9, 0.96, 1)
+alpha_curve = SubResource("CurveTexture_atpat")
+
+[sub_resource type="Gradient" id="Gradient_kqtwu"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(1, 1, 1, 0.8, 1, 1, 1, 0.3, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_6eyoc"]
+gradient = SubResource("Gradient_kqtwu")
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(0.5, 0)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_76oj4"]
+transparency = 1
+shading_mode = 0
+vertex_color_use_as_albedo = true
+albedo_texture = SubResource("GradientTexture2D_6eyoc")
+billboard_mode = 3
+particles_anim_h_frames = 1
+particles_anim_v_frames = 1
+particles_anim_loop = false
+proximity_fade_enabled = true
+proximity_fade_distance = 0.3
+
+[sub_resource type="QuadMesh" id="QuadMesh_wmyyq"]
+material = SubResource("StandardMaterial3D_76oj4")
+size = Vector2(0.25, 0.25)
+
+[node name="Player" type="CharacterBody3D" unique_id=1698369333]
 collision_layer = 2
 collision_mask = 5
 script = ExtResource("1")
 
-[node name="Collision" type="CollisionShape3D" parent="."]
+[node name="Collision" type="CollisionShape3D" parent="." unique_id=1508496272]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 shape = SubResource("capsule")
 
-[node name="Model" type="Node3D" parent="."]
+[node name="Model" type="Node3D" parent="." unique_id=1505965801]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
 script = ExtResource("2")
 
-[node name="Yurchik" parent="Model" instance=ExtResource("3")]
+[node name="Yurchik" parent="Model" unique_id=957845369 instance=ExtResource("3")]
 
-[node name="CamPivot" type="Node3D" parent="."]
+[node name="CamPivot" type="Node3D" parent="." unique_id=497187373]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.62, 0)
 
-[node name="Camera" type="Camera3D" parent="CamPivot"]
+[node name="Camera" type="Camera3D" parent="CamPivot" unique_id=969677700]
 current = true
 fov = 72.0
-near = 0.05
 far = 1200.0
 
-[node name="Flashlight" type="SpotLight3D" parent="CamPivot/Camera"]
+[node name="Flashlight" type="SpotLight3D" parent="CamPivot/Camera" unique_id=1677952294]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.18, -0.22, -0.05)
 light_color = Color(0.95, 0.96, 1, 1)
 light_energy = 9.0
@@ -43,3 +100,12 @@ spot_range = 20.0
 spot_attenuation = 0.8
 spot_angle = 22.0
 spot_angle_attenuation = 1.4
+
+[node name="BreathParticles" type="GPUParticles3D" parent="CamPivot/Camera" unique_id=2071320922]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.062128425, -0.17409149)
+amount = 15
+lifetime = 3.0
+explosiveness = 0.85
+process_material = SubResource("ParticleProcessMaterial_76oj4")
+draw_pass_1 = SubResource("QuadMesh_wmyyq")
+script = ExtResource("4_dyp2m")
