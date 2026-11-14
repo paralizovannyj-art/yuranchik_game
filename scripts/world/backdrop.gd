@@ -9,11 +9,11 @@ extends Node3D
 	set(v):
 		lit_windows = v
 		_apply()
-@export var haze_color := Color(0.115, 0.085, 0.07):          ## во что дома тают вдали
+@export var haze_color := Color(0.13, 0.1, 0.085):            ## во что дома тают вдали (цвет тумана сцены)
 	set(v):
 		haze_color = v
 		_apply()
-@export var haze_density := 0.0042:                           ## больше — дома тают раньше
+@export var haze_density := 0.005:                            ## больше — дома тают раньше: 200 м — силуэт в дымке, 500 м — почти растворился
 	set(v):
 		haze_density = v
 		_apply()

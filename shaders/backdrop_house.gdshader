@@ -3,15 +3,23 @@
 //   UV  — метры по фасаду и по высоте;
 //   UV2 — x: номер дома + оттенок стены (дробная часть), y: доля горящих окон;
 //         y = -1 — глухая стена, крыша, ствол дерева; y = -2 — полосы дымовой трубы.
-// Свет и туман сцены на эти дома не действуют: дымку по расстоянию считаем сами,
-// поэтому силуэты и огни окон не тонут в тумане, как бы далеко ни стояли.
+// Свет и туман сцены на эти дома не действуют (туман сцены за 300 м съел бы их целиком):
+// дымку по расстоянию считаем сами — цвет и плотность близки к туману сцены, так что дома в
+// сотне-другой метров проступают силуэтами, а дальние почти растворяются, оставляя огни окон.
 shader_type spatial;
 render_mode unshaded, fog_disabled;
 
 uniform vec3 wall_color : source_color = vec3(0.035, 0.04, 0.055);
-uniform vec3 haze_color : source_color = vec3(0.115, 0.085, 0.07);   // во что дома тают вдали (цвет зарева у земли)
-uniform float haze_density = 0.0042;                                   // чем больше, тем раньше тают
-uniform float haze_max : hint_range(0.0, 1.0) = 0.86;                  // до конца в небе не растворяются — силуэт остаётся
+uniform vec3 haze_color : source_color = vec3(0.13, 0.1, 0.085);     // во что дома тают вдали — цвет тумана сцены
+uniform float haze_density = 0.005;                                    // чем больше, тем раньше тают: 200 м — силуэт в дымке, 500 м — почти растворился
+uniform float haze_max : hint_range(0.0, 1.0) = 0.94;                  // до конца не растворяются — еле заметный силуэт остаётся
+// туман сцены с воздушной перспективой (fog_aerial_perspective) вдали берёт цвет неба — повторяем это:
+// у горизонта дома тают в зарево, выше — в тёмное небо (цвета — как в shaders/city_night_sky.gdshader)
+uniform vec3 sky_glow : source_color = vec3(0.546, 0.325, 0.182);     // horizon_color × glow_energy
+uniform vec3 sky_mid : source_color = vec3(0.07, 0.065, 0.07);
+uniform float glow_height = 0.28;
+uniform float aerial = 0.75;
+uniform float window_fade : hint_range(0.0, 1.0) = 0.85;              // насколько окна гаснут в дымке
 uniform vec2 cell = vec2(3.2, 2.8);                                    // шаг окон: по фасаду, по высоте (м)
 uniform float window_energy = 0.9;
 uniform float lit_scale : hint_range(0.0, 2.0) = 1.0;                  // общий множитель «сколько окон горит»
@@ -58,6 +66,9 @@ void fragment() {
 		// тёмное стекло негорящих окон чуть светлее стены — ловит небо
 		col = mix(col, col * 0.6 + vec3(0.012, 0.014, 0.02), win * (1.0 - lit) * (1.0 - far));
 	}
-	col = mix(col, haze_color, haze);
-	ALBEDO = col + glow * (1.0 - 0.55 * haze);
+	vec3 dir = normalize((INV_VIEW_MATRIX * vec4(VERTEX, 0.0)).xyz);
+	float g = exp(-max(dir.y, 0.0) / glow_height);
+	vec3 haze_col = mix(haze_color, mix(sky_mid, sky_glow, g * g), aerial);
+	col = mix(col, haze_col, haze);
+	ALBEDO = col + glow * (1.0 - window_fade * haze);
 }
