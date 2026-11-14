@@ -54,19 +54,29 @@ def paving():
 
 
 def asphalt_snow():
-    """Проезд 6×6 м: u — поперёк дороги. Две раскатанные колеи в слякоти, по краям снег."""
+    """Проезд 6×6 м, u — поперёк дороги: укатанный снег, сквозь который местами проступает мокрый асфальт,
+    и несколько узких виляющих следов от шин. Без широких контрастных полос — текстура повторяется
+    поперёк на широких съездах и пандусах, и колеи не должны складываться в «зебру».
+    Свой генератор случайных чисел: правка этой текстуры не сдвигает остальные."""
+    rng = np.random.default_rng(5521)
     w = h = 256
-    arr = photo("Road013A", w, relief=0.8, sat=0.4, gain=0.55)
-    x = np.linspace(-1, 1, w, dtype=np.float32)[None, :]
-    wob = (fbm(w, h, 2, 6, R) - 0.5) * 0.25
-    track = np.exp(-((np.abs(x + wob) - 0.42) / 0.16) ** 2)              # колеи
-    edge = np.clip((np.abs(x) - 0.72 + wob) * 6, 0, 1)                   # снег у бордюров
-    mid = np.exp(-((x + wob) / 0.14) ** 2) * 0.7                         # снежный гребень между колеями
-    cover = np.clip(0.55 + edge + mid - track * 0.9 + (fbm(w, h, 12, 12, R) - 0.5) * 0.5, 0, 1)[..., None]
-    snow = SNOW * (0.62 + fbm(w, h, 30, 30, R, oct=2)[..., None] * 0.3)
-    slush = rgb((0.2, 0.2, 0.22)) * (0.7 + fbm(w, h, 16, 16, R)[..., None] * 0.6)
-    arr = arr * 0.5 + slush * 0.5
-    arr = arr * (1 - cover) + snow * cover
+    asphalt = photo("Road013A", w, relief=0.8, sat=0.35, gain=0.5)
+    slush = asphalt * 0.55 + rgb((0.23, 0.235, 0.25)) * 0.45                   # мокрый асфальт, не чёрный
+    packed = SNOW * 0.78 * (0.85 + fbm(w, h, 24, 24, rng, oct=3)[..., None] * 0.2)   # укатанный, сероватый снег
+    x = np.linspace(-1, 1, w, endpoint=False, dtype=np.float32)[None, :]
+    v = np.linspace(0, 1, h, endpoint=False, dtype=np.float32)[:, None]
+    cover = 0.85 + (fbm(w, h, 5, 5, rng) - 0.5) * 0.4                           # снег почти везде
+    holes = np.clip((0.42 - fbm(w, h, 4, 4, rng)) * 3.0, 0, 1)                 # крупные проталины до асфальта
+    cover = cover - holes * 0.55
+    # следы шин: две пары мягких полос (~25 см), плавно виляют вдоль дороги
+    for cx, s in ((-0.5, 0.32), (-0.24, 0.3), (0.22, 0.26), (0.48, 0.3)):
+        wob = (fbm(w, h, 1, 2, rng, oct=2) - 0.5) * 0.2
+        line = np.exp(-((x - cx - wob) / 0.07) ** 2)
+        tread = 0.9 + 0.1 * np.cos(v * 2 * np.pi * 64)                           # чуть заметный протектор
+        cover = cover - line * s * tread
+    cover = np.clip(cover, 0, 1)[..., None]
+    arr = slush * (1 - cover) + packed * cover
+    arr *= 0.92 + fbm(w, h, 48, 48, rng, oct=2)[..., None] * 0.12               # мелкая зернистость
     save("asphalt_snow", arr)
 
 
@@ -141,10 +151,11 @@ def underpass_sign():
     save("underpass_sign_emission", arr * 0.9)
 
 
-retwall()
-paving()
-asphalt_snow()
-pipe_wrap()
-stop_wall()
-underpass_sign()
-print("infra textures: ok")
+if __name__ == "__main__":       # так скрипт можно импортировать и пересоздать одну текстуру
+    retwall()
+    paving()
+    asphalt_snow()
+    pipe_wrap()
+    stop_wall()
+    underpass_sign()
+    print("infra textures: ok")
