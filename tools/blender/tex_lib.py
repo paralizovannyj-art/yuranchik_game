@@ -4,7 +4,8 @@ import numpy as np
 import bpy
 import os
 
-TEX_DIR = r"C:\Users\mrs\Documents\yuranchik_game\assets\textures"
+_ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+TEX_DIR = os.path.join(_ROOT, "assets", "textures")
 
 
 def vnoise(w, h, cx, cy, rng):
@@ -44,7 +45,12 @@ def fill(h, w, c):
 
 
 def save(name, arr):
-    """Сохраняет массив как PNG в assets/textures и возвращает путь."""
+    """Сохраняет массив как PNG в assets/textures и возвращает путь.
+    Перед сохранением — PS2-обработка по имени текстуры (таблица ps2_style.TEXTURES).
+    Отключить: переменная окружения PS2_OFF=1."""
+    if not os.environ.get("PS2_OFF"):
+        import ps2_style
+        arr = ps2_style.ps2_pass(arr, name)
     h, w, _ = arr.shape
     img = bpy.data.images.get(name) or bpy.data.images.new(name, w, h, alpha=False)
     if img.size[0] != w or img.size[1] != h:
@@ -62,7 +68,7 @@ def save(name, arr):
 
 
 # --- Фототекстуры из библиотеки ---
-LIB = r"C:\Users\mrs\Documents\yuranchik_game\assets\texture_library\ambientcg"
+LIB = os.path.join(_ROOT, "assets", "texture_library", "ambientcg")
 _LIGHT = np.array([-0.45, 0.55, 0.70], np.float32)
 _LIGHT /= np.linalg.norm(_LIGHT)
 

@@ -17,6 +17,7 @@ ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 sys.path.insert(0, HERE)
 import tex_lib
 from tex_lib import *
+import ps2_hero
 
 _ns = {"NO_MAIN": True}
 exec(compile(open(os.path.join(HERE, "build_yard.py"), encoding="utf-8").read(), "build_yard.py", "exec"), _ns)
@@ -24,6 +25,7 @@ B, mat = _ns["B"], _ns["mat"]
 OUT = os.path.join(ROOT, "assets", "models")
 ICONS = os.path.join(ROOT, "assets", "ui", "icons")
 R = np.random.default_rng(2026)
+RH = np.random.default_rng(2077)                                   # отдельный генератор для ps2_hero
 ONLY = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 
 
@@ -44,59 +46,21 @@ def scribble(arr, x, y, n, color, rng, step=5):
 
 
 def tex_pod_wall():
-    w = h = 256
-    plaster = photo("PaintedPlaster006", w, h, relief=0.8, sat=0.15)
-    lum = plaster.mean(axis=2, keepdims=True)
-    lum = lum / lum.mean()
-    arr = np.ones((h, w, 3), np.float32) * rgb((0.62, 0.60, 0.53)) * lum                     # побелка
-    line = int(h * 0.44)
-    low = np.ones((h, w, 3), np.float32) * rgb((0.20, 0.36, 0.31)) * (lum ** 1.5)             # масляная краска
-    chips = fbm(w, h, 24, 24, R, oct=3) > 0.70                                               # облупилась
-    low = np.where(chips[..., None], rgb((0.42, 0.41, 0.37)) * lum, low)
-    arr[line:] = low[line:]
-    arr[line - 2:line + 1] *= 0.5
-    arr *= 1 - streaks(w, h, R, 1.0)[..., None] * 0.28
-    arr *= (1 - 0.5 * (np.linspace(0, 1, h)[:, None] ** 4))[..., None]                        # грязь у пола
-    arr *= (0.86 + 0.28 * fbm(w, h, 3, 3, R))[..., None]
-    scribble(arr, 60, 150, 14, rgb((0.05, 0.05, 0.06)), R)
-    scribble(arr, 190, 170, 10, rgb((0.35, 0.05, 0.05)), R)
-    draw_text(arr, "ОН ТУТ", 132, 122, 2, rgb((0.06, 0.06, 0.07)))
-    save("pod_wall", arr)
+    # Побелка + зелёная краска с разводами, как стены в Obscure (рисует ps2_hero)
+    save("pod_wall", ps2_hero.pod_wall(RH, draw_text))
 
 
 def tex_pod_green():
-    w = h = 256
-    plaster = photo("PaintedPlaster006", w, h, relief=0.9, sat=0.15)
-    lum = plaster.mean(axis=2, keepdims=True); lum = lum / lum.mean()
-    arr = np.ones((h, w, 3), np.float32) * rgb((0.19, 0.33, 0.29)) * (lum ** 1.5)
-    chips = fbm(w, h, 20, 20, R, oct=3) > 0.72
-    arr = np.where(chips[..., None], rgb((0.40, 0.39, 0.35)) * lum, arr)
-    arr *= 1 - streaks(w, h, R, 1.2)[..., None] * 0.35
-    arr *= (0.8 + 0.4 * fbm(w, h, 3, 3, R))[..., None]
-    draw_text(arr, "ПАСКОТ", 40, 96, 3, rgb((0.05, 0.05, 0.06)))
-    scribble(arr, 180, 60, 16, rgb((0.55, 0.52, 0.45)), R)
-    scribble(arr, 90, 200, 12, rgb((0.05, 0.05, 0.06)), R)
-    save("pod_green", arr)
+    save("pod_green", ps2_hero.pod_green(RH, draw_text))
 
 
 def tex_simple():
-    plaster = photo("PaintedPlaster006", 64, 64, relief=0.6, sat=0.1)
-    c = plaster.mean(axis=2, keepdims=True) / plaster.mean() * rgb((0.50, 0.48, 0.43))
-    c *= (0.7 + 0.5 * fbm(64, 64, 3, 3, R))[..., None]
-    save("pod_ceiling", c)
-    t = photo("Tiles140", 128, 128, relief=1.0, sat=0.3, gain=0.75) * rgb((0.80, 0.60, 0.42))
-    t *= (0.65 + 0.6 * fbm(128, 128, 4, 4, R))[..., None]
-    save("pod_floor", t)
-    s = photo("Concrete034", 128, 64, relief=0.9, sat=0.3, gain=0.8)
-    s[:10] *= 1.25; s[-6:] *= 0.6
-    s *= (0.75 + 0.45 * fbm(128, 64, 5, 3, R))[..., None]
-    save("pod_step", s)
+    save("pod_ceiling", ps2_hero.ceiling(RH, 128))                                # потолок с подтёками
+    save("pod_floor", ps2_hero.tile_floor(RH, 256, 6))                            # плитка 6x6 с грязной затиркой
+    save("pod_step", ps2_hero.step(RH))
     save("garage_in", photo("Bricks105", 128, 128, relief=1.0, sat=0.55, gain=0.55))
-    f = photo("Concrete034", 128, 128, relief=0.8, sat=0.2, gain=0.5)
-    f *= (0.7 + 0.5 * fbm(128, 128, 3, 3, R))[..., None]
-    f -= (np.clip(fbm(128, 128, 5, 5, R) - 0.6, 0, 1) * 1.2)[..., None] * rgb((0.2, 0.2, 0.2))   # масляные пятна
-    save("garage_floor", f)
-    save("parquet", photo("Planks023A", 128, 128, relief=0.7, sat=0.8, gain=0.62) * rgb((1.0, 0.80, 0.60)))
+    save("garage_floor", ps2_hero.finish(ps2_hero.concrete(RH, 128, 128, (0.36, 0.36, 0.34), oil=0.8), 1.4))
+    save("parquet", ps2_hero.wood_floor(RH, 256, 256, 10))                        # доски, как пол в Obscure
 
 
 def tex_doors():
@@ -167,14 +131,7 @@ def tex_misc():
     rad_[:5] *= 0.6; rad_[-5:] *= 0.6
     save("radiator", rad_)
     # обои
-    w = h = 128
-    yy, xx = np.mgrid[0:h, 0:w]
-    wp = np.ones((h, w, 3), np.float32) * rgb((0.52, 0.44, 0.31))
-    wp = np.where(((xx % 16) < 2)[..., None], wp * 0.82, wp)
-    fl = (((xx % 16) - 9) ** 2 + ((yy % 24) - 12) ** 2) < 10
-    wp = np.where(fl[..., None], wp * rgb((1.15, 0.95, 0.85)), wp)
-    wp *= (0.75 + 0.45 * fbm(w, h, 3, 3, R))[..., None]
-    save("wallpaper", wp)
+    save("wallpaper", ps2_hero.wallpaper(RH, 128))
     # ковёр на стене
     w, h = 128, 96
     yy, xx = np.mgrid[0:h, 0:w]

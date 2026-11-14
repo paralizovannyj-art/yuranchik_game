@@ -1,7 +1,8 @@
 # Генерация всех текстур двора. Запуск в Blender:
-# exec(open(r"...\tools\blender\textures.py", encoding="utf-8").read())
+#   blender -b --factory-startup --python tools/blender/textures.py
+import os
 import sys
-sys.path.insert(0, r"C:\Users\mrs\Documents\yuranchik_game\tools\blender")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import importlib
 import numpy as np
 import tex_lib
