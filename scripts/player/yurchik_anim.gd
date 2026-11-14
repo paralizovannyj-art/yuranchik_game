@@ -9,9 +9,10 @@ extends Node3D
 
 @export_group("Клипы")
 @export var walk_anim_speed := 0.95  ## м/с, с которой «идут» ноги в клипе Walk при скорости ×1
-@export var jog_anim_speed := 5.2    ## то же для Jog (им бежит спринт)
+@export var jog_anim_speed := 4.0    ## то же для Run (им бежит спринт; см. make_run в retarget_ual_yurchik.py)
 @export var walk_rate_max := 1.8     ## быстрее ходьбу не крутим — иначе семенит
-@export var jog_rate_min := 0.7      ## медленнее бег не крутим — иначе «плывёт»
+@export var jog_rate_min := 0.8      ## медленнее бег не крутим — иначе «плывёт»
+@export var jog_rate_max := 1.4
 @export var attack_rate := 1.0
 
 @export_group("Смешивание")
@@ -27,9 +28,14 @@ extends Node3D
 @export var lean_accel := 0.03       ## наклон при разгоне/торможении
 @export var breath := 0.015
 
+@export_group("Диагонали")
+@export var hips_twist_max := 55.0   ## ° — насколько ноги разворачиваются в сторону движения (вперёд по диагонали)
+@export var hips_twist_back := 40.0  ## ° — то же при шаге назад по диагонали
+@export var hips_response := 8.0
+
 var step_phase := 0.0                ## читает камера для покачивания (одна «волна» на шаг)
 
-const LOOPS := ["Idle", "Walk", "WalkBack", "Jog", "Sprint", "AimIdle"]
+const LOOPS := ["Idle", "Walk", "WalkBack", "Run", "AimIdle"]
 const UPPER := ["Spine", "Head", "UpperArmL", "ForearmL", "HandL", "UpperArmR", "ForearmR", "HandR"]
 
 var _anim: AnimationPlayer
@@ -43,8 +49,9 @@ var _back := 0.0
 var _aim := 0.0
 var _lean := Vector2.ZERO
 var _time := 0.0
+var _hips := 0.0
 var _walk_len := 1.333
-var _jog_len := 0.933
+var _jog_len := 0.733
 
 
 func _ready() -> void:
@@ -57,7 +64,7 @@ func _ready() -> void:
 		if _anim.has_animation(n):
 			_anim.get_animation(n).loop_mode = Animation.LOOP_LINEAR
 	_walk_len = _anim.get_animation("Walk").length
-	_jog_len = _anim.get_animation("Jog").length
+	_jog_len = _anim.get_animation("Run").length
 
 	_tree = AnimationTree.new()
 	_tree.name = "AnimationTree"
@@ -86,7 +93,7 @@ func _build_tree() -> AnimationNodeBlendTree:
 	var bt := AnimationNodeBlendTree.new()
 	bt.add_node("idle", _clip("Idle"))
 	for n: String in ["walk", "back", "jog", "attack_clip"]:
-		var src: String = {"walk": "Walk", "back": "WalkBack", "jog": "Jog", "attack_clip": "Attack"}[n]
+		var src: String = {"walk": "Walk", "back": "WalkBack", "jog": "Run", "attack_clip": "Attack"}[n]
 		bt.add_node(n, _clip(src))
 		bt.add_node(n + "_ts", AnimationNodeTimeScale.new())
 		bt.connect_node(n + "_ts", 0, n)
@@ -167,6 +174,7 @@ func play_death() -> void:
 	_tree.active = false
 	if _lean_mod:
 		_lean_mod.spine = Vector3.ZERO
+		_lean_mod.hips_yaw = 0.0
 	_anim.play("Death", 0.15)
 
 
@@ -183,8 +191,10 @@ func attack_length() -> float:
 	return 0.83
 
 
-## speed — со знаком (назад < 0); sprint 0..1; state: 0 обычный, 1 замах (ПКМ), 2 удар.
-func update_anim(delta: float, speed: float, sprint: float, state: int, yaw_rate: float, accel: float) -> void:
+## speed — со знаком (назад < 0); sprint 0..1; state: 0 обычный, 1 замах (ПКМ), 2 удар;
+## move_angle — куда идёт герой относительно взгляда, рад (0 — вперёд, > 0 — влево).
+func update_anim(delta: float, speed: float, sprint: float, state: int, yaw_rate: float, accel: float,
+		move_angle := 0.0) -> void:
 	if _tree == null or _dead:
 		return
 	_time += delta
@@ -197,7 +207,7 @@ func update_anim(delta: float, speed: float, sprint: float, state: int, yaw_rate
 
 	# скорость клипов под скорость героя
 	var walk_rate := clampf(spd / walk_anim_speed, 0.6, walk_rate_max)
-	var jog_rate := clampf(spd / jog_anim_speed, jog_rate_min, 1.3)
+	var jog_rate := clampf(spd / jog_anim_speed, jog_rate_min, jog_rate_max)
 	_tree.set("parameters/walk_ts/scale", walk_rate)
 	_tree.set("parameters/back_ts/scale", walk_rate)
 	_tree.set("parameters/jog_ts/scale", jog_rate)
@@ -214,8 +224,17 @@ func update_anim(delta: float, speed: float, sprint: float, state: int, yaw_rate
 	var lean_fwd := clampf(accel * lean_accel, -0.15, 0.15) * (1.0 - _aim)
 	var lean_roll := clampf(-yaw_rate * lean_turn * clampf(spd / 2.0, 0.0, 1.5), -0.25, 0.25)
 	_lean = _lean.lerp(Vector2(lean_fwd, lean_roll), 1.0 - exp(-6.0 * delta))
+	# по диагонали ноги бегут в сторону движения, корпус остаётся к камере
+	var twist := 0.0
+	if state != 2:
+		if speed < -0.05:
+			twist = clampf(wrapf(move_angle - PI, -PI, PI), -deg_to_rad(hips_twist_back), deg_to_rad(hips_twist_back))
+		else:
+			twist = clampf(move_angle, -deg_to_rad(hips_twist_max), deg_to_rad(hips_twist_max))
+	_hips = lerp_angle(_hips, twist * _move, 1.0 - exp(-hips_response * delta))
 	if _lean_mod:
 		var br := sin(_time * 1.6) * breath * _aim  # в стойке — заметное дыхание (клип стойки статичный)
 		_lean_mod.spine = Vector3(_lean.x + br, 0.0, _lean.y)
+		_lean_mod.hips_yaw = _hips
 
 	_tree.advance(delta)
