@@ -1,5 +1,6 @@
 ## Предмет, который можно подобрать. В инспекторе достаточно выбрать item_id —
 ## модель подгрузится сама, а над предметом будет мерцать блик, чтобы его было видно в темноте.
+## Когда Юрчик смотрит на предмет, блик горит ровно и ярко — это подсказка «можно взять» вместо текста.
 class_name Pickup
 extends Interactable
 
@@ -8,6 +9,8 @@ extends Interactable
 
 var _glint: MeshInstance3D
 var _t := 0.0
+var _focus := 0.0
+var _player: Player
 
 
 func _ready() -> void:
@@ -48,18 +51,25 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if _glint:
 		_t += delta
-		var k := pow(maxf(sin(_t * 2.2), 0.0), 6.0)
-		_glint.scale = Vector3.ONE * (0.25 + 0.75 * k)
+		if _player == null:
+			_player = get_tree().get_first_node_in_group("player") as Player
+		var focused := _player != null and _player.focus == self
+		_focus = move_toward(_focus, 1.0 if focused else 0.0, delta * 6.0)
+		var k := lerpf(pow(maxf(sin(_t * 2.2), 0.0), 6.0), 0.85 + 0.15 * sin(_t * 6.0), _focus)
+		_glint.scale = Vector3.ONE * (0.25 + 0.75 * k) * (1.0 + 0.3 * _focus)
 		_glint.transparency = 1.0 - (0.15 + 0.85 * k)
 
 
 func interact(player: Player) -> void:
 	if not Game.add_item(item_id):
 		Game.sfx("ui_error")
-		Game.say("Нет места. Освободи клетки в инвентаре (Tab).")
+		Game.say("Нет места. Освободи клетки в сумке (I).")
 		return
 	Game.sfx("pickup", global_position, 2.0)
-	Game.say("Подобрано: %s" % Game.item_name(item_id))
+	if Game.hint("bag_open"):
+		Game.say("Подобрано: %s.  I — сумка." % Game.item_name(item_id))
+	else:
+		Game.say("Подобрано: %s" % Game.item_name(item_id))
 	Game.item_picked.emit(item_id)
 	interacted.emit(player)
 	queue_free()

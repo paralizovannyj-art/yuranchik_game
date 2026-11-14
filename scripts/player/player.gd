@@ -81,6 +81,7 @@ var exhausted := false
 var control := true                    ## false — игрок не управляет (катсцена, меню)
 var focus: Interactable                ## на что сейчас можно нажать E
 var escape := 0.0                      ## прогресс вырывания из захвата 0..1
+var phone_up := false                  ## телефон в руке (phone.gd): только шаг, без ударов, бега и бросков
 
 var _yaw_target := 0.0
 var _pitch_target := -0.12
@@ -188,7 +189,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		var s := mouse_sensitivity * (0.65 if state == State.AIM else 1.0)
 		_yaw_target -= event.relative.x * s
 		_pitch_target = clampf(_pitch_target - event.relative.y * s, pitch_min, pitch_max)
-	if not control or state == State.DEAD:
+	if not control or state == State.DEAD or phone_up:
 		return
 	if event.is_action_pressed("holster") and (state == State.NORMAL or state == State.AIM):
 		_toggle_hammer()
@@ -220,14 +221,18 @@ func _physics_process(delta: float) -> void:
 	cam_pitch = lerpf(cam_pitch, _pitch_target, ls)
 
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back") if control else Vector2.ZERO
-	_sprinting = control and Input.is_action_pressed("run") and input.y < -0.3 and state == State.NORMAL and not exhausted
+	_sprinting = control and not phone_up and Input.is_action_pressed("run") and input.y < -0.3 and state == State.NORMAL and not exhausted
 	_run = move_toward(_run, 1.0 if _sprinting else 0.0, delta * (run_ramp if _sprinting else run_ramp * 2.0))
-	var readied := control and armed and Input.is_action_pressed("ready_weapon")   # замах — только с молотком
+	var readied := control and armed and not phone_up and Input.is_action_pressed("ready_weapon")   # замах — только с молотком
 	var hv := Vector3(velocity.x, 0.0, velocity.z)
 
 	match state:
 		State.NORMAL:
-			if readied:
+			if phone_up:
+				_attack_buffer = 0.0
+				_throw_buffer = 0.0
+				hv = _move(hv, input, aim_walk_speed, delta)
+			elif readied:
 				state = State.AIM
 			elif _attack_buffer > 0.0:
 				_attack_buffer = 0.0
@@ -235,7 +240,8 @@ func _physics_process(delta: float) -> void:
 			elif _throw_buffer > 0.0:
 				_throw_buffer = 0.0
 				_start_throw()
-			hv = _move(hv, input, walk_speed, delta)
+			if not phone_up:
+				hv = _move(hv, input, walk_speed, delta)
 		State.AIM:
 			hv = _move(hv, input, aim_walk_speed, delta)
 			if not readied:
@@ -268,6 +274,7 @@ func _physics_process(delta: float) -> void:
 			hv = Vector3.ZERO
 			move_speed = 0.0
 			escape = maxf(escape - 0.2 * delta, 0.0)
+			shake(escape * 0.45)                 # чем ближе к тому, чтобы вырваться, тем сильнее трясёт
 			if not is_instance_valid(_grabber) or not _grabber.is_grabbing():
 				grab_release()
 			else:
@@ -590,7 +597,7 @@ func busy(duration: float, anim := "") -> void:
 # ----------------------------------------------------------------------------- взаимодействие
 func _update_focus() -> void:
 	focus = null
-	if not control or not (state == State.NORMAL or state == State.AIM):
+	if not control or phone_up or not (state == State.NORMAL or state == State.AIM):
 		return
 	# фокус — то, на что смотрит камера: предмет в радиусе и близко к линии взгляда
 	var best := 1e9
@@ -623,6 +630,7 @@ func _footsteps() -> void:
 	_last_step = n
 	if not is_on_floor() or move_speed < 0.5:
 		return
+	Game.stats["steps"] = Game.stats.get("steps", 0) + 1
 	Game.sfx_rand(step_sound, step_variants, null, -11.0 if not _sprinting else -7.0)
 	if _sprinting:
 		Game.emit_noise(global_position, 9.0)

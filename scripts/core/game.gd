@@ -6,7 +6,8 @@ extends Node
 signal inventory_changed
 signal health_changed
 signal said(text: String)                       ## короткая реплика/подсказка внизу экрана
-signal objective_changed(text: String)
+signal objective_changed(text: String)          ## новое задание: приходит в телефон закреплённой СМС
+signal message_received(msg: Dictionary)         ## новая СМС в телефоне
 signal noise(pos: Vector3, radius: float)       ## шум, который слышат враги
 signal item_picked(id: String)
 
@@ -14,6 +15,7 @@ const MENU_SCENE := "res://scenes/ui/main_menu.tscn"
 const FIRST_LEVEL := "res://scenes/levels/district.tscn"   ## новый район «Паскот» (docs/CITY_PLAN.md)
 const GRID := Vector2i(8, 5)                    ## размер сетки инвентаря (клеток)
 const MAX_HP := 100.0
+const CLOCK_START := 2 * 60 + 41                ## во сколько начинается ночь на часах телефона, мин
 
 ## База предметов. size — сколько клеток занимает (ширина, высота).
 const ITEMS := {
@@ -38,7 +40,11 @@ const ITEMS := {
 var inventory: Array[Dictionary] = []           ## [{id, pos: Vector2i, rot: bool}]
 var hp := MAX_HP
 var flags := {}
-var stats := {"kills": 0, "time": 0.0, "deaths": 0}
+var stats := {"kills": 0, "time": 0.0, "deaths": 0, "steps": 0}
+var objective := ""                             ## текущее задание (закреплено в «Сообщениях»)
+var objective_read := true
+var messages: Array[Dictionary] = []            ## СМС в телефоне, новые первыми: [{from, text, time, read}]
+var hints := {}                                 ## сколько раз уже показана каждая подсказка (на всю сессию)
 var throw_item := ""                            ## выбранный для броска предмет
 var checkpoint := {}
 var in_game := false
@@ -171,7 +177,41 @@ func say(text: String) -> void:
 
 
 func set_objective(text: String) -> void:
+	if text == objective:
+		return
+	objective = text
+	objective_read = false
 	objective_changed.emit(text)
+
+
+## Прислать СМС в телефон Юрчика.
+func text(from: String, body: String) -> void:
+	var msg := {"from": from, "text": body, "time": clock_text(), "read": false}
+	messages.push_front(msg)
+	message_received.emit(msg)
+
+
+func unread_count() -> int:
+	var n := 0 if objective_read or objective == "" else 1
+	for m: Dictionary in messages:
+		if not m["read"]:
+			n += 1
+	return n
+
+
+## Время на часах телефона: ночь идёт вместе с игровым временем.
+func clock_text() -> String:
+	var m := CLOCK_START + int(stats["time"] / 60.0)
+	return "%02d:%02d" % [(m / 60) % 24, m % 60]
+
+
+## true, пока подсказка key показана меньше times раз; каждый вызов с true засчитывается как показ.
+func hint(key: String, times := 1) -> bool:
+	var n: int = hints.get(key, 0)
+	if n >= times:
+		return false
+	hints[key] = n + 1
+	return true
 
 
 func emit_noise(pos: Vector3, radius: float) -> void:
@@ -290,7 +330,10 @@ func new_game() -> void:
 	flags.clear()
 	hp = MAX_HP
 	throw_item = ""
-	stats = {"kills": 0, "time": 0.0, "deaths": 0}
+	stats = {"kills": 0, "time": 0.0, "deaths": 0, "steps": 0}
+	objective = ""
+	objective_read = true
+	messages.clear()
 	checkpoint = {}
 	add_item("hammer")
 	goto_level(FIRST_LEVEL)
@@ -306,7 +349,7 @@ func goto_level(path: String) -> void:
 ## Запомнить состояние на входе в уровень: после смерти начнём отсюда.
 func save_checkpoint(level_path: String) -> void:
 	checkpoint = {"level": level_path, "inventory": inventory.duplicate(true), "hp": maxf(hp, 40.0),
-		"flags": flags.duplicate(true), "throw": throw_item}
+		"flags": flags.duplicate(true), "throw": throw_item, "messages": messages.duplicate(true)}
 
 
 func restart_from_checkpoint() -> void:
@@ -317,6 +360,7 @@ func restart_from_checkpoint() -> void:
 	flags = checkpoint["flags"].duplicate(true)
 	hp = checkpoint["hp"]
 	throw_item = checkpoint["throw"]
+	messages.assign(checkpoint["messages"].duplicate(true))
 	inventory_changed.emit()
 	goto_level(checkpoint["level"])
 

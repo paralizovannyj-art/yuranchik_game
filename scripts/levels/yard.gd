@@ -24,8 +24,11 @@ func _start() -> void:
 	_objective()
 	await after(2.5)
 	Game.say("Третий час ночи. Фонари горят через один. Домой.")
-	await after(7.0)
-	Game.say("Tab — инвентарь.  F — фонарик.  Shift — бег.  ПКМ + ЛКМ — сильный удар.")
+	await after(4.0)
+	Game.text("Мама", "Юра ты где? Уже ночь. Ключи у тебя? Подъезд закрыли, домофон опять не работает.")
+	if Game.hint("phone"):
+		await after(1.2)
+		Game.say("Tab — телефон.")
 
 
 func _on_home_locked(_p: Player) -> void:

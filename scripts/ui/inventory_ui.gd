@@ -1,13 +1,22 @@
-## Инвентарь-сетка в духе RE4: предметы занимают клетки, их можно перекладывать и поворачивать.
+## Инвентарь — сумка Юрчика: взгляд опускается внутрь, предметы лежат на дне (сетка 8×5 в духе RE4),
+## их можно перекладывать и поворачивать. Сетка проступает швами, только когда несёшь предмет;
+## название и описание написаны на полоске малярного скотча под сумкой.
 ## Управление: стрелки / WASD / крестовина — курсор; E / Enter / ЛКМ — взять и положить; R / ПКМ — повернуть;
-## F — использовать (лечение, выбор предмета для броска); X — выбросить; Tab / Esc — закрыть.
+## F — использовать (лечение, выбор предмета для броска); X — выбросить; I / Esc — закрыть.
 ## На геймпаде: A — взять/положить, X — повернуть, Y — использовать, нажатие левого стика — выбросить.
 class_name InventoryUI
 extends Control
 
 const CELL := 40.0
-const ORIGIN := Vector2(24, 52)                  ## левый верхний угол сетки внутри панели
-const PANEL := Rect2(127, 82, 600, 300)
+const BAG := Rect2(232, 34, 390, 290)            ## сумка на экране 854×480
+const ORIGIN := Vector2(267, 78)                 ## левый верхний угол сетки (8×5 клеток по CELL)
+const TAPE := Rect2(192, 328, 470, 88)
+const KEYS_TIMES := 3                            ## сколько первых открытий показывать подсказку по клавишам
+const C_FABRIC := Color(0.10, 0.115, 0.10)
+const C_STITCH := Color(0.26, 0.29, 0.25)
+const C_ACCENT := Color(1.0, 0.62, 0.25)
+const C_THROW := Color(0.78, 0.2, 0.16)
+const C_INK := Color(0.16, 0.14, 0.10)
 
 var hud: HUD
 var cursor := Vector2i.ZERO
@@ -15,29 +24,74 @@ var held := {}                                   ## предмет «в руке
 
 var _held_from := {}
 var _icons := {}
+var _tape: Control
 var _name: Label
 var _desc: Label
 var _note: Label
+var _keys: Label
+var _specks := PackedVector2Array()
+var _slide_tw: Tween
 
 
 func _ready() -> void:
-	position = PANEL.position
-	size = PANEL.size
+	position = Vector2.ZERO
+	size = Vector2(HUD.W, HUD.H)
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	HUD.mk_label(self, "ИНВЕНТАРЬ", 12, HUD.C_ACCENT, Rect2(24, 14, 300, 18))
-	_name = HUD.mk_label(self, "", 15, Color.WHITE, Rect2(372, 50, 210, 22))
-	_desc = HUD.mk_label(self, "", 11, HUD.C_TEXT, Rect2(372, 76, 210, 110))
-	_note = HUD.mk_label(self, "", 11, Color(1, 0.8, 0.4), Rect2(372, 190, 210, 60))
-	HUD.mk_label(self, "E — взять / положить     R — повернуть     F — использовать     X — выбросить     Tab — закрыть",
-		10, Color(0.6, 0.6, 0.58), Rect2(24, 266, 560, 30))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 1977
+	for i in 160:
+		_specks.append(Vector2(rng.randf_range(BAG.position.x + 16, BAG.end.x - 16), rng.randf_range(BAG.position.y + 28, BAG.end.y - 16)))
+	_tape = Control.new()
+	_tape.position = TAPE.position
+	_tape.size = TAPE.size
+	_tape.pivot_offset = TAPE.size / 2.0
+	_tape.rotation = deg_to_rad(-1.3)
+	_tape.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_tape.draw.connect(_draw_tape)
+	add_child(_tape)
+	_name = _ink(_tape, 20, C_INK, Rect2(14, 4, TAPE.size.x - 28, 26))
+	_desc = _ink(_tape, 12, Color(0.29, 0.26, 0.20), Rect2(14, 30, TAPE.size.x - 28, 54))
+	_note = HUD.mk_label(self, "", 12, Color(1, 0.8, 0.4), Rect2(TAPE.position.x, TAPE.end.y + 4, TAPE.size.x, 20), HORIZONTAL_ALIGNMENT_CENTER)
+	_keys = HUD.mk_label(self, "E — взять / положить     R — повернуть     F — использовать     X — выбросить     I — закрыть",
+		11, Color(0.62, 0.62, 0.6), Rect2(0, 452, HUD.W, 18), HORIZONTAL_ALIGNMENT_CENTER)
 	Game.inventory_changed.connect(queue_redraw)
+
+
+func _draw_tape() -> void:
+	_tape.draw_rect(Rect2(Vector2(3, 5), _tape.size), Color(0, 0, 0, 0.45))
+	_tape.draw_rect(Rect2(Vector2.ZERO, _tape.size), Color(0.91, 0.87, 0.73))
+	_tape.draw_rect(Rect2(Vector2.ZERO, Vector2(_tape.size.x, 3)), Color(1, 1, 1, 0.25))
+
+
+func _ink(parent: Control, font_size: int, color: Color, r: Rect2) -> Label:
+	var l := Label.new()
+	var ls := LabelSettings.new()
+	ls.font_size = font_size
+	ls.font_color = color
+	l.label_settings = ls
+	l.position = r.position
+	l.size = r.size
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(l)
+	return l
 
 
 func open() -> void:
 	visible = true
 	_note.text = ""
+	_keys.visible = Game.hint("bag_keys", KEYS_TIMES)
 	_refresh()
+	# сумка выезжает снизу, пока взгляд опускается
+	position.y = 220.0
+	modulate.a = 0.0
+	if _slide_tw:
+		_slide_tw.kill()
+	_slide_tw = create_tween().set_parallel().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_slide_tw.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	_slide_tw.tween_property(self, "position:y", 0.0, 0.35)
+	_slide_tw.tween_property(self, "modulate:a", 1.0, 0.2)
 
 
 func close() -> void:
@@ -47,6 +101,8 @@ func close() -> void:
 		Game.inventory.append(held)
 		held = {}
 		Game.inventory_changed.emit()
+	if _slide_tw:
+		_slide_tw.kill()
 	visible = false
 
 
@@ -201,43 +257,76 @@ func _cell_rect(pos: Vector2i, cells: Vector2i) -> Rect2:
 	return Rect2(ORIGIN + Vector2(pos) * CELL, Vector2(cells) * CELL)
 
 
-func _draw_item(e: Dictionary, pos: Vector2i, alpha: float) -> void:
-	var cells := Game.entry_size(e)
-	var r := _cell_rect(pos, cells).grow(-2.0)
-	draw_rect(r, Color(0.16, 0.17, 0.19, 0.9 * alpha))
-	if Game.throw_item == e["id"] and Game.ITEMS[e["id"]].has("throw"):
-		draw_rect(r, Color(1.0, 0.62, 0.25, 0.5 * alpha), false, 1.0)
+## Небольшой наклон, чтобы вещи лежали «как бросили», а не по линейке. Свой у каждой клетки, не прыгает.
+func _tilt(e: Dictionary) -> float:
+	var p: Vector2i = e["pos"]
+	return deg_to_rad(float((p.x * 7 + p.y * 13 + String(e["id"]).length()) % 5 - 2) * 1.2)
+
+
+func _draw_item(e: Dictionary, pos: Vector2i, alpha: float, lifted := false) -> void:
+	var r := _cell_rect(pos, Game.entry_size(e))
 	var tex := _icon(e["id"])
 	if tex == null:
 		return
 	var base: Vector2i = Game.ITEMS[e["id"]]["size"]
-	var sz := Vector2(base) * CELL - Vector2(8, 8)
-	var mod := Color(1.7, 1.7, 1.7, alpha)
-	if e["rot"]:
-		draw_set_transform(r.get_center(), PI / 2.0, Vector2.ONE)
-		draw_texture_rect(tex, Rect2(-sz / 2.0, sz), false, mod)
-		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	else:
-		draw_texture_rect(tex, Rect2(r.get_center() - sz / 2.0, sz), false, mod)
+	var sz := Vector2(base) * CELL - Vector2(6, 6)
+	var ang := (PI / 2.0 if e["rot"] else 0.0) + (0.0 if lifted else _tilt(e))
+	var shadow := Vector2(6, 9) if lifted else Vector2(3, 4)
+	draw_set_transform(r.get_center() + shadow, ang, Vector2.ONE)
+	draw_texture_rect(tex, Rect2(-sz / 2.0, sz), false, Color(0, 0, 0, 0.55 * alpha))
+	draw_set_transform(r.get_center() - (Vector2(0, 4) if lifted else Vector2.ZERO), ang, Vector2.ONE)
+	draw_texture_rect(tex, Rect2(-sz / 2.0, sz), false, Color(1.6, 1.6, 1.55, alpha))
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	if Game.throw_item == e["id"] and Game.ITEMS[e["id"]].has("throw"):   # красная нитка: выбран для броска
+		var dot := r.position + Vector2(r.size.x - 7, 7)
+		draw_circle(dot, 5.0, Color(0, 0, 0, 0.6 * alpha))
+		draw_circle(dot, 3.5, Color(C_THROW, alpha))
 
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), Color(0.03, 0.035, 0.04, 0.93))
-	draw_rect(Rect2(Vector2.ZERO, size), Color(0.28, 0.28, 0.30), false, 1.0)
-	for y in Game.GRID.y:
-		for x in Game.GRID.x:
-			var r := _cell_rect(Vector2i(x, y), Vector2i.ONE)
-			draw_rect(r.grow(-1.0), Color(0.08, 0.085, 0.095))
-			draw_rect(r, Color(0.20, 0.21, 0.23), false, 1.0)
+	draw_rect(Rect2(Vector2(0, -position.y), size + Vector2(0, 240)), Color(0, 0, 0, 0.5))
+	# сумка: тёмная ткань, молния сверху, строчка по краю
+	var bag := StyleBoxFlat.new()
+	bag.bg_color = C_FABRIC
+	bag.set_corner_radius_all(22)
+	bag.corner_radius_bottom_left = 30
+	bag.corner_radius_bottom_right = 30
+	bag.border_color = Color(0.03, 0.035, 0.03)
+	bag.set_border_width_all(4)
+	bag.shadow_color = Color(0, 0, 0, 0.6)
+	bag.shadow_size = 18
+	bag.shadow_offset = Vector2(0, 10)
+	draw_style_box(bag, BAG)
+	for p: Vector2 in _specks:
+		draw_rect(Rect2(p, Vector2(2, 2)), Color(0, 0, 0, 0.18))
+	var z := Rect2(BAG.position.x + 22, BAG.position.y + 10, BAG.size.x - 44, 10)
+	draw_rect(z, Color(0.05, 0.05, 0.05))
+	var x := z.position.x + 2.0
+	while x < z.end.x - 3.0:
+		draw_rect(Rect2(x, z.position.y + 2, 3, 6), Color(0.55, 0.57, 0.6))
+		x += 6.0
+	draw_rect(Rect2(z.end.x - 22, z.position.y - 3, 14, 16), Color(0.62, 0.64, 0.66))   # бегунок молнии
+	var st := Rect2(BAG.position.x + 14, BAG.position.y + 30, BAG.size.x - 28, BAG.size.y - 44)
+	var corners := [st.position, Vector2(st.end.x, st.position.y), st.end, Vector2(st.position.x, st.end.y)]
+	for i in 4:
+		draw_dashed_line(corners[i], corners[(i + 1) % 4], C_STITCH, 2.0, 7.0)
+	# сетка еле видна и проступает швами, когда несёшь предмет
+	var grid_a := 0.16 if not held.is_empty() else 0.045
+	for gx in Game.GRID.x + 1:
+		var px := ORIGIN.x + gx * CELL
+		draw_line(Vector2(px, ORIGIN.y), Vector2(px, ORIGIN.y + Game.GRID.y * CELL), Color(1, 1, 1, grid_a))
+	for gy in Game.GRID.y + 1:
+		var py := ORIGIN.y + gy * CELL
+		draw_line(Vector2(ORIGIN.x, py), Vector2(ORIGIN.x + Game.GRID.x * CELL, py), Color(1, 1, 1, grid_a))
 	for e: Dictionary in Game.inventory:
 		_draw_item(e, e["pos"], 1.0)
 	if not held.is_empty():
 		var cells := Game.entry_size(held)
 		var ok := Game.fits(cells, cursor)
-		draw_rect(_cell_rect(cursor, cells), Color(0.2, 0.9, 0.3, 0.25) if ok else Color(0.9, 0.2, 0.15, 0.3))
-		_draw_item(held, cursor, 0.85)
+		draw_rect(_cell_rect(cursor, cells), Color(0.2, 0.9, 0.3, 0.2) if ok else Color(0.9, 0.2, 0.15, 0.25))
 		draw_rect(_cell_rect(cursor, cells), Color(0.4, 1.0, 0.5) if ok else Color(1.0, 0.35, 0.3), false, 2.0)
+		_draw_item(held, cursor, 0.95, true)
 	else:
 		var e2 := _entry_at(cursor)
 		var r2 := _cell_rect(cursor, Vector2i.ONE) if e2.is_empty() else _cell_rect(e2["pos"], Game.entry_size(e2))
-		draw_rect(r2, Color(1.0, 0.62, 0.25), false, 2.0)
+		draw_rect(r2.grow(1.0), C_ACCENT, false, 2.0)

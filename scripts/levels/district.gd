@@ -12,6 +12,9 @@ func _start() -> void:
 	Game.set_objective("Осмотри район.  F1–F8 — телепорт по зонам")
 	await after(1.5)
 	Game.say("Паскот. F1–F8 — прыжок в зону.")
+	if Game.hint("phone"):
+		await after(2.0)
+		Game.say("Tab — телефон.")
 
 
 func _process(_delta: float) -> void:
