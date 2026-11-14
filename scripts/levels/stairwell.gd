@@ -1,6 +1,6 @@
 ## Подъезд. Подняться на четвёртый этаж в квартиру 47, пока по лестнице идёт Сергей.
 ## Финал демо — дома: Юрчик заходит к себе в комнату (модель по фото — tools/blender/build_yurchik_room.py),
-## включает старый комп, и тут в дверь начинает ломиться Сергей.
+## включает старый комп. Если за ним шёл Сергей (старый двор) — тот начинает ломиться в дверь.
 extends Level
 
 @export var sergey_scene: PackedScene
@@ -93,10 +93,11 @@ func _use_pc(p: Player) -> void:
 	await after(1.5)
 	Game.say("Загудел. Старичок ещё живой.")
 	await after(3.0)
-	Game.sfx("door_bang", apt_use.global_position, 6.0, 0.0)
-	player.shake(0.6)
-	await after(2.2)
-	Game.sfx("door_bang", apt_use.global_position, 6.0, 0.0)
-	player.shake(0.8)
+	if Game.flags.get("sergey", false):         # Сергей шёл следом (старый двор) — ломится в дверь
+		Game.sfx("door_bang", apt_use.global_position, 6.0, 0.0)
+		player.shake(0.6)
+		await after(2.2)
+		Game.sfx("door_bang", apt_use.global_position, 6.0, 0.0)
+		player.shake(0.8)
 	await after(2.5)
 	hud.show_ending()
