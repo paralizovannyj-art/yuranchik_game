@@ -1,5 +1,5 @@
-## Анимации Юрчика. Клипы — из Quaternius «Universal Animation Library» 1 и 2 (CC0),
-## перенесены на скелет Юрчика в Blender: tools/blender/retarget_ual_yurchik.py.
+## Анимации Юрчика. Стойка, ходьба и бег построены процедурно, остальные клипы — из Quaternius
+## «Universal Animation Library» 1 и 2 (CC0); всё собирает tools/blender/retarget_ual_yurchik.py.
 ## Смешивание — AnimationTree, собирается здесь в коде:
 ##   стойка ↔ ходьба (вперёд/назад) ↔ бег  →  верх тела: стойка «готов к удару» (ПКМ)  →  удар (OneShot).
 ## Скорость проигрывания подгоняется под скорость героя, чтобы ноги не скользили.
@@ -8,8 +8,8 @@
 extends Node3D
 
 @export_group("Клипы")
-@export var walk_anim_speed := 0.95  ## м/с, с которой «идут» ноги в клипе Walk при скорости ×1
-@export var jog_anim_speed := 4.0    ## то же для Run (им бежит спринт; см. make_run в retarget_ual_yurchik.py)
+@export var walk_anim_speed := 1.51  ## м/с, с которой «идут» ноги в клипе Walk при скорости ×1 (foot_speed из сборки)
+@export var jog_anim_speed := 4.83   ## то же для Run (им бежит спринт; см. LOCOMOTION в retarget_ual_yurchik.py)
 @export var walk_rate_max := 1.8     ## быстрее ходьбу не крутим — иначе семенит
 @export var jog_rate_min := 0.8      ## медленнее бег не крутим — иначе «плывёт»
 @export var jog_rate_max := 1.4
