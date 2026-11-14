@@ -1157,6 +1157,12 @@ def fill_invalid4(img, valid, iters):
 
 
 def save_atlas(rgba, name="yur3_atlas"):
+    # PS2-обработка по имени (tools/blender/ps2_style.py, пресет "char"). Отключить: PS2_OFF=1.
+    if not os.environ.get("PS2_OFF"):
+        import sys
+        sys.path.insert(0, os.path.join(ROOT, "tools", "blender"))
+        import ps2_style
+        rgba = ps2_style.ps2_pass(rgba, name)
     h, w = rgba.shape[:2]
     img = bpy.data.images.get(name)
     if img and (img.size[0] != w or img.size[1] != h):

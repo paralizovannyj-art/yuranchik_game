@@ -1,4 +1,4 @@
-# PS2-обработка текстур «как в Obscure / метро-референсе» (docs/references).
+# PS2-обработка текстур по референсам из docs/references: Obscure, метро, трейлер Fleshbite.
 # Что делает текстуру «той самой»:
 #   * мягкая, чуть размытая картинка (низкое разрешение + билинейная фильтрация), без мелкого фото-шума;
 #   * крупная грязь: пятна, разводы от воды с тёмной каймой, потёки сверху вниз, темнее у пола;
@@ -200,28 +200,67 @@ def crack(h, w, rng, length=None, width=1):
     return m
 
 
+
+def clarity(arr, amount, radius=3.0):
+    """«Хрусткая» грязь как во Fleshbite: усилить местный контраст (средние детали), не трогая общий тон."""
+    if amount <= 0:
+        return arr
+    return arr + (arr - blur(arr, radius)) * amount
+
+
+def crush(arr, black=0.03, gamma=1.12):
+    """Глубже тени: чуть опустить чёрную точку и прижать тёмные полутона."""
+    return np.clip((arr - black) / (1 - black), 0, 1) ** gamma
+
+
+def peel(h, w, rng, cells=10, cover=0.26, shadow=2):
+    """Облупившаяся краска/штукатурка как во Fleshbite: маска сколов + нарисованная тень под краем
+    и светлая кромка сверху. Возвращает (chip, shade, rim) — всё 0..1."""
+    n = noise(w, h, cells, cells, rng, oct=4)
+    t = np.quantile(n, 1 - cover)
+    chip = smoothstep(t, t + 0.02, n)
+    sh = np.roll(np.roll(chip, -shadow, axis=0), -shadow, axis=1)     # край скола отбрасывает тень вниз-вправо
+    shade = np.clip(chip - sh, 0, 1)
+    rim = np.clip(np.roll(np.roll(chip, shadow, axis=0), shadow, axis=1) - chip, 0, 1)
+    return chip, blur(shade[..., None], 0.8)[..., 0], blur(rim[..., None], 0.6)[..., 0]
+
+
+def cracks(h, w, rng, cells=6, width=0.012):
+    """Сетка тонких трещин в штукатурке (линии по «гребням» шума)."""
+    n = noise(w, h, cells, cells, rng, oct=3)
+    m = np.exp(-((n - 0.5) / width) ** 2)
+    m *= smoothstep(0.45, 0.6, noise(w, h, 3, 3, rng, oct=2))           # трещины не везде
+    return np.clip(m, 0, 1)
+
+
 # ------------------------------------------------------------------ общий проход
-# soften — во сколько раз «уменьшить разрешение» (1 = не трогать);
-# sat — насыщенность; tint — грязный оттенок; mottle/stains/drips/floor — сила грязи;
-# contrast — сжатие контраста вокруг среднего (меньше 1 — мягче).
-DEFAULT = dict(soften=1.6, sat=0.72, tint=(1.0, 0.97, 0.90), contrast=0.9, mottle=0.18, mottle_cells=3,
-               stains=0.0, stain_cells=3, drips=0.0, floor=0.0, quant=True)
+# Стиль = Obscure (мягкость, разводы, потёки) + метро (зеленоватый бетон, потёки на колоннах)
+#       + Fleshbite (хрусткая грязь, глубокие тени, насыщенный цвет).
+# soften — во сколько раз «уменьшить разрешение» (1 = не трогать); sat — насыщенность; tint — оттенок;
+# contrast — контраст вокруг среднего; clarity — хрусткость грязи; crush — глубина теней;
+# mottle/stains/drips/floor — сила грязи.
+DEFAULT = dict(soften=1.3, sat=0.88, tint=(1.0, 0.98, 0.93), contrast=1.08, clarity=0.45, crush=True,
+               mottle=0.20, mottle_cells=3, stains=0.0, stain_cells=3, drips=0.0, floor=0.0, quant=True)
 
 PRESETS = {
     # стены, фасады, бетон — разводы и потёки
-    "wall":    dict(soften=1.7, sat=0.70, mottle=0.24, stains=0.7, drips=0.55),
-    "facade":  dict(soften=1.25, sat=0.72, mottle=0.16, stains=0.35, drips=0.25, stain_cells=4),
-    "floor":   dict(soften=1.6, sat=0.72, mottle=0.22, stains=0.45),
-    "metal":   dict(soften=1.6, sat=0.62, mottle=0.20, stains=0.25, drips=0.25),
-    "wood":    dict(soften=1.5, sat=0.80, mottle=0.18, stains=0.25),
-    "snow":    dict(soften=2.0, sat=0.65, tint=(0.98, 0.99, 1.0), contrast=0.85, mottle=0.10, quant=True),
-    "sign":    dict(soften=1.25, sat=0.80, mottle=0.14, stains=0.15),
-    "fabric":  dict(soften=1.4, sat=0.78, mottle=0.18),
-    "atlas":   dict(soften=1.2, sat=0.80, mottle=0.0, contrast=0.95),      # атласы мелких деталей: только мягкость/цвет
-    "hero":    dict(soften=1.0, sat=1.0, tint=(1, 1, 1), contrast=1.0, mottle=0.0),  # нарисованы уже в PS2-стиле
+    "wall":    dict(soften=1.35, mottle=0.26, stains=0.75, drips=0.6, clarity=0.55),
+    "facade":  dict(soften=1.15, mottle=0.18, stains=0.4, drips=0.3, stain_cells=4, clarity=0.35),
+    "floor":   dict(soften=1.3, mottle=0.24, stains=0.5, clarity=0.5),
+    "metal":   dict(soften=1.3, sat=0.85, mottle=0.22, stains=0.3, drips=0.35, clarity=0.55),
+    "wood":    dict(soften=1.25, sat=0.95, mottle=0.18, stains=0.25, clarity=0.5),
+    "snow":    dict(soften=1.6, sat=0.75, tint=(0.98, 0.99, 1.0), contrast=1.0, clarity=0.3, crush=False, mottle=0.10),
+    "sign":    dict(soften=1.15, sat=0.92, mottle=0.14, stains=0.2, clarity=0.3),
+    "fabric":  dict(soften=1.2, sat=0.92, mottle=0.18, clarity=0.4),
+    "atlas":   dict(soften=1.1, sat=0.92, mottle=0.0, contrast=1.05, clarity=0.3),    # атласы мелких деталей
+    "decal":   dict(soften=1.1, sat=0.9, mottle=0.12, contrast=1.05, clarity=0.3),     # граффити, объявления (с альфой)
+    # персонажи и предметы: без разводов (они легли бы поперёк лица), только хрусткость, тени и лёгкая грязь
+    "char":    dict(soften=1.0, sat=0.92, tint=(1.0, 0.98, 0.95), contrast=1.1, clarity=0.6, mottle=0.08, mottle_cells=6),
+    "item":    dict(soften=1.0, sat=0.95, contrast=1.08, clarity=0.5, mottle=0.06, mottle_cells=6),
+    "hero":    dict(soften=1.0, sat=1.0, tint=(1, 1, 1), contrast=1.0, clarity=0.0, crush=False, mottle=0.0),  # уже нарисованы
 }
 
-# какая текстура — какой пресет. Нет в таблице — не трогаем (персонажи, иконки, предметы).
+# какая текстура — какой пресет. Нет в таблице — не трогаем (иконки интерфейса, lamp_glass).
 TEXTURES = {
     # двор / дома
     "facade_albedo": "facade", "facade_b_albedo": "facade", "facade_c_albedo": "facade",
@@ -230,17 +269,20 @@ TEXTURES = {
     "garage_doors": "metal", "garage_wall": "wall", "metal": "metal", "green_metal": "metal",
     "bark": "wood", "wood": "wood", "kiosk": "sign", "shopfront": "sign", "ind_window": "facade",
     "snow": "snow", "slush": "floor",
-    # пропсы
+    # пропсы и детали
     "vehicles": "atlas", "fence_concrete": "wall", "pipe_insul": "metal", "paint_yellow": "metal",
-    "details": "atlas",
+    "details": "atlas", "graffiti": "decal", "notices": "decal",
     # инфраструктура / подземный переход (метро-референс)
     "retwall": "wall", "paving": "floor", "asphalt_snow": "floor", "pipe_wrap": "metal",
     "stop_wall": "wall", "underpass_sign": "sign",
-    # подъезд / квартира / гараж (Obscure-референс)
+    # подъезд / квартира / гараж (Obscure + Fleshbite) — рисует ps2_hero
     "pod_wall": "hero", "pod_green": "hero", "pod_ceiling": "hero", "pod_floor": "hero",
     "pod_step": "hero", "garage_in": "wall", "garage_floor": "hero", "parquet": "hero",
     "apt_doors": "sign", "mailboxes": "metal", "pod_window": "atlas", "radiator": "metal",
     "wallpaper": "hero", "carpet": "fabric", "fabric": "fabric", "tv": "atlas",
+    # персонажи и предметы
+    "yur3_atlas": "char", "sergey": "char", "enemy_a": "char", "enemy_b": "char", "enemy_c": "char",
+    "items": "item",
 }
 
 # у этих текстур есть «пара»-свечение: его надо размыть так же, чтобы окна совпали
@@ -249,6 +291,7 @@ EMISSION_OF = {
     "facade_c_emission": "facade_c_albedo", "khr_emission": "khr_albedo", "school_emission": "school_albedo",
     "ind_window_emission": "ind_window", "kiosk_emission": "kiosk", "shopfront_emission": "shopfront",
     "underpass_sign_emission": "underpass_sign", "pod_window_emission": "pod_window", "tv_emission": "tv",
+    "details_emission": "details",
 }
 
 
@@ -262,30 +305,40 @@ def preset_for(name):
 
 
 def ps2_pass(arr, name, seed=None):
-    """Применить PS2-обработку к готовой текстуре по её имени. Неизвестные имена возвращаются как есть."""
+    """PS2-обработка готовой текстуры по её имени (RGB или RGBA — альфа не меняется).
+    Неизвестные имена возвращаются как есть."""
     p = preset_for(name)
     if p is None:
         return arr
+    alpha = None
+    if arr.shape[2] == 4:
+        alpha = arr[..., 3:4].copy()
+        arr = arr[..., :3]
     h, w, _ = arr.shape
     rng = np.random.default_rng(seed if seed is not None else (sum(map(ord, name)) * 7919))
     out = soften(arr.astype(np.float32), p["soften"])
-    if p.get("emission"):
-        return np.clip(out, 0, 1)                                        # свечение: только та же мягкость
-    if p["contrast"] != 1.0:
-        m = out.mean(axis=(0, 1), keepdims=True)
-        out = m + (out - m) * p["contrast"]
-    out = desat(out, p["sat"]) * np.array(p["tint"], np.float32)
-    if p["mottle"]:
-        out *= mottle(h, w, rng, p["mottle_cells"], p["mottle"])[..., None]
-    if p["stains"]:
-        inside, ring = water_stains(h, w, rng, p["stain_cells"], cover=0.3)
-        brown = np.array((0.80, 0.72, 0.58), np.float32)
-        out = out * (1 - inside[..., None] * p["stains"]) * (1 - (1 - brown) * inside[..., None] * p["stains"])
-        out *= 1 - ring[..., None] * p["stains"]
-    if p["drips"]:
-        out *= 1 - drips(h, w, rng, 0.8, 0.7)[..., None] * 0.35 * p["drips"]
-    if p["floor"]:
-        out *= 1 - floor_grime(h, w, rng, 0.3, p["floor"])[..., None]
-    if p["quant"]:
-        out = quantize(out)
-    return np.clip(out, 0, 1)
+    if not p.get("emission"):
+        out = clarity(out, p["clarity"])
+        if p["contrast"] != 1.0:
+            m = out.mean(axis=(0, 1), keepdims=True)
+            out = m + (out - m) * p["contrast"]
+        out = desat(np.clip(out, 0, 1), p["sat"]) * np.array(p["tint"], np.float32)
+        if p["mottle"]:
+            out *= mottle(h, w, rng, p["mottle_cells"], p["mottle"])[..., None]
+        if p["stains"]:
+            inside, ring = water_stains(h, w, rng, p["stain_cells"], cover=0.3)
+            brown = np.array((0.80, 0.72, 0.58), np.float32)
+            out = out * (1 - inside[..., None] * p["stains"]) * (1 - (1 - brown) * inside[..., None] * p["stains"])
+            out *= 1 - ring[..., None] * p["stains"]
+        if p["drips"]:
+            out *= 1 - drips(h, w, rng, 0.8, 0.7)[..., None] * 0.4 * p["drips"]
+        if p["floor"]:
+            out *= 1 - floor_grime(h, w, rng, 0.3, p["floor"])[..., None]
+        if p["crush"]:
+            out = crush(np.clip(out, 0, 1))
+        if p["quant"]:
+            out = quantize(out)
+    out = np.clip(out, 0, 1)
+    if alpha is not None:
+        out = np.concatenate([out, alpha], axis=2)
+    return out
