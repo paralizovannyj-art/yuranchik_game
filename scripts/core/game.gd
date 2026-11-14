@@ -11,7 +11,7 @@ signal noise(pos: Vector3, radius: float)       ## шум, который слы
 signal item_picked(id: String)
 
 const MENU_SCENE := "res://scenes/ui/main_menu.tscn"
-const FIRST_LEVEL := "res://scenes/levels/yard.tscn"
+const FIRST_LEVEL := "res://scenes/levels/district.tscn"   ## новый район «Паскот» (docs/CITY_PLAN.md)
 const GRID := Vector2i(8, 5)                    ## размер сетки инвентаря (клеток)
 const MAX_HP := 100.0
 
