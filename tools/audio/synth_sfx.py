@@ -234,4 +234,17 @@ dr *= 0.6 + 0.4 * np.sin(2 * np.pi * t / d) ** 2
 dr += band(noise(d), 1500, 5000) * 0.03 * (1 + np.sin(2 * np.pi * t / d * 2))
 save("mus_drone", loopify(dr, 1.5), 0.45)
 
+# ---------------------------------------------------------------- выдох Юрчика на морозе (вместе с паром изо рта)
+# Тихий выдох ртом: шум в полосе «х», плавный подъём и долгое затухание, чуть дрожит.
+# Свой генератор, чтобы звуки выше не менялись. Три варианта — длина и тембр немного разные.
+brng = np.random.default_rng(3141)
+for i, (d, lo, hi, shake) in enumerate(((1.1, 350, 2200, 0.10), (1.3, 300, 1900, 0.14), (0.95, 420, 2600, 0.08))):
+    t = t_(d)
+    x = band(brng.standard_normal(int(SR * d)), lo, hi, 0.4)
+    x += band(brng.standard_normal(int(SR * d)), 120, 500, 0.4) * 0.35          # глухой низ — воздух из груди
+    e = np.clip(t / 0.12, 0, 1) ** 1.5 * np.exp(-np.clip(t - 0.12, 0, None) * 2.6)
+    e *= 1 + shake * np.sin(2 * np.pi * (7 + i) * t)                            # лёгкая дрожь — холодно
+    e *= np.clip((d - t) / 0.15, 0, 1)
+    save("player_breath_%d" % (i + 1), x * e, 0.5)
+
 print("SFX", len(os.listdir(OUT)), "files in", OUT)

@@ -48,6 +48,9 @@ CLIPS = [
     ("Attack", "UAL2", "TreeChopping_Loop", False, [(18, 28), (0, 14)]),
     # стойка «готов к удару» (ПКМ): молоток занесён у головы — кадр 19 рубки; играется на верх тела
     ("AimIdle", "UAL2", "TreeChopping_Loop", False, [(19, 19), (19, 19)]),
+    # удары кулаком — когда молоток убран в сумку (Q): джеб и кросс по очереди
+    ("Punch", "UAL1", "Punch_Jab", False),
+    ("Punch2", "UAL1", "Punch_Cross", False),        # второй удар — чередуется с первым
     ("HitChest", "UAL1", "Hit_Chest", False),
     ("HitHead", "UAL1", "Hit_Head", False),
     ("Death", "UAL1", "Death01", False),
