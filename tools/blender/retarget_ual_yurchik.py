@@ -77,9 +77,11 @@ CLIPS = [
 #   arm_mid / arm_amp / arm_phase / arm_lag — плечо (рука в противофазе своей ноге);
 #   elbow / elbow_amp / elbow_lag — сгиб локтя; arm_out, forearm_in, arm_in, hand_in — разводка рук;
 #   hammer_arm, hammer_twist, hammer_flex — рука с молотком машет меньше, кисть доворачивает рукоять
-#   вокруг предплечья и сгибается в запястье (опущенная рука — молоток висит бойком вниз);
+#   вокруг предплечья и сгибается в запястье (не больше ~25°: кисть видна от первого лица и без молотка,
+#   сильный сгиб выглядит как вывих);
 #   wrist — расслабленная кисть; flight / flight_from — подлёт в фазе полёта (только бег);
 #   lean_side — постоянный перенос веса вбок (стойка: вес на правой ноге).
+# Куртка у Юрчика объёмная: arm_out и forearm_in держат кисти снаружи от неё, иначе запястья проходят сквозь полы.
 # Кривые по фазе ноги: knee — сгиб колена, foot — наклон опорной стопы (+ носок вверх),
 # ankle — стопа в махе относительно голени, plant — сколько стопа держит землю (1) или идёт за голенью (0).
 BASE = {
@@ -101,7 +103,7 @@ LOCOMOTION = {
         "frames": 90,
         "k": dict(BASE, sway=0.012, pelvis_roll=1.5, lean_side=0.018, lean=1.0, lean_pulse=1.2,
                   head_pitch=-1.0, head_nod=1.0, arm_mid=-3.0, arm_amp=1.5, elbow=14.0, elbow_amp=2.0,
-                  arm_out=0.16, wrist=2.0, hammer_twist=0.0, hammer_flex=70.0),
+                  arm_out=0.30, forearm_in=-0.08, wrist=2.0, hammer_twist=0.0, hammer_flex=20.0),
         "knee": [(0.0, 6), (0.5, 6)],
         "foot": [(0.0, 0), (0.5, 0)],
         "ankle": [(0.0, 0), (0.5, 0)],
@@ -113,8 +115,8 @@ LOCOMOTION = {
         "k": dict(BASE, hip_mid=2.0, hip_amp=22.0, hip_peak=0.95, lean=2.0, pelvis_lean=1.0, lean_pulse=0.8,
                   pelvis_yaw=5.0, shoulder_yaw=1.2, sway=0.018, pelvis_roll=4.0, spine_bend=0.7,
                   head_pitch=1.0, head_nod=1.2, arm_mid=-2.0, arm_amp=20.0, arm_phase=0.45, arm_lag=0.06,
-                  elbow=16.0, elbow_amp=10.0, elbow_lag=0.08, arm_out=0.17, hammer_arm=0.7, wrist=6.0,
-                  hammer_twist=0.0, hammer_flex=70.0),
+                  elbow=16.0, elbow_amp=10.0, elbow_lag=0.08, arm_out=0.32, forearm_in=-0.1, hammer_arm=0.7, wrist=6.0,
+                  hammer_twist=0.0, hammer_flex=20.0),
         "knee": [(0.0, 4), (0.12, 16), (0.35, 6), (0.55, 34), (0.7, 62), (0.85, 30), (0.96, 4)],
         "foot": [(0.0, 16), (0.1, 0), (0.4, -2), (0.58, -28), (0.72, -10), (0.9, 12)],
         "ankle": [(0.0, 0), (0.6, -14), (0.72, -4), (0.85, 4), (0.95, 2)],
@@ -126,8 +128,8 @@ LOCOMOTION = {
         "k": dict(BASE, hip_mid=6.0, hip_amp=30.0, hip_peak=0.9, lean=10.0, pelvis_lean=5.0, lean_pulse=2.5,
                   pelvis_yaw=7.0, shoulder_yaw=1.2, sway=0.02, pelvis_roll=5.0, spine_bend=0.6,
                   head_pitch=4.0, head_nod=1.8, arm_mid=-4.0, arm_amp=32.0, arm_phase=0.4, arm_lag=0.04,
-                  elbow=92.0, elbow_amp=12.0, elbow_lag=0.08, arm_out=0.3, forearm_in=-0.05,
-                  arm_in=0.06, hand_in=0.06, hammer_arm=0.75, wrist=6.0, flight=0.035, flight_from=0.32),
+                  elbow=92.0, elbow_amp=12.0, elbow_lag=0.08, arm_out=0.4, forearm_in=-0.12,
+                  arm_in=0.02, hand_in=0.0, hammer_arm=0.75, wrist=6.0, flight=0.035, flight_from=0.32),
         "knee": [(0.0, 20), (0.12, 40), (0.3, 22), (0.45, 75), (0.6, 105), (0.78, 60), (0.9, 20), (0.96, 14)],
         "foot": [(0.0, 8), (0.08, 0), (0.22, -4), (0.34, -38), (0.5, -26), (0.7, -6), (0.88, 6)],
         "ankle": [(0.0, 0), (0.3, -8), (0.45, -16), (0.6, -5), (0.8, 6), (0.92, 5)],
