@@ -1,5 +1,6 @@
 ## Подъезд. Подняться на четвёртый этаж в квартиру 47, пока по лестнице идёт Сергей.
-## Финал демо — когда Юрчик заходит в квартиру и дверь за ним закрывается.
+## Финал демо — дома: Юрчик заходит к себе в комнату (модель по фото — tools/blender/build_yurchik_room.py),
+## включает старый комп, и тут в дверь начинает ломиться Сергей.
 extends Level
 
 @export var sergey_scene: PackedScene
@@ -7,10 +8,13 @@ extends Level
 
 @onready var apt_use: Interactable = $AptDoorUse
 @onready var apt_trigger: Area3D = $AptTrigger
+@onready var pc_use: Interactable = $PCUse
+@onready var monitor_light: OmniLight3D = $Lights/Monitor
 
 var _door: Node3D
 var _sergey: Enemy
 var _ended := false
+var _screen: StandardMaterial3D           ## материал экрана монитора: яркость свечения = «включён»
 
 
 func _start() -> void:
@@ -19,6 +23,8 @@ func _start() -> void:
 	_door = $Stairwell.find_child("AptDoor", true, false) as Node3D
 	apt_use.interacted.connect(_open_apartment)
 	apt_trigger.body_entered.connect(_on_apartment)
+	pc_use.interacted.connect(_use_pc)
+	_setup_screen()
 	await after(1.5)
 	Game.say("Тихо. На третьем опять выкрутили лампочку.")
 	if Game.flags.get("sergey", false) and sergey_scene:
@@ -57,6 +63,35 @@ func _on_apartment(body: Node3D) -> void:
 	Game.set_objective("Дома")
 	await after(1.2)
 	Game.say("Дома.")
+	await after(2.0)
+	Game.set_objective("Включить комп")
+	pc_use.enabled = true
+
+
+## Экран монитора выключен, пока Юрчик не включит комп.
+func _setup_screen() -> void:
+	var mi := $YurchikRoom.find_child("PCScreen_nocol", true, false) as MeshInstance3D
+	if mi == null or mi.mesh == null:
+		return
+	var m := mi.mesh.surface_get_material(0) as StandardMaterial3D
+	if m == null:
+		return
+	_screen = m.duplicate() as StandardMaterial3D
+	_screen.emission_energy_multiplier = 0.0
+	mi.set_surface_override_material(0, _screen)
+
+
+func _use_pc(p: Player) -> void:
+	p.busy(1.0, "Interact")
+	Game.sfx("click", pc_use.global_position)
+	await after(0.6)
+	var tw := create_tween().set_parallel()
+	if _screen:
+		tw.tween_property(_screen, "emission_energy_multiplier", 0.9, 1.2)
+	tw.tween_property(monitor_light, "light_energy", 0.7, 1.2)
+	Game.set_objective("Дома")
+	await after(1.5)
+	Game.say("Загудел. Старичок ещё живой.")
 	await after(3.0)
 	Game.sfx("door_bang", apt_use.global_position, 6.0, 0.0)
 	player.shake(0.6)

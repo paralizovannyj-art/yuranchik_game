@@ -5,7 +5,7 @@
 @tool
 extends EditorScenePostImport
 
-const NO_COLLISION := ["yurchik", "character", "enemy", "sergey", "item_"]
+const NO_COLLISION := ["yurchik.gltf", "character", "enemy", "sergey", "item_"]   # yurchik_room.gltf — комната, ей коллизия нужна
 
 
 func _post_import(scene: Node) -> Object:

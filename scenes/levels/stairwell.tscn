@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/levels/stairwell.gd" id="lvl"]
 [ext_resource type="PackedScene" path="res://assets/models/stairwell.gltf" id="model"]
+[ext_resource type="PackedScene" path="res://assets/models/yurchik_room.gltf" id="room"]
 [ext_resource type="PackedScene" path="res://scenes/characters/player.tscn" id="player"]
 [ext_resource type="PackedScene" path="res://scenes/characters/sergey.tscn" id="sergey"]
 [ext_resource type="Script" path="res://scripts/world/interactable.gd" id="inter"]
@@ -66,6 +67,8 @@ environment = SubResource("env")
 
 [node name="Stairwell" parent="." instance=ExtResource("model")]
 
+[node name="YurchikRoom" parent="." instance=ExtResource("room")]
+
 [node name="Lights" type="Node3D" parent="."]
 
 [node name="Bulb1" type="OmniLight3D" parent="Lights"]
@@ -114,9 +117,9 @@ light_energy = 0.6
 omni_range = 5.0
 
 [node name="AptRoom" type="OmniLight3D" parent="Lights"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.2, 10.4, -1.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.26, 10.4, -1.5)
 light_color = Color(1, 0.76, 0.5, 1)
-light_energy = 2.4
+light_energy = 2.2
 shadow_enabled = true
 omni_range = 8.0
 omni_attenuation = 1.2
@@ -127,14 +130,17 @@ light_color = Color(1, 0.78, 0.55, 1)
 light_energy = 1.2
 omni_range = 5.0
 
-[node name="TV" type="OmniLight3D" parent="Lights"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.9, 9.3, -0.35)
-light_color = Color(0.5, 0.62, 0.95, 1)
-light_energy = 0.7
-omni_range = 3.5
-script = ExtResource("flicker")
-flicker_chance = 4.0
-min_factor = 0.5
+[node name="Monitor" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.02, 9.45, -3.0)
+light_color = Color(0.55, 0.68, 1, 1)
+light_energy = 0.0
+omni_range = 3.0
+
+[node name="WindowNight" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.85, 10.1, -1.5)
+light_color = Color(0.45, 0.55, 0.8, 1)
+light_energy = 0.3
+omni_range = 3.0
 
 [node name="Items" type="Node3D" parent="."]
 
@@ -160,6 +166,14 @@ prompt = "Открыть квартиру 47"
 radius = 1.7
 need_item = "key_home"
 locked_text = "Заперто. Нужны ключи от дома."
+
+[node name="PCUse" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.02, 9.45, -3.4)
+script = ExtResource("inter")
+prompt = "Включить компьютер"
+radius = 1.9
+enabled = false
+one_shot = true
 
 [node name="AptTrigger" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.75, 9.6, -1.25)
