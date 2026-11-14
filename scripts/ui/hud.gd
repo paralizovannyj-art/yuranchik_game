@@ -1,6 +1,7 @@
-## Интерфейс во время игры: здоровье и выносливость, подсказки, цель, реплики, прицел, шкала вырывания,
-## затемнения экрана, а также меню паузы, экран смерти и финальный экран. Инвентарь — в inventory_ui.gd.
-## Весь интерфейс собирается кодом (в сцене уровня его нет) — уровень просто создаёт HUD при запуске.
+## Интерфейс во время игры: на экране только мир, субтитры, прицел и затемнения.
+## Цель, самочувствие и статистика — в телефоне Юрчика (phone.gd, Tab), инвентарь — сумка (inventory_ui.gd, I).
+## Ранение показывают красная виньетка и сердцебиение, усталость — тяжёлое дыхание.
+## Здесь же меню паузы, экран смерти и финальный экран. Весь интерфейс собирается кодом — уровень просто создаёт HUD.
 class_name HUD
 extends CanvasLayer
 
@@ -8,30 +9,20 @@ const W := 854.0
 const H := 480.0
 const C_TEXT := Color(0.86, 0.85, 0.80)
 const C_ACCENT := Color(1.0, 0.62, 0.25)
-const CROSS_SIZE := 20.0
-const CROSS_SPRING := 260.0   ## жёсткость «жидкой» пружины прицела
-const CROSS_BOUNCE := 0.45    ## < 1 — форма чуть перелетает и покачивается, как капля
+const PROMPT_TIMES := 3        ## сколько раз показывать «[E] …» для каждого вида действия
 
 var player: Player
 var inventory: InventoryUI
+var phone: Phone
 
 var _root: Control
 var _vignette: TextureRect
 var _fade: ColorRect
-var _objective: Label
 var _say: Label
 var _prompt: Label
 var _title: Label
 var _sub: Label
-var _cross: ColorRect
-var _cross_mat: ShaderMaterial
-var _hp_fill: ColorRect
-var _st_fill: ColorRect
-var _hp_text: Label
-var _throw_icon: TextureRect
-var _throw_text: Label
-var _grab_box: Control
-var _grab_fill: ColorRect
+var _cross: Crosshair
 var _menu: PanelContainer
 var _menu_box: VBoxContainer
 var _menu_kind := ""
@@ -39,10 +30,10 @@ var _say_t := 0.0
 var _flash := 0.0
 var _last_hp := 100.0
 var _beat := 0.0
-var _obj_t := 0.0
-var _cross_open := 0.0
-var _cross_vel := 0.0
-var _cross_alpha := 0.0
+var _breath := 0.0
+var _focus_seen: Interactable          ## предмет, для которого уже решили, показывать ли «[E] …»
+var _focus_prompt := false
+var _grab_hint := false
 
 
 func _ready() -> void:
@@ -50,13 +41,13 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build()
 	Game.said.connect(_on_said)
-	Game.objective_changed.connect(_on_objective)
 	Game.health_changed.connect(_on_health)
-	Game.inventory_changed.connect(_refresh_throw)
 	_last_hp = Game.hp
-	_refresh_throw()
 	if player:
 		player.died.connect(_on_died)
+		phone = Phone.new()
+		phone.player = player
+		player.camera.add_child(phone)
 
 
 static func make_theme() -> Theme:
@@ -142,43 +133,13 @@ func _build() -> void:
 	_vignette.modulate.a = 0.0
 	_root.add_child(_vignette)
 
-	# прицел из «жидкого стекла» (shaders/glass_crosshair.gdshader): капля, при замахе — кольцо
-	_cross = _rect(_root, Color.WHITE, Rect2(W / 2 - CROSS_SIZE / 2, H / 2 - CROSS_SIZE / 2, CROSS_SIZE, CROSS_SIZE))
-	_cross_mat = ShaderMaterial.new()
-	_cross_mat.shader = preload("res://shaders/glass_crosshair.gdshader")
-	_cross.material = _cross_mat
+	_cross = Crosshair.new()
+	_cross.position = Vector2.ZERO
+	_cross.size = Vector2(W, H)
+	_root.add_child(_cross)
 
-	mk_label(_root, "ЦЕЛЬ", 10, C_ACCENT, Rect2(18, 12, 200, 14))
-	_objective = mk_label(_root, "", 13, C_TEXT, Rect2(18, 25, 380, 40))
 	_prompt = mk_label(_root, "", 14, Color.WHITE, Rect2(W / 2 - 250, 350, 500, 20), HORIZONTAL_ALIGNMENT_CENTER)
 	_say = mk_label(_root, "", 14, C_TEXT, Rect2(W / 2 - 310, 384, 620, 60), HORIZONTAL_ALIGNMENT_CENTER)
-
-	# здоровье и выносливость
-	_rect(_root, Color(0, 0, 0, 0.6), Rect2(17, 447, 122, 9))
-	_hp_fill = _rect(_root, Color(0.3, 0.75, 0.3), Rect2(18, 448, 120, 7))
-	_rect(_root, Color(0, 0, 0, 0.6), Rect2(17, 458, 122, 5))
-	_st_fill = _rect(_root, Color(0.75, 0.78, 0.85), Rect2(18, 459, 120, 3))
-	_hp_text = mk_label(_root, "НОРМА", 10, Color(0.5, 0.9, 0.5), Rect2(18, 432, 160, 14))
-
-	# что полетит при броске
-	_throw_icon = TextureRect.new()
-	_throw_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_throw_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_throw_icon.position = Vector2(W - 96, 420)
-	_throw_icon.size = Vector2(44, 44)
-	_throw_icon.modulate = Color(1.5, 1.5, 1.5)
-	_throw_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_root.add_child(_throw_icon)
-	_throw_text = mk_label(_root, "", 12, C_TEXT, Rect2(W - 54, 440, 50, 20))
-
-	# вырывание из захвата
-	_grab_box = Control.new()
-	_grab_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_root.add_child(_grab_box)
-	mk_label(_grab_box, "ВЫРЫВАЙСЯ!   ЖМИ  [E]", 18, Color(1, 0.85, 0.3), Rect2(W / 2 - 200, 268, 400, 26), HORIZONTAL_ALIGNMENT_CENTER)
-	_rect(_grab_box, Color(0, 0, 0, 0.7), Rect2(W / 2 - 91, 299, 182, 10))
-	_grab_fill = _rect(_grab_box, Color(1, 0.75, 0.2), Rect2(W / 2 - 90, 300, 180, 8))
-	_grab_box.visible = false
 
 	inventory = InventoryUI.new()
 	inventory.hud = self
@@ -203,8 +164,6 @@ func _process(delta: float) -> void:
 	if _say_t > 0.0 and not paused:
 		_say_t -= delta
 		_say.modulate.a = clampf(_say_t / 0.6, 0.0, 1.0)
-	_obj_t = maxf(_obj_t - delta, 0.0)
-	_objective.label_settings.font_color = C_TEXT.lerp(C_ACCENT, clampf(_obj_t / 2.0, 0.0, 1.0))
 	# виньетка
 	_flash = move_toward(_flash, 0.0, delta * 1.6)
 	var low := clampf(1.0 - Game.hp / 35.0, 0.0, 1.0)
@@ -212,46 +171,48 @@ func _process(delta: float) -> void:
 	_vignette.modulate.a = maxf(_flash, pulse)
 	if player == null or not is_instance_valid(player):
 		return
-	var k := Game.hp / Game.MAX_HP
-	_hp_fill.size.x = 120.0 * k
-	var col := Color(0.3, 0.75, 0.3) if k > 0.6 else (Color(0.9, 0.75, 0.2) if k > 0.3 else Color(0.9, 0.2, 0.15))
-	_hp_fill.color = col
-	_hp_text.text = "НОРМА" if k > 0.6 else ("РАНЕН" if k > 0.3 else "ПРИ СМЕРТИ")
-	_hp_text.label_settings.font_color = col.lightened(0.2)
-	_st_fill.size.x = 120.0 * player.stamina / player.max_stamina
-	_st_fill.color = Color(0.9, 0.3, 0.2) if player.exhausted else Color(0.75, 0.78, 0.85)
+	if phone.is_open and (player.is_dead() or player.state == Player.State.GRABBED or not player.control):
+		phone.close()
 	var playing := not paused and not player.is_dead() and _menu_kind == ""
-	_update_cross(delta, playing)
-	_prompt.text = "[E]  %s" % player.focus.prompt if playing and player.focus else ""
-	_grab_box.visible = playing and player.state == Player.State.GRABBED
-	_grab_fill.size.x = 180.0 * clampf(player.escape, 0.0, 1.0)
-	# сердцебиение при малом здоровье
+	var free := playing and not phone.is_open
+	_cross.alpha = move_toward(_cross.alpha, ((0.35 if player.move_speed > player.walk_speed * 1.3 else 1.0) if free else 0.0), delta * 5.0)
+	_cross.step(delta, player.focus != null, player.is_aiming())
+	_update_prompt(free)
+	# сердцебиение при малом здоровье, тяжёлое дыхание, когда выдохся
 	if playing and low > 0.0:
 		_beat -= delta
 		if _beat <= 0.0:
 			_beat = 1.0
 			Game.sfx("heartbeat", null, -8.0 + low * 6.0, 0.0)
+	if playing and player.exhausted:
+		_breath -= delta
+		if _breath <= 0.0:
+			_breath = 0.85
+			Game.sfx_rand("player_breath", 3, null, -4.0)
+	else:
+		_breath = 0.0
 
 
-## Капля в обычном режиме, большое кольцо — когда взгляд на предмете, с которым можно взаимодействовать,
-## кольцо поуже — при замахе. Форма ведётся недодемпфированной пружиной, поэтому переливается с «бульком».
-func _update_cross(delta: float, playing: bool) -> void:
-	var goal := 0.0
-	if player.focus:
-		goal = 1.0
-	elif player.is_aiming():
-		goal = 0.7
-	_cross_vel += ((goal - _cross_open) * CROSS_SPRING - _cross_vel * 2.0 * sqrt(CROSS_SPRING) * CROSS_BOUNCE) * delta
-	_cross_open = clampf(_cross_open + _cross_vel * delta, 0.0, 1.2)
-	var sprinting := player.move_speed > player.walk_speed * 1.3
-	var a_goal := (0.35 if sprinting else 1.0) if playing else 0.0
-	_cross_alpha = move_toward(_cross_alpha, a_goal, delta * 5.0)
-	_cross.visible = _cross_alpha > 0.01
-	_cross_mat.set_shader_parameter("open", _cross_open)
-	_cross_mat.set_shader_parameter("alpha", _cross_alpha)
+## «[E] …» показываем только первые PROMPT_TIMES раз для каждого вида действия, дальше хватает прицела и блика.
+## «Вырывайся» — один раз за игру, в первом захвате.
+func _update_prompt(free: bool) -> void:
+	if free and player.state == Player.State.GRABBED:
+		if not _grab_hint and Game.hint("grab"):
+			_grab_hint = true
+		_prompt.text = "ВЫРЫВАЙСЯ!   ЖМИ  [E]" if _grab_hint else ""
+		return
+	_grab_hint = false
+	var f := player.focus if free else null
+	if f != _focus_seen:
+		_focus_seen = f
+		_focus_prompt = f != null and Game.hint("prompt:" + ("pickup" if f is Pickup else f.prompt), PROMPT_TIMES)
+	_prompt.text = "[E]  %s" % f.prompt if f and _focus_prompt else ""
 
 
 func _input(event: InputEvent) -> void:
+	if phone and phone.is_open:
+		_phone_input(event)
+		return
 	if event.is_action_pressed("pause"):
 		if inventory.visible:
 			close_inventory()
@@ -266,6 +227,59 @@ func _input(event: InputEvent) -> void:
 		elif _menu_kind == "" and _can_open():
 			open_inventory()
 		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("phone") and not inventory.visible and _menu_kind == "" and _can_open() \
+			and player.state != Player.State.GRABBED:
+		phone.open()
+		get_viewport().set_input_as_handled()
+
+
+## Телефон в руке: листаем стрелками, крестовиной и колёсиком, WASD и стик продолжают вести Юрчика.
+func _phone_input(event: InputEvent) -> void:
+	var s := phone.screen
+	var used := true
+	if event is InputEventJoypadMotion or event is InputEventMouseMotion:
+		return
+	if event.is_action_pressed("phone") or event.is_action_pressed("pause"):
+		phone.close()
+	elif event.is_action_pressed("inventory") and event is InputEventKey:   # крестовина вниз листает телефон
+		phone.close()
+		if _can_open():
+			open_inventory()
+	elif event is InputEventMouseButton and event.pressed:
+		match event.button_index:
+			MOUSE_BUTTON_WHEEL_UP: s.move(Vector2i(0, -1))
+			MOUSE_BUTTON_WHEEL_DOWN: s.move(Vector2i(0, 1))
+			MOUSE_BUTTON_LEFT: s.ok()
+			MOUSE_BUTTON_RIGHT: _phone_back()
+			_: used = false
+	elif event.is_action_pressed("ui_up", true):
+		s.move(Vector2i(0, -1))
+	elif event.is_action_pressed("ui_down", true):
+		s.move(Vector2i(0, 1))
+	elif event.is_action_pressed("ui_left", true):
+		s.move(Vector2i(-1, 0))
+	elif event.is_action_pressed("ui_right", true):
+		s.move(Vector2i(1, 0))
+	elif event.is_action_pressed("interact") or event.is_action_pressed("ui_accept"):
+		s.ok()
+	elif (event is InputEventKey and event.pressed and event.keycode == KEY_BACKSPACE) \
+			or (event is InputEventJoypadButton and event.pressed and event.button_index == JOY_BUTTON_B):
+		_phone_back()
+	elif event.is_action("move_forward") or event.is_action("move_back") or event.is_action("move_left") \
+			or event.is_action("move_right") or event.is_action("flashlight") or event.is_action("look_left") \
+			or event.is_action("look_right") or event.is_action("look_up") or event.is_action("look_down"):
+		used = false                         # идти и светить фонариком с телефоном можно
+	elif event is InputEventKey or event is InputEventJoypadButton or event is InputEventMouseButton:
+		pass                                 # остальное (удар, бросок, бег, молоток) с телефоном в руке не работает
+	else:
+		used = false
+	if used:
+		get_viewport().set_input_as_handled()
+
+
+func _phone_back() -> void:
+	if not phone.screen.back():
+		phone.screen.shortcut_messages()
 
 
 func _can_open() -> bool:
@@ -279,26 +293,10 @@ func _on_said(text: String) -> void:
 	_say_t = 2.5 + text.length() * 0.06
 
 
-func _on_objective(text: String) -> void:
-	if text == _objective.text:
-		return
-	_objective.text = text
-	_obj_t = 3.0
-	Game.sfx("ui_select", null, -10.0)
-
-
 func _on_health() -> void:
 	if Game.hp < _last_hp:
 		_flash = clampf((_last_hp - Game.hp) / 25.0, 0.25, 0.8)
 	_last_hp = Game.hp
-
-
-func _refresh_throw() -> void:
-	var id := Game.current_throwable()
-	_throw_icon.visible = id != ""
-	_throw_text.text = "×%d [G]" % Game.count(id) if id != "" else ""
-	if id != "":
-		_throw_icon.texture = load("res://assets/ui/icons/%s.png" % id)
 
 
 # ----------------------------------------------------------------------------- затемнения
@@ -320,13 +318,30 @@ func open_inventory() -> void:
 	get_tree().paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	Game.sfx("ui_open", null, -4.0)
+	_look_into_bag(true)
 	inventory.open()
 
 
 func close_inventory() -> void:
 	inventory.close()
-	get_tree().paused = false
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	Game.sfx("ui_open", null, -8.0, 0.12)
+	await _look_into_bag(false)
+	if not inventory.visible:
+		get_tree().paused = false
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+
+## Взгляд опускается в сумку и поднимается обратно. Игра на паузе, поэтому камерой крутит HUD,
+## а после снятия паузы player.gd сам вернёт её на место (из того же положения — без рывка).
+func _look_into_bag(down: bool) -> Signal:
+	var tw := create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	if player and is_instance_valid(player):
+		var pitch := deg_to_rad(-62.0) if down else player.cam_pitch
+		tw.tween_property(player.cam_pivot, "rotation:x", pitch, 0.35 if down else 0.22)
+	else:
+		tw.tween_interval(0.01)
+	return tw.finished
 
 
 func _open_menu(kind: String, entries: Array) -> void:

@@ -247,4 +247,22 @@ for i, (d, lo, hi, shake) in enumerate(((1.1, 350, 2200, 0.10), (1.3, 300, 1900,
     e *= np.clip((d - t) / 0.15, 0, 1)
     save("player_breath_%d" % (i + 1), x * e, 0.5)
 
+# ---------------------------------------------------------------- телефон «ОРБИТА Q2»
+# Свой генератор, чтобы звуки выше не менялись.
+prng = np.random.default_rng(2718)
+d = 0.035                                                              # писк клавиши
+save("phone_key", np.sign(np.sin(2 * np.pi * 1320 * t_(d))) * env(d, 0.001, 0.01, 2.0), 0.25)
+x = np.zeros(1)                                                        # вибрация: два гула «бзз-бзз» о ткань кармана
+for at in (0.0, 0.55):
+    d = 0.38
+    t = t_(d)
+    buzz = np.sign(np.sin(2 * np.pi * 150 * t)) * (0.6 + 0.4 * np.sign(np.sin(2 * np.pi * 37 * t)))
+    buzz = band(buzz + band(prng.standard_normal(len(t)), 80, 600) * 0.4, 60, 1400)
+    x = mixat(x, buzz * np.clip(t / 0.02, 0, 1) * np.clip((d - t) / 0.04, 0, 1), at)
+save("phone_vibrate", x, 0.55)
+x = np.zeros(1)                                                        # СМС на открытом телефоне: три коротких ноты
+for at, f in ((0.0, 1568), (0.11, 2093), (0.22, 1568)):
+    x = mixat(x, np.sign(np.sin(2 * np.pi * f * t_(0.09))) * env(0.09, 0.002, 0.02, 1.5), at)
+save("phone_sms", x, 0.3)
+
 print("SFX", len(os.listdir(OUT)), "files in", OUT)
