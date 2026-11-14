@@ -6,6 +6,7 @@
 ## - Shift / B — бег вперёд (тратит выносливость), разгоняется до бега за долю секунды.
 ## - ПКМ / LT — замах: камера приближается, медленная ходьба.
 ## - ЛКМ / RT — удар молотком. С замахом (ПКМ) — сильный: целься выше — в голову, ниже — по ногам.
+## - Q / крестовина влево — убрать молоток в сумку или достать. Без молотка ЛКМ — удар кулаком (слабее).
 ## - G / RB — бросить бутылку или кирпич. E / A — подобрать, открыть, вырваться из захвата.
 ## - F / Y — фонарик.
 class_name Player
@@ -62,6 +63,9 @@ enum State { NORMAL, AIM, ATTACK, HURT, GRABBED, THROW, BUSY, DEAD }
 @export var attack_arc := 62.0         ## градусов в каждую сторону
 @export var light_damage := 1.0
 @export var heavy_damage := 2.0
+@export var punch_damage := 0.4        ## кулаком, когда молоток в сумке
+@export var punch_reach := 1.2         ## м
+@export var punch_cost := 5.0          ## выносливость за удар кулаком
 @export var throw_speed := 15.0
 
 @export_group("Звук")
@@ -106,6 +110,11 @@ var _thrown := false
 var _last_step := 0
 var _sprinting := false
 var _run := 0.0                        ## 0 — шаг, 1 — полный бег
+var armed := true                      ## молоток в руке (false — убран в сумку)
+var _hammer: Node3D
+var _swap_at := -1.0                   ## когда в BUSY убрать/достать молоток (по _timer); < 0 — не трогаем
+var _punch := false                    ## текущий удар — кулаком
+var _punch_alt := false                ## следующий удар кулаком — второй рукой (Punch2)
 
 @onready var model: Node3D = $Model
 @onready var cam_pivot: Node3D = $CamPivot
@@ -117,6 +126,7 @@ var _run := 0.0                        ## 0 — шаг, 1 — полный бе�
 const BODY_LAYER := 1 << 19
 ## Кости, которые камера не должна видеть: иначе голова изнутри закрывает обзор.
 const HIDDEN_BONES := ["Head"]
+const DRAW_TIME := 0.35
 
 
 func _ready() -> void:
@@ -134,6 +144,7 @@ func _ready() -> void:
 	if sk.size() > 0:
 		_skel = sk[0] as Skeleton3D
 		_head_bone = _skel.find_bone("Head")
+		_setup_hammer()
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
@@ -179,6 +190,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_pitch_target = clampf(_pitch_target - event.relative.y * s, pitch_min, pitch_max)
 	if not control or state == State.DEAD:
 		return
+	if event.is_action_pressed("holster") and (state == State.NORMAL or state == State.AIM):
+		_toggle_hammer()
 	if event.is_action_pressed("attack"):
 		_attack_buffer = 0.2
 	if event.is_action_pressed("throw"):
@@ -209,7 +222,7 @@ func _physics_process(delta: float) -> void:
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back") if control else Vector2.ZERO
 	_sprinting = control and Input.is_action_pressed("run") and input.y < -0.3 and state == State.NORMAL and not exhausted
 	_run = move_toward(_run, 1.0 if _sprinting else 0.0, delta * (run_ramp if _sprinting else run_ramp * 2.0))
-	var readied := control and Input.is_action_pressed("ready_weapon")
+	var readied := control and armed and Input.is_action_pressed("ready_weapon")   # замах — только с молотком
 	var hv := Vector3(velocity.x, 0.0, velocity.z)
 
 	match state:
@@ -270,8 +283,14 @@ func _physics_process(delta: float) -> void:
 				state = State.NORMAL
 		State.BUSY:
 			_timer -= delta
-			hv = hv.move_toward(Vector3.ZERO, deceleration * 2.0 * delta)
-			move_speed = hv.length()
+			if _swap_at >= 0.0:           # убрать/достать молоток: идти можно, но медленно
+				hv = _move(hv, input, aim_walk_speed, delta)
+				if _timer <= _swap_at:
+					_swap_at = -1.0
+					_place_hammer(not armed)
+			else:
+				hv = hv.move_toward(Vector3.ZERO, deceleration * 2.0 * delta)
+				move_speed = hv.length()
 			if _timer <= 0.0:
 				state = State.NORMAL
 		State.DEAD:
@@ -346,17 +365,22 @@ func _update_stamina(delta: float) -> void:
 func _start_attack() -> void:
 	if stamina < 5.0:
 		return
-	_attack_heavy = Input.is_action_pressed("ready_weapon")
-	_spend(heavy_attack_cost if _attack_heavy else attack_cost)
+	_punch = not armed
+	_attack_heavy = armed and Input.is_action_pressed("ready_weapon")
+	_spend(punch_cost if _punch else (heavy_attack_cost if _attack_heavy else attack_cost))
 	state = State.ATTACK
 	_hit_done = false
-	model.attack_rate = 1.0 if _attack_heavy else 1.2
+	var clip := "Attack"
+	if _punch:                             # кулаком — по очереди: джеб, кросс, джеб…
+		clip = "Punch2" if _punch_alt else "Punch"
+		_punch_alt = not _punch_alt
+	model.attack_rate = 1.3 if _punch else (1.0 if _attack_heavy else 1.2)
 	if model.has_method("attack_length"):
-		attack_time = model.attack_length()
+		attack_time = model.attack_length(clip)
 	_timer = attack_time
 	if _attack_heavy:
 		rotation.y = cam_yaw
-	model.play_attack()
+	model.play_attack(clip)
 	get_tree().create_timer(attack_time * (hit_moment - 0.2)).timeout.connect(
 		func() -> void: Game.sfx("swing", global_position + Vector3.UP * 1.4, -6.0))
 
@@ -371,15 +395,22 @@ func _do_hit() -> void:
 		var to := e.global_position - global_position
 		to.y = 0.0
 		var d := to.length()
-		if d > attack_reach + 0.25 or absf(e.global_position.y - global_position.y) > 1.5:
+		if d > (punch_reach if _punch else attack_reach) + 0.25 or absf(e.global_position.y - global_position.y) > 1.5:
 			continue
 		if d > 0.5 and rad_to_deg(fwd.angle_to(to)) > attack_arc:
 			continue
 		if d < best_d:
 			best = e
 			best_d = d
-	Game.emit_noise(global_position, 7.0)
+	Game.emit_noise(global_position, 4.0 if _punch else 7.0)
 	if best == null:
+		return
+	if _punch:                             # кулаком: слабо, без зон и без оглушения
+		var at := best.global_position + Vector3.UP * 1.3
+		best.take_hit(punch_damage, "body", global_position, false)
+		Game.sfx("punch", at, 0.0)
+		Game.hitstop(0.03)
+		shake(0.25)
 		return
 	var zone := _aim_zone(best) if _attack_heavy else "body"
 	var hit_h: float = {"head": 1.6, "legs": 0.5}.get(zone, 1.15)
@@ -518,10 +549,38 @@ func _die() -> void:
 	died.emit()
 
 
+# ----------------------------------------------------------------------------- молоток: в руке / в сумке
+## Молоток из модели висит на кости кисти; «в сумке» — просто скрыт (он и так лежит в инвентаре).
+func _setup_hammer() -> void:
+	var nodes := model.find_children("Hammer", "Node3D", true, false)
+	if not nodes.is_empty():
+		_hammer = nodes[0] as Node3D
+
+
+## Достать (true) или убрать в сумку (false).
+func _place_hammer(in_hand: bool) -> void:
+	armed = in_hand
+	if _hammer:
+		_hammer.visible = in_hand
+	Game.sfx("ui_open", null, -10.0, 0.12)       # шорох сумки
+
+
+## Убрать или достать молоток: короткая пауза, на её середине он исчезает в сумке или появляется в руке.
+func _toggle_hammer() -> void:
+	if _hammer == null or state == State.DEAD:
+		return
+	state = State.BUSY
+	_timer = DRAW_TIME
+	_swap_at = DRAW_TIME * 0.5
+
+
 ## Занять героя на время (отпирает дверь, подбирает вещь) — он останавливается и не атакует.
 func busy(duration: float, anim := "") -> void:
 	if state == State.DEAD or state == State.GRABBED:
 		return
+	if _swap_at >= 0.0:                    # не дотянулись до пояса — молоток перекладываем сразу
+		_swap_at = -1.0
+		_place_hammer(not armed)
 	state = State.BUSY
 	_timer = duration
 	if anim != "":

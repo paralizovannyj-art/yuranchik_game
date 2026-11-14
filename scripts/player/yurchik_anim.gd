@@ -178,16 +178,19 @@ func play_death() -> void:
 	_anim.play("Death", 0.15)
 
 
-func play_attack() -> void:
+## clip — «Attack» (молоток) или «Punch» (кулак, молоток в сумке).
+func play_attack(clip := "Attack") -> void:
 	if _tree:
+		if _anim.has_animation(clip):
+			(_bt.get_node("attack_clip") as AnimationNodeAnimation).animation = clip
 		_tree.set("parameters/attack_clip_ts/scale", attack_rate)
 		_tree.set("parameters/attack/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE)
 
 
 ## Длина удара в секундах — по ней player.gd считает, когда удар закончится.
-func attack_length() -> float:
-	if _anim and _anim.has_animation("Attack"):
-		return _anim.get_animation("Attack").length / attack_rate
+func attack_length(clip := "Attack") -> float:
+	if _anim and _anim.has_animation(clip):
+		return _anim.get_animation(clip).length / attack_rate
 	return 0.83
 
 
