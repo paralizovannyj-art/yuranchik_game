@@ -371,47 +371,28 @@ def stairwell(M):
         st.cyl((0.06, FL_Y1, h + 0.92), (-0.06, FL_Y1, h + 0.92), 0.025, 0.025, M["green_metal"], segs=4)
         st.cyl((-0.06, FL_Y0, z0 + FH + 0.92), (0.06, FL_Y0, z0 + FH + 0.92), 0.025, 0.025, M["green_metal"], segs=4)
 
-    # --- квартира Юрчика ---
+    # --- квартира Юрчика: прихожая. Сама комната — отдельная модель (tools/blender/build_yurchik_room.py) ---
     wp, pq = M["wallpaper"], M["parquet"]
     AH = 2.5
     cx0, cx1, cy0, cy1 = -6.2, -HALL_W - 0.2, 0.2, 2.3            # коридор
-    rx0, rx1, ry0, ry1 = -10.2, -6.2, -0.6, 3.6                   # комната
     WP = (1.0, 1.0)
     b.box((cx0, cy0, Z3 - 0.1), (cx1, cy1, Z3), {'+Z': pq}, scale=(1.5, 1.5))
-    b.box((rx0, ry0, Z3 - 0.1), (rx1, ry1, Z3), {'+Z': pq}, scale=(1.5, 1.5))
     b.box((cx0, cy0, Z3 + AH), (cx1, cy1, Z3 + AH + 0.1), {'-Z': ceil}, scale=(1, 1))
-    b.box((rx0, ry0, Z3 + AH), (rx1, ry1, Z3 + AH + 0.1), {'-Z': ceil}, scale=(1, 1))
     b.box((cx0, cy0 - 0.2, Z3), (cx1, cy0, Z3 + AH), {'+Y': wp}, scale=WP)
     b.box((cx0, cy1, Z3), (cx1, cy1 + 0.2, Z3 + AH), {'-Y': wp}, scale=WP)
     # стена у входа (со стороны квартиры)
     b.box((cx1, cy0, Z3), (cx1 + 0.01, DOOR_Y0, Z3 + AH), {'-X': wp}, scale=WP)
     b.box((cx1, DOOR_Y1, Z3), (cx1 + 0.01, cy1, Z3 + AH), {'-X': wp}, scale=WP)
     b.box((cx1, DOOR_Y0, Z3 + DOOR_H), (cx1 + 0.01, DOOR_Y1, Z3 + AH), {'-X': wp}, scale=WP)
-    # стена между коридором и комнатой с проёмом y 0.6..1.9
-    for (ya, yb, za, zb) in ((ry0, 0.6, Z3, Z3 + AH), (1.9, ry1, Z3, Z3 + AH), (0.6, 1.9, Z3 + 2.05, Z3 + AH)):
-        b.box((cx0 - 0.12, ya, za), (cx0, yb, zb), {'+X': wp, '-X': wp, '+Y': wp, '-Y': wp, '-Z': wp}, scale=WP)
-    b.box((rx0 - 0.2, ry0, Z3), (rx0, ry1, Z3 + AH), {'+X': wp}, scale=WP)
-    b.box((rx0, ry0 - 0.2, Z3), (rx1, ry0, Z3 + AH), {'+Y': wp}, scale=WP)
-    b.box((rx0, ry1, Z3), (rx1, ry1 + 0.2, Z3 + AH), {'-Y': wp}, scale=WP)
+    # стена между коридором и комнатой с проёмом y 0.6..1.9 (сторону комнаты рисует модель комнаты)
+    for (ya, yb, za, zb) in ((-0.6, 0.6, Z3, Z3 + AH), (1.9, 3.6, Z3, Z3 + AH), (0.6, 1.9, Z3 + 2.05, Z3 + AH)):
+        b.box((cx0 - 0.12, ya, za), (cx0, yb, zb), {'+X': wp, '+Y': wp, '-Y': wp, '-Z': wp}, scale=WP)
     wood, fab = M["wood"], M["fabric"]
     allf = lambda m: {k_: m for k_ in ('+X', '-X', '+Y', '-Y', '+Z')}
     # прихожая: вешалка с курткой, полка для обуви
     b.box((-5.6, cy0, Z3 + 1.65), (-4.2, cy0 + 0.06, Z3 + 1.75), allf(wood), scale=(1, 1))
     b.box((-5.3, cy0 + 0.02, Z3 + 0.75), (-4.8, cy0 + 0.20, Z3 + 1.68), allf(fab), scale=(0.5, 0.5))
     b.box((-5.6, cy0, Z3), (-4.4, cy0 + 0.32, Z3 + 0.38), allf(wood), scale=(1, 1))
-    # комната: диван, ковёр, стенка, стол с телевизором, окно, люстра
-    b.box((rx0 + 0.02, 0.4, Z3), (rx0 + 0.95, 2.6, Z3 + 0.42), allf(fab), scale=(0.6, 0.6))
-    b.box((rx0 + 0.02, 0.4, Z3 + 0.42), (rx0 + 0.28, 2.6, Z3 + 0.88), allf(fab), scale=(0.6, 0.6))
-    b.box((rx0, 0.3, Z3 + 1.0), (rx0 + 0.02, 2.7, Z3 + 2.35), {'+X': (M["carpet"], (0, 0, 1, 1))})
-    b.box((-9.4, ry1 - 0.5, Z3), (-6.9, ry1, Z3 + 2.0), allf(wood), scale=(1.2, 1.0))
-    b.box((-9.3, ry1 - 0.52, Z3 + 0.9), (-7.0, ry1 - 0.5, Z3 + 1.9), {'-Y': (M["window"], (0.1, 0.4, 0.45, 0.62))})   # стекло серванта
-    b.box((-7.3, ry0 + 0.1, Z3), (-6.5, ry0 + 0.7, Z3 + 0.62), allf(wood), scale=(1, 1))
-    tvr = (M["tv"], (0, 0, 1, 1)); tvs = (M["tv"], (0, 0, 0.08, 0.08))
-    b.box((-7.2, ry0 + 0.15, Z3 + 0.62), (-6.6, ry0 + 0.6, Z3 + 1.08), {'+Y': tvr, '-X': tvs, '+X': tvs, '+Z': tvs, '-Y': tvs})
-    b.box((-9.3, ry0, Z3 + 0.9), (-8.0, ry0 + 0.02, Z3 + 2.1), {'+Y': (M["window"], (0, 0, 1, 1))})
-    b.box((-9.5, ry0 + 0.02, Z3 + 0.2), (-9.25, ry0 + 0.1, Z3 + 2.3), allf(fab), scale=(0.3, 2))    # шторы
-    b.box((-8.05, ry0 + 0.02, Z3 + 0.2), (-7.8, ry0 + 0.1, Z3 + 2.3), allf(fab), scale=(0.3, 2))
-    b.box((-8.3, 1.4, Z3 + AH - 0.3), (-8.1, 1.6, Z3 + AH - 0.12), {kk: (M["glass"], (0, 0, 1, 1)) for kk in ('+X', '-X', '+Y', '-Y', '-Z')})
     b.box((cx0 + 1.4, 1.2, Z3 + AH - 0.22), (cx0 + 1.52, 1.32, Z3 + AH - 0.1), {kk: (M["glass"], (0, 0, 1, 1)) for kk in ('+X', '-X', '+Y', '-Y', '-Z')})
 
     main = b.build("Stairwell", coll)

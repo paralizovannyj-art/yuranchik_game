@@ -414,8 +414,11 @@ func show_ending() -> void:
 	var t := int(Game.stats["time"])
 	_title.text = "ДОМА"
 	_title.label_settings.font_color = C_TEXT
-	_sub.text = "Сегодня ты добрался. Но он знает, где ты живёшь.\n\nВремя: %d:%02d     Офников уложено: %d     Смертей: %d\n\nКонец демо-версии. Продолжение следует." % [
-		t / 60, t % 60, Game.stats["kills"], Game.stats["deaths"]]
+	if Game.flags.get("sergey", false):         # старый двор (yard.tscn): с Сергеем и офниками
+		_sub.text = "Сегодня ты добрался. Но он знает, где ты живёшь.\n\nВремя: %d:%02d     Офников уложено: %d     Смертей: %d\n\nКонец демо-версии. Продолжение следует." % [
+			t / 60, t % 60, Game.stats["kills"], Game.stats["deaths"]]
+	else:                                        # Паскот: пока без врагов
+		_sub.text = "Сегодня ты добрался.\n\nВремя: %d:%02d\n\nКонец демо-версии. Продолжение следует." % [t / 60, t % 60]
 	_open_menu("end", [
 		["Сыграть ещё раз", Game.new_game],
 		["В главное меню", Game.to_menu],
