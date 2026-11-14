@@ -5,7 +5,7 @@ shader_type spatial;
 render_mode unshaded, fog_disabled, blend_add, cull_disabled, depth_draw_never;
 
 uniform float energy = 1.0;
-uniform float haze_density = 0.0016;       // огни тускнеют с расстоянием, но не гаснут
+uniform float haze_density = 0.003;        // огни тускнеют в тумане с расстоянием, но не гаснут
 
 void fragment() {
 	float r = length(UV - 0.5) * 2.0;

@@ -2,7 +2,9 @@
 #   север  — вторая линия высоток за проспектом;
 #   запад  — соседний микрорайон;
 #   восток — ТЭЦ: две трубы с красными огнями, градирня, корпуса, прожекторы;
-#   юг     — балка (тёмный провал с голыми деревьями и парой домиков), за ней огни дальнего района.
+#   юг     — балка (тёмный провал с голыми деревьями и парой домиков), за ней огни дальнего района;
+#            ближе к гаражам — ряд тополей по бровке и линия высоток на дальнем склоне,
+#            чтобы с крыш гаражей не открывался пустой простор.
 # Туда нельзя дойти: всё без коллизий («nocol» в именах), без теней, один файл.
 #
 # Выход:  assets/models/district/backdrop.gltf, объекты:
@@ -403,6 +405,19 @@ def main():
         if i % 6 != 2:
             glow(g, (x, 8.5, -141), 3.0, 0)
 
+    # ближний юг (добавлено в конце, чтобы не сдвигать случайную раскладку выше):
+    # тополя по бровке балки прямо за гаражами и линия высоток на дальнем склоне — в ~190–215 м от гаражей
+    for i in range(23):
+        x = -99 + i * 9 + R.uniform(-2.5, 2.5)
+        if R.random() < 0.85:
+            tree(trees, x, 106 + R.uniform(-1.5, 3.5), poplar=True)
+    for i in range(10):
+        cx = -330 + (i + 0.5) * 66 + R.uniform(-8, 8)
+        cz = R.uniform(290, 316) - 22.0 * math.sin(cx * 0.006 + 0.5)   # по склону, вслед за изгибом балки
+        # высотки: склон ниже гаражей на 10–20 м, дома пониже из-за него не встают стеной
+        house(south, R.choice([16, 16, 12, 9]), cx, cz, R.uniform(-0.08, 0.08), balka_h(cx, cz), R.uniform(0.15, 0.35))
+        glow(g, (cx + R.uniform(-20, 20), balka_h(cx, cz) + 7.5, cz - R.uniform(12, 22)), 3.4, 0)
+
     obs = [north.build([m_house], coll), west.build([m_house], coll), east.build([m_house], coll), south.build([m_house], coll),
            trees.build([m_house], coll), g.build([m_glow], coll), ground.build([m_snow], coll)]
     for o in obs:
@@ -410,8 +425,10 @@ def main():
             p.use_smooth = False
 
     vl = bpy.context.view_layer
+    vl.update()                                                   # после удаления старого фона в слое бывают пустые ссылки
     for o in vl.objects:                                          # экспортируем только фон
-        o.select_set(False, view_layer=vl)
+        if o is not None:
+            o.select_set(False, view_layer=vl)
     for o in obs:
         o.select_set(True, view_layer=vl)
     vl.objects.active = obs[0]
