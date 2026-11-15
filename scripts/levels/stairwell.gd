@@ -67,6 +67,7 @@ func _on_apartment(body: Node3D) -> void:
 	if _ended or not body is Player:
 		return
 	_ended = true
+	_set_warm()
 	if _door:
 		create_tween().tween_property(_door, "rotation:y", 0.0, 0.22)
 	await after(0.22)
@@ -87,6 +88,7 @@ func _on_apartment(body: Node3D) -> void:
 ## Отладка: Юрчик уже дома, дверь закрыта, можно сразу включать комп.
 func _start_in_room() -> void:
 	_ended = true
+	_set_warm()
 	var at := Vector3(-7.9, 8.45, -1.45)
 	var yaw := -0.45                              # лицом к столу с компом
 	player.global_position = at
@@ -228,3 +230,11 @@ func _flicker_loop() -> void:
 				return
 			_set_bulbs(1.0)
 			await after(randf_range(0.04, 0.12))
+
+
+## Дома тепло: изо рта больше не идёт пар (в подъезде — холодно, там он есть).
+func _set_warm() -> void:
+	var b := player.find_child("BreathParticles", true, false) as GPUParticles3D
+	if b:
+		b.set("warm", true)
+		b.emitting = false
