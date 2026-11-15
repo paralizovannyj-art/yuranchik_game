@@ -2,13 +2,14 @@
 ## - чинит свечение (умножение вместо сложения);
 ## - для окружения добавляет статические коллизии (персонажам и предметам — нет);
 ## - узлы с «nocol» в имени остаются без коллизии (ступени, перила — по ним ходят через невидимые пандусы);
-## - вид из окна (window_view.gltf): без коллизии и без тумана, свет сцены на него не действует — освещение
-##   запечено в текстуры свечения, а туман и фонарик подъезда испортили бы дома напротив.
+## - вид из окна (window_view.gltf): без коллизии, материалы заменяются шейдером shaders/window_view.gdshader —
+##   свет запечён в текстуры свечения, свой туман метели; лампы, фонарик и туман подъезда на него не действуют.
 @tool
 extends EditorScenePostImport
 
 const NO_COLLISION := ["yurchik.gltf", "character", "enemy", "sergey", "item_", "window_view"]   # yurchik_room.gltf — комната, ей коллизия нужна
 const NO_FOG := ["window_view"]
+const VIEW_SHADER := "res://shaders/window_view.gdshader"
 
 
 func _post_import(scene: Node) -> Object:
@@ -40,16 +41,17 @@ func _fix(node: Node, root: Node, collide: bool, fog := true) -> void:
 			continue
 		mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		if not fog:
-			mat.disable_fog = true
-			# свет комнаты (фонарик, лампы) не должен светить на улицу: цвет — только из текстуры свечения
-			mat.albedo_color = Color.BLACK
-			mat.metallic_specular = 0.0
-			mat.roughness = 1.0
+			var sm := ShaderMaterial.new()
+			sm.resource_name = mat.resource_name
+			sm.shader = load(VIEW_SHADER)
+			sm.set_shader_parameter("tex", mat.emission_texture if mat.emission_texture else mat.albedo_texture)
+			mesh.surface_set_material(i, sm)
+			continue
 		if mat.emission_texture:
 			mat.emission_enabled = true
 			mat.emission = Color.WHITE
 			mat.emission_operator = BaseMaterial3D.EMISSION_OP_MULTIPLY
-			mat.emission_energy_multiplier = 1.8 if fog else 3.2   # вид из окна светится сам, без ламп сцены
+			mat.emission_energy_multiplier = 1.8
 		else:
 			mat.emission_enabled = false
 	if collide and not "nocol" in String(mi.name).to_lower():

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-# Вид из окна комнаты Юрчика (задача YUR-25) — по трём фотографиям из настоящего окна, но зимней ночью.
+# Вид из окна комнаты Юрчика (задача YUR-25) — по трём фотографиям из настоящего окна, но зимой, днём, в метель
+# (референс из задачи: серо-белая пелена, дома напротив еле проступают сквозь снег).
 #
 # Что за окном (как на фото, окно смотрит на запад, −X; справа — север, +Y):
 #   * прямо напротив, через двор, — длинная жёлто-кремовая десятиэтажка с красными «шапками»-крышами над подъездами;
@@ -8,9 +9,9 @@
 #   * внизу — тротуар и проезд вдоль нашего дома, машины на парковке, фонари, двор с голыми деревьями,
 #     трансформаторная будка в граффити, домик с коричневой крышей, детская площадка, гаражи;
 #   * на фасаде слева от окна — наружный блок кондиционера, через небо тянутся провода.
-# Зимняя ночь: всё в снегу, свет фонарей — оранжевые пятна на снегу, горят редкие окна, небо в городском зареве.
-# Освещение «запечено» в текстуры свечения (как у фасадов района), в игре материалам выключается туман
-# (scripts/tools/ps2_import.gd: всё из window_view.gltf), иначе туман подъезда съел бы весь вид.
+# Пасмурный зимний день: всё в свежем снегу, рассеянный серый свет, окна почти не горят, небо — ровная пелена.
+# Свет «запечён» в текстуры свечения. В игре материалы заменяются шейдером shaders/window_view.gdshader
+# (scripts/tools/ps2_import.gd): свой светло-серый туман метели по расстоянию, без ламп и тумана подъезда.
 #
 # Запуск (Blender 5.2, из корня проекта):
 #   blender -b --factory-startup --python tools/blender/build_window_view.py
@@ -100,7 +101,9 @@ def tex_atlas():
     for n, (i, c, e) in CELLS.items():
         r, k = i // 8, i % 8
         alb[r * 32:(r + 1) * 32, k * 32:(k + 1) * 32] = C(*c)
-        emi[r * 32:(r + 1) * 32, k * 32:(k + 1) * 32] = C(*c) * e
+        if e > 0.5 and n not in ("window_lit",):                            # днём лампы и вывески не горят
+            c = (0.55, 0.56, 0.58) if n in ("lamp", "door_lamp", "tail") else tuple(x * 0.6 for x in c)
+        emi[r * 32:(r + 1) * 32, k * 32:(k + 1) * 32] = C(*c) * (0.5 if n == "window_lit" else DAY)
     # лицевая сторона кондиционера: белый корпус, слева круглая решётка вентилятора, справа рёбра
     r0, c0 = AC_REGION[0] * 32, AC_REGION[1] * 32
     yy, xx = np.mgrid[0:64, 0:64].astype(np.float32)
@@ -116,7 +119,7 @@ def tex_atlas():
     face *= (0.85 + 0.25 * noise(64, 64, 4, 4, R))[..., None]
     face[56:] *= C(0.75, 0.68, 0.58)                                     # ржавые потёки снизу
     alb[r0:r0 + 64, c0:c0 + 64] = face
-    emi[r0:r0 + 64, c0:c0 + 64] = face * 0.10
+    emi[r0:r0 + 64, c0:c0 + 64] = face * DAY
     save("wv_atlas", finish(alb, 1.0, crisp=0.2))
     save("wv_atlas_emission", emi.astype(np.float32))
 
@@ -128,8 +131,13 @@ WARM = [C(1.0, 0.72, 0.40), C(1.0, 0.80, 0.52), C(0.95, 0.62, 0.30), C(1.0, 0.88
 COLD = [C(0.55, 0.70, 1.0), C(0.75, 0.85, 1.0)]
 
 
+DAYLIT = 0.15          # днём горит только каждое ~7-е окно из тех, что горели бы ночью
+DAY = 0.82             # рассеянный свет пасмурного дня: свечение = цвет * DAY
+
+
 def lit_window(alb, emi, x0, y0, x1, y1, rng, p=0.27, glass=(0.05, 0.06, 0.075)):
-    """Окно: тёмное стекло или горящее (тёплое, редко — голубое от телевизора; бывают шторы и тюль)."""
+    """Окно днём: стекло отражает серое небо (бывают шторы и тюль), редкое — с включённым светом."""
+    p *= DAYLIT
     x0, y0, x1, y1 = int(round(x0)), int(round(y0)), int(round(x1)), int(round(y1))
     if x1 <= x0 or y1 <= y0:
         return
@@ -146,11 +154,17 @@ def lit_window(alb, emi, x0, y0, x1, y1, rng, p=0.27, glass=(0.05, 0.06, 0.075))
             g *= 0.6 + 0.4 * rng.random((h, w)).astype(np.float32)
         elif kind < 0.65:                                              # жалюзи
             g[::2] *= 0.45
-        alb[y0:y1, x0:x1] = col * 0.85 * g[..., None]
-        emi[y0:y1, x0:x1] = col * k * g[..., None]
+        alb[y0:y1, x0:x1] = col * 0.6 * g[..., None]
+        emi[y0:y1, x0:x1] = col * (0.35 + 0.2 * k) * g[..., None]
     else:
-        alb[y0:y1, x0:x1] = C(*glass) * rng.uniform(0.7, 1.3)
-        emi[y0:y1, x0:x1] = C(*glass) * 0.4
+        refl = C(0.30, 0.31, 0.33) + C(*glass)
+        sh = rng.uniform(0.55, 1.1)
+        h, w = y1 - y0, x1 - x0
+        g = np.ones((h, w), np.float32)
+        if rng.random() < 0.35:                                        # за стеклом шторы — темнее
+            g *= rng.uniform(0.5, 0.8)
+        g[: max(1, h // 4)] *= 1.15                                    # блик неба сверху
+        alb[y0:y1, x0:x1] = refl * sh * g[..., None]
 
 
 def tex_yellow():
@@ -194,8 +208,7 @@ def tex_yellow():
                 alb[ay + 6:ay + 14, ax + 2:ax + 4] *= 0.8                        # потёк
     alb[:int(fh * 0.12)] = C(0.86, 0.84, 0.78)                                   # карниз
     yy = np.arange(h, dtype=np.float32)[:, None, None]
-    wall = alb * 0.09 + alb * C(1.0, 0.6, 0.3) * 0.22 * np.exp(-(h - yy) / (fh * 0.8))  # снизу — от фонарей у подъездов
-    emi = np.maximum(emi, wall)
+    emi = np.maximum(emi, alb * DAY)
     save("wv_yellow", finish(alb, 1.05, crisp=0.25))
     save("wv_yellow_emission", quantize(soften(np.clip(emi, 0, 1), 1.0)))
 
@@ -226,7 +239,7 @@ def tex_tower():
                 lit_window(alb, emi, x0 + cw * 0.15, ytop + fh * 0.22, x0 + cw * 0.48, ytop + fh * 0.75, rng)
                 lit_window(alb, emi, x0 + cw * 0.52, ytop + fh * 0.22, x0 + cw * 0.85, ytop + fh * 0.75, rng)
     alb[:4] = C(0.62, 0.60, 0.56)
-    emi = np.maximum(emi, alb * 0.075)
+    emi = np.maximum(emi, alb * DAY)
     save("wv_tower", finish(alb, 1.05, crisp=0.25))
     save("wv_tower_emission", quantize(soften(np.clip(emi, 0, 1), 1.0)))
 
@@ -253,95 +266,59 @@ def tex_tp():
         alb[18:h:3, x:x + 22] *= 0.6
     alb[:6] = C(0.36, 0.35, 0.33)
     save("wv_tp", finish(alb, 1.0, crisp=0.3))
-    save("wv_tp_emission", (alb * 0.06).astype(np.float32))
+    save("wv_tp_emission", (alb * DAY).astype(np.float32))
 
 
 def tex_ground():
-    """Снег двора 128 x 128 м сверху: тротуар и проезд вдоль дома (укатанный снег со следами шин),
-    тропинки, сугробы, оранжевые пятна фонарей, тёплый отсвет окон под жёлтым домом."""
+    """Снег двора 128 x 128 м сверху: тротуар и проезд вдоль дома (метель их почти замела, колеи едва видны),
+    тропинки, сугробы. Пасмурный день — ровный серый свет без пятен."""
     s = 1024
     rng = np.random.default_rng(254)
     ii, jj = np.mgrid[0:s, 0:s].astype(np.float32)
     X = GX0 - (ii + 0.5) / s * GS                                                # строка — к западу
     Y = GY0 + (jj + 0.5) / s * GS                                                # столбец — к северу
-    snow = C(0.80, 0.82, 0.87)
+    snow = C(0.84, 0.86, 0.90)
     n = noise(s, s, 24, 24, rng)
     alb = np.ones((s, s, 3), np.float32) * snow
-    alb *= (0.92 + 0.12 * n)[..., None]
-    # тротуар и проезд — укатанный серый снег и колеи
+    alb *= (0.93 + 0.10 * n)[..., None]
     walk = (X <= GX0) & (X > WALK_X)
     drive = (X <= WALK_X) & (X > DRIVE_X)
     park = (X <= DRIVE_X) & (X > PARK_X)
-    alb[walk] = C(0.62, 0.62, 0.64) * (0.9 + 0.15 * n[walk])[..., None]
-    alb[drive] = C(0.42, 0.41, 0.42) * (0.85 + 0.25 * n[drive])[..., None]
+    alb[walk] = C(0.74, 0.75, 0.78) * (0.92 + 0.12 * n[walk])[..., None]
+    alb[drive] = C(0.64, 0.64, 0.67) * (0.88 + 0.2 * n[drive])[..., None]
     for tx in (-14.4, -15.9):                                                    # колеи
         rut = np.abs(X - tx - 0.15 * np.sin(Y * 0.21)) < 0.18
-        alb[rut] *= 0.55
-    alb[park] = C(0.55, 0.55, 0.57) * (0.9 + 0.2 * n[park])[..., None]
+        alb[rut] *= 0.8
+    alb[park] = C(0.72, 0.73, 0.76) * (0.9 + 0.15 * n[park])[..., None]
     curb = (np.abs(X - PARK_X) < 0.25)
-    alb[curb] = C(0.88, 0.89, 0.92)                                              # отвал снега вдоль бордюра
-    # тропинки
+    alb[curb] = C(0.90, 0.91, 0.94)                                              # отвал снега вдоль бордюра
     def seg_dist(ax, ay, bx, by):
         dx, dy = bx - ax, by - ay
         t = np.clip(((X - ax) * dx + (Y - ay) * dy) / (dx * dx + dy * dy), 0, 1)
         return np.hypot(X - (ax + t * dx), Y - (ay + t * dy))
-    for path in PATHS:
+    for path in PATHS:                                                           # тропинки, полузаметённые
         for (a, b_) in zip(path[:-1], path[1:]):
             d = seg_dist(a[0], a[1], b_[0], b_[1])
             m = d < 0.75
-            alb[m] *= (0.72 + 0.12 * n[m])[..., None]
-    # пятна у построек: под деревьями и стенами снег темнее
-    light = np.ones((s, s), np.float32) * 0.17
-    glow = np.zeros((s, s, 3), np.float32)
-    for (lx, ly) in LAMPS:
-        hx = lx + (1.3 if lx > -50 else -1.3)
-        d = np.hypot(X - hx, Y - ly)
-        glow += C(1.0, 0.60, 0.28)[None, None] * (0.95 * np.exp(-(d / 7.5) ** 2) + 0.25 * np.exp(-(d / 16) ** 2))[..., None]
-    for yc in (-40.0, -16.0, 8.0, 32.0):                                         # лампы над подъездами жёлтого дома
-        d = np.hypot(X - (BX + 2.0), Y - yc)
-        glow += C(1.0, 0.82, 0.55)[None, None] * (0.7 * np.exp(-(d / 4.0) ** 2))[..., None]
-    win = np.clip(1 - (BX - X) / -14.0, 0, 1) * (X > BX)                         # отсвет окон под фасадом
-    glow += C(1.0, 0.75, 0.45)[None, None] * (0.07 * win)[..., None]
-    glow += C(0.0, 0.0, 0.0)
+            alb[m] *= (0.86 + 0.08 * n[m])[..., None]
     alb = finish(alb, 1.2, crisp=0.2)
-    emi = alb * light[..., None] * C(0.95, 0.97, 1.05) + alb * glow
+    emi = alb * DAY * C(0.97, 0.99, 1.03)
     save("wv_ground", alb)
     save("wv_ground_emission", quantize(soften(np.clip(emi, 0, 1), 1.2)))
 
 
 def tex_sky():
-    """Небо на купол: u — азимут, v — высота (сжата к горизонту: e = −4° + 94° * v^1.8).
-    Низкие облака в оранжевом зареве города, у горизонта — силуэты далёких домов с огоньками."""
+    """Небо на купол: u — азимут, v — высота (e = −4° + 94° * v^1.8). Сплошная серая пелена, к горизонту светлее;
+    едва заметные тёмные клочья облаков. В игре почти всё небо закроет туман метели."""
     w, h = 1024, 512
     rng = np.random.default_rng(255)
     v = 1 - (np.arange(h, dtype=np.float32) + 0.5) / h                         # строка 0 — зенит
     e = -4.0 + 94.0 * v ** 1.8
-    t = np.clip(e / 30.0, 0, 1)[:, None, None]
-    hor = C(0.22, 0.13, 0.085); mid = C(0.075, 0.06, 0.07); zen = C(0.018, 0.022, 0.035)
-    sky = np.where(t < 0.25, hor + (mid - hor) * (t / 0.25), mid + (zen - mid) * ((t - 0.25) / 0.75))
-    sky = np.broadcast_to(sky, (h, w, 3)).copy()
+    t = np.clip(e / 40.0, 0, 1)[:, None, None]
+    hor = C(0.70, 0.71, 0.73); zen = C(0.56, 0.57, 0.60)
+    sky = np.broadcast_to(hor + (zen - hor) * t, (h, w, 3)).copy()
     cl = noise(w, h, 16, 6, rng, oct=5)
-    cl = smoothstep(0.45, 0.75, cl)[..., None]
-    glow = np.clip(1 - e / 40.0, 0, 1)[:, None, None]
-    sky = sky * (1 - cl * 0.5) + cl * (C(0.20, 0.12, 0.08) * glow + C(0.05, 0.045, 0.05) * (1 - glow)) * 0.9
-    # силуэты далёкого города у горизонта
-    row_of = lambda deg: int(np.clip((1 - ((deg + 4.0) / 94.0) ** (1 / 1.8)) * h, 0, h - 1))
-    r_ground = row_of(0.0)
-    x = 0
-    while x < w:
-        bw = min(int(rng.integers(6, 28)), w - x)
-        top = rng.uniform(0.5, 2.6) if rng.random() < 0.8 else rng.uniform(2.5, 4.0)
-        r_top = row_of(top)
-        col = C(0.035, 0.03, 0.035) * rng.uniform(0.8, 1.3)
-        sky[r_top:r_ground + 6, x:x + bw] = col
-        for yy in range(r_top + 2, r_ground, 2):
-            for xx in range(x + 1, x + bw - 1, 2):
-                if rng.random() < 0.13:
-                    sky[yy, xx] = WARM[rng.integers(len(WARM))] * rng.uniform(0.3, 0.8)
-        if top > 2.5 and rng.random() < 0.6:
-            sky[max(r_top - 1, 0), x + bw // 2] = C(1.0, 0.1, 0.05)               # красный огонь на крыше
-        x += bw + int(rng.integers(0, 6))
-    sky[r_ground + 6:] = C(0.11, 0.10, 0.11)                                     # под горизонтом — заснеженная даль
+    sky *= (0.96 + 0.08 * cl)[..., None]
     sky = quantize(soften(np.clip(sky, 0, 1), 1.0))
     save("wv_sky", sky)
     save("wv_sky_emission", sky)
