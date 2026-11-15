@@ -340,7 +340,8 @@ func new_game(level := FIRST_LEVEL) -> void:
 	goto_level(level)
 
 
-## Отладка: новая игра сразу в комнате Юрчика (пункт меню и F9 в игре — только при запуске из редактора).
+## Отладка: новая игра сразу в комнате Юрчика (пункт меню и клавиша Home в игре — только при запуске из редактора).
+## Не F9: F5–F12 заняты редактором Godot (F9 у него — «заморозить игру»).
 func start_in_room() -> void:
 	new_game(ROOM_LEVEL)
 	flags["start_in_room"] = true
@@ -349,7 +350,7 @@ func start_in_room() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not OS.is_debug_build() or not in_game or not event is InputEventKey:
 		return
-	if event.pressed and not event.echo and event.keycode == KEY_F9:
+	if event.pressed and not event.echo and event.keycode == KEY_HOME:
 		get_viewport().set_input_as_handled()
 		start_in_room.call_deferred()            # не менять сцену посреди обработки нажатия
 
