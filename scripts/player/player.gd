@@ -607,6 +607,12 @@ func _update_focus() -> void:
 		var i := it as Interactable
 		if i == null or not i.enabled:
 			continue
+		if i.has_method("aim_hit"):                   # дверь: только если прицел на самой створке
+			var hit: float = i.call("aim_hit", eye, look)
+			if hit >= 0.0 and hit * 0.001 < best:     # попадание по створке важнее остального
+				best = hit * 0.001
+				focus = i
+			continue
 		var to := i.global_position - global_position
 		var dy := absf(to.y - 0.9)
 		to.y = 0.0
