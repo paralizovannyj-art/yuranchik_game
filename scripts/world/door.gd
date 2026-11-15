@@ -21,6 +21,7 @@ var is_open := false
 var _hinge: Node3D
 var _base_yaw := 0.0
 var _tween: Tween
+var _shapes: Array[CollisionShape3D] = []   ## коллизия створки: только у закрытой двери, открытая не мешает пройти
 
 
 func _ready() -> void:
@@ -28,6 +29,8 @@ func _ready() -> void:
 	_hinge = get_node_or_null("Hinge") as Node3D
 	if _hinge:
 		_base_yaw = _hinge.rotation.y
+		for n: Node in _hinge.find_children("*", "CollisionShape3D", true, false):
+			_shapes.append(n as CollisionShape3D)
 	interacted.connect(_on_interacted)
 	set_open(start_open, false)
 
@@ -49,8 +52,10 @@ func set_open(value: bool, animate := true) -> void:
 		_tween.kill()
 	if not animate:
 		_hinge.rotation.y = target
+		_set_solid(not value)
 		return
 	if value:
+		_set_solid(false)                          # открывается — сразу проходима и не толкает Юрчика
 		Game.sfx(open_sound, global_position)
 		_tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 		_tween.tween_property(_hinge, "rotation:y", target, open_time)
@@ -59,4 +64,10 @@ func set_open(value: bool, animate := true) -> void:
 		_tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		_tween.tween_property(_hinge, "rotation:y", target, close_time)
 		_tween.tween_callback(func() -> void: Game.sfx(close_sound, global_position))
+		_tween.tween_callback(_set_solid.bind(true))    # закрылась — снова твёрдая
 		_tween.tween_callback(closed.emit)
+
+
+func _set_solid(on: bool) -> void:
+	for s: CollisionShape3D in _shapes:
+		s.set_deferred("disabled", not on)

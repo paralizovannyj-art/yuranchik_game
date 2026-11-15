@@ -76,7 +76,7 @@ material = SubResource("mat_flake_out")
 size = Vector2(0.06, 0.06)
 
 [sub_resource type="BoxShape3D" id="door_box"]
-size = Vector3(0.04, 2.03, 0.83)
+size = Vector3(0.04, 2.035, 0.85)
 
 [sub_resource type="BoxShape3D" id="apt_box"]
 size = Vector3(1.5, 2.2, 1.9)
@@ -186,6 +186,17 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.7, 10.7, -1.26)
 light_color = Color(1, 0.78, 0.55, 1)
 light_energy = 1.2
 shadow_enabled = true
+shadow_bias = 0.02
+shadow_normal_bias = 0.2
+
+[node name="DoorGap" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.05, 8.45, -1.47)
+light_color = Color(1, 0.78, 0.55, 1)
+light_energy = 0.8
+shadow_enabled = true
+shadow_bias = 0.02
+shadow_normal_bias = 0.2
+omni_range = 1.6
 
 [node name="Monitor" type="OmniLight3D" parent="Lights" unique_id=119520343]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.02, 9.45, -3.3)
@@ -252,7 +263,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, -0.9, 0.42)
 [node name="Body" type="AnimatableBody3D" parent="RoomDoor/Hinge"]
 
 [node name="Shape" type="CollisionShape3D" parent="RoomDoor/Hinge/Body"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.02, 1.02, -0.42)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.02, 1.0325, -0.425)
 shape = SubResource("door_box")
 
 [node name="AptTrigger" type="Area3D" parent="." unique_id=960663719]
