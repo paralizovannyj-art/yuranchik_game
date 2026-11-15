@@ -412,13 +412,15 @@ func show_ending() -> void:
 	await fade_out(2.5).finished
 	Game.sfx("win", null, -4.0, 0.0)
 	var t := int(Game.stats["time"])
+	@warning_ignore("integer_division")          # целые минуты
+	var mins := t / 60
 	_title.text = "ДОМА"
 	_title.label_settings.font_color = C_TEXT
 	if Game.flags.get("sergey", false):         # старый двор (yard.tscn): с Сергеем и офниками
 		_sub.text = "Сегодня ты добрался. Но он знает, где ты живёшь.\n\nВремя: %d:%02d     Офников уложено: %d     Смертей: %d\n\nКонец демо-версии. Продолжение следует." % [
-			t / 60, t % 60, Game.stats["kills"], Game.stats["deaths"]]
+			mins, t % 60, Game.stats["kills"], Game.stats["deaths"]]
 	else:                                        # Паскот: пока без врагов
-		_sub.text = "Сегодня ты добрался.\n\nВремя: %d:%02d\n\nКонец демо-версии. Продолжение следует." % [t / 60, t % 60]
+		_sub.text = "Сегодня ты добрался.\n\nВремя: %d:%02d\n\nКонец демо-версии. Продолжение следует." % [mins, t % 60]
 	_open_menu("end", [
 		["Сыграть ещё раз", Game.new_game],
 		["В главное меню", Game.to_menu],

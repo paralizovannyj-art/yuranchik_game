@@ -320,6 +320,7 @@ func _draw_health() -> void:
 func _draw_steps() -> void:
 	_status("Шагомер")
 	var t := int(Game.stats["time"])
+	@warning_ignore("integer_division")          # целые минуты
 	var rows := [["Шагов", str(Game.stats.get("steps", 0))], ["В пути", "%d:%02d" % [t / 60, t % 60]],
 		["Офников уложено", str(Game.stats["kills"])], ["Смертей", str(Game.stats["deaths"])]]
 	for i in rows.size():

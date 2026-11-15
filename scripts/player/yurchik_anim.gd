@@ -196,7 +196,7 @@ func attack_length(clip := "Attack") -> float:
 
 ## speed — со знаком (назад < 0); sprint 0..1; state: 0 обычный, 1 замах (ПКМ), 2 удар;
 ## move_angle — куда идёт герой относительно взгляда, рад (0 — вперёд, > 0 — влево).
-func update_anim(delta: float, speed: float, sprint: float, state: int, yaw_rate: float, accel: float,
+func update_anim(delta: float, speed: float, _sprint: float, state: int, yaw_rate: float, accel: float,
 		move_angle := 0.0) -> void:
 	if _tree == null or _dead:
 		return
