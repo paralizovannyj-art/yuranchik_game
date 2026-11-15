@@ -24,7 +24,8 @@
 # пол на z = 8.4. Поэтому модель ставится в stairwell.tscn без смещения.
 # Объекты: YurRoom — стены и жёсткая мебель (с коллизией), YurRoomSoft_nocol — мягкое с гладким затенением: диван,
 # кресла, плед, гора одежды; его коллизия — простые ящики YurRoomSoftCol-colonly (невидимые); YurRoomSoftProps_nocol и YurRoomProps_nocol — мелочь, PCScreen_nocol —
-# экран монитора (отдельно, чтобы игра могла его «включить»), EastWriting_nocol — прозрачная наклейка с надписями.
+# экран монитора (отдельно, чтобы игра могла его «включить»), EastWriting_nocol — прозрачная наклейка с надписями,
+# LightSwitchKey_nocol — клавиша выключателя (отдельно, чтобы игра могла её щёлкать).
 # Мягкие формы — soft() (скруглённый ящик с буграми) и drape() (ткань, наброшенная на прямоугольник, со свесами).
 import bpy, os, sys, math
 import numpy as np
@@ -1229,6 +1230,16 @@ def room(M):
         r_ = math.radians(k * 72 + cyaw)
         obox(col, (chx + math.cos(r_) * 0.17, chy + math.sin(r_) * 0.17, Z + 0.06), (0.36, 0.05, 0.08), at, BL, yaw=k * 72 + cyaw)
 
+    # --- выключатель света у проёма (поверх нарисованного на стене): рамка и отдельная клавиша —
+    #     игра качает клавишу (stairwell.gd: _toggle_light), ось — у поверхности рамки ---
+    SWY, SWZ = 2.10, Z + 1.55
+    abox(p, (X1 - 0.012, SWY - 0.04, SWZ - 0.078), (X1, SWY + 0.04, SWZ + 0.078), at, WH, skip=('+X',))
+    kb = B()
+    abox(kb, (-0.014, -0.025, -0.045), (0.0, 0.025, 0.045), at, WH, skip=('+X',))
+    abox(kb, (-0.0145, -0.012, 0.028), (-0.0135, 0.012, 0.032), at, BL, faces=None, skip=('+X',))   # риска сверху
+    key = kb.build("LightSwitchKey_nocol", coll)
+    key.location = (X1 - 0.012, SWY, SWZ)
+
     main = b.build("YurRoom", coll)
     softo = s.build("YurRoomSoft_nocol", coll)
     colo = col.build("YurRoomSoftCol-colonly", coll)        # суффикс -colonly: Godot сделает из него только коллизию
@@ -1236,7 +1247,7 @@ def room(M):
     props = p.build("YurRoomProps_nocol", coll)
     screen = scr.build("PCScreen_nocol", coll)
     writing = wr.build("EastWriting_nocol", coll)
-    export("yurchik_room", [main, softo, softp, colo, props, screen, writing])
+    export("yurchik_room", [main, softo, softp, colo, props, screen, writing, key])
     return {"room_polys": len(main.data.polygons), "soft_polys": len(softo.data.polygons) + len(softp.data.polygons), "props_polys": len(props.data.polygons)}
 
 

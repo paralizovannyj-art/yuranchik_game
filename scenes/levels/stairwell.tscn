@@ -213,6 +213,12 @@ radius = 1.9
 enabled = false
 one_shot = true
 
+[node name="LightSwitchUse" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.4, 9.95, -2.1)
+script = ExtResource("inter")
+prompt = "Включить свет"
+radius = 1.4
+
 [node name="AptTrigger" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.75, 9.6, -1.25)
 collision_layer = 0
