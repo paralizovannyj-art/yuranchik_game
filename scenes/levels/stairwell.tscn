@@ -1,19 +1,18 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://rrqth1gst2c6"]
 
-[ext_resource type="Script" path="res://scripts/levels/stairwell.gd" id="lvl"]
-[ext_resource type="PackedScene" path="res://assets/models/stairwell.gltf" id="model"]
-[ext_resource type="PackedScene" path="res://assets/models/yurchik_room.gltf" id="room"]
-[ext_resource type="PackedScene" path="res://assets/models/window_view.gltf" id="view"]
-[ext_resource type="PackedScene" path="res://scenes/characters/player.tscn" id="player"]
+[ext_resource type="Script" uid="uid://bsrgiiid28yqq" path="res://scripts/world/flicker_light.gd" id="flicker"]
+[ext_resource type="Script" uid="uid://cle5irdo5k1bj" path="res://scripts/world/interactable.gd" id="inter"]
+[ext_resource type="Script" uid="uid://bs6tfuxihjm01" path="res://scripts/levels/stairwell.gd" id="lvl"]
+[ext_resource type="PackedScene" uid="uid://c2auofh1kjct5" path="res://assets/models/stairwell.gltf" id="model"]
+[ext_resource type="Script" uid="uid://b20i7sxqhhctq" path="res://scripts/world/pickup.gd" id="pick"]
+[ext_resource type="PackedScene" uid="uid://l6yy2wslyolu" path="res://scenes/characters/player.tscn" id="player"]
+[ext_resource type="Shader" uid="uid://507jlrfn4qwu" path="res://shaders/ps2_post.gdshader" id="post"]
+[ext_resource type="PackedScene" uid="uid://denmsb1irwg0b" path="res://assets/models/yurchik_room.gltf" id="room"]
 [ext_resource type="PackedScene" path="res://scenes/characters/sergey.tscn" id="sergey"]
-[ext_resource type="Script" path="res://scripts/world/interactable.gd" id="inter"]
-[ext_resource type="Script" path="res://scripts/world/pickup.gd" id="pick"]
-[ext_resource type="Script" path="res://scripts/world/flicker_light.gd" id="flicker"]
-[ext_resource type="Shader" path="res://shaders/ps2_post.gdshader" id="post"]
+[ext_resource type="PackedScene" uid="uid://c7ajfkmkpjxd" path="res://assets/models/window_view.gltf" id="view"]
 
 [sub_resource type="Environment" id="env"]
 background_mode = 1
-background_color = Color(0, 0, 0, 1)
 ambient_light_source = 2
 ambient_light_color = Color(0.4, 0.5, 0.6, 1)
 ambient_light_energy = 0.16
@@ -34,21 +33,6 @@ volumetric_fog_anisotropy = 0.4
 volumetric_fog_length = 30.0
 volumetric_fog_ambient_inject = 0.05
 
-[sub_resource type="ShaderMaterial" id="mat_post"]
-shader = ExtResource("post")
-shader_parameter/blur_px = 0.55
-shader_parameter/color_levels = 32.0
-shader_parameter/dither_strength = 1.0
-shader_parameter/black_crush = 0.05
-shader_parameter/s_curve = 0.5
-shader_parameter/saturation = 0.8
-shader_parameter/exposure = 1.1
-shader_parameter/shadow_tint = Color(0.03, 0.06, 0.07, 1)
-shader_parameter/highlight_tint = Color(1, 0.95, 0.86, 1)
-shader_parameter/halo = 0.25
-shader_parameter/grain = 0.05
-shader_parameter/vignette = 0.6
-
 [sub_resource type="ParticleProcessMaterial" id="pm_snow_out"]
 emission_shape = 3
 emission_box_extents = Vector3(16, 9, 40)
@@ -65,7 +49,7 @@ turbulence_noise_speed = Vector3(0, 0, 0.6)
 [sub_resource type="StandardMaterial3D" id="mat_flake_out"]
 shading_mode = 0
 disable_fog = true
-albedo_color = Color(0.93, 0.94, 0.96, 1)
+albedo_color = Color(0.6, 0.61, 0.63, 1)
 billboard_mode = 3
 particles_anim_h_frames = 1
 particles_anim_v_frames = 1
@@ -78,7 +62,22 @@ size = Vector2(0.045, 0.045)
 [sub_resource type="BoxShape3D" id="apt_box"]
 size = Vector3(1.5, 2.2, 1.9)
 
-[node name="StairwellLevel" type="Node3D"]
+[sub_resource type="ShaderMaterial" id="mat_post"]
+shader = ExtResource("post")
+shader_parameter/blur_px = 0.55
+shader_parameter/color_levels = 32.0
+shader_parameter/dither_strength = 1.0
+shader_parameter/black_crush = 0.05
+shader_parameter/s_curve = 0.5
+shader_parameter/saturation = 0.8
+shader_parameter/exposure = 1.1
+shader_parameter/shadow_tint = Color(0.03, 0.06, 0.07, 1)
+shader_parameter/highlight_tint = Color(1, 0.95, 0.86, 1)
+shader_parameter/halo = 0.25
+shader_parameter/grain = 0.05
+shader_parameter/vignette = 0.6
+
+[node name="StairwellLevel" type="Node3D" unique_id=698876280]
 script = ExtResource("lvl")
 sergey_scene = ExtResource("sergey")
 ambience_sound = "amb_room"
@@ -89,16 +88,16 @@ flashlight_energy = 3.0
 nav_agent_radius = 0.375
 nav_cell = 0.125
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1226267808]
 environment = SubResource("env")
 
-[node name="Stairwell" parent="." instance=ExtResource("model")]
+[node name="Stairwell" parent="." unique_id=1373150828 instance=ExtResource("model")]
 
-[node name="YurchikRoom" parent="." instance=ExtResource("room")]
+[node name="YurchikRoom" parent="." unique_id=1792968832 instance=ExtResource("room")]
 
-[node name="WindowView" parent="." instance=ExtResource("view")]
+[node name="WindowView" parent="." unique_id=998683274 instance=ExtResource("view")]
 
-[node name="SnowOutside" type="GPUParticles3D" parent="WindowView"]
+[node name="SnowOutside" type="GPUParticles3D" parent="WindowView" unique_id=455122601]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.5, 14, -20)
 amount = 24000
 lifetime = 9.0
@@ -107,9 +106,9 @@ visibility_aabb = AABB(-20, -26, -45, 40, 40, 110)
 process_material = SubResource("pm_snow_out")
 draw_pass_1 = SubResource("mesh_flake_out")
 
-[node name="Lights" type="Node3D" parent="."]
+[node name="Lights" type="Node3D" parent="." unique_id=761837974]
 
-[node name="Bulb1" type="OmniLight3D" parent="Lights"]
+[node name="Bulb1" type="OmniLight3D" parent="Lights" unique_id=1761647443]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, -1.3)
 light_color = Color(1, 0.8, 0.55, 1)
 light_energy = 1.7
@@ -120,7 +119,7 @@ omni_attenuation = 1.2
 script = ExtResource("flicker")
 flicker_chance = 0.35
 
-[node name="Bulb2" type="OmniLight3D" parent="Lights"]
+[node name="Bulb2" type="OmniLight3D" parent="Lights" unique_id=503565627]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.2, -1.3)
 light_color = Color(1, 0.78, 0.5, 1)
 light_energy = 1.1
@@ -128,7 +127,7 @@ shadow_enabled = true
 omni_range = 7.0
 omni_attenuation = 1.2
 
-[node name="Bulb4" type="OmniLight3D" parent="Lights"]
+[node name="Bulb4" type="OmniLight3D" parent="Lights" unique_id=568336771]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10.6, -1.3)
 light_color = Color(1, 0.8, 0.55, 1)
 light_energy = 1.7
@@ -137,28 +136,25 @@ shadow_enabled = true
 omni_range = 8.0
 omni_attenuation = 1.2
 
-[node name="Window1" type="OmniLight3D" parent="Lights"]
+[node name="Window1" type="OmniLight3D" parent="Lights" unique_id=318398069]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.9, -6.4)
 light_color = Color(0.85, 0.55, 0.4, 1)
 light_energy = 0.6
 shadow_enabled = true
-omni_range = 5.0
 
-[node name="Window2" type="OmniLight3D" parent="Lights"]
+[node name="Window2" type="OmniLight3D" parent="Lights" unique_id=1008051306]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.7, -6.4)
 light_color = Color(0.85, 0.55, 0.4, 1)
 light_energy = 0.6
 shadow_enabled = true
-omni_range = 5.0
 
-[node name="Window3" type="OmniLight3D" parent="Lights"]
+[node name="Window3" type="OmniLight3D" parent="Lights" unique_id=1446138996]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.5, -6.4)
 light_color = Color(0.85, 0.55, 0.4, 1)
 light_energy = 0.6
 shadow_enabled = true
-omni_range = 5.0
 
-[node name="AptRoom" type="OmniLight3D" parent="Lights"]
+[node name="AptRoom" type="OmniLight3D" parent="Lights" unique_id=1846523846]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.41, 10.6, -2.425)
 light_color = Color(1, 0.76, 0.5, 1)
 light_energy = 2.2
@@ -166,45 +162,41 @@ shadow_enabled = true
 omni_range = 8.0
 omni_attenuation = 1.2
 
-[node name="AptHall" type="OmniLight3D" parent="Lights"]
+[node name="AptHall" type="OmniLight3D" parent="Lights" unique_id=1719521486]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.7, 10.7, -1.26)
 light_color = Color(1, 0.78, 0.55, 1)
 light_energy = 1.2
 shadow_enabled = true
-omni_range = 5.0
 
-[node name="Monitor" type="OmniLight3D" parent="Lights"]
+[node name="Monitor" type="OmniLight3D" parent="Lights" unique_id=119520343]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.02, 9.45, -3.3)
 light_color = Color(0.55, 0.68, 1, 1)
 light_energy = 0.0
 shadow_enabled = true
 omni_range = 3.0
 
-[node name="WindowDay" type="OmniLight3D" parent="Lights"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.0, 10.0, -2.445)
+[node name="WindowDay" type="OmniLight3D" parent="Lights" unique_id=1225608182]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 10, -2.445)
 light_color = Color(0.78, 0.82, 0.9, 1)
 light_energy = 0.45
-shadow_enabled = true
-omni_range = 5.0
 
-[node name="Items" type="Node3D" parent="."]
+[node name="Items" type="Node3D" parent="." unique_id=395394839]
 
-[node name="BandageNook" type="Node3D" parent="Items"]
+[node name="BandageNook" type="Node3D" parent="Items" unique_id=1337277014]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.75, 0.03, -3.6)
 script = ExtResource("pick")
 item_id = "bandage"
 
-[node name="BottleSill" type="Node3D" parent="Items"]
+[node name="BottleSill" type="Node3D" parent="Items" unique_id=1153823455]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 2.31, -6.9)
 script = ExtResource("pick")
-item_id = "bottle"
 
-[node name="Bandage3" type="Node3D" parent="Items"]
+[node name="Bandage3" type="Node3D" parent="Items" unique_id=1241531141]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6, 5.63, -0.5)
 script = ExtResource("pick")
 item_id = "bandage"
 
-[node name="AptDoorUse" type="Node3D" parent="."]
+[node name="AptDoorUse" type="Node3D" parent="." unique_id=1574557236]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.75, 9.4, -1.25)
 script = ExtResource("inter")
 prompt = "Открыть квартиру 47"
@@ -212,7 +204,7 @@ radius = 1.7
 need_item = "key_home"
 locked_text = "Заперто. Нужны ключи от дома."
 
-[node name="PCUse" type="Node3D" parent="."]
+[node name="PCUse" type="Node3D" parent="." unique_id=2072950525]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.02, 9.45, -3.7)
 script = ExtResource("inter")
 prompt = "Включить компьютер"
@@ -220,30 +212,30 @@ radius = 1.9
 enabled = false
 one_shot = true
 
-[node name="LightSwitchUse" type="Node3D" parent="."]
+[node name="LightSwitchUse" type="Node3D" parent="." unique_id=1196206228]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.4, 9.95, -2.1)
 script = ExtResource("inter")
 prompt = "Включить свет"
 radius = 1.4
 
-[node name="AptTrigger" type="Area3D" parent="."]
+[node name="AptTrigger" type="Area3D" parent="." unique_id=960663719]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.75, 9.6, -1.25)
 collision_layer = 0
 collision_mask = 2
 
-[node name="Shape" type="CollisionShape3D" parent="AptTrigger"]
+[node name="Shape" type="CollisionShape3D" parent="AptTrigger" unique_id=431982500]
 shape = SubResource("apt_box")
 
-[node name="SergeySpawn" type="Marker3D" parent="."]
+[node name="SergeySpawn" type="Marker3D" parent="." unique_id=390770993]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -0.7)
 
-[node name="Player" parent="." instance=ExtResource("player")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -1.0)
+[node name="Player" parent="." unique_id=1694671708 instance=ExtResource("player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -1)
 
-[node name="PS2Post" type="CanvasLayer" parent="."]
+[node name="PS2Post" type="CanvasLayer" parent="." unique_id=19877577]
 layer = 10
 
-[node name="Filter" type="ColorRect" parent="PS2Post"]
+[node name="Filter" type="ColorRect" parent="PS2Post" unique_id=1963241749]
 material = SubResource("mat_post")
 anchors_preset = 15
 anchor_right = 1.0
