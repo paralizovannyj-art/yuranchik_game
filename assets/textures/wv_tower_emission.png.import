@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dsfc3rv63rxco"
-path.s3tc="res://.godot/imported/yr_window_emission.png-201afcf006c4821511f09b0d0ea5c792.s3tc.ctex"
+uid="uid://catb0lv7hk3p8"
+path.s3tc="res://.godot/imported/wv_tower_emission.png-5acf5bf323f4ab78778537ff315defed.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -12,8 +12,8 @@ generator_parameters={}
 
 [deps]
 
-source_file="res://assets/textures/yr_window_emission.png"
-dest_files=["res://.godot/imported/yr_window_emission.png-201afcf006c4821511f09b0d0ea5c792.s3tc.ctex"]
+source_file="res://assets/textures/wv_tower_emission.png"
+dest_files=["res://.godot/imported/wv_tower_emission.png-5acf5bf323f4ab78778537ff315defed.s3tc.ctex"]
 
 [params]
 

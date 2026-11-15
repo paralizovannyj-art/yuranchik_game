@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/levels/stairwell.gd" id="lvl"]
 [ext_resource type="PackedScene" path="res://assets/models/stairwell.gltf" id="model"]
 [ext_resource type="PackedScene" path="res://assets/models/yurchik_room.gltf" id="room"]
+[ext_resource type="PackedScene" path="res://assets/models/window_view.gltf" id="view"]
 [ext_resource type="PackedScene" path="res://scenes/characters/player.tscn" id="player"]
 [ext_resource type="PackedScene" path="res://scenes/characters/sergey.tscn" id="sergey"]
 [ext_resource type="Script" path="res://scripts/world/interactable.gd" id="inter"]
@@ -48,6 +49,31 @@ shader_parameter/halo = 0.25
 shader_parameter/grain = 0.05
 shader_parameter/vignette = 0.6
 
+[sub_resource type="ParticleProcessMaterial" id="pm_snow_out"]
+emission_shape = 3
+emission_box_extents = Vector3(14, 1, 32)
+direction = Vector3(0, -1, 0)
+spread = 20.0
+initial_velocity_min = 0.6
+initial_velocity_max = 1.2
+gravity = Vector3(0.35, -0.5, 0.1)
+turbulence_enabled = true
+turbulence_noise_strength = 0.4
+turbulence_noise_scale = 6.0
+
+[sub_resource type="StandardMaterial3D" id="mat_flake_out"]
+shading_mode = 0
+disable_fog = true
+albedo_color = Color(0.62, 0.6, 0.6, 1)
+billboard_mode = 3
+particles_anim_h_frames = 1
+particles_anim_v_frames = 1
+particles_anim_loop = false
+
+[sub_resource type="QuadMesh" id="mesh_flake_out"]
+material = SubResource("mat_flake_out")
+size = Vector2(0.05, 0.05)
+
 [sub_resource type="BoxShape3D" id="apt_box"]
 size = Vector3(1.5, 2.2, 1.9)
 
@@ -68,6 +94,17 @@ environment = SubResource("env")
 [node name="Stairwell" parent="." instance=ExtResource("model")]
 
 [node name="YurchikRoom" parent="." instance=ExtResource("room")]
+
+[node name="WindowView" parent="." instance=ExtResource("view")]
+
+[node name="SnowOutside" type="GPUParticles3D" parent="WindowView"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 24, -4)
+amount = 5000
+lifetime = 22.0
+preprocess = 22.0
+visibility_aabb = AABB(-16, -26, -34, 32, 30, 68)
+process_material = SubResource("pm_snow_out")
+draw_pass_1 = SubResource("mesh_flake_out")
 
 [node name="Lights" type="Node3D" parent="."]
 

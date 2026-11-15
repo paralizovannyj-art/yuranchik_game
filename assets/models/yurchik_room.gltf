@@ -147,22 +147,15 @@
 			}
 		},
 		{
+			"alphaMode":"BLEND",
 			"doubleSided":true,
-			"emissiveFactor":[
-				1,
-				1,
-				1
-			],
-			"emissiveTexture":{
-				"index":9
-			},
 			"name":"YrWindow",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
-					"index":10
+					"index":9
 				},
 				"metallicFactor":0,
-				"roughnessFactor":0.30000001192092896
+				"roughnessFactor":0.800000011920929
 			}
 		},
 		{
@@ -170,7 +163,7 @@
 			"name":"YrAtlas",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
-					"index":11
+					"index":10
 				},
 				"metallicFactor":0,
 				"roughnessFactor":0.699999988079071
@@ -181,7 +174,7 @@
 			"name":"YrPipe",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
-					"index":12
+					"index":11
 				},
 				"metallicFactor":0,
 				"roughnessFactor":0.6000000238418579
@@ -195,12 +188,12 @@
 				1
 			],
 			"emissiveTexture":{
-				"index":13
+				"index":12
 			},
 			"name":"YrLampGlass",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
-					"index":14
+					"index":13
 				},
 				"metallicFactor":0,
 				"roughnessFactor":0.30000001192092896
@@ -211,7 +204,7 @@
 			"name":"YrFabric",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
-					"index":15
+					"index":14
 				},
 				"metallicFactor":0,
 				"roughnessFactor":0.8999999761581421
@@ -222,7 +215,7 @@
 			"name":"YrArmchair",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
-					"index":16
+					"index":15
 				},
 				"metallicFactor":0,
 				"roughnessFactor":0.8999999761581421
@@ -233,7 +226,7 @@
 			"name":"YrBlanket",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
-					"index":17
+					"index":16
 				},
 				"metallicFactor":0,
 				"roughnessFactor":0.8999999761581421
@@ -242,7 +235,7 @@
 	],
 	"meshes":[
 		{
-			"name":"EastWriting_nocol.006",
+			"name":"EastWriting_nocol",
 			"primitives":[
 				{
 					"attributes":{
@@ -256,7 +249,7 @@
 			]
 		},
 		{
-			"name":"PCScreen_nocol.006",
+			"name":"PCScreen_nocol",
 			"primitives":[
 				{
 					"attributes":{
@@ -270,7 +263,7 @@
 			]
 		},
 		{
-			"name":"YurRoom.006",
+			"name":"YurRoom",
 			"primitives":[
 				{
 					"attributes":{
@@ -347,7 +340,7 @@
 			]
 		},
 		{
-			"name":"YurRoomProps_nocol.006",
+			"name":"YurRoomProps_nocol",
 			"primitives":[
 				{
 					"attributes":{
@@ -416,7 +409,7 @@
 			]
 		},
 		{
-			"name":"YurRoomSoftProps_nocol.005",
+			"name":"YurRoomSoftProps_nocol",
 			"primitives":[
 				{
 					"attributes":{
@@ -503,7 +496,7 @@
 		},
 		{
 			"sampler":0,
-			"source":13
+			"source":12
 		},
 		{
 			"sampler":0,
@@ -516,10 +509,6 @@
 		{
 			"sampler":0,
 			"source":15
-		},
-		{
-			"sampler":0,
-			"source":16
 		}
 	],
 	"images":[
@@ -567,11 +556,6 @@
 			"mimeType":"image/png",
 			"name":"yr_west",
 			"uri":"../textures/yr_west.png"
-		},
-		{
-			"mimeType":"image/png",
-			"name":"yr_window_emission",
-			"uri":"../textures/yr_window_emission.png"
 		},
 		{
 			"mimeType":"image/png",

@@ -450,7 +450,7 @@ def tex_fabric():
 
 
 def tex_window():
-    """Окно в белой пластиковой раме: две створки, за стеклом ночь, дом напротив с редкими огнями."""
+    """Окно в белой пластиковой раме: две створки, стекло полупрозрачное (вид за окном — отдельная модель)."""
     s = 128
     yy, xx = np.mgrid[0:s, 0:s].astype(np.float32)
     g = (yy / s)[..., None]
@@ -476,8 +476,47 @@ def tex_window():
     alb = np.where(frame[..., None], white, glass)
     alb[58:74, 70:74] = C(0.86, 0.84, 0.74)
     alb[18:28, 118:122] = C(0.55, 0.55, 0.53); alb[100:110, 118:122] = C(0.55, 0.55, 0.53)
-    save("yr_window", finish(alb, 1.1, crisp=0.3))
-    save("yr_window_emission", np.where(frame[..., None], 0.0, glass * 0.6 + lit[..., None] * 0.45).astype(np.float32))
+    # Стекло прозрачное (за ним — 3D-вид из окна, tools/blender/build_window_view.py): чуть синеватое, с засохшими
+    # каплями и потёками, как на фото, и грязью у нижнего края рамы. Случайности — свои, чтобы не сдвигать R.
+    WR = np.random.default_rng(2526)
+    alpha = np.full((s, s), 0.10, np.float32)
+    tint = np.ones((s, s, 3), np.float32) * C(0.10, 0.11, 0.13)
+    for _ in range(260):                                                  # капли
+        cx, cy, r = WR.uniform(0, s), WR.uniform(0, s), WR.uniform(0.6, 1.8)
+        d = np.hypot(xx - cx, yy - cy)
+        m = np.clip(1 - d / r, 0, 1) * WR.uniform(0.15, 0.35)
+        alpha = np.maximum(alpha, m)
+    for _ in range(18):                                                   # потёки сверху вниз
+        cx, y0 = WR.uniform(10, s - 10), WR.uniform(8, s * 0.6)
+        ln = WR.uniform(10, 50)
+        m = (np.abs(xx - cx - np.sin(yy * 0.3) * 0.6) < 0.7) & (yy > y0) & (yy < y0 + ln)
+        alpha = np.where(m, np.maximum(alpha, 0.2), alpha)
+    alpha += np.clip((yy - (s - 34)) / 20.0, 0, 1) * 0.18                   # грязь у нижнего края
+    alpha *= 0.85 + 0.3 * noise(s, s, 8, 8, WR)
+    tint = tint * (1 - alpha[..., None]) + C(0.55, 0.55, 0.56) * alpha[..., None]
+    alb = np.where(frame[..., None], white, tint)
+    alb[58:74, 70:74] = C(0.86, 0.84, 0.74)
+    alb[18:28, 118:122] = C(0.55, 0.55, 0.53); alb[100:110, 118:122] = C(0.55, 0.55, 0.53)
+    alb = finish(alb, 1.1, crisp=0.3)
+    save_rgba("yr_window", alb, np.where(frame, 1.0, np.clip(alpha, 0.06, 0.6)))
+
+
+def save_rgba(name, rgb, alpha):
+    """PNG с прозрачностью в assets/textures (tex_lib.save пишет только RGB)."""
+    h, w, _ = rgb.shape
+    img = bpy.data.images.get(name)
+    if img:
+        bpy.data.images.remove(img)
+    img = bpy.data.images.new(name, w, h, alpha=True)
+    rgba = np.ones((h, w, 4), np.float32)
+    rgba[..., :3] = np.clip(rgb, 0, 1)
+    rgba[..., 3] = np.clip(alpha, 0, 1)
+    img.pixels.foreach_set(rgba[::-1].ravel())
+    path = os.path.join(ROOT, "assets", "textures", name + ".png")
+    img.filepath_raw = path
+    img.file_format = 'PNG'
+    img.save()
+    img.filepath = path
 
 
 def tex_screen():
@@ -1221,7 +1260,7 @@ def main():
         "panels": mat("YrPanels", "yr_panels"), "west": mat("YrWest", "yr_west"), "south": mat("YrSouth", "yr_south"),
         "east": mat("YrEast", "yr_east"), "floor": mat("YrLaminate", "yr_laminate", rough=0.5),
         "ceiling": mat("YrCeiling", "yr_ceiling"), "blanket": mat("YrBlanket", "yr_blanket"),
-        "fabric": mat("YrFabric", "yr_fabric"), "armchair": mat("YrArmchair", "yr_armchair"), "window": mat("YrWindow", "yr_window", "yr_window_emission", rough=0.3),
+        "fabric": mat("YrFabric", "yr_fabric"), "armchair": mat("YrArmchair", "yr_armchair"), "window": mat_alpha("YrWindow", "yr_window"),
         "screen": mat("YrScreen", "yr_screen", "yr_screen_emission", rough=0.2), "atlas": mat("YrAtlas", "yr_atlas", rough=0.7),
         "radiator": mat("YrRadiator", "radiator", rough=0.6), "radiator_m": mat("YrPipe", "radiator", rough=0.6),
         "glass": mat("YrLampGlass", "lamp_glass", "lamp_glass", rough=0.3),
