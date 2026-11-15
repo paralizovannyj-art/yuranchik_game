@@ -81,7 +81,7 @@ _mcp_print("hello")
 # Correct - multi-line
 var nodes = []
 for child in EditorInterface.get_edited_scene_root().get_children():
-    nodes.append(child.name)
+	nodes.append(child.name)
 _mcp_print(str(nodes))
 ```
 
@@ -96,9 +96,9 @@ Pass an array of node definitions. Nodes are processed in order, so earlier node
 ```json
 {
   "nodes": [
-    {"type": "Node2D", "name": "Container", "parent_path": "."},
-    {"type": "Sprite2D", "name": "Icon", "parent_path": "Container"},
-    {"type": "Label", "name": "Title", "parent_path": "Container", "properties": {"text": "Hello"}}
+	{"type": "Node2D", "name": "Container", "parent_path": "."},
+	{"type": "Sprite2D", "name": "Icon", "parent_path": "Container"},
+	{"type": "Label", "name": "Title", "parent_path": "Container", "properties": {"text": "Hello"}}
   ]
 }
 ```
