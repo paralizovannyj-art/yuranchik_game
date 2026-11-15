@@ -519,7 +519,8 @@ def tex_window():
     alb[58:74, 70:74] = C(0.86, 0.84, 0.74)
     alb[18:28, 118:122] = C(0.55, 0.55, 0.53); alb[100:110, 118:122] = C(0.55, 0.55, 0.53)
     alb = finish(alb, 1.1, crisp=0.3)
-    save_rgba("yr_window", alb, np.where(frame, 1.0, np.clip(alpha, 0.06, 0.6)))
+    # Текстура больше не сохраняется: окно теперь отдельная 3D-модель (build_room_window.py). Расчёт оставлен,
+    # чтобы случайности у следующих текстур не сдвинулись.
 
 
 def save_rgba(name, rgb, alpha):
@@ -1006,8 +1007,8 @@ def room(M):
     for (ya, yb, za, zb) in ((Y0, WY0, Z, ZT), (WY1, Y1, Z, ZT), (WY0, WY1, Z, WZ0), (WY0, WY1, WZ1, ZT)):
         b.box((X0 - 0.2, ya, za), (X0, yb, zb), {'+X': M["west"]}, scale=WS)
     # Откосы, рама со стёклами и подоконник — отдельная 3D-модель (tools/blender/build_room_window.py →
-    # room_window.gltf), стоит в stairwell.tscn в точке (X0, WY0, WZ0). Текстура yr_window больше не используется,
-    # но рисуется по-прежнему, чтобы не сдвигать случайности у остальных текстур.
+    # room_window.gltf), стоит в stairwell.tscn в точке (X0, WY0, WZ0). Текстура yr_window больше не нужна
+    # (tex_window только тратит случайности, чтобы не сдвинуть остальные текстуры).
     # батарея и стояк
     # чугунная батарея МС-140 под левой половиной окна (как на фото): 8 секций — по две круглые колонки с перемычкой,
     # сверху и снизу секции соединены ниппелями (сквозные трубы). Коллизия — простой ящик (см. col ниже)
@@ -1273,7 +1274,7 @@ def main():
         "panels": mat("YrPanels", "yr_panels"), "west": mat("YrWest", "yr_west"), "south": mat("YrSouth", "yr_south"),
         "east": mat("YrEast", "yr_east"), "floor": mat("YrLaminate", "yr_laminate", rough=0.5),
         "ceiling": mat("YrCeiling", "yr_ceiling"), "blanket": mat("YrBlanket", "yr_blanket"),
-        "fabric": mat("YrFabric", "yr_fabric"), "armchair": mat("YrArmchair", "yr_armchair"), "window": mat_alpha("YrWindow", "yr_window"),
+        "fabric": mat("YrFabric", "yr_fabric"), "armchair": mat("YrArmchair", "yr_armchair"),
         "screen": mat("YrScreen", "yr_screen", "yr_screen_emission", rough=0.2), "atlas": mat("YrAtlas", "yr_atlas", rough=0.7),
         "radiator": mat("YrRadiator", "radiator", rough=0.6), "radiator_m": mat("YrPipe", "radiator", rough=0.6),
         "glass": mat("YrLampGlass", "lamp_glass", "lamp_glass", rough=0.3),
