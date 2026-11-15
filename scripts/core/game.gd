@@ -13,6 +13,7 @@ signal item_picked(id: String)
 
 const MENU_SCENE := "res://scenes/ui/main_menu.tscn"
 const FIRST_LEVEL := "res://scenes/levels/district.tscn"   ## новый район «Паскот» (docs/CITY_PLAN.md)
+const ROOM_LEVEL := "res://scenes/levels/stairwell.tscn"   ## подъезд с квартирой 47 — там комната Юрчика
 const GRID := Vector2i(8, 5)                    ## размер сетки инвентаря (клеток)
 const MAX_HP := 100.0
 const CLOCK_START := 2 * 60 + 41                ## во сколько начинается ночь на часах телефона, мин
@@ -325,7 +326,7 @@ func fx_burst(at: Vector3, color := Color(0.35, 0.02, 0.02), amount := 10, speed
 
 
 # ----------------------------------------------------------------------------- ход игры
-func new_game() -> void:
+func new_game(level := FIRST_LEVEL) -> void:
 	inventory.clear()
 	flags.clear()
 	hp = MAX_HP
@@ -336,7 +337,21 @@ func new_game() -> void:
 	messages.clear()
 	checkpoint = {}
 	add_item("hammer")
-	goto_level(FIRST_LEVEL)
+	goto_level(level)
+
+
+## Отладка: новая игра сразу в комнате Юрчика (пункт меню и F9 в игре — только при запуске из редактора).
+func start_in_room() -> void:
+	new_game(ROOM_LEVEL)
+	flags["start_in_room"] = true
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not OS.is_debug_build() or not in_game or not event is InputEventKey:
+		return
+	if event.pressed and not event.echo and event.keycode == KEY_F9:
+		get_viewport().set_input_as_handled()
+		start_in_room.call_deferred()            # не менять сцену посреди обработки нажатия
 
 
 func goto_level(path: String) -> void:
