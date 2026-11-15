@@ -117,7 +117,7 @@ light_energy = 0.6
 omni_range = 5.0
 
 [node name="AptRoom" type="OmniLight3D" parent="Lights"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.26, 10.4, -1.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.41, 10.6, -2.425)
 light_color = Color(1, 0.76, 0.5, 1)
 light_energy = 2.2
 shadow_enabled = true
@@ -125,19 +125,19 @@ omni_range = 8.0
 omni_attenuation = 1.2
 
 [node name="AptHall" type="OmniLight3D" parent="Lights"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.7, 10.5, -1.26)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.7, 10.7, -1.26)
 light_color = Color(1, 0.78, 0.55, 1)
 light_energy = 1.2
 omni_range = 5.0
 
 [node name="Monitor" type="OmniLight3D" parent="Lights"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.02, 9.45, -3.0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.02, 9.45, -3.3)
 light_color = Color(0.55, 0.68, 1, 1)
 light_energy = 0.0
 omni_range = 3.0
 
 [node name="WindowNight" type="OmniLight3D" parent="Lights"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.85, 10.1, -1.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.15, 10.0, -2.445)
 light_color = Color(0.45, 0.55, 0.8, 1)
 light_energy = 0.3
 omni_range = 3.0
@@ -168,7 +168,7 @@ need_item = "key_home"
 locked_text = "Заперто. Нужны ключи от дома."
 
 [node name="PCUse" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.02, 9.45, -3.4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.02, 9.45, -3.7)
 script = ExtResource("inter")
 prompt = "Включить компьютер"
 radius = 1.9

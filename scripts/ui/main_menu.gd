@@ -47,6 +47,8 @@ func _ready() -> void:
 	root.add_child(box)
 	var first: Button = null
 	var entries := [["Начать игру", Game.new_game], ["Управление", _toggle_help], ["Выход", get_tree().quit]]
+	if OS.is_debug_build():                       # отладка: сразу в комнату Юрчика (в собранной игре пункта нет)
+		entries.insert(1, ["Комната Юрчика", Game.start_in_room])
 	for e: Array in entries:
 		var b := Button.new()
 		b.text = e[0]

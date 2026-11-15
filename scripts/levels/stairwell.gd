@@ -25,6 +25,10 @@ func _start() -> void:
 	apt_trigger.body_entered.connect(_on_apartment)
 	pc_use.interacted.connect(_use_pc)
 	_setup_screen()
+	if Game.flags.get("start_in_room", false):  # отладка (F9 / пункт меню): сразу в комнате
+		Game.flags.erase("start_in_room")
+		_start_in_room()
+		return
 	await after(1.5)
 	Game.say("Тихо. На третьем опять выкрутили лампочку.")
 	if Game.flags.get("sergey", false) and sergey_scene:
@@ -64,6 +68,22 @@ func _on_apartment(body: Node3D) -> void:
 	await after(1.2)
 	Game.say("Дома.")
 	await after(2.0)
+	Game.set_objective("Включить комп")
+	pc_use.enabled = true
+
+
+## Отладка: Юрчик уже дома, дверь закрыта, можно сразу включать комп.
+func _start_in_room() -> void:
+	_ended = true
+	var at := Vector3(-7.9, 8.45, -1.45)
+	var yaw := -0.45                              # лицом к столу с компом
+	player.global_position = at
+	player.velocity = Vector3.ZERO
+	player.cam_yaw = yaw
+	player.set("_yaw_target", yaw)
+	player.set("_cam_pos", at + Vector3.UP * player.eye_height)
+	Game.music("", 0.0, 0.5)
+	Game.ambience("amb_room", -14.0)
 	Game.set_objective("Включить комп")
 	pc_use.enabled = true
 
