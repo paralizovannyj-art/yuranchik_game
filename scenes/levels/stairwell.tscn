@@ -1,5 +1,6 @@
 [gd_scene format=3 uid="uid://rrqth1gst2c6"]
 
+[ext_resource type="Script" uid="uid://dxqi43eh4md3p" path="res://scripts/world/door.gd" id="door"]
 [ext_resource type="Script" uid="uid://bsrgiiid28yqq" path="res://scripts/world/flicker_light.gd" id="flicker"]
 [ext_resource type="Script" uid="uid://cle5irdo5k1bj" path="res://scripts/world/interactable.gd" id="inter"]
 [ext_resource type="Script" uid="uid://bs6tfuxihjm01" path="res://scripts/levels/stairwell.gd" id="lvl"]
@@ -7,11 +8,10 @@
 [ext_resource type="Script" uid="uid://b20i7sxqhhctq" path="res://scripts/world/pickup.gd" id="pick"]
 [ext_resource type="PackedScene" uid="uid://l6yy2wslyolu" path="res://scenes/characters/player.tscn" id="player"]
 [ext_resource type="Shader" uid="uid://507jlrfn4qwu" path="res://shaders/ps2_post.gdshader" id="post"]
+[ext_resource type="PackedScene" uid="uid://jcujcrvodxj5" path="res://assets/models/room_door.gltf" id="rdoor"]
 [ext_resource type="PackedScene" uid="uid://denmsb1irwg0b" path="res://assets/models/yurchik_room.gltf" id="room"]
 [ext_resource type="PackedScene" path="res://scenes/characters/sergey.tscn" id="sergey"]
 [ext_resource type="PackedScene" uid="uid://c7ajfkmkpjxd" path="res://assets/models/window_view.gltf" id="view"]
-[ext_resource type="Script" path="res://scripts/world/door.gd" id="door"]
-[ext_resource type="PackedScene" path="res://assets/models/room_door.gltf" id="rdoor"]
 
 [sub_resource type="Environment" id="env"]
 background_mode = 1
@@ -47,6 +47,7 @@ turbulence_enabled = true
 turbulence_noise_strength = 1.6
 turbulence_noise_scale = 4.0
 turbulence_noise_speed = Vector3(0, 0, 0.6)
+collision_mode = 2
 
 [sub_resource type="Gradient" id="grad_flake"]
 offsets = PackedFloat32Array(0, 0.45, 1)
@@ -125,6 +126,10 @@ visibility_aabb = AABB(-20, -26, -45, 40, 40, 110)
 process_material = SubResource("pm_snow_out")
 draw_pass_1 = SubResource("mesh_flake_out")
 
+[node name="SnowBlocker" type="GPUParticlesCollisionBox3D" parent="." unique_id=1572266730]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.35, 6, -2.5)
+size = Vector3(14.7, 14, 11)
+
 [node name="Lights" type="Node3D" parent="." unique_id=761837974]
 
 [node name="Bulb1" type="OmniLight3D" parent="Lights" unique_id=1761647443]
@@ -189,7 +194,7 @@ shadow_enabled = true
 shadow_bias = 0.02
 shadow_normal_bias = 0.2
 
-[node name="DoorGap" type="OmniLight3D" parent="Lights"]
+[node name="DoorGap" type="OmniLight3D" parent="Lights" unique_id=1119309991]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.05, 8.45, -1.47)
 light_color = Color(1, 0.78, 0.55, 1)
 light_energy = 0.8
@@ -248,21 +253,20 @@ script = ExtResource("inter")
 prompt = "Включить свет"
 radius = 1.4
 
-[node name="RoomDoor" type="Node3D" parent="."]
+[node name="RoomDoor" type="Node3D" parent="." unique_id=1538550053]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.3, 9.3, -1.47)
 script = ExtResource("door")
 prompt = "Открыть дверь"
 radius = 1.3
-open_angle = 85.0
 
-[node name="Hinge" type="Node3D" parent="RoomDoor"]
+[node name="Hinge" type="Node3D" parent="RoomDoor" unique_id=512841659]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, -0.9, 0.42)
 
-[node name="Model" parent="RoomDoor/Hinge" instance=ExtResource("rdoor")]
+[node name="Model" parent="RoomDoor/Hinge" unique_id=652343788 instance=ExtResource("rdoor")]
 
-[node name="Body" type="AnimatableBody3D" parent="RoomDoor/Hinge"]
+[node name="Body" type="AnimatableBody3D" parent="RoomDoor/Hinge" unique_id=283746366]
 
-[node name="Shape" type="CollisionShape3D" parent="RoomDoor/Hinge/Body"]
+[node name="Shape" type="CollisionShape3D" parent="RoomDoor/Hinge/Body" unique_id=1566303994]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.02, 1.0325, -0.425)
 shape = SubResource("door_box")
 
