@@ -9,6 +9,7 @@ extends EditorScenePostImport
 
 const NO_COLLISION := ["yurchik.gltf", "character", "enemy", "sergey", "item_", "window_view"]   # yurchik_room.gltf — комната, ей коллизия нужна
 const NO_FOG := ["window_view"]
+const NO_SPECULAR := ["RwGlass"]   # стекло окна в комнате: без блика от лампы (иначе на стекле горит «звезда»)
 const VIEW_SHADER := "res://shaders/window_view.gdshader"
 
 
@@ -40,6 +41,8 @@ func _fix(node: Node, root: Node, collide: bool, fog := true) -> void:
 		if mat == null:
 			continue
 		mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		if mat.resource_name in NO_SPECULAR:
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 		if not fog:
 			var sm := ShaderMaterial.new()
 			sm.resource_name = mat.resource_name
