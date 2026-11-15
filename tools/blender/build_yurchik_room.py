@@ -10,17 +10,20 @@
 #   * в углу у двери — чёрный компьютерный стол и зелёно-чёрное игровое кресло;
 #   * компьютер образца 2010–2011: квадратный LCD-монитор 19" (5:4), чёрный корпус с DVD-приводом стоит НА столе,
 #     колонки 2.0, клавиатура, мышь. Никакого маленького RGB-компа под столом;
-#   * белая стена с дверью: красные каракули маркером над столом, выключатель, розетка;
-#     на стене напротив дивана — обрывки старых газетных обоев у двери; люстра с тремя плафонами, светлый ламинат.
+#   * белая стена с дверью: над столом надписи красным маркером (как на фото — текст в списке WRITING),
+#     над ними гирлянда с зелёными бусинами; выключатель на 1.5 м у проёма, розетка под ним;
+#     на столе миска с ложкой, на системнике красная мягкая игрушка;
+#   * стена напротив дивана — у двери коллаж из страниц манги почти до потолка (страницы свои, процедурные);
+#     люстра с тремя плафонами, светлый ламинат.
 #
-# Запуск (Blender 5.2, из корня проекта):
+# Запуск (Blender 5.2, из корня проекта; надписи рисуются шрифтами Windows Segoe Print и Ink Free):
 #   blender -b --factory-startup --python tools/blender/build_yurchik_room.py
-# Результат: assets/textures/yr_*.png, assets/models/yurchik_room.gltf
+# Результат: assets/textures/yr_*.png (yr_writing.png — с прозрачностью), assets/models/yurchik_room.gltf
 #
 # Координаты — те же, что у подъезда (build_mvp_assets.py): комната на 4-м этаже, x −10.2…−6.32, y −0.6…3.6,
 # пол на z = 8.4. Поэтому модель ставится в stairwell.tscn без смещения.
 # Объекты: YurRoom — стены и мебель (с коллизией), YurRoomProps_nocol — мелочь, PCScreen_nocol — экран монитора
-# (отдельно, чтобы игра могла его «включить»).
+# (отдельно, чтобы игра могла его «включить»), EastWriting_nocol — прозрачная наклейка с надписями.
 import bpy, os, sys, math
 import numpy as np
 from mathutils import Vector, Euler
@@ -79,43 +82,104 @@ def tex_west():
     save("yr_west", finish(arr, 1.25))
 
 
-def _sheet(arr, x0, y0, w, h, rng):
-    """Обрывок газетных обоев с рваным краем и тенью."""
-    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
-    edge = np.minimum(np.minimum(xx, w - 1 - xx), np.minimum(yy, h - 1 - yy))
-    rag = noise(w, h, max(2, w // 4), max(2, h // 4), rng, oct=2) * 5
-    m = (edge + 1.5 > rag).astype(np.float32)
-    paper = C(0.66, 0.63, 0.55) * (0.85 + 0.25 * noise(w, h, 4, 4, rng, oct=3))[..., None]
-    paper *= np.where((yy % 3 < 1)[..., None] & ((xx % 14) < 11)[..., None], 0.55, 1.0)   # строки текста
-    paper[:, w // 2 - 1:w // 2] *= 0.85                                                 # колонки
-    if w > 30 and h > 18:
-        paper[3:12, 3:16] = C(0.30, 0.29, 0.27)                                          # фотография
-    paper *= np.linspace(1.0, 0.8, h, dtype=np.float32)[:, None, None]                   # пожелтело к низу
-    reg = arr[y0:y0 + h, x0:x0 + w]
-    reg[:] = reg * (1 - m[..., None]) + paper * m[..., None]
-    arr[y0 + h:y0 + h + 2, x0 + 2:x0 + w + 2] *= 0.75                                    # тень
+RM = np.random.default_rng(2015)             # свой генератор для манги и надписей — остальные текстуры не «плывут»
+
+
+def manga_page(pw, ph, rng):
+    """Страница манги «по мотивам» (своя, процедурная): кадры с белыми полями, штриховка, чёрные заливки,
+    линии скорости, силуэты и облачка речи. Ч/б с серым, бумага чуть желтоватая."""
+    paper = C(0.86, 0.84, 0.78) * (0.92 + 0.12 * rng.random())
+    pg = np.ones((ph, pw, 3), np.float32) * paper
+    yy, xx = np.mgrid[0:ph, 0:pw].astype(np.float32)
+
+    def fill(x0, y0, x1, y1):
+        if x1 - x0 < 4 or y1 - y0 < 4:
+            return
+        w, h = x1 - x0, y1 - y0
+        ly, lx = yy[y0:y1, x0:x1] - y0, xx[y0:y1, x0:x1] - x0
+        kind = rng.choice(["hatch", "dark", "speed", "figure", "hatch", "dark"])
+        if kind == "hatch":                                   # штриховка + серые пятна
+            n = noise(w, h, max(2, w // 6), max(2, h // 6), rng, oct=3)
+            v = np.where(n > 0.55, 0.15, np.where(((lx + ly) % 3 < 1) & (n > 0.4), 0.35, 0.9))
+        elif kind == "dark":                                  # чёрная заливка с белыми прожилками
+            n = noise(w, h, max(2, w // 4), max(2, h // 4), rng, oct=4)
+            v = np.where(np.abs(n - 0.5) < 0.03, 0.85, 0.06)
+        elif kind == "speed":                                 # линии скорости к центру
+            cx, cy = w * rng.uniform(0.3, 0.7), h * rng.uniform(0.3, 0.7)
+            ang = np.arctan2(ly - cy, lx - cx)
+            v = np.where(np.sin(ang * rng.integers(18, 30)) > 0.6, 0.15, 0.92)
+            r = np.hypot(lx - cx, ly - cy)
+            v = np.where(r < min(w, h) * 0.25, 0.92, v)
+        else:                                                 # силуэт: голова и плечи
+            cx, cy = w * rng.uniform(0.3, 0.7), h * rng.uniform(0.35, 0.6)
+            r = min(w, h) * rng.uniform(0.18, 0.3)
+            body = ((lx - cx) / (r * 1.8)) ** 2 + ((ly - cy - r * 2.0) / (r * 1.3)) ** 2 < 1
+            head = (lx - cx) ** 2 + (ly - cy) ** 2 < r * r
+            hair = head & (ly < cy - r * 0.1)
+            bg = np.where(noise(w, h, 3, 3, rng, oct=2) > 0.5, 0.8, 0.92)
+            v = np.where(body, 0.08, bg)
+            v = np.where(head, 0.88, v)
+            v = np.where(hair, 0.1, v)
+        pg[y0:y1, x0:x1] = paper * v[..., None]
+        pg[y0, x0:x1] = 0.05                                  # рамка кадра
+        pg[y1 - 1, x0:x1] = 0.05
+        pg[y0:y1, x0] = 0.05
+        pg[y0:y1, x1 - 1] = 0.05
+        if rng.random() < 0.55 and w > 10 and h > 9:          # облачко речи
+            bw, bh = rng.uniform(0.3, 0.55) * w, rng.uniform(0.25, 0.4) * h
+            bx = x0 + rng.uniform(0.1, 0.9) * (w - bw) + bw / 2
+            by = y0 + rng.uniform(0.1, 0.9) * (h - bh) + bh / 2
+            e = ((xx - bx) / (bw / 2)) ** 2 + ((yy - by) / (bh / 2)) ** 2
+            box = (xx >= x0) & (xx < x1) & (yy >= y0) & (yy < y1)
+            pg[(e >= 1) & (e < 1.35) & box] = 0.08
+            pg[(e < 1) & box] = paper * 0.97
+            for k in range(int(bh // 3)):                     # строчки текста
+                ty = int(by - bh / 2 + 2 + k * 3)
+                tx0, tx1 = int(bx - bw * 0.3), int(bx + bw * 0.3)
+                if y0 < ty < y1 - 1:
+                    pg[ty, max(tx0, x0 + 1):min(tx1, x1 - 1)] = paper * 0.45
+
+    if rng.random() < 0.12:                                   # разворот-заливка на всю страницу
+        fill(1, 1, pw - 1, ph - 1)
+    else:
+        rows = int(rng.integers(2, 4))
+        cuts = sorted(rng.uniform(0.2, 0.8, rows - 1))
+        ys = [1] + [int(c * ph) for c in cuts] + [ph - 1]
+        for r in range(len(ys) - 1):
+            xs = [1] + ([int(rng.uniform(0.3, 0.7) * pw)] if rng.random() < 0.5 else []) + [pw - 1]
+            for c in range(len(xs) - 1):
+                fill(xs[c] + 1, ys[r] + 1, xs[c + 1] - 1, ys[r + 1] - 1)
+    return pg
 
 
 def tex_south():
-    """Стена напротив дивана: побелка, у двери полоса из обрывков газетных обоев, красные каракули."""
-    w, h = 512, 256
-    arr = plaster(R, w, h, (0.74, 0.72, 0.66), streak=0.2, stains=0.35, crack=0.25)
-    arr = peeled(arr, R, C(0.56, 0.54, 0.48), 16, 0.05)
-    # слева (у двери, восточный край) — обрывки на высоте 0.7…2.3 м (1 px ≈ 1 см по высоте)
-    y = 20
-    while y < 180:
-        sw, sh = int(R.integers(34, 62)), int(R.integers(18, 30))
-        _sheet(arr, int(R.integers(6, 48)), y, sw, sh, R)
-        y += int(sh * 0.75)
-    for _ in range(5):
-        scribble(arr, int(R.integers(80, 300)), int(R.integers(70, 150)), 10, C(0.55, 0.09, 0.07), R, step=3, width=1)
+    """Стена напротив дивана: побелка; у двери (левый край текстуры) — коллаж из страниц манги почти до потолка,
+    ряды к низу обрываются неровно, как на фото. 1024 x 512 на 3.88 x 2.5 м."""
+    w, h = 1024, 512
+    arr = plaster(R, w, h, (0.76, 0.75, 0.70), streak=0.2, stains=0.3, crack=0.25)
+    arr = peeled(arr, R, C(0.56, 0.54, 0.48), 16, 0.04)
     arr *= (1 - floor_grime(h, w, R, 0.25, 0.45))[..., None]
-    save("yr_south", finish(arr, 1.2))
+    ppm_x, ppm_y = w / (X1 - X0), h / H                        # пикселей на метр
+    PW, PH = 0.205, 0.285                                      # страница, м
+    cols_in_row = [range(12)] * 6 + [range(2, 10), [4, 5, 6, 11]]
+    top = 2.36                                                 # верх коллажа от пола, м
+    for r, cols in enumerate(cols_in_row):
+        for c in cols:
+            x_m = 0.05 + c * PW + RM.uniform(-0.012, 0.012)
+            z_m = top - (r + 1) * PH + RM.uniform(-0.012, 0.012)
+            x0, y0 = int(x_m * ppm_x), int((H - z_m - PH) * ppm_y)
+            pw, ph = int(PW * ppm_x) - 1, int(PH * ppm_y) - 1
+            pg = manga_page(pw, ph, RM)
+            pg *= np.linspace(1.0, 0.94, ph, dtype=np.float32)[:, None, None]     # низ страницы чуть темнее
+            arr[y0 + ph:y0 + ph + 2, x0 + 2:x0 + pw + 2] *= 0.7                      # тень под листом
+            arr[y0:y0 + ph, x0 + pw:x0 + pw + 2] *= 0.8
+            arr[y0:y0 + ph, x0:x0 + pw] = pg
+    save("yr_south", finish(arr, 1.1, crisp=0.3))
 
 
 def tex_east():
-    """Стена с дверью: белая штукатурка, у потолка отвалилась; над столом красные надписи маркером,
-    выключатель у двери, розетка под столом. Левый край текстуры — северный угол (стол)."""
+    """Стена с дверью: белая штукатурка, у потолка отвалилась; выключатель на 1.5 м у проёма, розетка под ним.
+    Надписи маркером над столом — отдельная прозрачная наклейка (render_writing). Левый край текстуры — северный угол."""
     w, h = 512, 256
     arr = plaster(R, w, h, (0.78, 0.77, 0.72), streak=0.2, stains=0.3, crack=0.3)
     top = np.zeros((h, w), np.float32); top[:70] = 1
@@ -125,23 +189,117 @@ def tex_east():
     arr = arr * (1 - patches[..., None]) + under * patches[..., None]
     rim = np.clip(patches - np.roll(patches, (2, 2), (0, 1)), 0, 1)
     arr *= (1 - rim * 0.5)[..., None]
-    red = C(0.62, 0.10, 0.07)
-    for line in range(7):                                       # «надписи» над столом: слова-каракули
-        x = 18 + int(R.integers(0, 10)); yl = 66 + line * 12 + int(R.integers(-2, 3))
-        while x < 150:
-            scribble(arr, x, yl, int(R.integers(4, 9)), red, R, step=2, width=1)
-            x += int(R.integers(14, 26))
-    scribble(arr, 160, 90, 12, red, R, step=4, width=1)
-    sx, sy = 183, 160                                            # выключатель у двери (y ≈ 2.1 м, h ≈ 0.95 м)
-    arr[sy - 1:sy + 13, sx - 1:sx + 11] *= 0.6
-    arr[sy:sy + 12, sx:sx + 10] = C(0.80, 0.78, 0.70)
-    arr[sy + 2:sy + 10, sx + 3:sx + 7] = C(0.70, 0.68, 0.60)
-    ox, oy = 43, 222                                             # розетка
+    ux = lambda y: int((Y1 - y) / (Y1 - Y0) * w)
+    vy = lambda z: int((1 - z / H) * h)
+    sx, sy = ux(2.10) - 6, vy(1.55) - 7                         # выключатель (y ≈ 2.07 м, h ≈ 1.5 м)
+    arr[sy - 1:sy + 15, sx - 1:sx + 13] *= 0.6
+    arr[sy:sy + 14, sx:sx + 12] = C(0.80, 0.78, 0.70)
+    arr[sy + 2:sy + 12, sx + 3:sx + 9] = C(0.70, 0.68, 0.60)
+    ox, oy = ux(2.24) - 5, vy(0.36) - 5                         # розетка под выключателем
     arr[oy - 1:oy + 11, ox - 1:ox + 11] *= 0.6
     arr[oy:oy + 10, ox:ox + 10] = C(0.78, 0.76, 0.68)
     arr[oy + 4:oy + 6, ox + 2:ox + 4] = C(0.1, 0.1, 0.1); arr[oy + 4:oy + 6, ox + 6:ox + 8] = C(0.1, 0.1, 0.1)
     arr *= (1 - floor_grime(h, w, R, 0.2, 0.4))[..., None]
     save("yr_east", finish(arr, 1.2))
+
+
+# --- надписи маркером над столом (как на фото стены): рендер текста Blender'ом в прозрачную текстуру ---
+WR_Y0, WR_Y1, WR_Z0, WR_Z1 = 2.16, 3.56, 0.88, 2.06          # где висит наклейка: y (с севера к двери), высота от пола
+WR_PX = 420                                                    # пикселей на метр
+FONT_HAND = r"C:\Windows\Fonts\segoepr.ttf"                     # Segoe Print — рукописный, с кириллицей
+FONT_INK = r"C:\Windows\Fonts\Inkfree.ttf"                      # Ink Free — для латиницы
+RED, GREY, BLACK = (0.55, 0.07, 0.04), (0.25, 0.25, 0.27), (0.06, 0.06, 0.07)
+# (текст, x, y, высота букв — всё в пикселях фото стены 960x1280, поворот°, шрифт, цвет)
+WRITING = [
+    ("Началось", 175, 448, 20, 3, FONT_HAND, RED), ("element", 60, 528, 20, 12, FONT_INK, RED),
+    ("/|\\", 180, 512, 26, 0, FONT_INK, RED), ("da?", 325, 498, 30, 0, FONT_INK, RED),
+    ("tewiq", 430, 488, 48, 0, FONT_INK, RED), ("???", 265, 550, 20, 0, FONT_HAND, RED),
+    ("67", 265, 603, 28, 0, FONT_HAND, RED), ("сука", 545, 598, 40, 0, FONT_HAND, RED),
+    ("Это пиздец", 130, 628, 18, 2, FONT_HAND, RED), ("Ну прив", 270, 658, 24, 0, FONT_HAND, RED),
+    ("RR", 510, 675, 30, 0, FONT_INK, RED), ("113 squad", 65, 693, 26, 0, FONT_INK, GREY),
+    ("Гандон", 225, 708, 22, 0, FONT_HAND, RED), ("^ ^", 418, 712, 22, 0, FONT_INK, RED),
+    ("ω", 425, 745, 26, 0, FONT_HAND, RED), ("Ты чё пидор?", 190, 750, 22, 0, FONT_HAND, RED),
+    ("YYAA", 145, 786, 16, 0, FONT_INK, RED), ("секси айс", 222, 808, 16, 8, FONT_HAND, RED),
+    ("<3", 385, 798, 22, 0, FONT_INK, RED), ("#2016", 455, 808, 26, -3, FONT_INK, RED),
+    ("СВЭГ", 600, 775, 32, -5, FONT_HAND, RED), ("ПЯТЬТЫЩ", 655, 828, 28, -18, FONT_HAND, RED),
+    ("9scarecrows", 365, 862, 22, -3, FONT_INK, RED), ("error nice///", 365, 902, 22, 0, FONT_INK, RED),
+]
+STROKES = [                                                  # линии маркером: (точки, цвет)
+    ([(235, 382), (249, 365), (262, 382), (276, 365), (288, 382), (300, 365), (312, 382), (322, 368)], BLACK),   # зигзаг
+    ([(690, 415), (690, 548)], RED), ([(668, 432), (676, 456)], RED),                                           # знак-руна
+    ([(712, 425), (717, 450), (706, 460)], RED), ([(660, 458), (720, 520)], RED), ([(720, 458), (660, 520)], RED),
+    ([(660, 520), (690, 548), (720, 520)], RED),
+    ([(372, 572), (408, 572)], RED), ([(452, 572), (488, 572)], RED),                                           # глаза
+    ([(372, 582), (372, 594), (408, 594), (408, 582), (372, 582)], RED),
+    ([(452, 582), (452, 594), (488, 594), (488, 582), (452, 582)], RED),
+    ([(382, 582), (382, 594)], RED), ([(392, 582), (392, 594)], RED), ([(462, 582), (462, 594)], RED), ([(472, 582), (472, 594)], RED),
+    ([(395, 662), (440, 664)], RED), ([(452, 647), (446, 664)], RED),                                           # ухмылка «—/»
+]
+SMUDGES = []                                                   # размазанные пятна маркера (x, y, радиус)
+
+
+def render_writing():
+    """Отрисовать надписи в отдельной сцене (Workbench, плоский свет, прозрачный фон) → yr_writing.png (RGBA)."""
+    W, Hh = WR_Y1 - WR_Y0, WR_Z1 - WR_Z0
+    rx, ry = int(W * WR_PX), int(Hh * WR_PX)
+    sc = bpy.data.scenes.new("Writing")
+    sc.render.engine = 'BLENDER_WORKBENCH'
+    sc.display.shading.light = 'FLAT'
+    sc.display.shading.color_type = 'MATERIAL'
+    sc.display.render_aa = '16'
+    sc.render.film_transparent = True
+    sc.render.resolution_x, sc.render.resolution_y, sc.render.resolution_percentage = rx, ry, 100
+    sc.view_settings.view_transform = 'Standard'
+    sc.render.image_settings.color_mode = 'RGBA'
+    cd = bpy.data.cameras.new("WrCam"); cd.type = 'ORTHO'; cd.ortho_scale = max(W, Hh)
+    cam = bpy.data.objects.new("WrCam", cd); sc.collection.objects.link(cam)
+    cam.location = (W / 2, Hh / 2, 5); sc.camera = cam
+    # фото-пиксели → метры наклейки: x 40…900 → 0…W, y 340…910 → Hh…0
+    sx = W / 860.0; sy = Hh / 570.0
+    P = lambda px, py: ((px - 40) * sx, Hh - (py - 340) * sy)
+    mats = {}
+
+    def mt(col):
+        if col not in mats:
+            m = bpy.data.materials.new("Wr%d" % len(mats)); m.diffuse_color = (*col, 1.0); mats[col] = m
+        return mats[col]
+
+    fonts = {}
+    for (txt, px, py, hpx, rot, fpath, col) in WRITING:
+        if fpath not in fonts:
+            fonts[fpath] = bpy.data.fonts.load(fpath)
+        cu = bpy.data.curves.new("t", 'FONT')
+        cu.body = txt; cu.font = fonts[fpath]; cu.size = hpx * sy * 1.45
+        ob = bpy.data.objects.new("t", cu)
+        ob.location = (*P(px, py), 0); ob.rotation_euler.z = math.radians(rot)
+        ob.data.materials.append(mt(col))
+        sc.collection.objects.link(ob)
+    bm = B()
+    wdt = 4.5 * sx
+    for pts, col in STROKES:
+        q = [Vector((*P(*p_), 0)) for p_ in pts]
+        for a_, b_ in zip(q, q[1:]):
+            d = (b_ - a_); n = Vector((-d.y, d.x, 0)).normalized() * wdt / 2
+            e = d.normalized() * wdt / 2
+            bm.poly([a_ - e - n, b_ + e - n, b_ + e + n, a_ - e + n], [(0, 0)] * 4, mt(col))
+    for (px, py, r) in SMUDGES:                                # размазня — неровный многоугольник
+        cx, cy = P(px, py)
+        pts = [Vector((cx + math.cos(t) * r * sx * (0.6 + 0.6 * RM.random()), cy + math.sin(t) * r * sy * (0.4 + 0.4 * RM.random()), 0))
+               for t in np.linspace(0, 2 * math.pi, 10, endpoint=False)]
+        bm.poly(pts, [(0, 0)] * len(pts), mt(RED))
+    bm.build("WrStrokes", sc.collection)
+    out = os.path.join(ROOT, "assets", "textures", "yr_writing.png")
+    sc.render.filepath = out
+    bpy.ops.render.render(write_still=True, scene=sc.name)
+    # маркер: неровный нажим, местами прозрачнее, лёгкая мягкость
+    img = bpy.data.images.load(out); img.reload()
+    a = np.array(img.pixels[:], np.float32).reshape(ry, rx, 4)
+    press = 0.78 + 0.22 * noise(rx, ry, rx // 6, ry // 6, RM, oct=3)
+    a[..., 3] = np.clip(a[..., 3] * press * 1.35, 0, 1)
+    a[..., :3] = blur(a[..., :3], 0.5, wrap=False)
+    a[..., 3] = blur(a[..., 3:4], 0.6, wrap=False)[..., 0]
+    img.pixels.foreach_set(a.ravel()); img.filepath_raw = out; img.file_format = 'PNG'; img.save()
+    bpy.data.scenes.remove(sc)
 
 
 def tex_floor_ceiling():
@@ -280,6 +438,7 @@ A = {
     "book": (64, 168, 128, 200), "clothes": (128, 168, 192, 232), "brass": (224, 168, 256, 200),
     "door": (0, 200, 32, 256), "mousepad": (32, 200, 64, 232), "white": (64, 200, 128, 232), "pillow": (128, 232, 160, 256),
     "soil": (192, 200, 224, 232), "cap": (224, 200, 256, 232),
+    "plush": (128, 72, 160, 104), "bead": (160, 72, 192, 104),
 }
 
 
@@ -399,6 +558,12 @@ def tex_atlas():
     pl[::4, ::4] = C(0.6, 0.55, 0.65); put("pillow", pl)
     flat("soil", (0.10, 0.07, 0.05), 0.4)
     flat("cap", (0.15, 0.35, 0.75), 0.2)
+    pl = np.ones((32, 32, 3), np.float32) * C(0.78, 0.12, 0.10) * (0.7 + 0.6 * R.random((32, 32, 1)).astype(np.float32))
+    pl[12:17, 8:12] = C(0.03, 0.03, 0.03); pl[12:17, 20:24] = C(0.03, 0.03, 0.03)               # мягкая игрушка: глазки
+    put("plush", pl)
+    bd = np.ones((32, 32, 3), np.float32) * C(0.08, 0.50, 0.22)
+    bd[4:12, 4:12] = C(0.45, 0.85, 0.55)                                                          # бусина гирлянды: блик
+    put("bead", bd)
     save("yr_atlas", finish(a, 1.0, crisp=0.3))
 
 
@@ -627,9 +792,37 @@ def room(M):
         cylr(p, (x, y, dt), (x, y, dt + hh), 0.045, 0.045, at, RC("bottle"), segs=8)
         cylr(p, (x, y, dt + hh), (x, y, dt + hh + 0.06), 0.045, 0.015, at, RC("bottle"), segs=8, caps=False)
         cylr(p, (x, y, dt + hh + 0.06), (x, y, dt + hh + 0.08), 0.016, 0.016, at, RC("cap"), segs=6)
-    # провода из-под стола к розетке
+    # миска с ложкой и красная мягкая игрушка на системнике (как на фото стены)
+    bx_, by_ = dx0 + 0.17, dy0 + 0.09
+    cylr(p, (bx_, by_, dt), (bx_, by_, dt + 0.055), 0.035, 0.07, at, WH, segs=8)
+    cylr(p, (bx_, by_, dt + 0.05), (bx_, by_, dt + 0.052), 0.058, 0.058, at, RC("soil"), segs=8)
+    obox(p, (bx_ + 0.05, by_ + 0.04, dt + 0.07), (0.012, 0.17, 0.005), at, WH, yaw=-55, pitch=18)
+    cylr(p, (dx1 - 0.12, dy0 + 0.33, dt + 0.43), (dx1 - 0.12, dy0 + 0.33, dt + 0.54), 0.07, 0.06, at, RC("plush"), segs=8)
+    # провода из-под стола: вниз за столом, по полу вдоль стены к розетке под выключателем
     for k in range(3):
-        cylr(p, (dx1 - 0.1 - k * 0.05, dy1 - 0.08, dt), (X1 - 0.02, 3.25 - k * 0.03, Z + 0.32), 0.004, 0.004, at, BL, segs=3, caps=False)
+        y_, zz = 2.24 - k * 0.012, Z + 0.33 + k * 0.012
+        pts_ = [(dx1 - 0.1 - k * 0.05, dy1 - 0.08, dt), (X1 - 0.03 - k * 0.01, 3.3, Z + 0.015),
+                (X1 - 0.03 - k * 0.01, y_ + 0.06, Z + 0.015), (X1 - 0.015, y_, zz)]
+        for a_, b_ in zip(pts_, pts_[1:]):
+            cylr(p, a_, b_, 0.004, 0.004, at, BL, segs=3, caps=False)
+
+    # гирлянда с зелёными бусинами вдоль восточной стены, над надписями (провисает между гвоздиками)
+    pins = [(3.55, ZT - 0.30), (3.18, ZT - 0.28), (2.82, ZT - 0.25), (2.46, ZT - 0.22), (2.10, ZT - 0.19)]
+    gx = X1 - 0.012
+    wire = []
+    for (ya, za), (yb, zb) in zip(pins, pins[1:]):
+        for t in np.linspace(0, 1, 6)[:-1]:
+            wire.append((ya + (yb - ya) * t, za + (zb - za) * t - 0.035 * 4 * t * (1 - t)))
+    wire.append(pins[-1])
+    for (ya, za), (yb, zb) in zip(wire, wire[1:]):
+        cylr(p, (gx, ya, za), (gx, yb, zb), 0.002, 0.002, at, BL, segs=3, caps=False)
+    for i, (y_, z_) in enumerate(wire[1:-1]):
+        if i % 2 == 0:
+            obox(p, (gx - 0.004, y_, z_ - 0.008), (0.016, 0.016, 0.016), at, RC("bead"), yaw=30 * i)
+
+    # надписи маркером — прозрачная наклейка в 4 мм от стены
+    wr = B()
+    wr.box((X1 - 0.005, WR_Y0, Z + WR_Z0), (X1 - 0.004, WR_Y1, Z + WR_Z1), {'-X': (M["writing"], (0, 0, 1, 1))})
 
     # --- игровое кресло (зелёно-чёрное), развёрнуто к столу ---
     chx, chy, cyaw = mx + 0.05, 2.42, 12.0
@@ -657,8 +850,19 @@ def room(M):
     main = b.build("YurRoom", coll)
     props = p.build("YurRoomProps_nocol", coll)
     screen = scr.build("PCScreen_nocol", coll)
-    export("yurchik_room", [main, props, screen])
+    writing = wr.build("EastWriting_nocol", coll)
+    export("yurchik_room", [main, props, screen, writing])
     return {"room_polys": len(main.data.polygons), "props_polys": len(props.data.polygons)}
+
+
+def mat_alpha(name, tex):
+    """Материал-наклейка: цвет и прозрачность из PNG (экспорт в glTF как alphaMode BLEND)."""
+    m = mat(name, tex, rough=0.8)
+    nt = m.node_tree
+    t = next(n for n in nt.nodes if n.type == 'TEX_IMAGE')
+    nt.links.new(t.outputs["Alpha"], nt.nodes["Principled BSDF"].inputs["Alpha"])
+    m.surface_render_method = 'BLENDED'
+    return m
 
 
 def main():
@@ -666,6 +870,7 @@ def main():
         bpy.data.objects.remove(ob, do_unlink=True)
     tex_panels(); tex_west(); tex_south(); tex_east(); tex_floor_ceiling()
     tex_blanket(); tex_fabric(); tex_window(); tex_screen(); tex_atlas()
+    render_writing()
     M = {
         "panels": mat("YrPanels", "yr_panels"), "west": mat("YrWest", "yr_west"), "south": mat("YrSouth", "yr_south"),
         "east": mat("YrEast", "yr_east"), "floor": mat("YrLaminate", "yr_laminate", rough=0.5),
@@ -674,6 +879,7 @@ def main():
         "screen": mat("YrScreen", "yr_screen", "yr_screen_emission", rough=0.2), "atlas": mat("YrAtlas", "yr_atlas", rough=0.7),
         "radiator": mat("YrRadiator", "radiator", rough=0.6), "radiator_m": mat("YrPipe", "radiator", rough=0.6),
         "glass": mat("YrLampGlass", "lamp_glass", "lamp_glass", rough=0.3),
+        "writing": mat_alpha("YrWriting", "yr_writing"),
     }
     print("BUILD_YUR_ROOM " + str(room(M)))
 
