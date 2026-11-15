@@ -265,4 +265,36 @@ for at, f in ((0.0, 1568), (0.11, 2093), (0.22, 1568)):
     x = mixat(x, np.sign(np.sin(2 * np.pi * f * t_(0.09))) * env(0.09, 0.002, 0.02, 1.5), at)
 save("phone_sms", x, 0.3)
 
+# --- комната Юрчика: выключатель и лампочки (свой генератор, чтобы не сдвигать звуки выше) ---
+lrng = np.random.default_rng(4747)
+x = np.zeros(1)                                                        # старый советский выключатель: «щёлк-клац»
+x = mixat(x, band(lrng.standard_normal(int(SR * 0.012)), 2500, 9000) * env(0.012, 0.0005, None, 12.0), 0.0, 0.7)
+d = 0.07
+x = mixat(x, (band(lrng.standard_normal(int(SR * d)), 300, 2200) * 0.8 + np.sin(2 * np.pi * 180 * t_(d)) * 0.5)
+          * env(d, 0.001, None, 9.0), 0.008, 1.0)                     # пластиковый корпус гудит низко
+x = mixat(x, band(lrng.standard_normal(int(SR * 0.02)), 1800, 6000) * env(0.02, 0.001, None, 10.0), 0.045, 0.25)  # дребезг
+save("light_switch", x, 0.6)
+d = 0.9                                                                # лампочка «ловит» контакт: треск и гул 100 Гц
+t = t_(d)
+hum = np.sign(np.sin(2 * np.pi * 100 * t)) * 0.4 + np.sin(2 * np.pi * 200 * t) * 0.3
+gate = np.zeros(len(t))
+for a, b_ in ((0.0, 0.05), (0.13, 0.17), (0.24, 0.27), (0.36, 0.9)):
+    gate[int(a * SR):int(b_ * SR)] = 1.0
+gate = band(gate, 0, 400)
+crack = band(lrng.standard_normal(len(t)), 1500, 7000) * (lrng.random(len(t)) < 0.004) * 6.0
+x = band(hum, 60, 1800) * gate * np.clip((d - t) / 0.5, 0, 1) + crack * np.clip(1 - t / 0.4, 0, 1)
+save("bulb_flicker", x, 0.35)
+
+# --- межкомнатная дверь: закрыть (свой генератор, чтобы не сдвигать звуки выше) ---
+drng = np.random.default_rng(5151)
+x = np.zeros(1)
+d = 0.35                                                               # лёгкое полотно мягко бьёт в коробку
+t = t_(d)
+thud = band(drng.standard_normal(len(t)), 60, 420) * 0.9 + np.sin(2 * np.pi * 95 * t) * 0.6
+x = mixat(x, thud * env(d, 0.002, None, 7.0), 0.0, 1.0)
+x = mixat(x, band(drng.standard_normal(int(SR * 0.03)), 2000, 8000) * env(0.03, 0.0005, None, 10.0), 0.012, 0.5)  # язычок защёлки
+x = mixat(x, band(drng.standard_normal(int(SR * 0.025)), 1500, 6000) * env(0.025, 0.0005, None, 10.0), 0.06, 0.35)  # щёлк — вошёл в паз
+x = mixat(x, band(drng.standard_normal(int(SR * 0.2)), 300, 1500) * env(0.2, 0.01, None, 6.0), 0.02, 0.15)  # дребезг стекла
+save("door_close", x, 0.6)
+
 print("SFX", len(os.listdir(OUT)), "files in", OUT)

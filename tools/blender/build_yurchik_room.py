@@ -24,7 +24,8 @@
 # пол на z = 8.4. Поэтому модель ставится в stairwell.tscn без смещения.
 # Объекты: YurRoom — стены и жёсткая мебель (с коллизией), YurRoomSoft_nocol — мягкое с гладким затенением: диван,
 # кресла, плед, гора одежды; его коллизия — простые ящики YurRoomSoftCol-colonly (невидимые); YurRoomSoftProps_nocol и YurRoomProps_nocol — мелочь, PCScreen_nocol —
-# экран монитора (отдельно, чтобы игра могла его «включить»), EastWriting_nocol — прозрачная наклейка с надписями.
+# экран монитора (отдельно, чтобы игра могла его «включить»), EastWriting_nocol — прозрачная наклейка с надписями,
+# LightSwitchKey_nocol — клавиша выключателя (отдельно, чтобы игра могла её щёлкать).
 # Мягкие формы — soft() (скруглённый ящик с буграми) и drape() (ткань, наброшенная на прямоугольник, со свесами).
 import bpy, os, sys, math
 import numpy as np
@@ -450,7 +451,7 @@ def tex_fabric():
 
 
 def tex_window():
-    """Окно в белой пластиковой раме: две створки, за стеклом ночь, дом напротив с редкими огнями."""
+    """Окно в белой пластиковой раме: две створки, стекло полупрозрачное (вид за окном — отдельная модель)."""
     s = 128
     yy, xx = np.mgrid[0:s, 0:s].astype(np.float32)
     g = (yy / s)[..., None]
@@ -476,8 +477,47 @@ def tex_window():
     alb = np.where(frame[..., None], white, glass)
     alb[58:74, 70:74] = C(0.86, 0.84, 0.74)
     alb[18:28, 118:122] = C(0.55, 0.55, 0.53); alb[100:110, 118:122] = C(0.55, 0.55, 0.53)
-    save("yr_window", finish(alb, 1.1, crisp=0.3))
-    save("yr_window_emission", np.where(frame[..., None], 0.0, glass * 0.6 + lit[..., None] * 0.45).astype(np.float32))
+    # Стекло прозрачное (за ним — 3D-вид из окна, tools/blender/build_window_view.py): чуть синеватое, с засохшими
+    # каплями и потёками, как на фото, и грязью у нижнего края рамы. Случайности — свои, чтобы не сдвигать R.
+    WR = np.random.default_rng(2526)
+    alpha = np.full((s, s), 0.10, np.float32)
+    tint = np.ones((s, s, 3), np.float32) * C(0.10, 0.11, 0.13)
+    for _ in range(260):                                                  # капли
+        cx, cy, r = WR.uniform(0, s), WR.uniform(0, s), WR.uniform(0.6, 1.8)
+        d = np.hypot(xx - cx, yy - cy)
+        m = np.clip(1 - d / r, 0, 1) * WR.uniform(0.15, 0.35)
+        alpha = np.maximum(alpha, m)
+    for _ in range(18):                                                   # потёки сверху вниз
+        cx, y0 = WR.uniform(10, s - 10), WR.uniform(8, s * 0.6)
+        ln = WR.uniform(10, 50)
+        m = (np.abs(xx - cx - np.sin(yy * 0.3) * 0.6) < 0.7) & (yy > y0) & (yy < y0 + ln)
+        alpha = np.where(m, np.maximum(alpha, 0.2), alpha)
+    alpha += np.clip((yy - (s - 34)) / 20.0, 0, 1) * 0.18                   # грязь у нижнего края
+    alpha *= 0.85 + 0.3 * noise(s, s, 8, 8, WR)
+    tint = tint * (1 - alpha[..., None]) + C(0.55, 0.55, 0.56) * alpha[..., None]
+    alb = np.where(frame[..., None], white, tint)
+    alb[58:74, 70:74] = C(0.86, 0.84, 0.74)
+    alb[18:28, 118:122] = C(0.55, 0.55, 0.53); alb[100:110, 118:122] = C(0.55, 0.55, 0.53)
+    alb = finish(alb, 1.1, crisp=0.3)
+    save_rgba("yr_window", alb, np.where(frame, 1.0, np.clip(alpha, 0.06, 0.6)))
+
+
+def save_rgba(name, rgb, alpha):
+    """PNG с прозрачностью в assets/textures (tex_lib.save пишет только RGB)."""
+    h, w, _ = rgb.shape
+    img = bpy.data.images.get(name)
+    if img:
+        bpy.data.images.remove(img)
+    img = bpy.data.images.new(name, w, h, alpha=True)
+    rgba = np.ones((h, w, 4), np.float32)
+    rgba[..., :3] = np.clip(rgb, 0, 1)
+    rgba[..., 3] = np.clip(alpha, 0, 1)
+    img.pixels.foreach_set(rgba[::-1].ravel())
+    path = os.path.join(ROOT, "assets", "textures", name + ".png")
+    img.filepath_raw = path
+    img.file_format = 'PNG'
+    img.save()
+    img.filepath = path
 
 
 def tex_screen():
@@ -949,7 +989,7 @@ def room(M):
     b.box((XW, WY1, WZ0), (X0, WY1 + 0.01, WZ1), {'-Y': M["west"]}, scale=WS)
     b.box((XW, WY0, WZ1), (X0, WY1, WZ1 + 0.01), {'-Z': M["west"]}, scale=WS)
     b.box((XW - 0.01, WY0, WZ0), (XW, WY1, WZ1), {'+X': (M["window"], (0, 0, 1, 1))})
-    abox(b, (XW + 0.04, WY0 - 0.08, WZ0 - 0.04), (X0 + 0.24, WY1 + 0.08, WZ0), at, WH)                 # подоконник
+    abox(b, (XW, WY0 - 0.08, WZ0 - 0.04), (X0 + 0.24, WY1 + 0.08, WZ0), at, WH)                       # подоконник — вплотную к раме
     # батарея и стояк
     # чугунная батарея МС-140 под левой половиной окна (как на фото): 8 секций — по две круглые колонки с перемычкой,
     # сверху и снизу секции соединены ниппелями (сквозные трубы). Коллизия — простой ящик (см. col ниже)
@@ -966,13 +1006,11 @@ def room(M):
         cylr(p, (X0 + 0.06, 1.5, z), (X0 + 0.06, 2.08, z), 0.016, 0.016, M["radiator_m"], (0, 0, 1, 1), segs=6, caps=False)
     cylr(p, (X0 + 0.06, 1.5, Z), (X0 + 0.06, 1.5, ZT), 0.022, 0.022, M["radiator_m"], (0, 0, 1, 1), segs=6, caps=False)
 
-    # --- дверь: наличник и полотно, открытое в комнату к южной стене ---
+    # --- дверь: наличник; само полотно — отдельная модель room_door.gltf (build_room_door.py), игра её открывает ---
     for (mn, mx) in (((X1 - 0.02, DOOR_Y0 - 0.08, Z), (X1, DOOR_Y0, Z + DOOR_H + 0.08)),
                      ((X1 - 0.02, DOOR_Y1, Z), (X1, DOOR_Y1 + 0.08, Z + DOOR_H + 0.08)),
                      ((X1 - 0.02, DOOR_Y0, Z + DOOR_H), (X1, DOOR_Y1, Z + DOOR_H + 0.08))):
         abox(p, mn, mx, at, WH)
-    abox(b, (X1 - 0.86, Y0 + 0.02, Z + 0.01), (X1 - 0.06, Y0 + 0.06, Z + 2.0), at, WH, faces={'+Y': (at, RC("door"))})
-    cylr(p, (X1 - 0.79, Y0 + 0.06, Z + 0.95), (X1 - 0.79, Y0 + 0.12, Z + 0.95), 0.012, 0.012, at, BL, segs=4)
 
     # --- люстра: три плафона ---
     cx, cy = (X0 + X1) / 2, (Y0 + Y1) / 2
@@ -1190,6 +1228,16 @@ def room(M):
         r_ = math.radians(k * 72 + cyaw)
         obox(col, (chx + math.cos(r_) * 0.17, chy + math.sin(r_) * 0.17, Z + 0.06), (0.36, 0.05, 0.08), at, BL, yaw=k * 72 + cyaw)
 
+    # --- выключатель света у проёма (поверх нарисованного на стене): рамка и отдельная клавиша —
+    #     игра качает клавишу (stairwell.gd: _toggle_light), ось — у поверхности рамки ---
+    SWY, SWZ = 2.10, Z + 1.55
+    abox(p, (X1 - 0.012, SWY - 0.04, SWZ - 0.078), (X1, SWY + 0.04, SWZ + 0.078), at, WH, skip=('+X',))
+    kb = B()
+    abox(kb, (-0.014, -0.025, -0.045), (0.0, 0.025, 0.045), at, WH, skip=('+X',))
+    abox(kb, (-0.0145, -0.012, 0.028), (-0.0135, 0.012, 0.032), at, BL, faces=None, skip=('+X',))   # риска сверху
+    key = kb.build("LightSwitchKey_nocol", coll)
+    key.location = (X1 - 0.012, SWY, SWZ)
+
     main = b.build("YurRoom", coll)
     softo = s.build("YurRoomSoft_nocol", coll)
     colo = col.build("YurRoomSoftCol-colonly", coll)        # суффикс -colonly: Godot сделает из него только коллизию
@@ -1197,7 +1245,7 @@ def room(M):
     props = p.build("YurRoomProps_nocol", coll)
     screen = scr.build("PCScreen_nocol", coll)
     writing = wr.build("EastWriting_nocol", coll)
-    export("yurchik_room", [main, softo, softp, colo, props, screen, writing])
+    export("yurchik_room", [main, softo, softp, colo, props, screen, writing, key])
     return {"room_polys": len(main.data.polygons), "soft_polys": len(softo.data.polygons) + len(softp.data.polygons), "props_polys": len(props.data.polygons)}
 
 
@@ -1221,7 +1269,7 @@ def main():
         "panels": mat("YrPanels", "yr_panels"), "west": mat("YrWest", "yr_west"), "south": mat("YrSouth", "yr_south"),
         "east": mat("YrEast", "yr_east"), "floor": mat("YrLaminate", "yr_laminate", rough=0.5),
         "ceiling": mat("YrCeiling", "yr_ceiling"), "blanket": mat("YrBlanket", "yr_blanket"),
-        "fabric": mat("YrFabric", "yr_fabric"), "armchair": mat("YrArmchair", "yr_armchair"), "window": mat("YrWindow", "yr_window", "yr_window_emission", rough=0.3),
+        "fabric": mat("YrFabric", "yr_fabric"), "armchair": mat("YrArmchair", "yr_armchair"), "window": mat_alpha("YrWindow", "yr_window"),
         "screen": mat("YrScreen", "yr_screen", "yr_screen_emission", rough=0.2), "atlas": mat("YrAtlas", "yr_atlas", rough=0.7),
         "radiator": mat("YrRadiator", "radiator", rough=0.6), "radiator_m": mat("YrPipe", "radiator", rough=0.6),
         "glass": mat("YrLampGlass", "lamp_glass", "lamp_glass", rough=0.3),

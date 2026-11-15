@@ -6,6 +6,7 @@ extends GPUParticles3D
 @export var exhale_duration: float = 0.5
 @export var pause_choices: PackedFloat32Array = [10.0, 15.0, 20.0]  ## секунды между выдохами, берётся случайная
 @export var sound_db := -14.0          ## громкость выдоха (тихо — это фон, а не событие)
+@export var warm := false              ## в тепле (квартира): пара не видно, выдох не слышно
 
 
 func _ready() -> void:
@@ -19,6 +20,8 @@ func breathe_loop() -> void:
 		await get_tree().create_timer(_next_pause()).timeout
 		if not is_inside_tree():
 			return
+		if warm:
+			continue
 		# Принудительно перезапускаем цикл частиц для чистого выдоха
 		restart()
 		emitting = true

@@ -9,6 +9,7 @@ signal said(text: String)                       ## короткая реплик
 signal objective_changed(text: String)          ## новое задание: приходит в телефон закреплённой СМС
 signal message_received(msg: Dictionary)         ## новая СМС в телефоне
 signal noise(pos: Vector3, radius: float)       ## шум, который слышат враги
+@warning_ignore("unused_signal")              # шлёт pickup.gd, слушают уровни
 signal item_picked(id: String)
 
 const MENU_SCENE := "res://scenes/ui/main_menu.tscn"
@@ -173,16 +174,16 @@ func heal(amount: float) -> void:
 
 
 # ----------------------------------------------------------------------------- сообщения
-func say(text: String) -> void:
-	said.emit(text)
+func say(line: String) -> void:
+	said.emit(line)
 
 
-func set_objective(text: String) -> void:
-	if text == objective:
+func set_objective(line: String) -> void:
+	if line == objective:
 		return
-	objective = text
+	objective = line
 	objective_read = false
-	objective_changed.emit(text)
+	objective_changed.emit(line)
 
 
 ## Прислать СМС в телефон Юрчика.
@@ -203,6 +204,7 @@ func unread_count() -> int:
 ## Время на часах телефона: ночь идёт вместе с игровым временем.
 func clock_text() -> String:
 	var m := CLOCK_START + int(stats["time"] / 60.0)
+	@warning_ignore("integer_division")          # нужны целые часы
 	return "%02d:%02d" % [(m / 60) % 24, m % 60]
 
 

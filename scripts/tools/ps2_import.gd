@@ -1,11 +1,15 @@
 ## Пост-обработка импорта моделей из Blender (.gltf).
 ## - чинит свечение (умножение вместо сложения);
 ## - для окружения добавляет статические коллизии (персонажам и предметам — нет);
-## - узлы с «nocol» в имени остаются без коллизии (ступени, перила — по ним ходят через невидимые пандусы).
+## - узлы с «nocol» в имени остаются без коллизии (ступени, перила — по ним ходят через невидимые пандусы);
+## - вид из окна (window_view.gltf): без коллизии, материалы заменяются шейдером shaders/window_view.gdshader —
+##   свет запечён в текстуры свечения, свой туман метели; лампы, фонарик и туман подъезда на него не действуют.
 @tool
 extends EditorScenePostImport
 
-const NO_COLLISION := ["yurchik.gltf", "character", "enemy", "sergey", "item_"]   # yurchik_room.gltf — комната, ей коллизия нужна
+const NO_COLLISION := ["yurchik.gltf", "character", "enemy", "sergey", "item_", "window_view"]   # yurchik_room.gltf — комната, ей коллизия нужна
+const NO_FOG := ["window_view"]
+const VIEW_SHADER := "res://shaders/window_view.gdshader"
 
 
 func _post_import(scene: Node) -> Object:
@@ -14,13 +18,17 @@ func _post_import(scene: Node) -> Object:
 	for k: String in NO_COLLISION:
 		if k in src:
 			collide = false
-	_fix(scene, scene, collide)
+	var fog := true
+	for k: String in NO_FOG:
+		if k in src:
+			fog = false
+	_fix(scene, scene, collide, fog)
 	return scene
 
 
-func _fix(node: Node, root: Node, collide: bool) -> void:
+func _fix(node: Node, root: Node, collide: bool, fog := true) -> void:
 	for child in node.get_children():
-		_fix(child, root, collide)
+		_fix(child, root, collide, fog)
 	if not node is MeshInstance3D:
 		return
 	var mi := node as MeshInstance3D
@@ -32,6 +40,13 @@ func _fix(node: Node, root: Node, collide: bool) -> void:
 		if mat == null:
 			continue
 		mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		if not fog:
+			var sm := ShaderMaterial.new()
+			sm.resource_name = mat.resource_name
+			sm.shader = load(VIEW_SHADER)
+			sm.set_shader_parameter("tex", mat.emission_texture if mat.emission_texture else mat.albedo_texture)
+			mesh.surface_set_material(i, sm)
+			continue
 		if mat.emission_texture:
 			mat.emission_enabled = true
 			mat.emission = Color.WHITE
