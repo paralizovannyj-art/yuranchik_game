@@ -384,8 +384,8 @@ def stairwell(M):
     b.box((cx1, cy0, Z3), (cx1 + 0.01, DOOR_Y0, Z3 + AH), {'-X': wp}, scale=WP)
     b.box((cx1, DOOR_Y1, Z3), (cx1 + 0.01, cy1, Z3 + AH), {'-X': wp}, scale=WP)
     b.box((cx1, DOOR_Y0, Z3 + DOOR_H), (cx1 + 0.01, DOOR_Y1, Z3 + AH), {'-X': wp}, scale=WP)
-    # стена между коридором и комнатой с проёмом y 0.6..1.9 (сторону комнаты рисует модель комнаты)
-    for (ya, yb, za, zb) in ((-0.6, 0.6, Z3, Z3 + AH), (1.9, 3.6, Z3, Z3 + AH), (0.6, 1.9, Z3 + 2.05, Z3 + AH)):
+    # стена между коридором и комнатой с проёмом y 1.05..1.9 (сторону комнаты рисует модель комнаты)
+    for (ya, yb, za, zb) in ((-0.6, 1.05, Z3, Z3 + AH), (1.9, 3.6, Z3, Z3 + AH), (1.05, 1.9, Z3 + 2.05, Z3 + AH)):
         b.box((cx0 - 0.12, ya, za), (cx0, yb, zb), {'+X': wp, '+Y': wp, '-Y': wp, '-Z': wp}, scale=WP)
     wood, fab = M["wood"], M["fabric"]
     allf = lambda m: {k_: m for k_ in ('+X', '-X', '+Y', '-Y', '+Z')}
