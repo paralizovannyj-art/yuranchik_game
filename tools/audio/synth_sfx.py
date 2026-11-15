@@ -285,4 +285,16 @@ crack = band(lrng.standard_normal(len(t)), 1500, 7000) * (lrng.random(len(t)) < 
 x = band(hum, 60, 1800) * gate * np.clip((d - t) / 0.5, 0, 1) + crack * np.clip(1 - t / 0.4, 0, 1)
 save("bulb_flicker", x, 0.35)
 
+# --- межкомнатная дверь: закрыть (свой генератор, чтобы не сдвигать звуки выше) ---
+drng = np.random.default_rng(5151)
+x = np.zeros(1)
+d = 0.35                                                               # лёгкое полотно мягко бьёт в коробку
+t = t_(d)
+thud = band(drng.standard_normal(len(t)), 60, 420) * 0.9 + np.sin(2 * np.pi * 95 * t) * 0.6
+x = mixat(x, thud * env(d, 0.002, None, 7.0), 0.0, 1.0)
+x = mixat(x, band(drng.standard_normal(int(SR * 0.03)), 2000, 8000) * env(0.03, 0.0005, None, 10.0), 0.012, 0.5)  # язычок защёлки
+x = mixat(x, band(drng.standard_normal(int(SR * 0.025)), 1500, 6000) * env(0.025, 0.0005, None, 10.0), 0.06, 0.35)  # щёлк — вошёл в паз
+x = mixat(x, band(drng.standard_normal(int(SR * 0.2)), 300, 1500) * env(0.2, 0.01, None, 6.0), 0.02, 0.15)  # дребезг стекла
+save("door_close", x, 0.6)
+
 print("SFX", len(os.listdir(OUT)), "files in", OUT)
