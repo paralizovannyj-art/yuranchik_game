@@ -22,8 +22,8 @@
 #
 # Координаты — те же, что у подъезда (build_mvp_assets.py): комната на 4-м этаже, x −10.5…−6.32, y 0.95…3.9,
 # пол на z = 8.4. Поэтому модель ставится в stairwell.tscn без смещения.
-# Объекты: YurRoom — стены и жёсткая мебель (с коллизией), YurRoomSoft — мягкое с гладким затенением: диван, кресла,
-# плед, батарея, гора одежды (с коллизией), YurRoomSoftProps_nocol и YurRoomProps_nocol — мелочь, PCScreen_nocol —
+# Объекты: YurRoom — стены и жёсткая мебель (с коллизией), YurRoomSoft_nocol — мягкое с гладким затенением: диван,
+# кресла, плед, гора одежды; его коллизия — простые ящики YurRoomSoftCol-colonly (невидимые); YurRoomSoftProps_nocol и YurRoomProps_nocol — мелочь, PCScreen_nocol —
 # экран монитора (отдельно, чтобы игра могла его «включить»), EastWriting_nocol — прозрачная наклейка с надписями.
 # Мягкие формы — soft() (скруглённый ящик с буграми) и drape() (ткань, наброшенная на прямоугольник, со свесами).
 import bpy, os, sys, math
@@ -920,7 +920,8 @@ def room(M):
     rng = random.Random(47)
     coll = bpy.context.scene.collection
     b, p, scr = B(), B(), B()
-    s, sp = SB(), SB()                       # мягкое: с коллизией и без
+    s, sp = SB(), SB()                       # мягкое (без коллизии — у него простые ящики в col)
+    col = B()                                # невидимые ящики-коллизии для мягкой мебели
     srng = np.random.default_rng(306)
     at = M["atlas"]
     BL, WH = RC("black"), RC("white")
@@ -950,15 +951,17 @@ def room(M):
     b.box((XW - 0.01, WY0, WZ0), (XW, WY1, WZ1), {'+X': (M["window"], (0, 0, 1, 1))})
     abox(b, (XW + 0.04, WY0 - 0.08, WZ0 - 0.04), (X0 + 0.24, WY1 + 0.08, WZ0), at, WH)                 # подоконник
     # батарея и стояк
-    # чугунная батарея МС-140 под левой половиной окна (как на фото): 8 рёбер-секций со скруглениями
+    # чугунная батарея МС-140 под левой половиной окна (как на фото): 8 секций — по две круглые колонки с перемычкой,
+    # сверху и снизу секции соединены ниппелями (сквозные трубы). Коллизия — простой ящик (см. col ниже)
     NS_, RY0, RY1 = 8, 2.08, 2.80
     sw = (RY1 - RY0) / NS_
     for k in range(NS_):
         yc = RY0 + sw * (k + 0.5)
-        for xc in (X0 + 0.065, X0 + 0.115):                          # две колонки в секции
-            soft(s, (xc, yc, Z + 0.45), (0.042, sw - 0.012, 0.60), at, WH, r=0.018, n=(1, 1, 3), bottom=True)
-        for zc in (Z + 0.19, Z + 0.71):                               # ниппели сверху и снизу
-            soft(s, (X0 + 0.09, yc, zc), (0.10, sw - 0.004, 0.07), at, WH, r=0.025, n=(1, 1, 1), bottom=True)
+        for xc in (X0 + 0.065, X0 + 0.115):
+            cylr(p, (xc, yc, Z + 0.15), (xc, yc, Z + 0.75), 0.021, 0.021, at, WH, segs=8)
+        abox(p, (X0 + 0.065, yc - 0.006, Z + 0.20), (X0 + 0.115, yc + 0.006, Z + 0.70), at, WH)
+    for zc in (Z + 0.19, Z + 0.71):
+        cylr(p, (X0 + 0.09, RY0 + 0.004, zc), (X0 + 0.09, RY1 - 0.004, zc), 0.03, 0.03, at, WH, segs=8)
     for z in (Z + 0.22, Z + 0.68):
         cylr(p, (X0 + 0.06, 1.5, z), (X0 + 0.06, 2.08, z), 0.016, 0.016, M["radiator_m"], (0, 0, 1, 1), segs=6, caps=False)
     cylr(p, (X0 + 0.06, 1.5, Z), (X0 + 0.06, 1.5, ZT), 0.022, 0.022, M["radiator_m"], (0, 0, 1, 1), segs=6, caps=False)
@@ -1041,7 +1044,7 @@ def room(M):
             (0.72, 0.45, 0.40, 0.52, 0.42, 0.30, -6, -25),
             (0.68, 0.10, 0.36, 0.40, 0.24, 0.44, 15, -18)):
         q_ = (0, 1, 0, 2, 3, 1, 0, 3)[pile_i[0] % 8]; pile_i[0] += 1
-        soft(s, (ax0 + fy * AW, ay1 - dx, Z + dz), (sy, sx, sz), at, CLQ(q_), r=min(sx, sy, sz) * 0.35, n=(3, 3, 1),
+        soft(s, (ax0 + fy * AW, ay1 - dx, Z + dz), (sy, sx, sz), at, CLQ(q_), r=min(sx, sy, sz) * 0.35, n=(2, 2, 1),
              amp=0.028, rng=srng, yaw=yw, pitch=pt, freq=14)
     soft(sp, (ax0 + 0.16, ay0 - 0.05, Z + 0.30), (0.30, 0.06, 0.56), at, cl, r=0.025, n=(2, 1, 3), amp=0.01, rng=srng, yaw=8, pitch=-14)   # джинсы свесились
     soft(sp, (ax0 + 0.62 * AW, ay0 - 0.03, Z + 0.32), (0.12, 0.03, 0.44), at, WH, r=0.012, n=(1, 1, 3), amp=0.006, rng=srng, yaw=-4, pitch=-8)  # белое полотенце
@@ -1170,13 +1173,31 @@ def room(M):
         soft(sp, P(sx, 0.02, 0.67), (0.07, 0.28, 0.035), at, BL, r=0.015, n=(1, 2, 1), yaw=cyaw)
         soft(sp, P(sx, -0.05, 0.58), (0.035, 0.04, 0.17), at, BL, r=0.01, n=(1, 1, 1), yaw=cyaw)
 
+    # --- коллизии мягкой мебели: простые ящики (сетка обивки слишком подробная для физики) ---
+    CF = {k: at for k in ('+X', '-X', '+Y', '-Y', '+Z', '-Z')}
+    col.box((X0 + 0.04, 2.08, Z + 0.15), (X0 + 0.14, 2.80, Z + 0.75), CF)                         # батарея
+    col.box((ax0, ay0 - 0.05, Z), (ax1, ay1, Z + 0.92), CF)                                         # кресло с одеждой
+    obox(col, (ax0 + 0.55 * AW, ay0 - 0.30, Z + 0.20), (0.50, 0.08, 0.40), at, BL, yaw=-8, pitch=-28)   # коробка у кресла
+    col.box((sx0, 2.0, Z), (sx1, sy1, Z + 0.32), CF)                                                # диван: основание
+    col.box((sx0, sy1 - 0.26, Z), (sx1, sy1, Z + 0.87), CF)                                         # спинка
+    for (xa, xb) in ((sx0 - 0.05, sx0 + 0.21), (sx1 - 0.21, sx1 + 0.05)):                           # подлокотники
+        col.box((xa, sy1 - 0.95, Z), (xb, sy1, Z + 0.68), CF)
+    col.box((sx0, by0 + 0.10, Z), (sx1, sy1 - 0.26, Z + 0.44), CF)                                  # кровать с пледом
+    obox(col, P(0, 0.02, 0.47), (0.52, 0.52, 0.14), at, BL, yaw=cyaw)                              # игровое кресло: сиденье
+    obox(col, P(0, -0.32, 0.95), (0.54, 0.14, 0.95), at, BL, yaw=cyaw, pitch=-10)                  # спинка
+    cylr(col, (chx, chy, Z + 0.07), (chx, chy, Z + 0.40), 0.035, 0.035, at, BL, segs=6)
+    for k in range(5):
+        r_ = math.radians(k * 72 + cyaw)
+        obox(col, (chx + math.cos(r_) * 0.17, chy + math.sin(r_) * 0.17, Z + 0.06), (0.36, 0.05, 0.08), at, BL, yaw=k * 72 + cyaw)
+
     main = b.build("YurRoom", coll)
-    softo = s.build("YurRoomSoft", coll)
+    softo = s.build("YurRoomSoft_nocol", coll)
+    colo = col.build("YurRoomSoftCol-colonly", coll)        # суффикс -colonly: Godot сделает из него только коллизию
     softp = sp.build("YurRoomSoftProps_nocol", coll)
     props = p.build("YurRoomProps_nocol", coll)
     screen = scr.build("PCScreen_nocol", coll)
     writing = wr.build("EastWriting_nocol", coll)
-    export("yurchik_room", [main, softo, softp, props, screen, writing])
+    export("yurchik_room", [main, softo, softp, colo, props, screen, writing])
     return {"room_polys": len(main.data.polygons), "soft_polys": len(softo.data.polygons) + len(softp.data.polygons), "props_polys": len(props.data.polygons)}
 
 
