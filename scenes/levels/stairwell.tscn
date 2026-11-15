@@ -117,7 +117,7 @@ light_energy = 0.6
 omni_range = 5.0
 
 [node name="AptRoom" type="OmniLight3D" parent="Lights"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.26, 10.4, -2.27)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.26, 10.6, -2.27)
 light_color = Color(1, 0.76, 0.5, 1)
 light_energy = 2.2
 shadow_enabled = true
@@ -125,7 +125,7 @@ omni_range = 8.0
 omni_attenuation = 1.2
 
 [node name="AptHall" type="OmniLight3D" parent="Lights"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.7, 10.5, -1.26)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.7, 10.7, -1.26)
 light_color = Color(1, 0.78, 0.55, 1)
 light_energy = 1.2
 omni_range = 5.0

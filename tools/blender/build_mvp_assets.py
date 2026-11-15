@@ -373,7 +373,7 @@ def stairwell(M):
 
     # --- квартира Юрчика: прихожая. Сама комната — отдельная модель (tools/blender/build_yurchik_room.py) ---
     wp, pq = M["wallpaper"], M["parquet"]
-    AH = 2.5
+    AH = 2.7                                                      # как у комнаты
     cx0, cx1, cy0, cy1 = -6.2, -HALL_W - 0.2, 0.2, 2.3            # коридор
     WP = (1.0, 1.0)
     b.box((cx0, cy0, Z3 - 0.1), (cx1, cy1, Z3), {'+Z': pq}, scale=(1.5, 1.5))
