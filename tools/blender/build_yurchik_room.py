@@ -22,8 +22,10 @@
 #
 # Координаты — те же, что у подъезда (build_mvp_assets.py): комната на 4-м этаже, x −10.5…−6.32, y 0.95…3.9,
 # пол на z = 8.4. Поэтому модель ставится в stairwell.tscn без смещения.
-# Объекты: YurRoom — стены и мебель (с коллизией), YurRoomProps_nocol — мелочь, PCScreen_nocol — экран монитора
-# (отдельно, чтобы игра могла его «включить»), EastWriting_nocol — прозрачная наклейка с надписями.
+# Объекты: YurRoom — стены и жёсткая мебель (с коллизией), YurRoomSoft — мягкое с гладким затенением: диван, кресла,
+# плед, батарея, гора одежды (с коллизией), YurRoomSoftProps_nocol и YurRoomProps_nocol — мелочь, PCScreen_nocol —
+# экран монитора (отдельно, чтобы игра могла его «включить»), EastWriting_nocol — прозрачная наклейка с надписями.
+# Мягкие формы — soft() (скруглённый ящик с буграми) и drape() (ткань, наброшенная на прямоугольник, со свесами).
 import bpy, os, sys, math
 import numpy as np
 from mathutils import Vector, Euler
@@ -54,32 +56,53 @@ DOOR_Y0, DOOR_Y1, DOOR_H = 1.05, 1.9, 2.05
 #  Текстуры
 # =====================================================================================
 def tex_panels():
-    """Бежевые фактурные панели над диваном: «штукатурка-шуба» с разводами шпателя, стыки, дырки от дюбелей."""
-    w = h = 256
-    n = noise(w, h, 8, 8, R, oct=5)
-    n2 = noise(w, h, 24, 24, R, oct=3)
-    hgt = n * 0.7 + n2 * 0.3
-    sh = 1 + ((hgt - np.roll(hgt, 1, 1)) + (hgt - np.roll(hgt, 1, 0))) * 6        # рельеф, свет сверху-слева
-    swirl = 0.95 + 0.05 * np.sin(hgt * 46)                                         # мазки шпателя
-    arr = np.ones((h, w, 3), np.float32) * C(0.70, 0.65, 0.53)
-    arr *= (sh * swirl)[..., None]
-    arr *= mottle(h, w, R, 2, 0.12)[..., None]
-    for k in (0, 128):                                                             # стыки панелей 1.2 x 1.2 м
-        arr[k:k + 1] *= 0.55; arr[k + 1:k + 2] *= 1.08
-        arr[:, k:k + 1] *= 0.6; arr[:, k + 1:k + 2] *= 1.06
-    for py in (52, 180):                                                           # ряд дырок от дюбелей
-        for px in range(10, 256, 21):
-            x = px + int(R.integers(-3, 4)); y = py + int(R.integers(-2, 3))
-            arr[y:y + 3, x:x + 3] = C(0.10, 0.08, 0.06)
-            arr[y + 3:y + 4, x:x + 3] *= 0.8
-    save("yr_panels", finish(arr, 1.2))
+    """Бежевые фактурные панели над диваном (как на фото): светлый «венецианский» узор — дуги и завитки шпателя
+    чуть темнее фона, мелкий рельеф, стыки панелей 1.2 x 1.2 м, ряд дырок от дюбелей."""
+    w = h = 512
+    PR = np.random.default_rng(301)
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    warp = noise(w, h, 6, 6, PR, oct=3) * 60
+    arcs = np.zeros((h, w), np.float32)
+    for _ in range(14):                                                            # дуги-мазки вокруг случайных центров
+        cx, cy, rad = PR.uniform(0, w), PR.uniform(0, h), PR.uniform(40, 140)
+        rr = np.hypot(((xx - cx + w / 2) % w) - w / 2, ((yy - cy + h / 2) % h) - h / 2) + warp
+        ring = np.exp(-((np.sin(rr / rad * 6.0)) ** 2) / 0.03) * np.exp(-(rr / (rad * 1.6)) ** 2)
+        arcs = np.maximum(arcs, ring)
+    n2 = noise(w, h, 48, 48, PR, oct=3)
+    hgt = n2 * 0.5 + arcs * 0.5
+    sh = 1 + ((hgt - np.roll(hgt, 1, 1)) + (hgt - np.roll(hgt, 1, 0))) * 1.2       # рельеф, свет сверху-слева
+    arr = np.ones((h, w, 3), np.float32) * C(0.80, 0.74, 0.58)
+    arr = arr * (1 - arcs[..., None] * 0.08) + arcs[..., None] * C(0.58, 0.50, 0.34) * 0.08
+    arr *= sh[..., None]
+    arr *= mottle(h, w, PR, 2, 0.08)[..., None]
+    for k in (0, 256):                                                             # стыки панелей
+        arr[k:k + 2] *= 0.62; arr[k + 2:k + 3] *= 1.08
+        arr[:, k:k + 2] *= 0.66; arr[:, k + 2:k + 3] *= 1.06
+    for py in (104, 360):                                                          # ряд дырок от дюбелей
+        for px in range(20, 512, 42):
+            x = px + int(PR.integers(-5, 6)); y = py + int(PR.integers(-3, 4))
+            arr[y:y + 5, x:x + 5] = C(0.12, 0.09, 0.06)
+            arr[y + 5:y + 7, x:x + 5] *= 0.82
+    save("yr_panels", finish(arr, 1.15, crisp=0.3))
 
 
 def tex_west():
-    """Стена с окном: пожелтевшая побелка в разводах."""
-    arr = plaster(R, 256, 256, (0.70, 0.66, 0.53), streak=0.3, stains=0.45, crack=0.3)
-    arr = peeled(arr, R, C(0.52, 0.50, 0.44), 12, 0.05)
-    save("yr_west", finish(arr, 1.25))
+    """Стена с окном (как на фото): светлая кремовая побелка; там, где содрали обои, — пятна белой шпаклёвки
+    с жёлтой каймой и клочки старых обоев с мелким «червячковым» узором."""
+    w = h = 512
+    WR_ = np.random.default_rng(302)
+    arr = plaster(WR_, w, h, (0.85, 0.80, 0.67), streak=0.06, stains=0.08, crack=0.06)
+    patch = smoothstep(0.52, 0.58, noise(w, h, 6, 6, WR_, oct=4))
+    rim = np.clip(patch - np.roll(patch, (3, 3), (0, 1)), 0, 1)
+    white = C(0.89, 0.87, 0.80) * (0.95 + 0.08 * noise(w, h, 30, 30, WR_))[..., None]
+    arr = arr * (1 - patch[..., None]) + white * patch[..., None]
+    arr *= (1 - rim * 0.12)[..., None]
+    paper = smoothstep(0.62, 0.66, noise(w, h, 5, 5, WR_, oct=3)) * (1 - patch)        # клочки обоев
+    worm = np.abs(noise(w, h, 90, 90, WR_, oct=2) - 0.5) < 0.035
+    pap = C(0.86, 0.82, 0.69) * np.where(worm, 1.08, 0.93)[..., None]
+    arr = arr * (1 - paper[..., None]) + pap * paper[..., None]
+    arr *= (1 - smoothstep(0.7, 0.9, noise(w, h, 4, 4, WR_, oct=3)) * 0.12)[..., None]   # лёгкая желтизна
+    save("yr_west", finish(arr, 1.15, crisp=0.3))
 
 
 RM = np.random.default_rng(2015)             # свой генератор для манги и надписей — остальные текстуры не «плывут»
@@ -303,61 +326,116 @@ def render_writing():
 
 
 def tex_floor_ceiling():
-    save("yr_laminate", ps2_hero.wood_floor(R, 256, 256, 8, base=(0.50, 0.35, 0.21)))   # светлый ламинат «дуб»
-    save("yr_ceiling", ps2_hero.ceiling(R, 128))
+    """Ламинат (как на фото): светлый «дуб» с напечатанными волокнами, доски 1.3 x 0.2 м вразбежку, тёмные стыки,
+    у стен грязнее. Потолок — ровная светлая побелка с бледными разводами."""
+    FR = np.random.default_rng(303)
+    w = h = 512                                                    # 2 x 2 м
+    rows = 10
+    rh = h / rows
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    row = (yy // rh).astype(int)
+    shift = (FR.random(rows) * w).astype(np.float32)
+    PL = 333.0                                                     # длина доски, px
+    xs = (xx + shift[row]) % w
+    plank = (xs // PL).astype(int) + row * 7
+    tone = (0.88 + 0.22 * FR.random(200)).astype(np.float32)
+    grain = noise(w, h, 3, 90, FR, oct=4)
+    fine = noise(w, h, 6, 200, FR, oct=2)
+    arr = np.ones((h, w, 3), np.float32) * C(0.74, 0.58, 0.40)
+    arr *= tone[plank % 200][..., None]
+    arr *= (0.86 + 0.22 * grain + 0.08 * fine)[..., None]
+    knots = np.abs(np.sin((yy + grain * 40) * 0.9)) < 0.08
+    arr[knots] *= 0.9
+    fy = (yy % rh); fx = xs % PL
+    arr[(fy < 1.2)] *= 0.55; arr[(fy >= 1.2) & (fy < 2.4)] *= 1.06
+    arr[(fx < 1.5)] *= 0.6
+    arr *= mottle(h, w, FR, 2, 0.12)[..., None]
+    save("yr_laminate", finish(arr, 1.1, crisp=0.3))
+    c = plaster(FR, 256, 256, (0.84, 0.82, 0.77), streak=0.0, stains=0.12, rough=0.03, crack=0.08)
+    save("yr_ceiling", finish(c, 1.3))
 
 
 def tex_blanket():
-    """Плед на диване: ржаво-оранжевый, розы, кремовый медальон в центре, «леопардовая» кайма."""
-    s = 256
+    """Плед (как на фото): ржаво-оранжевый ворсистый, по полю — тёмные и золотистые завитки-вензеля и крупные
+    пионы (персиковые лепестки слоями, оливковые листья), в центре кремово-золотой медальон с букетом,
+    по краю — «леопардовая» кайма с розетками. 512 x 512 на весь плед вместе со свесами."""
+    s = 512
+    BR = np.random.default_rng(304)
     yy, xx = np.mgrid[0:s, 0:s].astype(np.float32)
     u = (xx - s / 2 + 0.5) / (s / 2); v = (yy - s / 2 + 0.5) / (s / 2)
     sq = np.maximum(np.abs(u), np.abs(v))
-    arr = np.ones((s, s, 3), np.float32) * C(0.56, 0.24, 0.09)
-    # кайма «под леопарда»
-    spots = smoothstep(0.62, 0.70, noise(s, s, 28, 28, R, oct=2))
-    leo = C(0.72, 0.46, 0.18) * (1 - spots[..., None]) + C(0.20, 0.09, 0.03) * spots[..., None]
-    arr = np.where((sq > 0.80)[..., None], leo, arr)
-    arr = np.where(((sq > 0.75) & (sq < 0.79))[..., None], C(0.80, 0.66, 0.38), arr)
-    # розы с листьями по полю
-    def rose(cx, cy, r, base, dark):
+    arr = np.ones((s, s, 3), np.float32) * C(0.62, 0.28, 0.09)
+    arr *= (0.85 + 0.3 * noise(s, s, 10, 10, BR, oct=3))[..., None]
+    sc1 = np.abs(noise(s, s, 14, 14, BR, oct=2) - 0.5) < 0.022                     # тёмные вензеля
+    sc2 = np.abs(noise(s, s, 11, 11, BR, oct=2) - 0.5) < 0.010                     # золотистые вензеля
+    arr[sc1] = arr[sc1] * 0.55
+    arr[sc2] = arr[sc2] * 0.4 + C(0.80, 0.52, 0.24) * 0.6
+
+    def leafy(cx, cy, ang, L, W):
+        ca, sa = math.cos(ang), math.sin(ang)
+        lx = (xx - cx) * ca + (yy - cy) * sa; ly = -(xx - cx) * sa + (yy - cy) * ca
+        m = ((lx - L / 2) / (L / 2)) ** 2 + (ly / (W / 2)) ** 2 < 1
+        vein = m & (np.abs(ly) < 0.9)
+        return m, vein
+
+    def peony(cx, cy, r, light, dark):
         dx, dy = xx - cx, yy - cy
-        rr = np.sqrt(dx * dx + dy * dy); a = np.arctan2(dy, dx)
-        m = rr < r
-        petals = 0.5 + 0.5 * np.sin(a * 3 + rr * 0.9)
-        col = base * (1 - petals[..., None] * 0.45) + dark * (petals[..., None] * 0.45)
+        rr = np.hypot(dx, dy); a = np.arctan2(dy, dx)
+        edge = r * (0.86 + 0.10 * np.sin(a * 7 + cx) + 0.04 * np.sin(a * 13))
+        m = rr < edge
+        t = rr / r
+        layers = 0.5 + 0.5 * np.cos(2 * np.pi * (t * 3.2 + 0.18 * np.sin(a * 6 + cy)))
+        shade = np.clip(layers * (0.55 + 0.45 * t), 0, 1)
+        col = light * (1 - shade[..., None] * 0.6) + dark * (shade[..., None] * 0.6)
+        col = np.where((t < 0.22)[..., None], dark * 0.9, col)
         return m, col
-    pts = [(40, 40), (216, 40), (40, 216), (216, 216), (128, 30), (128, 226), (30, 128), (226, 128),
-           (72, 90), (184, 90), (72, 166), (184, 166)]
-    for (cx, cy) in pts:
-        for k in range(3):                                       # листья
-            ang = R.random() * 6.28; lx, ly = cx + math.cos(ang) * 11, cy + math.sin(ang) * 11
-            lm = ((xx - lx) / 7) ** 2 + ((yy - ly) / 3.5) ** 2 < 1
-            arr = np.where(lm[..., None], C(0.30, 0.40, 0.16), arr)
-        m, col = rose(cx + R.integers(-4, 5), cy + R.integers(-4, 5), 9 + R.integers(0, 4), C(0.86, 0.56, 0.42), C(0.52, 0.18, 0.12))
-        arr = np.where(m[..., None], col, arr)
-    # медальон
-    e = (u / 0.46) ** 2 + (v / 0.34) ** 2
-    arr = np.where((e < 1.0)[..., None], C(0.82, 0.70, 0.46), arr)
-    arr = np.where((e < 0.82)[..., None], C(0.70, 0.50, 0.28), arr)
-    ring = (e > 0.86) & (e < 0.95)
-    arr = np.where(ring[..., None], C(0.48, 0.20, 0.10), arr)
-    m, col = rose(128, 128, 22, C(0.90, 0.62, 0.46), C(0.55, 0.20, 0.14))
-    arr = np.where(m[..., None], col, arr)
-    for (cx, cy) in ((96, 128), (160, 128), (128, 108), (128, 148)):
-        m, col = rose(cx, cy, 8, C(0.86, 0.56, 0.42), C(0.52, 0.18, 0.12))
-        arr = np.where(m[..., None], col, arr)
-    arr *= (0.82 + 0.3 * noise(s, s, 64, 64, R, oct=2))[..., None]        # ворс
-    arr *= mottle(s, s, R, 2, 0.12)[..., None]
-    save("yr_blanket", finish(blur(arr, 0.6, wrap=False), 1.15, crisp=0.3))
+
+    def bouquet(cx, cy, r, k_leaves=5):
+        for k in range(k_leaves):
+            ang = BR.uniform(0, 6.283)
+            m, vein = leafy(cx + math.cos(ang) * r * 0.7, cy + math.sin(ang) * r * 0.7, ang, r * 1.1, r * 0.45)
+            arr[m] = C(0.50, 0.52, 0.24) * (0.8 + 0.3 * BR.random())
+            arr[vein] = C(0.30, 0.32, 0.12)
+        m, col = peony(cx, cy, r, C(0.98, 0.76, 0.55), C(0.72, 0.30, 0.12))
+        arr[m] = col[m]
+
+    for (cx, cy) in ((70, 70), (442, 70), (70, 442), (442, 442), (256, 58), (256, 454), (58, 256), (454, 256),
+                     (150, 170), (362, 170), (150, 342), (362, 342)):
+        bouquet(cx + BR.integers(-8, 9), cy + BR.integers(-8, 9), 34 + BR.integers(0, 10), 5)
+    # медальон: кремово-золотой овал с кольцами и букетом
+    e = (u / 0.50) ** 2 + (v / 0.40) ** 2
+    med = C(0.86, 0.72, 0.46) * (0.9 + 0.15 * noise(s, s, 20, 20, BR))[..., None]
+    arr = np.where((e < 1.0)[..., None], med, arr)
+    arr = np.where(((e > 0.88) & (e < 0.96))[..., None], C(0.50, 0.20, 0.08), arr)
+    arr = np.where(((e > 0.74) & (e < 0.79))[..., None], C(0.72, 0.45, 0.20), arr)
+    lace = (e < 0.74) & (np.abs(noise(s, s, 24, 24, BR, oct=2) - 0.5) < 0.03)
+    arr[lace] *= 0.82
+    bouquet(256, 256, 58, 8)
+    for (cx, cy) in ((200, 238), (312, 238), (230, 300), (284, 300)):
+        bouquet(cx, cy, 28, 3)
+    # кайма «под леопарда»: розетки — тёмное кольцо вокруг рыжего пятна
+    border = sq > 0.84
+    cells = noise(s, s, 40, 40, BR, oct=1)
+    ros = (cells > 0.60) & (cells < 0.68)
+    core = cells >= 0.68
+    leo = np.ones((s, s, 3), np.float32) * C(0.80, 0.58, 0.30)
+    leo[ros] = C(0.22, 0.10, 0.04); leo[core] = C(0.62, 0.32, 0.10)
+    arr = np.where(border[..., None], leo, arr)
+    arr = np.where(((sq > 0.80) & (sq <= 0.84))[..., None], C(0.48, 0.18, 0.06), arr)
+    arr *= (0.84 + 0.26 * noise(s, s, 128, 128, BR, oct=2))[..., None]               # ворс
+    arr *= mottle(s, s, BR, 2, 0.10)[..., None]
+    save("yr_blanket", finish(blur(arr, 0.7, wrap=False), 1.1, crisp=0.3))
 
 
 def tex_fabric():
-    """Обивка дивана и кресла: серо-бежевый велюр."""
-    arr = np.ones((64, 64, 3), np.float32) * C(0.50, 0.44, 0.35)
-    arr *= (0.85 + 0.25 * noise(64, 64, 16, 16, R, oct=2) + 0.1 * R.random((64, 64)).astype(np.float32))[..., None]
-    arr *= mottle(64, 64, R, 2, 0.15)[..., None]
-    save("yr_fabric", finish(arr, 1.1))
+    """Обивка дивана и кресла (как на фото): бежевый велюр — пятна примятого ворса светлее/темнее, мелкий ворс."""
+    FB = np.random.default_rng(305)
+    s = 128
+    arr = np.ones((s, s, 3), np.float32) * C(0.60, 0.52, 0.41)
+    arr *= (0.86 + 0.22 * noise(s, s, 5, 5, FB, oct=3))[..., None]                  # примятый ворс
+    arr *= (0.94 + 0.10 * noise(s, s, 64, 64, FB, oct=1))[..., None]
+    arr *= (0.97 + 0.06 * FB.random((s, s)).astype(np.float32))[..., None]
+    save("yr_fabric", finish(arr, 1.1, crisp=0.2))
     # кресло у окна (как на фото): тёмная серо-сиреневая обивка с крупными блёклыми цветами
     s_ = 64
     yy, xx = np.mgrid[0:s_, 0:s_].astype(np.float32)
@@ -382,8 +460,8 @@ def tex_window():
     lit = np.zeros((s, s), np.float32)
     for wy in range(40, 124, 10):
         for wx in range(16, 108, 9):
-            if R.random() < 0.18:
-                lit[wy:wy + 5, wx:wx + 4] = 0.6 + 0.4 * R.random()
+            if R.random() < 0.10:                                          # редкие тусклые окна напротив
+                lit[wy:wy + 4, wx:wx + 3] = 0.25 + 0.3 * R.random()
     glass = glass + lit[..., None] * C(0.85, 0.55, 0.28)
     glass *= (0.8 + 0.4 * noise(s, s, 6, 6, R))[..., None]
     frame = np.zeros((s, s), bool)
@@ -399,7 +477,7 @@ def tex_window():
     alb[58:74, 70:74] = C(0.86, 0.84, 0.74)
     alb[18:28, 118:122] = C(0.55, 0.55, 0.53); alb[100:110, 118:122] = C(0.55, 0.55, 0.53)
     save("yr_window", finish(alb, 1.1, crisp=0.3))
-    save("yr_window_emission", np.where(frame[..., None], 0.0, glass * 0.8 + lit[..., None] * 0.6).astype(np.float32))
+    save("yr_window_emission", np.where(frame[..., None], 0.0, glass * 0.6 + lit[..., None] * 0.45).astype(np.float32))
 
 
 def tex_screen():
@@ -453,6 +531,13 @@ A = {
     "soil": (192, 200, 224, 232), "cap": (224, 200, 256, 232),
     "plush": (128, 72, 160, 104), "bead": (160, 72, 192, 104),
 }
+
+
+def CLQ(q):
+    """Четверть куска «clothes»: 0 — толстовка, 1 — джинса, 2 — трикотаж, 3 — куртка."""
+    x0, y0, x1, y1 = A["clothes"]
+    xa, ya = x0 + (q % 2) * 32, y0 + (q // 2) * 32
+    return (xa / 256, 1 - (ya + 32) / 256, (xa + 32) / 256, 1 - ya / 256)
 
 
 def RC(name):
@@ -548,11 +633,26 @@ def tex_atlas():
     bo = np.ones((32, 64, 3), np.float32) * C(0.55, 0.08, 0.06) * (0.85 + 0.3 * noise(64, 32, 6, 4, R))[..., None]
     bo[8:12, 10:50] = C(0.85, 0.70, 0.30); bo[16:19, 14:40] = C(0.85, 0.70, 0.30); bo[:, :3] *= 0.6
     put("book", bo)
-    cl = np.ones((64, 64, 3), np.float32) * C(0.20, 0.27, 0.40)
-    n1 = noise(64, 64, 5, 5, R, oct=2); n2 = noise(64, 64, 4, 4, R, oct=2)
-    cl = np.where((n1 > 0.55)[..., None], C(0.05, 0.05, 0.06), cl)
-    cl = np.where((n2 > 0.62)[..., None], C(0.32, 0.33, 0.35), cl)
-    cl *= (0.75 + 0.5 * noise(64, 64, 10, 10, R))[..., None]
+    # одежда — четыре куска 32x32: чёрная толстовка (красный шнурок), джинса, серый трикотаж, тёмно-синяя куртка;
+    # по каждому — тени складок
+    cl = np.zeros((64, 64, 3), np.float32)
+    yy, xx = np.mgrid[0:32, 0:32].astype(np.float32)
+    for q, (col, kind) in enumerate(((C(0.06, 0.06, 0.07), "hood"), (C(0.25, 0.34, 0.50), "denim"),
+                                     (C(0.42, 0.42, 0.44), "knit"), (C(0.11, 0.13, 0.20), "jacket"))):
+        sw_ = np.ones((32, 32, 3), np.float32) * col
+        folds = 0.82 + 0.3 * noise(32, 32, 3, 3, R, oct=2)
+        sw_ *= folds[..., None]
+        if kind == "denim":
+            sw_ *= (0.9 + 0.12 * ((xx + yy) % 3 < 1))[..., None]
+            sw_[:, 14:15] = C(0.70, 0.55, 0.25)                         # шов
+        elif kind == "knit":
+            sw_ *= (0.9 + 0.12 * (yy % 2 < 1))[..., None]
+        elif kind == "hood":
+            sw_[np.abs(xx - 10 - 3 * np.sin(yy / 4)) < 0.5] = C(0.45, 0.08, 0.07)
+        else:
+            sw_[16:17] = C(0.5, 0.5, 0.52)                               # молния
+        y_, x_ = (q // 2) * 32, (q % 2) * 32
+        cl[y_:y_ + 32, x_:x_ + 32] = sw_
     put("clothes", cl)
     flat("brass", (0.58, 0.44, 0.20), 0.3)
     dr = np.ones((56, 32, 3), np.float32) * C(0.80, 0.79, 0.74) * (0.9 + 0.15 * noise(32, 56, 4, 6, R))[..., None]
@@ -567,8 +667,8 @@ def tex_atlas():
     mp[np.abs(yy - 10 - 4 * np.sin(xx / 4 + 1)) < 0.8] = C(0.55, 0.08, 0.06)
     put("mousepad", mp)
     flat("white", (0.80, 0.80, 0.77), 0.15)
-    pl = np.ones((24, 32, 3), np.float32) * C(0.42, 0.36, 0.50) * (0.85 + 0.3 * noise(32, 24, 4, 4, R))[..., None]
-    pl[::4, ::4] = C(0.6, 0.55, 0.65); put("pillow", pl)
+    pl = np.ones((24, 32, 3), np.float32) * C(0.40, 0.43, 0.52) * (0.85 + 0.3 * noise(32, 24, 4, 4, R))[..., None]
+    put("pillow", pl)                                                                             # серо-голубая подушка
     flat("soil", (0.10, 0.07, 0.05), 0.4)
     flat("cap", (0.15, 0.35, 0.75), 0.2)
     pl = np.ones((32, 32, 3), np.float32) * C(0.78, 0.12, 0.10) * (0.7 + 0.6 * R.random((32, 32, 1)).astype(np.float32))
@@ -627,19 +727,23 @@ def cylr(b, p0, p1, r0, r1, m, rect, segs=8, caps=True):
 
 
 def leaf(b, base, yaw, tilt, L, W, m, rect):
-    """Двусторонний лист: от основания под углом tilt от вертикали в сторону yaw (градусы)."""
-    y, t = math.radians(yaw), math.radians(tilt)
+    """Двусторонний лист спатифиллума: черешок, широкая ланцетная пластина, кончик свисает (градусы)."""
+    y, t_ = math.radians(yaw), math.radians(tilt)
     base = Vector(base)
-    d = Vector((math.cos(y) * math.sin(t), math.sin(y) * math.sin(t), math.cos(t)))
-    side = Vector((-math.sin(y), math.cos(y), 0)) * (W / 2)
-    mid = base + d * (L * 0.45) - Vector((0, 0, L * 0.05 * math.sin(t)))
-    tip = base + d * L - Vector((0, 0, L * 0.25 * math.sin(t)))         # кончик чуть свисает
+    d = Vector((math.cos(y) * math.sin(t_), math.sin(y) * math.sin(t_), math.cos(t_)))
+    side = Vector((-math.sin(y), math.cos(y), 0))
     u0, v0, u1, v1 = rect
-    um, vm = (u0 + u1) / 2, (v0 + v1) / 2
-    pts = [base, mid + side, tip, mid - side]
-    uvs = [(um, v0), (u1, vm), (um, v1), (u0, vm)]
-    b.poly(pts, uvs, m)
-    b.poly(pts[::-1], uvs[::-1], m)
+    um = (u0 + u1) / 2
+    prof = [(0.0, 0.0), (0.35, 0.04), (0.45, 0.42), (0.62, 0.50), (0.80, 0.34), (1.0, 0.0)]   # (доля длины, полуширина)
+    spine = [base + d * (L * f) - Vector((0, 0, L * 0.45 * math.sin(t_) * f * f)) for f, _ in prof]
+    for k in range(len(prof) - 1):
+        (fa, wa), (fb, wb) = prof[k], prof[k + 1]
+        a0, a1 = spine[k], spine[k + 1]
+        pts = [a0 - side * (W * wa), a1 - side * (W * wb), a1 + side * (W * wb), a0 + side * (W * wa)]
+        va, vb = v0 + (v1 - v0) * fa, v0 + (v1 - v0) * fb
+        uvs = [(um - (um - u0) * wa * 2, va), (um - (um - u0) * wb * 2, vb), (um + (u1 - um) * wb * 2, vb), (um + (u1 - um) * wa * 2, va)]
+        b.poly(pts, uvs, m)
+        b.poly(pts[::-1], uvs[::-1], m)
 
 
 def plant(b, base, n, L, M, rng, spread=50):
@@ -650,6 +754,154 @@ def plant(b, base, n, L, M, rng, spread=50):
     for i in range(n):
         leaf(b, (x, y, z + 0.15), i * 360 / n + rng.uniform(-15, 15), rng.uniform(15, spread), L * rng.uniform(0.7, 1.1),
              L * 0.32, M["atlas"], RC("leaf"))
+
+
+class SB(B):
+    """Мягкие формы с общими вершинами — после сборки затеняются гладко (обивка, плед, одежда)."""
+
+    def build(self, name, coll):
+        ob = super().build(name, coll)
+        ob.data.shade_smooth()
+        return ob
+
+
+def _axis_coords(h, rr, k):
+    """Координаты сетки вдоль оси: частые у краёв (там скругление), k равных шагов в середине."""
+    if rr < 1e-4:
+        return list(np.linspace(-h, h, k + 1))
+    inner = list(np.linspace(-h + rr, h - rr, k + 1))
+    return [-h, -h + rr * 0.45] + inner + [h - rr * 0.45, h]
+
+
+def _rot(pitch, roll, yaw):
+    return Euler((math.radians(pitch), math.radians(roll), math.radians(yaw)), 'XYZ').to_matrix()
+
+
+def soft(sb, c, size, m, rect, r=0.05, n=(3, 3, 2), amp=0.0, rng=None, yaw=0.0, pitch=0.0, roll=0.0,
+         sag=0.0, taper=1.0, bottom=False, freq=7.0, pivot=None):
+    """Скруглённый ящик (обивка, подушки, одежда): радиус r, лёгкая «бугристость» amp, провис верха sag,
+    taper — сужение к верху. pivot — точка, вокруг которой поворачивать (по умолчанию центр)."""
+    h = [size[0] / 2, size[1] / 2, size[2] / 2]
+    rr = min(r, min(h) * 0.98)
+    ph = [rng.uniform(0, 6.283) for _ in range(6)] if rng else [0.0] * 6
+    rot = _rot(pitch, roll, yaw)
+    cc = Vector(c)
+    pv = Vector(pivot) if pivot is not None else cc
+    axes = [_axis_coords(h[i], rr, n[i]) for i in range(3)]
+    E = [Vector((1, 0, 0)), Vector((0, 1, 0)), Vector((0, 0, 1))]
+    FACES = [(0, 1, 1, 2, 1), (0, -1, 1, 2, -1), (1, 1, 0, 2, -1), (1, -1, 0, 2, 1), (2, 1, 0, 1, 1), (2, -1, 0, 1, -1)]
+    idx = {}
+    u0, v0, u1, v1 = rect
+
+    def vert(p):
+        key = (round(p.x, 5), round(p.y, 5), round(p.z, 5))
+        if key in idx:
+            return idx[key]
+        q = Vector(p)
+        t = (q.z + h[2]) / (2 * h[2])
+        s_ = 1 + (taper - 1) * t
+        q.x *= s_; q.y *= s_
+        hx, hy = h[0] * s_, h[1] * s_
+        inner = Vector((max(-hx + rr, min(hx - rr, q.x)), max(-hy + rr, min(hy - rr, q.y)), max(-h[2] + rr, min(h[2] - rr, q.z))))
+        d = q - inner
+        nrm = d.normalized() if d.length > 1e-7 else Vector((0, 0, 1))
+        q = inner + nrm * rr if d.length > 1e-7 else q
+        if sag and q.z > 0:
+            q.z -= sag * (1 - (q.x / hx) ** 2) * (1 - (q.y / hy) ** 2) * (q.z / h[2])
+        if amp:
+            w_ = (math.sin(q.x * freq + ph[0]) * math.sin(q.y * freq * 1.3 + ph[1]) +
+                  0.5 * math.sin((q.x + q.z) * freq * 2.1 + ph[2]) * math.sin(q.y * freq * 1.7 + ph[3]) +
+                  0.3 * math.sin(q.z * freq * 1.5 + ph[4]))
+            q = q + nrm * (amp * w_)
+        world = pv + rot @ (cc + q - pv)
+        idx[key] = len(sb.v)
+        sb.v.append(tuple(world))
+        return idx[key]
+
+    for (a, s, ua, va, us) in FACES:
+        if a == 2 and s < 0 and not bottom:
+            continue
+        A, V_ = axes[ua], axes[va]
+        if us < 0:
+            A = A[::-1]
+        V_ = V_ if not (a == 2 and s < 0) else V_[::-1]
+        grid = []
+        for vv in V_:
+            row = []
+            for uu in A:
+                p = Vector((0, 0, 0)); p[a] = s * h[a]; p[ua] = uu; p[va] = vv
+                row.append(vert(p))
+            grid.append(row)
+        nu, nv = len(A) - 1, len(V_) - 1
+        su = [(uu - A[0]) / (A[-1] - A[0]) for uu in A]
+        sv = [(vv - V_[0]) / (V_[-1] - V_[0]) for vv in V_]
+        mi = sb._m(m)
+        for j in range(nv):
+            for i in range(nu):
+                f = (grid[j][i], grid[j][i + 1], grid[j + 1][i + 1], grid[j + 1][i])
+                sb.f.append(f)
+                sb.uv.append([(u0 + (u1 - u0) * su[i], v0 + (v1 - v0) * sv[j]), (u0 + (u1 - u0) * su[i + 1], v0 + (v1 - v0) * sv[j]),
+                              (u0 + (u1 - u0) * su[i + 1], v0 + (v1 - v0) * sv[j + 1]), (u0 + (u1 - u0) * su[i], v0 + (v1 - v0) * sv[j + 1])])
+                sb.mi.append(mi)
+
+
+def drape(sb, x0, x1, y0, y1, zt, hang, m, rect, rng, n=(10, 12), nh=4, amp=0.015, edge=0.05, zfloor=None, fold=0.03, bumps=()):
+    """Ткань, наброшенная на прямоугольник x0..x1, y0..y1 на высоте zt и свисающая по сторонам.
+    hang = {'-X':, '+X':, '-Y':, '+Y':} — длина свеса, число или функция от координаты вдоль края.
+    Складки: бугры сверху (amp) и вертикальные волны на свесе (fold)."""
+    zfloor = Z + 0.012 if zfloor is None else zfloor
+    hv = lambda k, t: (hang.get(k, 0.0)(t) if callable(hang.get(k, 0.0)) else hang.get(k, 0.0))
+    ph = [rng.uniform(0, 6.283) for _ in range(6)]
+
+    def seg(a, b_, k):
+        return list(np.linspace(a, b_, k + 1))
+    # параметры: доля по свесу (-1..0), по верху (0..1), по свесу (1..2)
+    us = [-1 + t for t in seg(0, 1, nh)[:-1]] + seg(0, 1, n[0]) + [1 + t for t in seg(0, 1, nh)[1:]]
+    vs = [-1 + t for t in seg(0, 1, nh)[:-1]] + seg(0, 1, n[1]) + [1 + t for t in seg(0, 1, nh)[1:]]
+    W, D = x1 - x0, y1 - y0
+    arc = edge * math.pi / 2
+    smp = lambda k, a, b_: max(hv(k, a + (b_ - a) * q) for q in np.linspace(0, 1, 9))
+    hmx = (smp('-X', y0, y1), smp('+X', y0, y1), smp('-Y', x0, x1), smp('+Y', x0, x1))   # для развёртки UV
+    pos, uvp = {}, {}
+    for j, v in enumerate(vs):
+        for i, u in enumerate(us):
+            px = x0 + W * min(max(u, 0), 1); py = y0 + D * min(max(v, 0), 1)
+            ox = -hv('-X', py) * (-u) if u < 0 else (hv('+X', py) * (u - 1) if u > 1 else 0.0)
+            oy = -hv('-Y', px) * (-v) if v < 0 else (hv('+Y', px) * (v - 1) if v > 1 else 0.0)
+            dist = math.hypot(ox, oy)
+            z = zt + amp * (math.sin(px * 5.1 + ph[0]) * math.sin(py * 4.3 + ph[1]) + 0.6 * math.sin(px * 11 + py * 7 + ph[2]))
+            for (bx, by, br, bh) in bumps:                             # комья под тканью
+                z += bh * math.exp(-((px - bx) ** 2 + (py - by) ** 2) / (br * br))
+            x, y = px, py
+            if dist > 1e-6:
+                dx, dy = ox / dist, oy / dist
+                if dist < arc:
+                    a_ = dist / edge
+                    hor, dz = edge * math.sin(a_), edge * (1 - math.cos(a_))
+                else:
+                    hor, dz = edge + (dist - arc) * 0.06, edge + (dist - arc)
+                zz = zt - dz
+                if zz < zfloor:                                        # легла на пол — тянется дальше по полу
+                    hor += (zfloor - zz); zz = zfloor
+                tang = (py if abs(dx) > abs(dy) else px)
+                wv = fold * math.sin(tang * 17 + ph[3]) * min(1, dist / 0.2) + fold * 0.5 * math.sin(tang * 37 + ph[4]) * min(1, dist / 0.3)
+                x, y, z = px + dx * (hor + wv), py + dy * (hor + wv), zz + (z - zt) * 0.3
+            pos[(i, j)] = (x, y, z)
+            uvp[(i, j)] = ((W * min(max(u, 0), 1) + ox + hmx[0]) / (W + hmx[0] + hmx[1]),
+                           (D * min(max(v, 0), 1) + oy + hmx[2]) / (D + hmx[2] + hmx[3]))
+    base = len(sb.v)
+    NI = len(us)
+    for j in range(len(vs)):
+        for i in range(NI):
+            sb.v.append(pos[(i, j)])
+    u0, v0, u1, v1 = rect
+    mi = sb._m(m)
+    for j in range(len(vs) - 1):
+        for i in range(NI - 1):
+            ids = [(i, j), (i + 1, j), (i + 1, j + 1), (i, j + 1)]
+            sb.f.append(tuple(base + b_ * NI + a for (a, b_) in ids))
+            sb.uv.append([(u0 + (u1 - u0) * uvp[k][0], v0 + (v1 - v0) * uvp[k][1]) for k in ids])
+            sb.mi.append(mi)
 
 
 def export(name, obs):
@@ -668,6 +920,8 @@ def room(M):
     rng = random.Random(47)
     coll = bpy.context.scene.collection
     b, p, scr = B(), B(), B()
+    s, sp = SB(), SB()                       # мягкое: с коллизией и без
+    srng = np.random.default_rng(306)
     at = M["atlas"]
     BL, WH = RC("black"), RC("white")
 
@@ -696,8 +950,15 @@ def room(M):
     b.box((XW - 0.01, WY0, WZ0), (XW, WY1, WZ1), {'+X': (M["window"], (0, 0, 1, 1))})
     abox(b, (XW + 0.04, WY0 - 0.08, WZ0 - 0.04), (X0 + 0.24, WY1 + 0.08, WZ0), at, WH)                 # подоконник
     # батарея и стояк
-    b.box((X0 + 0.04, 2.08, Z + 0.15), (X0 + 0.14, 2.8, Z + 0.75),     # батарея под левой половиной окна
-          {'+X': (M["radiator"], (0, 0, 1.5, 1)), '+Z': M["radiator"], '+Y': M["radiator"], '-Y': M["radiator"]}, scale=(0.3, 0.3))
+    # чугунная батарея МС-140 под левой половиной окна (как на фото): 8 рёбер-секций со скруглениями
+    NS_, RY0, RY1 = 8, 2.08, 2.80
+    sw = (RY1 - RY0) / NS_
+    for k in range(NS_):
+        yc = RY0 + sw * (k + 0.5)
+        for xc in (X0 + 0.065, X0 + 0.115):                          # две колонки в секции
+            soft(s, (xc, yc, Z + 0.45), (0.042, sw - 0.012, 0.60), at, WH, r=0.018, n=(1, 1, 3), bottom=True)
+        for zc in (Z + 0.19, Z + 0.71):                               # ниппели сверху и снизу
+            soft(s, (X0 + 0.09, yc, zc), (0.10, sw - 0.004, 0.07), at, WH, r=0.025, n=(1, 1, 1), bottom=True)
     for z in (Z + 0.22, Z + 0.68):
         cylr(p, (X0 + 0.06, 1.5, z), (X0 + 0.06, 2.08, z), 0.016, 0.016, M["radiator_m"], (0, 0, 1, 1), segs=6, caps=False)
     cylr(p, (X0 + 0.06, 1.5, Z), (X0 + 0.06, 1.5, ZT), 0.022, 0.022, M["radiator_m"], (0, 0, 1, 1), segs=6, caps=False)
@@ -728,10 +989,10 @@ def room(M):
     dr_ = RC("drawer")
     abox(p, (cx1, cy0 + 0.03, Z + 0.03), (cx1 + 0.06, cy1 - 0.03, Z + 0.19), at, RC("wood"),        # нижний ящик выдвинут
          faces={'+X': (at, (dr_[0], dr_[1], dr_[2], dr_[1] + (dr_[3] - dr_[1]) * 0.24))})
-    fx = cx1 + 0.075                                                                               # скатерть спереди
-    abox(p, (cx0 - 0.01, cy0, ch), (fx + 0.01, cy1 + 0.03, ch + 0.012), at, RC("cloth"))            # на крышке
-    abox(p, (fx, cy0 + 0.24, Z + 0.10), (fx + 0.012, cy1 + 0.03, ch), at, RC("cloth"), skip=('-X',))   # свисает спереди
-    abox(p, (cx0, cy1 + 0.015, Z + 0.30), (fx + 0.01, cy1 + 0.03, ch), at, RC("cloth"), skip=('-Y',))  # и сбоку
+    # белая скатерть: на крышке, спереди свисает до выдвинутого нижнего ящика (у южной стены — коротко, там видны ящики), сбоку — до середины
+    fhang = lambda y: 0.04 if y < cy0 + 0.22 else (ch - Z - 0.22) * min(1.0, (y - cy0 - 0.22) / 0.06)
+    drape(sp, cx0 - 0.01, cx1 + 0.065, cy0, cy1 + 0.01, ch + 0.006, {'+X': fhang, '+Y': 0.52, '-Y': 0.02, '-X': 0.0},
+          at, RC("cloth"), srng, n=(5, 8), nh=5, amp=0.004, edge=0.012, fold=0.012)
     t = ch + 0.012
     plant(p, (cx0 + 0.15, cy0 + 0.16, t), 13, 0.40, M, rng, spread=60)                              # большой спатифиллум
     obox(p, (cx0 + 0.34, cy0 + 0.17, t + 0.02), (0.20, 0.26, 0.035), at, RC("wood"),                # рамка лежит на краю
@@ -758,58 +1019,60 @@ def room(M):
     #     спинкой к стене с панелями; округлая спинка, тёмная обивка в цветах, гора одежды сползает к батарее ---
     fab = M["fabric"]
     af = M["armchair"]
+    FS = lambda w_, h_: (0, 0, w_ / 0.5, h_ / 0.5)              # велюр: тайл 0.5 м
     sx0_ = X0 + 1.2                                             # где начинается диван (см. ниже)
     ax0, ax1, ay0, ay1 = X0 + 0.02, sx0_ - 0.05, Y1 - 0.86, Y1 - 0.04
     AW = ax1 - ax0
-    AS = (0.5, 0.5)
-    b.box((ax0 + 0.15, ay0, Z), (ax1 - 0.15, ay1 - 0.2, Z + 0.44), {k: af for k in ('+X', '-X', '+Z', '-Y')}, scale=AS)
-    b.box((ax0, ay1 - 0.24, Z), (ax1, ay1, Z + 0.80), {k: af for k in ('+X', '-X', '-Y')}, scale=AS)          # спинка
-    cylr(b, (ax0, ay1 - 0.13, Z + 0.80), (ax1, ay1 - 0.13, Z + 0.80), 0.13, 0.13, af, (0, 0, 1, 0.5), segs=8)  # её округлый верх
-    for (xa, xb) in ((ax0, ax0 + 0.16), (ax1 - 0.16, ax1)):                                                  # подлокотники
-        b.box((xa, ay0 + 0.04, Z), (xb, ay1 - 0.2, Z + 0.56), {k: af for k in ('+X', '-X', '-Y')}, scale=AS)
-        cylr(b, ((xa + xb) / 2, ay0 + 0.04, Z + 0.56), ((xa + xb) / 2, ay1 - 0.2, Z + 0.56), 0.08, 0.08, af, (0, 0, 1, 0.5), segs=6)
-    cl = RC("clothes")
-    # (от спинки, доля ширины кресла, высота, размер x, y, z, поворот, наклон) — куча выше подлокотников, ниже спинки
+    axc = (ax0 + ax1) / 2
+    soft(s, (axc, (ay0 + ay1 - 0.2) / 2, Z + 0.22), (AW - 0.30, ay1 - 0.2 - ay0, 0.44), fab, FS(AW, 0.6), r=0.07, n=(3, 3, 2), sag=0.03)
+    soft(s, (axc, ay1 - 0.13, Z + 0.46), (AW, 0.26, 0.92), fab, FS(AW, 1.0), r=0.12, n=(4, 1, 3), taper=0.97)        # спинка, округлый верх
+    for xc in (ax0 + 0.08, ax1 - 0.08):                                                                         # толстые подлокотники
+        soft(s, (xc, (ay0 + 0.04 + ay1 - 0.2) / 2, Z + 0.30), (0.17, ay1 - 0.24 - ay0, 0.62), fab, FS(0.2, 0.6), r=0.08, n=(1, 3, 2))
+    # на спинку наброшен серо-сиреневый плед с блёклыми цветами (как на фото)
+    drape(sp, ax0 + 0.02, ax1 - 0.02, ay1 - 0.24, ay1 - 0.02, Z + 0.925, {'-Y': 0.30, '+Y': 0.05, '-X': 0.12, '+X': 0.10},
+          af, (0, 0, 2.2, 1.2), srng, n=(6, 2), nh=3, amp=0.01, edge=0.06, fold=0.025)
+    cl = CLQ(1)
+    pile_i = [0]
+    # гора одежды (мягкие комья): выше подлокотников, ниже спинки; часть сползает к батарее и на пол
     for (dx, fy, dz, sx, sy, sz, yw, pt) in (
-            (0.55, 0.45, 0.52, 0.52, 0.62, 0.18, 8, 0), (0.48, 0.55, 0.66, 0.42, 0.48, 0.16, -14, 0),
-            (0.56, 0.35, 0.74, 0.30, 0.36, 0.12, 25, 6), (0.62, 0.75, 0.60, 0.30, 0.30, 0.20, 40, 0),
-            (0.60, 0.18, 0.62, 0.30, 0.26, 0.20, 10, 0), (0.42, 0.68, 0.76, 0.26, 0.30, 0.12, -30, 0),
-            (0.74, 0.45, 0.40, 0.50, 0.40, 0.34, -6, -25),                                                    # сползает с сиденья
-            (0.70, 0.10, 0.34, 0.40, 0.22, 0.46, 15, -18)):                                                   # свесилось к батарее
-        obox(b, (ax0 + fy * AW, ay1 - dx, Z + dz), (sy, sx, sz), at, cl, yaw=yw, pitch=pt)
-    obox(p, (ax0 + 0.16, ay0 - 0.06, Z + 0.28), (0.28, 0.05, 0.52), at, cl, yaw=8, pitch=-14)      # джинсы свесились на пол
-    obox(p, (ax0 + 0.62 * AW, ay0 - 0.04, Z + 0.30), (0.10, 0.03, 0.42), at, WH, yaw=-4, pitch=-8)  # белое полотенце
-    obox(b, (ax0 + 0.55 * AW, ay0 - 0.30, Z + 0.20), (0.50, 0.08, 0.40), at, BL, yaw=-8, pitch=-28)   # чёрная коробка у кресла
-    obox(p, (ax0 + 0.22, ay0 - 0.22, Z + 0.06), (0.36, 0.28, 0.12), at, cl, yaw=20)               # куча на полу
+            (0.50, 0.45, 0.50, 0.55, 0.66, 0.20, 8, 0), (0.46, 0.58, 0.66, 0.44, 0.50, 0.18, -14, 4),
+            (0.54, 0.32, 0.74, 0.32, 0.38, 0.14, 25, 6), (0.60, 0.76, 0.60, 0.32, 0.32, 0.22, 40, 0),
+            (0.58, 0.18, 0.62, 0.30, 0.28, 0.22, 10, 0), (0.40, 0.66, 0.80, 0.28, 0.32, 0.14, -30, 0),
+            (0.72, 0.45, 0.40, 0.52, 0.42, 0.30, -6, -25),
+            (0.68, 0.10, 0.36, 0.40, 0.24, 0.44, 15, -18)):
+        q_ = (0, 1, 0, 2, 3, 1, 0, 3)[pile_i[0] % 8]; pile_i[0] += 1
+        soft(s, (ax0 + fy * AW, ay1 - dx, Z + dz), (sy, sx, sz), at, CLQ(q_), r=min(sx, sy, sz) * 0.35, n=(3, 3, 1),
+             amp=0.028, rng=srng, yaw=yw, pitch=pt, freq=14)
+    soft(sp, (ax0 + 0.16, ay0 - 0.05, Z + 0.30), (0.30, 0.06, 0.56), at, cl, r=0.025, n=(2, 1, 3), amp=0.01, rng=srng, yaw=8, pitch=-14)   # джинсы свесились
+    soft(sp, (ax0 + 0.62 * AW, ay0 - 0.03, Z + 0.32), (0.12, 0.03, 0.44), at, WH, r=0.012, n=(1, 1, 3), amp=0.006, rng=srng, yaw=-4, pitch=-8)  # белое полотенце
+    soft(s, (ax0 + 0.55 * AW, ay0 - 0.30, Z + 0.20), (0.50, 0.08, 0.40), at, BL, r=0.01, n=(1, 1, 1), yaw=-8, pitch=-28)   # чёрная коробка у кресла
+    soft(sp, (ax0 + 0.22, ay0 - 0.22, Z + 0.06), (0.38, 0.30, 0.13), at, cl, r=0.06, n=(2, 2, 1), amp=0.015, rng=srng, yaw=20, freq=12)   # куча на полу
     cylr(p, (ax0 + 0.50 * AW, ay0 - 0.12, Z + 0.62), (ax0 + 0.66 * AW, ay0 - 0.02, Z + 0.58), 0.04, 0.04, at, RC("bottle"), segs=8)   # бутылка в куче
     for k_ in range(2):                                                                            # провода из-под коробки
         cylr(p, (ax0 + 0.5 * AW + k_ * 0.08, ay0 - 0.36, Z + 0.01), (ax0 + 0.5 * AW + 0.22 + k_ * 0.05, ay0 - 0.70, Z + 0.01), 0.005, 0.005, at, BL, segs=3, caps=False)
     for (y_, yw) in ((2.78, 75), (2.56, 95)):                                                      # кроссовки у батареи
-        obox(p, (X0 + 0.30, y_, Z + 0.05), (0.11, 0.28, 0.10), at, WH, yaw=yw)
-        obox(p, (X0 + 0.30, y_, Z + 0.012), (0.12, 0.29, 0.024), at, BL, yaw=yw)
+        soft(sp, (X0 + 0.30, y_, Z + 0.06), (0.10, 0.27, 0.09), at, WH, r=0.04, n=(1, 2, 1), yaw=yw, taper=0.8)
+        soft(sp, (X0 + 0.30, y_, Z + 0.013), (0.115, 0.29, 0.026), at, BL, r=0.012, n=(1, 2, 1), yaw=yw)
 
     # --- диван-кровать вдоль северной стены, разложен ---
     sx0, sx1 = X0 + 1.2, -7.58                                                 # вплотную к креслу; между комодом и кроватью — проход к окну
     sy1 = Y1 - 0.02
+    SW = sx1 - sx0
     bl = M["blanket"]
-    b.box((sx0, 2.0, Z), (sx1, sy1, Z + 0.32), {k: fab for k in ('+X', '-X', '-Y')}, scale=(0.6, 0.6))
-    b.box((sx0, sy1 - 0.26, Z + 0.32), (sx1, sy1, Z + 0.86), {k: fab for k in ('+X', '-X', '+Z', '-Y')}, scale=(0.6, 0.6))
-    for (xa, xb) in ((sx0 - 0.04, sx0 + 0.2), (sx1 - 0.2, sx1 + 0.04)):                     # подлокотники
-        b.box((xa, sy1 - 0.95, Z), (xb, sy1, Z + 0.66), {k: fab for k in ('+X', '-X', '+Z', '-Y')}, scale=(0.6, 0.6))
-        cylr(b, (xa, sy1 - 0.95, Z + 0.66), (xb, sy1 - 0.95, Z + 0.66), 0.1, 0.1, fab, (0, 0, 1, 0.3), segs=6)
-    # разложенная часть выдвинута далеко от стены (как на фото): шириной с диван, плед чуть свисает по бокам;
-    # до стены с мангой остаётся проход ~0.7 м
+    soft(s, ((sx0 + sx1) / 2, (2.0 + sy1) / 2, Z + 0.16), (SW, sy1 - 2.0, 0.32), fab, FS(SW, 1.9), r=0.04, n=(4, 3, 1))
+    soft(s, ((sx0 + sx1) / 2, sy1 - 0.13, Z + 0.59), (SW, 0.26, 0.56), fab, FS(SW, 0.6), r=0.09, n=(5, 1, 2), sag=0.02)  # спинка
+    for xc in (sx0 + 0.08, sx1 - 0.08):                                                         # подлокотники: толстые, скруглённые
+        soft(s, (xc, sy1 - 0.475, Z + 0.34), (0.26, 0.95, 0.68), fab, FS(0.3, 1.0), r=0.11, n=(1, 3, 2))
+    # разложенная часть выдвинута далеко от стены (как на фото): шириной с диван; до стены с мангой проход ~0.7 м
     by0, by1 = Y0 + 0.70, sy1 - 0.95                                           # by1 — перед подлокотниками
-    b.box((sx0, by0 + 0.04, Z), (sx1, by1, Z + 0.30), {k: fab for k in ('+X', '-X', '-Y')}, scale=(0.6, 0.6))
-    abox(p, (sx0 + 0.03, by0 + 0.06, Z + 0.30), (sx1 - 0.03, by1, Z + 0.40), at, WH)            # простыня
-    abox(p, (sx0 + 0.05, by1, Z + 0.32), (sx1 - 0.05, sy1 - 0.26, Z + 0.40), at, WH)
-    b.box((sx0 - 0.05, by0, Z + 0.18), (sx1 + 0.05, by1, Z + 0.46),
-          {'+Z': (bl, (0, 0, 1, 0.62)), '-Y': (bl, (0, 0, 1, 0.12)), '+X': (bl, (0.88, 0, 1, 0.62)), '-X': (bl, (0, 0, 0.12, 0.62))})
-    b.box((sx0 + 0.02, by1, Z + 0.22), (sx1 - 0.02, sy1 - 0.27, Z + 0.46),
-          {'+Z': (bl, (0, 0.62, 1, 1)), '+X': (bl, (0.88, 0.62, 1, 1)), '-X': (bl, (0, 0.62, 0.12, 1))})
-    obox(p, (sx0 + 0.75, by0 + 0.75, Z + 0.50), (0.62, 0.5, 0.1), bl, (0.3, 0.3, 0.75, 0.7), yaw=-12,
-         faces={'-Z': (bl, (0.3, 0.3, 0.75, 0.7))})                                            # сбившийся ком пледа
-    obox(p, (sx0 + 0.5, sy1 - 0.45, Z + 0.52), (0.36, 0.26, 0.11), at, RC("pillow"), yaw=10)   # подушка
+    soft(s, ((sx0 + sx1) / 2, (by0 + 0.10 + sy1 - 0.26) / 2, Z + 0.20), (SW, sy1 - 0.26 - by0 - 0.10, 0.40), fab,
+         FS(SW, 2.2), r=0.05, n=(4, 5, 1))
+    # плед наброшен на кровать и свисает спереди и по бокам; ком посередине, складки
+    side = lambda y: 0.28 if y < by1 - 0.05 else 0.0
+    drape(sp, sx0 - 0.02, sx1 + 0.02, by0 + 0.08, sy1 - 0.28, Z + 0.44, {'-Y': 0.32, '-X': side, '+X': side, '+Y': 0.02},
+          bl, (0, 0, 1, 1), srng, n=(12, 16), nh=4, amp=0.018, edge=0.05, fold=0.03,
+          bumps=[(sx0 + 0.75, by0 + 0.80, 0.30, 0.12), (sx0 + 1.1, by0 + 1.35, 0.25, 0.07), (sx0 + 0.4, by0 + 0.4, 0.2, 0.05)])
+    soft(sp, (sx0 + 0.55, sy1 - 0.45, Z + 0.53), (0.38, 0.34, 0.12), at, RC("pillow"), r=0.06, n=(2, 2, 1), sag=-0.02, yaw=10)   # подушка
 
     # --- компьютерный стол в северо-восточном углу ---
     dx0, dx1, dy0, dy1 = -7.48, X1 - 0.02, Y1 - 0.64, Y1 - 0.02
@@ -878,30 +1141,43 @@ def room(M):
     rot = Euler((0, 0, math.radians(cyaw)), 'XYZ').to_matrix()
     P = lambda lx, ly, lz: tuple(Vector((chx, chy, Z)) + rot @ Vector((lx, ly, lz)))
     G, K = RC("chair_g"), RC("chair_b")
+    # крестовина на колёсиках, газлифт
     for k in range(5):
         a = k * 72 + cyaw
         r = math.radians(a)
-        obox(b, (chx + math.cos(r) * 0.16, chy + math.sin(r) * 0.16, Z + 0.07), (0.32, 0.05, 0.04), at, BL, yaw=a)
-        abox(p, (chx + math.cos(r) * 0.31 - 0.025, chy + math.sin(r) * 0.31 - 0.025, Z), (chx + math.cos(r) * 0.31 + 0.025, chy + math.sin(r) * 0.31 + 0.025, Z + 0.05), at, BL)
-    cylr(b, (chx, chy, Z + 0.07), (chx, chy, Z + 0.42), 0.03, 0.03, at, BL, segs=6)
-    obox(b, P(0, 0, 0.47), (0.52, 0.52, 0.09), at, K, yaw=cyaw)
-    for sx in (-0.23, 0.23):
-        obox(b, P(sx, 0, 0.51), (0.08, 0.52, 0.08), at, G, yaw=cyaw)
-    obox(b, P(0, -0.29, 0.96), (0.36, 0.09, 0.88), at, K, yaw=cyaw, pitch=-10)            # спинка: чёрная середина
-    for sx in (-0.21, 0.21):                                                               # зелёные боковины
-        obox(b, P(sx, -0.28, 0.96), (0.10, 0.12, 0.86), at, G, yaw=cyaw, pitch=-10)
-    obox(p, P(0, -0.20, 1.22), (0.24, 0.07, 0.12), at, K, yaw=cyaw, pitch=-10)               # подушка под шею
-    obox(p, P(0, -0.22, 0.72), (0.26, 0.08, 0.12), at, K, yaw=cyaw, pitch=-10)               # поясничная подушка
-    for sx in (-0.31, 0.31):
-        obox(p, P(sx, 0.02, 0.66), (0.06, 0.28, 0.035), at, BL, yaw=cyaw)
-        obox(p, P(sx, -0.05, 0.58), (0.035, 0.035, 0.16), at, BL, yaw=cyaw)
+        soft(s, (chx + math.cos(r) * 0.17, chy + math.sin(r) * 0.17, Z + 0.075), (0.34, 0.05, 0.04), at, BL, r=0.015, n=(2, 1, 1), yaw=a, bottom=True)
+        wx, wy = chx + math.cos(r) * 0.33, chy + math.sin(r) * 0.33
+        cylr(p, (wx, wy - 0.02, Z + 0.025), (wx, wy + 0.02, Z + 0.025), 0.025, 0.025, at, BL, segs=8)
+    cylr(b, (chx, chy, Z + 0.07), (chx, chy, Z + 0.40), 0.028, 0.028, at, RC("tower_f"), segs=8)
+    cylr(b, (chx, chy, Z + 0.25), (chx, chy, Z + 0.40), 0.034, 0.034, at, BL, segs=8)
+    # сиденье «ковшом»: чёрная середина, зелёные валики по бокам
+    soft(s, P(0, 0.02, 0.47), (0.50, 0.50, 0.10), at, K, r=0.04, n=(2, 2, 1), yaw=cyaw, sag=0.012, bottom=True)
+    for sx in (-0.22, 0.22):
+        soft(s, P(sx, 0.02, 0.53), (0.09, 0.48, 0.08), at, G, r=0.035, n=(1, 2, 1), yaw=cyaw)
+    # спинка наклонена назад: всё крутим вокруг шарнира у сиденья
+    hinge = P(0, -0.24, 0.50)
+    BK = lambda lx, lz: P(lx, -0.27, lz)
+    soft(s, BK(0, 0.95), (0.36, 0.09, 0.84), at, K, r=0.03, n=(2, 1, 3), yaw=cyaw, pitch=-10, pivot=hinge, taper=1.15)
+    for sx in (-0.21, 0.21):                                                               # зелёные боковины-«крылья»
+        soft(s, BK(sx, 0.90), (0.10, 0.13, 0.78), at, G, r=0.045, n=(1, 1, 3), yaw=cyaw, pitch=-10, roll=-sx * 22, pivot=hinge)
+    soft(s, BK(0, 1.36), (0.54, 0.10, 0.16), at, K, r=0.05, n=(3, 1, 1), yaw=cyaw, pitch=-10, pivot=hinge)       # широкие «плечи»
+    for sx in (-0.10, 0.10):                                                               # прорези под ремни в плечах
+        abox(p, (BK(sx, 1.38)[0] - 0.02, BK(sx, 1.38)[1] - 0.0, BK(sx, 1.38)[2] - 0.035),
+             (BK(sx, 1.38)[0] + 0.02, BK(sx, 1.38)[1] + 0.001, BK(sx, 1.38)[2] + 0.035), at, BL)
+    soft(sp, P(0, -0.18, 1.22), (0.25, 0.08, 0.13), at, K, r=0.04, n=(2, 1, 1), yaw=cyaw, pitch=-10, pivot=hinge)    # подушка под шею
+    soft(sp, P(0, -0.20, 0.72), (0.28, 0.09, 0.13), at, K, r=0.045, n=(2, 1, 1), yaw=cyaw, pitch=-10, pivot=hinge)   # поясничная
+    for sx in (-0.31, 0.31):                                                               # подлокотники
+        soft(sp, P(sx, 0.02, 0.67), (0.07, 0.28, 0.035), at, BL, r=0.015, n=(1, 2, 1), yaw=cyaw)
+        soft(sp, P(sx, -0.05, 0.58), (0.035, 0.04, 0.17), at, BL, r=0.01, n=(1, 1, 1), yaw=cyaw)
 
     main = b.build("YurRoom", coll)
+    softo = s.build("YurRoomSoft", coll)
+    softp = sp.build("YurRoomSoftProps_nocol", coll)
     props = p.build("YurRoomProps_nocol", coll)
     screen = scr.build("PCScreen_nocol", coll)
     writing = wr.build("EastWriting_nocol", coll)
-    export("yurchik_room", [main, props, screen, writing])
-    return {"room_polys": len(main.data.polygons), "props_polys": len(props.data.polygons)}
+    export("yurchik_room", [main, softo, softp, props, screen, writing])
+    return {"room_polys": len(main.data.polygons), "soft_polys": len(softo.data.polygons) + len(softp.data.polygons), "props_polys": len(props.data.polygons)}
 
 
 def mat_alpha(name, tex):
