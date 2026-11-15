@@ -12,6 +12,7 @@
 [ext_resource type="PackedScene" uid="uid://denmsb1irwg0b" path="res://assets/models/yurchik_room.gltf" id="room"]
 [ext_resource type="PackedScene" path="res://scenes/characters/sergey.tscn" id="sergey"]
 [ext_resource type="PackedScene" uid="uid://c7ajfkmkpjxd" path="res://assets/models/window_view.gltf" id="view"]
+[ext_resource type="PackedScene" uid="uid://dofehnsuy624m" path="res://assets/models/room_window.gltf" id="rwindow"]
 
 [sub_resource type="Environment" id="env"]
 background_mode = 1
@@ -114,6 +115,9 @@ environment = SubResource("env")
 [node name="Stairwell" parent="." unique_id=1373150828 instance=ExtResource("model")]
 
 [node name="YurchikRoom" parent="." unique_id=1792968832 instance=ExtResource("room")]
+
+[node name="RoomWindow" parent="." unique_id=1427705113 instance=ExtResource("rwindow")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5, 9.3, -1.76)
 
 [node name="WindowView" parent="." unique_id=998683274 instance=ExtResource("view")]
 
