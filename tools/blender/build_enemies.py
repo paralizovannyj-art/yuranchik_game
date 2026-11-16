@@ -376,7 +376,7 @@ def make_painter(V, unscale=(1.0, 1.0, 1.0)):
             if V.get("beanie_band"):
                 c = np.where(((v > 0.20) & (v < 0.30))[:, None], col(V["beanie_band"]), c)
             c = np.where((v < 0.16)[:, None], c * 0.8, c) * toplight(N)
-        elif tag in ("hand", "thumb") or tag.startswith("finger"):
+        elif tag in ("hand", "thumb", "nail") or tag.startswith("finger"):
             c = paint_hand2(V, tag, P, N, v)
         else:
             c = np.tile(col((0.02, 0.02, 0.024)), (n, 1))

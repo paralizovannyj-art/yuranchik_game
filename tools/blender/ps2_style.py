@@ -281,7 +281,7 @@ TEXTURES = {
     "apt_doors": "sign", "mailboxes": "metal", "pod_window": "atlas", "radiator": "metal",
     "wallpaper": "hero", "carpet": "fabric", "fabric": "fabric", "tv": "atlas",
     # персонажи и предметы
-    "yur3_atlas": "char", "sergey": "char", "enemy_a": "char", "enemy_b": "char", "enemy_c": "char",
+    "yur3_atlas": "char", "yur3_hands": "char", "sergey": "char", "enemy_a": "char", "enemy_b": "char", "enemy_c": "char",
     "items": "item",
 }
 
