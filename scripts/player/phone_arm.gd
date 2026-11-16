@@ -1,7 +1,8 @@
 ## Правая рука Юрчика (кости его модели) держит телефон (scripts/ui/phone.gd), как на фото-референсе:
-## ладонь за спинкой, пальцы обхватывают левый край и ложатся на лицо, большой палец идёт вверх по правому краю,
-## предплечье уходит вниз-вправо. Работает поверх анимаций (SkeletonModifier3D — дочерний узел Skeleton3D):
-##   кисть ставится по телефону, плечо и предплечье — двухзвенный IK, пальцы и большой палец — по направлениям.
+## ладонь за спинкой, четыре пальца обхватывают левое ребро и ложатся ногтями на лицо, большой палец за телефоном
+## выглядывает над правым верхним углом, кисть в перчатке видна справа, предплечье уходит вниз-вправо. Работает поверх анимаций (SkeletonModifier3D — дочерний узел Skeleton3D):
+##   кисть ставится по телефону, плечо и предплечье — двухзвенный IK, пальцы — по точкам на ребре телефона.
+## debug_on = true — в debug пишутся координаты суставов в мм телефона (удобно подгонять позу).
 ## weight 0..1 — насколько рука поднята (phone.gd анимирует его вместе с телефоном).
 ## Оси кисти (l — к пальцам, w — к большому пальцу, p — к ладони) и кулак в покое — из tools/blender/build_yurchik_v3.py.
 class_name PhoneArm
@@ -11,17 +12,20 @@ var target: Node3D                   ## телефон
 var weight := 0.0
 
 ## Поза кисти относительно телефона (мм в осях модели телефона: u вправо, v вверх, w к зрителю; масштаб — как у телефона).
-var anchor := Vector3(-4.0, -31.0, -12.0)      ## середина костяшек со стороны ладони — за спинкой
-var tilt_deg := Vector3(0.0, 0.0, -6.0)        ## доворот кисти: z — пальцы чуть вверх
+var anchor := Vector3(-12.0, 4.0, -13.0)      ## середина костяшек со стороны ладони — за спинкой
+var tilt_deg := Vector3(0.0, 0.0, -22.0)       ## доворот кисти: запястье вниз-вправо, костяшки вверх-влево
 ## Кисть крупнее телефона, как на референсе (телефон и так увеличен — phone.gd SCALE).
-var hand_scale := 1.35
+var hand_scale := 1.4
 var pole := Vector3(-0.6, -1.0, -0.15)         ## куда смотрит локоть (оси модели: −x — вправо от Юрчика)
-## Сгиб пальцев в хвате, по суставам (°): основная фаланга вдоль спинки, средняя — вокруг левого края, ногтевая — на лицо.
-var curl := {"Index": [10.0, 80.0, 45.0], "Middle": [8.0, 92.0, 55.0], "Ring": [10.0, 94.0, 55.0], "Pinky": [16.0, 94.0, 50.0]}
-var spread := {"Index": 6.0, "Middle": 1.0, "Ring": -4.0, "Pinky": -9.0}   ## веер пальцев (° к большому пальцу)
-## Большой палец: направления трёх фаланг в осях кисти (l, w, p) — за телефоном вверх, кончик выглядывает
-## над правым верхним углом.
-var thumb_dirs := [Vector3(0.3, 0.95, 0.0), Vector3(0.6, 0.8, 0.0), Vector3(0.85, 0.5, -0.1)]
+## Пальцы ставятся по телефону (мм в его осях): средний сустав каждого — у левого ребра на высоте edge_v,
+## средняя фаланга огибает ребро (mid_dir), ногтевая ложится на лицо (tip_dir).
+var edge_v := {"Index": 42.0, "Middle": 24.0, "Ring": 7.0, "Pinky": -10.0}
+var edge_uw := Vector2(-35.0, -10.0)             ## u и w суставов у ребра (ребро — u −28, спинка — w −8.5)
+var mid_dir := Vector3(0.55, 0.0, 1.0)
+var tip_dir := Vector3(1.0, -0.15, -0.25)
+## Большой палец: направления трёх фаланг в осях телефона (u вправо, v вверх, w к зрителю) — за телефоном
+## вверх, сустав выглядывает над правым верхним углом, кончик загнут за спинку.
+var thumb_dirs := [Vector3(-0.15, 1.0, -0.1), Vector3(-0.35, 0.5, -0.8), Vector3(-0.6, 0.0, -0.8)]
 
 const FINGERS := ["Index", "Middle", "Ring", "Pinky"]
 # оси левой кисти в Blender (build_yurchik_v3.py: HAND_L, HAND_WD, HAND_PN); правая — зеркало по x
@@ -37,6 +41,8 @@ var _knuckle_loc: Vector3            ## костяшки (сторона лад�
 var _len1 := 0.0
 var _len2 := 0.0
 var _bones: Array[int] = []
+var debug_on := false
+var debug := {}
 
 
 func _ready() -> void:
@@ -100,18 +106,24 @@ func _process_modification_with_delta(_delta: float) -> void:
 	_aim(sk, _fore, wrist - sk.get_bone_global_pose(_fore).origin)
 	_set_global_basis(sk, _hand, want)
 
-	# --- пальцы: направления фаланг в осях кисти ---
-	var hb := sk.get_bone_global_pose(_hand).basis.orthonormalized() * _frame_loc   # столбцы: l, w, p
+	# --- пальцы: по точкам на телефоне (позиции — с учётом будущего масштаба кисти) ---
+	var pb := p.basis.orthonormalized()
+	var ho := sk.get_bone_global_pose(_hand).origin
 	for n: String in FINGERS:
-		var c: Array = curl[n]
-		var sp := deg_to_rad(spread[n])
-		var acc := 0.0
-		for k in 3:
-			acc += deg_to_rad(c[k])
-			var dl := Vector3(cos(acc) * cos(sp), sin(sp), sin(acc) * cos(sp))
-			_aim(sk, _chains[n][k], hb * dl)
+		var c: Array = _chains[n]
+		var k0 := ho + (sk.get_bone_global_pose(c[0]).origin - ho) * hand_scale
+		var pip := p * (Vector3(edge_uw.x, edge_v[n], edge_uw.y) * 0.001)
+		_aim(sk, c[0], pip - k0)
+		_aim(sk, c[1], pb * mid_dir)
+		_aim(sk, c[2], pb * tip_dir)
 	for k in 3:
-		_aim(sk, _chains["Thumb"][k], hb * (thumb_dirs[k] as Vector3).normalized())
+		_aim(sk, _chains["Thumb"][k], pb * (thumb_dirs[k] as Vector3).normalized())
+	if debug_on:                     # где оказались суставы — в мм телефона (с учётом hand_scale)
+		var pi := p.affine_inverse()
+		debug = {}
+		for n: String in ["HandR", "IndexR1", "IndexR2", "IndexR3", "PinkyR1", "PinkyR3", "ThumbR1", "ThumbR2", "ThumbR3"]:
+			var o := sk.get_bone_global_pose(sk.find_bone(n)).origin
+			debug[n] = (pi * (ho + (o - ho) * hand_scale) * 1000.0).round()
 
 	# --- смешать с анимацией по weight ---
 	var w := weight * weight * (3.0 - 2.0 * weight)

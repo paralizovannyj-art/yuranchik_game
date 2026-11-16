@@ -164,7 +164,7 @@ func _animate(pos: Vector3, rot: Vector3, light: float) -> void:
 	_tween.tween_property(self, "position", pos, ANIM)
 	_tween.tween_property(self, "rotation", rot, ANIM)
 	_tween.tween_property(_light, "light_energy", light, ANIM)
-	_tween.tween_property(_hand_light, "light_energy", light * 0.13, ANIM)
+	_tween.tween_property(_hand_light, "light_energy", light * 0.07, ANIM)
 	if arm:
 		_tween.tween_property(arm, "weight", 1.0 if light > 0.0 else 0.0, ANIM)
 	_tween.chain()

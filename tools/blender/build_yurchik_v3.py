@@ -448,7 +448,7 @@ def build_arm(mb, T, sx):
     tip = mb.vert(mx(hand_pt(PALM_END, 0, PALM[-1][1]), sx), {HD: 1.0})
     loft(mb, hr, "hand", "hand", seam=3, pole=tip, bake=(sx > 0))
 
-    # --- пальцы: шестигранные трубки, кольца в суставах делят вес между соседними фалангами ---
+    # --- пальцы: восьмигранные трубки, кольца в суставах делят вес между соседними фалангами ---
     wv = Vector((0, 1, 0))
     dvec = lambda a: Vector((math.cos(a), 0, math.sin(a)))
     nvec = lambda a: Vector((-math.sin(a), 0, math.cos(a)))           # к ладони, поперёк фаланги
@@ -463,8 +463,8 @@ def build_arm(mb, T, sx):
         fr = []
         for cen_, a, k, wt in specs:
             rw, rp = r * k, r * k * 0.88
-            ring = [mx(hand_pt(*(cen_ + nvec(a) * (rp * math.cos(rad(60 * j))) + wv * (rw * math.sin(rad(60 * j))))), sx)
-                    for j in range(6)]
+            ring = [mx(hand_pt(*(cen_ + nvec(a) * (rp * math.cos(rad(45 * j))) + wv * (rw * math.sin(rad(45 * j))))), sx)
+                    for j in range(8)]
             fr.append(mb.ring(ring, wt))
         # в суставе кольцо стоит по биссектрисе, без поправки сечение там тоньше фаланг
         for ri, (cen_, a, k, wt) in enumerate(specs[1:4], 1):
@@ -491,7 +491,7 @@ def build_arm(mb, T, sx):
         ea = Vector((0, 0, 1)); eb = d.cross(ea).normalized(); ea = eb.cross(d).normalized()
         cen_ = cs[k] - d * 0.006 if last else cs[k]
         r = THUMB[k][1] * (0.95 if last else 1.0)
-        pts = [mx(hand_pt(*(cen_ + (ea * math.cos(rad(60 * j)) + eb * math.sin(rad(60 * j))) * r)), sx) for j in range(6)]
+        pts = [mx(hand_pt(*(cen_ + (ea * math.cos(rad(45 * j)) + eb * math.sin(rad(45 * j))) * r)), sx) for j in range(8)]
         tr.append(mb.ring(pts, wts[k]))
     ttip = mb.vert(mx(hand_pt(*(cs[3] + (cs[3] - cs[2]).normalized() * 0.003)), sx), {b[2]: 1.0})
     loft(mb, tr, "thumb", "thumb", seam=0, pole=ttip, bake=(sx > 0))
