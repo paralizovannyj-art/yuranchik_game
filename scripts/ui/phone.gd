@@ -8,12 +8,16 @@ extends Node3D
 
 const MODEL := preload("res://assets/models/phone.gltf")
 const LAYOUT := preload("res://assets/models/phone_layout.json")
+## Левая рука в вязаной перчатке без пальцев, держит телефон (tools/blender/build_phone_hand.py) — в тех же координатах.
+const HAND := preload("res://assets/models/phone_hand.gltf")
 const SCALE := 1.6                               ## крупнее настоящего, чтобы экран читался на 854×480
-const OPEN_POS := Vector3(0.022, -0.046, -0.118)
+const OPEN_POS := Vector3(0.03, -0.042, -0.185)   ## подальше: в кадре весь телефон и рука, как на фото
 const CLOSED_POS := Vector3(0.05, -0.2, -0.12)
 ## Отдельный слой: фонарик в голове (player.tscn) телефон не освещает, иначе экран засвечивается.
 const LAYER := 1 << 18
-const OPEN_ROT := Vector3(deg_to_rad(12.0), deg_to_rad(-8.0), deg_to_rad(-5.0))
+## Рука — свой слой: фонарик её тоже не трогает (в упор пересвечивает), а подсветка экрана — освещает.
+const HAND_LAYER := 1 << 19
+const OPEN_ROT := Vector3(deg_to_rad(10.0), deg_to_rad(-10.0), deg_to_rad(-8.0))
 const CLOSED_ROT := Vector3(deg_to_rad(55.0), deg_to_rad(-8.0), deg_to_rad(-20.0))
 const ANIM := 0.28
 const SERGEY_NEAR := 14.0                        ## ближе — одна палка сети
@@ -26,6 +30,7 @@ var player: Player
 var _screen_vp: SubViewport
 var _print_vp: SubViewport
 var _light: OmniLight3D
+var _hand_light: OmniLight3D
 var _tween: Tween
 var _attrs: CameraAttributesPractical
 var _cam_old_attrs: CameraAttributes
@@ -40,8 +45,13 @@ func _ready() -> void:
 	_build_model()
 	for v: Node in find_children("*", "VisualInstance3D", true, false):
 		(v as VisualInstance3D).layers = LAYER
+	var hand: Node3D = HAND.instantiate()
+	add_child(hand)
+	for mi: MeshInstance3D in hand.find_children("*", "MeshInstance3D", true, false):
+		mi.layers = HAND_LAYER
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	if player:
-		player.flashlight.light_cull_mask &= ~LAYER
+		player.flashlight.light_cull_mask &= ~(LAYER | HAND_LAYER)
 	Game.objective_changed.connect(func(_t: String) -> void: _buzz())
 	Game.message_received.connect(func(_m: Dictionary) -> void: _buzz())
 
@@ -100,8 +110,17 @@ func _build_model() -> void:
 	_light.omni_range = 0.45
 	_light.omni_attenuation = 1.6
 	_light.position = Vector3(0, 0.025, 0.03)
-	_light.light_cull_mask = ~LAYER              # светит на руки и лицо, но не на сам телефон
+	_light.light_cull_mask = ~(LAYER | HAND_LAYER)   # светит на лицо, но не на сам телефон
 	add_child(_light)
+	# руку в упор подсвечивает отдельный слабый свет спереди, иначе пальцы у экрана пересвечены
+	_hand_light = OmniLight3D.new()
+	_hand_light.light_color = Color("c8d8d0")
+	_hand_light.light_energy = 0.0
+	_hand_light.omni_range = 0.6
+	_hand_light.omni_attenuation = 1.0
+	_hand_light.position = Vector3(0, 0.03, 0.12)
+	_hand_light.light_cull_mask = HAND_LAYER
+	add_child(_hand_light)
 
 
 # ----------------------------------------------------------------------------- достать / убрать
@@ -140,6 +159,7 @@ func _animate(pos: Vector3, rot: Vector3, light: float) -> void:
 	_tween.tween_property(self, "position", pos, ANIM)
 	_tween.tween_property(self, "rotation", rot, ANIM)
 	_tween.tween_property(_light, "light_energy", light, ANIM)
+	_tween.tween_property(_hand_light, "light_energy", light * 0.13, ANIM)
 	_tween.chain()
 
 
