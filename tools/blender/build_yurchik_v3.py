@@ -322,22 +322,95 @@ HAND_W = JS + AD * WRIST_T + Vector((0, -0.014, 0))                   # запя
 HAND_L = Vector((0.30, -0.10, -0.95)).normalized()
 HAND_WD = Vector((-0.82, 0.57, 0.0)).cross(HAND_L).normalized()      # в сторону большого пальца
 HAND_PN = HAND_L.cross(HAND_WD).normalized()                          # нормаль ладони
-HAND = [  # l (вдоль кисти), p (к ладони), угол сгиба, полуширина, толщина к ладони / к тыльной стороне
-    (-0.030, 0.000, 0, 0.027, 0.017, 0.017),
-    (0.020, 0.000, 0, 0.040, 0.014, 0.015),
-    (0.062, 0.002, 0, 0.046, 0.013, 0.015),
-    (0.092, 0.001, 12, 0.044, 0.011, 0.013),
-    (0.128, 0.016, 55, 0.041, 0.009, 0.010),
-    (0.137, 0.047, 125, 0.038, 0.008, 0.009),
-    (0.113, 0.062, 178, 0.034, 0.007, 0.007),
+# Кисть: ладонь, четыре пальца по три фаланги и большой палец — у каждой фаланги своя кость, чтобы пальцы
+# можно было сгибать (поза «держит телефон» в игре — scripts/player/phone_arm.gd). В покое кулак обнимает
+# рукоять молотка: углы суставов подбираются под неё (fist_angles). Координаты кисти: l — вдоль кисти,
+# w — поперёк, к большому пальцу, p — к ладони.
+PALM = [  # l, p, полуширина, толщина к ладони / к тыльной стороне
+    (-0.030, 0.000, 0.027, 0.017, 0.017),
+    (0.020, 0.000, 0.040, 0.014, 0.015),
+    (0.062, 0.002, 0.045, 0.013, 0.015),
+    (0.086, 0.002, 0.041, 0.011, 0.012),
 ]
-THUMB = [((0.026, 0.036, 0.006), 0.0150), ((0.058, 0.058, 0.022), 0.0140), ((0.088, 0.052, 0.044), 0.0120)]
-THUMB_TIP = (0.103, 0.036, 0.057)
-GRIP = (0.108, 0.0, 0.034)                         # центр хвата (l, w, p) — через него проходит рукоять молотка
+PALM_END = 0.093
+KNUCKLE_P = 0.001                                  # оси пальцев у костяшек — посередине толщины ладони
+FINGERS = [  # имя, w оси пальца, l костяшки, длины фаланг (осн., средн., ногтевая), радиус у основания
+    ("Index", 0.0290, 0.083, (0.040, 0.025, 0.021), 0.0096),
+    ("Middle", 0.0095, 0.087, (0.044, 0.028, 0.022), 0.0100),
+    ("Ring", -0.0105, 0.084, (0.041, 0.026, 0.021), 0.0095),
+    ("Pinky", -0.0285, 0.077, (0.032, 0.020, 0.018), 0.0083),
+]
+THUMB = [  # суставы большого пальца (l, w, p): основание в ладони, пястный, межфаланговый, кончик; радиусы
+    ((0.022, 0.033, 0.004), 0.0150), ((0.052, 0.056, 0.024), 0.0135),
+    ((0.088, 0.054, 0.058), 0.0115), ((0.110, 0.040, 0.063), 0.0098),
+]
+THUMB_TIP = THUMB[-1][0]
+GRIP = (0.0706, 0.0, 0.0315)                       # центр хвата (l, w, p): рукоять лежит в ладони у костяшек
+GRIP_R = 0.0145                                    # радиус рукояти в хвате
+DIGIT_V = {}                                       # тег пальца → v колец его развёртки (для раскраски)
 
 
 def hand_pt(l, w, p):
     return HAND_W + HAND_L * l + HAND_WD * w + HAND_PN * p
+
+
+def fist_angles(w, l0, segs, r):
+    """Углы трёх суставов пальца (°) для кулака вокруг рукояти: перебор по сетке. Палец не должен входить
+    в рукоять и в ладонь, а средняя и ногтевая фаланги — лежать на рукояти вплотную."""
+    c = np.array((GRIP[0] + 0.36 * w, GRIP[2]))     # рукоять наклонена: у указательного дальше от запястья
+    A = np.radians(np.arange(20, 96, 2.0)); B = np.radians(np.arange(30, 116, 2.0)); C = np.radians(np.arange(10, 86, 2.0))
+    a1, a2, a3 = np.meshgrid(A, B, C, indexing="ij")
+    p = np.zeros(a1.shape + (2,)); p[..., 0] = l0; p[..., 1] = KNUCKLE_P
+    cost = np.zeros(a1.shape); ang = np.zeros(a1.shape)
+    for k, (L, a) in enumerate(zip(segs, (a1, a2, a3))):
+        ang = ang + a
+        d = np.stack((np.cos(ang), np.sin(ang)), -1)
+        rk = r * (1.0, 0.9, 0.82)[k]
+        for s_ in np.linspace(0.1, 1.0, 6):
+            q = p + d * (L * s_)
+            cl = np.linalg.norm(q - c, axis=-1) - GRIP_R - rk
+            cost += 200 * np.maximum(-cl, 0) ** 2 + (0.3 if k == 0 else 1.0) * np.maximum(cl - 0.001, 0) ** 2
+            if k == 2:
+                cost += 200 * np.maximum(0.015 + rk - q[..., 1], 0) ** 2 * (q[..., 0] < 0.09)
+        p = p + d * L
+    i = np.unravel_index(np.argmin(cost), cost.shape)
+    return tuple(float(np.degrees(x[j])) for x, j in zip((A, B, C), i))
+
+
+FIST = {n: fist_angles(w, l0, segs, r) for n, w, l0, segs, r in FINGERS}
+
+
+def finger_chain(name):
+    """Суставы пальца в покое (l, w, p): костяшка, два сустава, кончик — и накопленные углы сгиба."""
+    _, w, l0, segs, _ = next(f for f in FINGERS if f[0] == name)
+    pts, acc, a = [Vector((l0, w, KNUCKLE_P))], [], 0.0
+    for L, da in zip(segs, FIST[name]):
+        a += rad(da); acc.append(a)
+        pts.append(pts[-1] + Vector((math.cos(a) * L, 0.0, math.sin(a) * L)))
+    return pts, acc
+
+
+def hand_bones():
+    out = []
+    for s, sx in (("L", 1), ("R", -1)):
+        chains = [(n, finger_chain(n)[0]) for n, *_ in FINGERS] + [("Thumb", [Vector(c) for c, _ in THUMB])]
+        for n, pts in chains:
+            for k in range(3):
+                out.append((n + s + str(k + 1), tuple(mx(hand_pt(*pts[k]), sx)), tuple(mx(hand_pt(*pts[k + 1]), sx)),
+                            "Hand" + s if k == 0 else n + s + str(k)))
+    return out
+
+
+BONES += hand_bones()
+
+
+def ring_v(mb, rings, pole):
+    """v колец так же, как их считает loft (+ хвост до полюса), нормированные на длину островка."""
+    v = [0.0]
+    for i in range(1, len(rings)):
+        v.append(v[-1] + sum((mb.co[a] - mb.co[b]).length for a, b in zip(rings[i], rings[i - 1])) / len(rings[i]))
+    tail = sum((mb.co[j] - mb.co[pole]).length for j in rings[-1]) / len(rings[-1])
+    return [x / (v[-1] + tail) for x in v]
 
 
 def build_arm(mb, T, sx):
@@ -366,27 +439,63 @@ def build_arm(mb, T, sx):
     loft(mb, rings, "sleeve", "sleeve", seam=5, bake=(sx > 0))
     dark_cap(mb, rings[-1], mx(cen, sx), 0.55, mx(AD * -0.02, sx), mx(AD, sx))
 
-    # --- кисть: ладонь + блок пальцев, согнутый в неплотный кулак ---
+    # --- ладонь (пальцы вставлены в её торец) ---
     hr = []
-    for k, (l, p, al, ww, tp, tb) in enumerate(HAND):
-        a = rad(al); ql, qp = -math.sin(a), math.cos(a)
-        pts = []
-        for w_, q_ in ((ww, 0), (0.55 * ww, tp), (-0.55 * ww, tp), (-ww, 0), (-0.55 * ww, -tb), (0.55 * ww, -tb)):
-            pts.append(mx(hand_pt(l + ql * q_, w_, p + qp * q_), sx))
+    for k, (l, p, ww, tp, tb) in enumerate(PALM):
+        pts = [mx(hand_pt(l, w_, p + q_), sx) for w_, q_ in
+               ((ww, 0), (0.55 * ww, tp), (-0.55 * ww, tp), (-ww, 0), (-0.55 * ww, -tb), (0.55 * ww, -tb))]
         hr.append(mb.ring(pts, {FA: 0.5, HD: 0.5} if k == 0 else {HD: 1.0}))
-    l, p, al = HAND[-1][0], HAND[-1][1], rad(HAND[-1][2])
-    tip = mb.vert(mx(hand_pt(l + math.cos(al) * 0.012, 0, p + math.sin(al) * 0.012), sx), {HD: 1.0})
+    tip = mb.vert(mx(hand_pt(PALM_END, 0, PALM[-1][1]), sx), {HD: 1.0})
     loft(mb, hr, "hand", "hand", seam=3, pole=tip, bake=(sx > 0))
-    # большой палец
-    cs = [Vector(c_) for c_, _ in THUMB] + [Vector(THUMB_TIP)]
+
+    # --- пальцы: шестигранные трубки, кольца в суставах делят вес между соседними фалангами ---
+    wv = Vector((0, 1, 0))
+    dvec = lambda a: Vector((math.cos(a), 0, math.sin(a)))
+    nvec = lambda a: Vector((-math.sin(a), 0, math.cos(a)))           # к ладони, поперёк фаланги
+    for name, _, _, _, r in FINGERS:
+        pts, acc = finger_chain(name)
+        b = [name + s + str(k + 1) for k in range(3)]
+        specs = [(pts[0] - Vector((0.011, 0, 0)), 0.0, 0.98, {HD: 1.0}),
+                 (pts[0], acc[0] / 2, 1.0, {HD: 0.5, b[0]: 0.5}),
+                 (pts[1], (acc[0] + acc[1]) / 2, 0.90, {b[0]: 0.5, b[1]: 0.5}),
+                 (pts[2], (acc[1] + acc[2]) / 2, 0.82, {b[1]: 0.5, b[2]: 0.5}),
+                 (pts[3] - dvec(acc[2]) * 0.0055, acc[2], 0.76, {b[2]: 1.0})]
+        fr = []
+        for cen_, a, k, wt in specs:
+            rw, rp = r * k, r * k * 0.88
+            ring = [mx(hand_pt(*(cen_ + nvec(a) * (rp * math.cos(rad(60 * j))) + wv * (rw * math.sin(rad(60 * j))))), sx)
+                    for j in range(6)]
+            fr.append(mb.ring(ring, wt))
+        # в суставе кольцо стоит по биссектрисе, без поправки сечение там тоньше фаланг
+        for ri, (cen_, a, k, wt) in enumerate(specs[1:4], 1):
+            half = (acc[ri - 1] - (acc[ri - 2] if ri > 1 else 0.0)) / 2
+            g = min(1.0 / max(math.cos(half), 0.5), 1.22)
+            ctr = mx(hand_pt(*cen_), sx)
+            ax = mx(hand_pt(*(cen_ + nvec(a))), sx) - ctr
+            for vid in fr[ri]:
+                off = mb.co[vid] - ctr
+                mb.co[vid] = ctr + off + ax * (off.dot(ax) * (g - 1.0))
+        ftip = mb.vert(mx(hand_pt(*(pts[3] + dvec(acc[2]) * 0.0015)), sx), {b[2]: 1.0})
+        tag = "finger_" + name
+        loft(mb, fr, tag, tag, seam=0, pole=ftip, bake=(sx > 0))
+        DIGIT_V[tag] = ring_v(mb, fr, ftip)
+
+    # --- большой палец ---
+    cs = [Vector(c_) for c_, _ in THUMB]
+    b = ["Thumb" + s + str(k + 1) for k in range(3)]
+    wts = [{HD: 0.7, b[0]: 0.3}, {b[0]: 0.5, b[1]: 0.5}, {b[1]: 0.5, b[2]: 0.5}, {b[2]: 1.0}]
     tr = []
-    for k, (c_, r) in enumerate(THUMB):
-        d = (cs[k + 1] - cs[max(k - 1, 0)]).normalized()            # в локальных (l, w, p)
+    for k in range(4):
+        last = k == 3
+        d = (cs[min(k + 1, 3)] - cs[max(k - 1, 0)]).normalized()
         ea = Vector((0, 0, 1)); eb = d.cross(ea).normalized(); ea = eb.cross(d).normalized()
-        pts = [mx(hand_pt(*(cs[k] + e * r)), sx) for e in (ea, eb, -ea, -eb)]
-        tr.append(mb.ring(pts, {HD: 1.0}))
-    ttip = mb.vert(mx(hand_pt(*THUMB_TIP), sx), {HD: 1.0})
-    loft(mb, tr, "thumb", "thumb", seam=2, pole=ttip, bake=(sx > 0))
+        cen_ = cs[k] - d * 0.006 if last else cs[k]
+        r = THUMB[k][1] * (0.95 if last else 1.0)
+        pts = [mx(hand_pt(*(cen_ + (ea * math.cos(rad(60 * j)) + eb * math.sin(rad(60 * j))) * r)), sx) for j in range(6)]
+        tr.append(mb.ring(pts, wts[k]))
+    ttip = mb.vert(mx(hand_pt(*(cs[3] + (cs[3] - cs[2]).normalized() * 0.003)), sx), {b[2]: 1.0})
+    loft(mb, tr, "thumb", "thumb", seam=0, pole=ttip, bake=(sx > 0))
+    DIGIT_V["thumb"] = [0.0] + ring_v(mb, tr, ttip)          # как у пальцев: [—, основание, сустав, сустав, кончик]
 
 
 # =====================================================================================
@@ -732,20 +841,23 @@ def build_strap_bag(mb):
 # =====================================================================================
 #  Молоток (отдельный объект в правой руке)
 # =====================================================================================
-def build_hammer(mb):
-    mb.obj = 1
-    g = mx(hand_pt(*GRIP), -1)
-    wd = mx(HAND_WD, -1); ln = mx(HAND_L, -1); pn = mx(HAND_PN, -1)
+def build_hammer(mb, sx=-1):
+    """Молоток в правой руке (объект 1). sx=1 — его зеркальная копия для левой руки (объект 2): в неё Юрчик
+    перекладывает молоток, пока правой держит телефон. Текстура у копии та же (bake=False)."""
+    mb.obj = 1 if sx < 0 else 2
+    bake = sx < 0
+    g = mx(hand_pt(*GRIP), sx)
+    wd = mx(HAND_WD, sx); ln = mx(HAND_L, sx)
     hdir = (wd + ln * 0.36).normalized()                              # рукоять: вперёд и чуть вниз
     fdir = (ln - hdir * ln.dot(hdir)).normalized()                    # боёк смотрит «от запястья»
     sdir = hdir.cross(fdir).normalized()
-    W = {"HandR": 1.0}
+    W = {"HandR" if sx < 0 else "HandL": 1.0}
     rings = []
     for t, r in ((-0.075, 0.0175), (-0.02, 0.0150), (0.08, 0.0140), (0.235, 0.0150)):
         c = g + hdir * t
         rings.append(mb.ring([c + (fdir * math.cos(rad(60 * j)) + sdir * math.sin(rad(60 * j))) * r for j in range(6)], W))
-    loft(mb, rings, "hammer_handle", "hammer_wood")
-    ngon(mb, rings[0], "hammer_cap", "hammer_wood", -hdir)
+    loft(mb, rings, "hammer_handle", "hammer_wood", bake=bake)
+    ngon(mb, rings[0], "hammer_cap", "hammer_wood", -hdir, bake=bake)
     hc = g + hdir * 0.252
     hr = []
     for t, r in ((-0.058, 0.007), (-0.024, 0.0165), (0.032, 0.0165), (0.038, 0.0195), (0.062, 0.0195)):
@@ -753,9 +865,9 @@ def build_hammer(mb):
         k = 0.45 if t < -0.03 else 1.0                                # гвоздодёр — сплюснутый клин
         hr.append(mb.ring([c + hdir * (r * a) + sdir * (r * b * (1.6 if t < -0.03 else 1.0))
                            for a, b in ((k, 1), (-k, 1), (-k, -1), (k, -1))], W))
-    loft(mb, hr, "hammer_head", "hammer_metal")
-    ngon(mb, hr[0], "hammer_cap", "hammer_metal", -fdir)
-    ngon(mb, hr[-1], "hammer_cap", "hammer_metal", fdir)
+    loft(mb, hr, "hammer_head", "hammer_metal", bake=bake)
+    ngon(mb, hr[0], "hammer_cap", "hammer_metal", -fdir, bake=bake)
+    ngon(mb, hr[-1], "hammer_cap", "hammer_metal", fdir, bake=bake)
     mb.obj = 0
     return g
 
@@ -769,13 +881,15 @@ def build_all():
     build_head(mb); build_neck(mb); build_hair(mb); build_beanie(mb); build_hood(mb)
     build_strap_bag(mb)
     grip = build_hammer(mb)
+    build_hammer(mb, 1)
     return mb, grip
 
 
 # =====================================================================================
 #  Упаковка островков в атлас
 # =====================================================================================
-ISL_DENS = {"head": 2.0, "neck": 1.25, "beanie": 1.1, "hand": 1.5, "thumb": 1.5, "pelvis": 0.5, "sole": 0.6,
+ISL_DENS = {"head": 2.0, "neck": 1.25, "beanie": 1.1, "hand": 1.5, "thumb": 1.6, "finger_Index": 1.6, "finger_Middle": 1.6, "finger_Ring": 1.6,
+            "finger_Pinky": 1.6, "pelvis": 0.5, "sole": 0.6,
             "sole_cap": 0.35, "hair_bangs": 1.4, "hair_strand": 1.6, "bag_side": 0.7, "hood": 0.9, "boot": 1.1,
             "hammer_cap": 0.6, "dark": 1.0}
 
@@ -1014,8 +1128,8 @@ def paint(tag, refs, P, N, LUV):
         c = project(refs, "orig", P, N, side=1.0)
     elif tag.startswith("hair"):
         c, alpha = paint_hair(tag, u, v)
-    elif tag in ("hand", "thumb"):
-        c = paint_hand(tag, P, N, v)
+    elif tag in ("hand", "thumb") or tag.startswith("finger"):
+        c = paint_hand(tag, P, N, v, u)
     elif tag in ("bag", "bag_side"):
         # сумка целиком с концепта: лицевая сторона — с вида сбоку, торцы — с видов спереди и сзади
         pz = GY - P[:, 2] / S
@@ -1070,29 +1184,43 @@ def paint_hair(tag, u, v):
     return c, alpha
 
 
-def paint_hand(tag, P, N, v):
+def paint_hand(tag, P, N, v, u=None):
+    """Перчатка без пальцев: вязаная ладонь, на пальцах обрезана посередине основной фаланги, дальше кожа —
+    со складками на суставах и ногтями. tag: "hand" — ладонь, "finger_*" и "thumb" — пальцы (v — вдоль пальца,
+    u — по кругу, 0.5 — тыльная сторона)."""
     d = P - np.array(HAND_W, np.float32)
-    l = d @ np.array(HAND_L, np.float32); w = d @ np.array(HAND_WD, np.float32); p = d @ np.array(HAND_PN, np.float32)
+    l = d @ np.array(HAND_L, np.float32)
     palm = N @ np.array(HAND_PN, np.float32)
-    skin = col((0.50, 0.415, 0.385)) * (0.82 + 0.3 * fbm(P[:, 0] * 300, P[:, 2] * 300, 51))[:, None]
-    skin = skin * (0.80 + 0.2 * np.clip(-palm, 0, 1))[:, None] + col((0.05, 0.0, 0.0)) * np.clip(palm, 0, 1)[:, None]
-    glove = col((0.105, 0.118, 0.128)) * (0.7 + 0.6 * fbm(P[:, 0] * 260, P[:, 2] * 260, 53))[:, None]
-    if tag == "thumb":
-        is_skin = v > 0.5
-        edge = np.abs(v - 0.5) < 0.05
-    else:
-        fing = 0.574 * (l - 0.128) + 0.819 * (p - 0.016)
-        is_skin = fing > 0
-        edge = np.abs(fing) < 0.004
-        lines = np.minimum.reduce([np.abs(w - x) for x in (-0.021, 0.0, 0.021)])
-        groove = (lines < 0.0028) & (l > 0.088)
-        skin = skin * np.where(groove, 0.45, 1.0)[:, None]
-        glove = glove * np.where(groove, 0.6, 1.0)[:, None]
-        knuckle = np.exp(-((l - 0.092) / 0.012) ** 2) * np.clip(-palm, 0, 1) * (lines > 0.006)
+    knit = 0.7 + 0.6 * fbm(P[:, 0] * 260, P[:, 2] * 260, 53)
+    rib = 0.88 + 0.12 * np.cos(P[:, 2] * 2600.0 + P[:, 0] * 900.0)                    # петли вязки
+    glove = col((0.105, 0.118, 0.128)) * (knit * rib)[:, None]
+    if tag == "hand":
+        back = np.clip(-palm, 0, 1)
+        knuckle = np.exp(-((l - 0.084) / 0.011) ** 2) * back
         glove = glove + col((0.05, 0.055, 0.06)) * knuckle[:, None]
-        glove = glove * np.where(l < -0.004, 0.75, 1.0)[:, None]                            # манжета перчатки
+        glove = glove * (0.82 + 0.18 * back)[:, None]                                    # ладонь в тени
+        return glove * np.where(l < -0.004, 0.75, 1.0)[:, None]                           # манжета перчатки
+    f = DIGIT_V.get(tag)
+    if u is None or f is None:                                                         # старый вызов (враги)
+        u = np.full_like(v, 0.5)
+        f = f or [0.0, 0.15, 0.5, 0.75, 0.95]
+    dorsal = np.cos((u - 0.5) * 2 * np.pi)                                             # 1 — тыл, -1 — подушечки
+    skin = col((0.50, 0.415, 0.385)) * (0.82 + 0.3 * fbm(P[:, 0] * 300, P[:, 2] * 300, 51))[:, None]
+    skin = skin * (0.84 + 0.16 * np.clip(dorsal, 0, 1))[:, None] + col((0.05, 0.0, 0.0)) * np.clip(-dorsal, 0, 1)[:, None]
+    for j in (2, 3):                                                                    # складки на суставах
+        crease = np.exp(-((v - f[j]) / 0.018) ** 2) * (0.5 + 0.5 * np.abs(dorsal))
+        skin = skin * (1.0 - 0.38 * crease)[:, None]
+    nail_v = f[3] + 0.42 * (f[4] - f[3])
+    nail = (v > nail_v) & (v < f[4] + 0.06) & (dorsal > 0.55)
+    nail_edge = nail & ((v < nail_v + 0.03) | (dorsal < 0.68))
+    skin = np.where(nail[:, None], col((0.60, 0.52, 0.49)) * (0.9 + 0.2 * fbm(u * 40, v * 40, 57))[:, None], skin)
+    skin = np.where(nail_edge[:, None], col((0.36, 0.28, 0.26)), skin)
+    cut = f[2] + 0.2 * (f[3] - f[2]) if tag == "thumb" else f[1] + 0.5 * (f[2] - f[1])
+    cut = cut + 0.018 * (vnoise(u * 18, v * 2, 59) - 0.5)                              # неровный распущенный край
+    is_skin = v > cut
     c = np.where(is_skin[:, None], skin, glove)
-    return np.where(edge[:, None], col((0.19, 0.20, 0.21)), c)                             # обрезанный край перчатки
+    edge = np.abs(v - cut) < 0.022
+    return np.where(edge[:, None], col((0.19, 0.20, 0.21)) * (0.85 + 0.3 * vnoise(u * 60, v * 9, 61))[:, None], c)
 
 
 def paint_bag(tag, u, v, P):
@@ -1165,6 +1293,8 @@ def save_atlas(rgba, name="yur3_atlas"):
         rgba = ps2_style.ps2_pass(rgba, name)
     h, w = rgba.shape[:2]
     img = bpy.data.images.get(name)
+    if img and img.packed_file:                    # упакованная в .blend копия перекрыла бы новый атлас
+        img.unpack(method='REMOVE')
     if img and (img.size[0] != w or img.size[1] != h):
         bpy.data.images.remove(img); img = None
     img = img or bpy.data.images.new(name, w, h, alpha=True)
@@ -1198,15 +1328,16 @@ def make_material(name, img, alpha):
 #  Скелет и веса
 # =====================================================================================
 def scene_ctx(sc):
-    """Операторы работают в сцене окна Blender — main() заранее переключает окно на нашу сцену."""
+    """Операторы работают в сцене окна Blender — main() заранее переключает окно на нашу сцену.
+    Без окна (blender -b) сцена в файле одна, она и активная."""
     import contextlib
-    if bpy.context.window.scene is not sc:
+    if bpy.context.window and bpy.context.window.scene is not sc:
         bpy.context.window.scene = sc
     return contextlib.nullcontext()
 
 
 def select_only(sc, obs, active):
-    if bpy.context.window.scene is not sc:
+    if bpy.context.window and bpy.context.window.scene is not sc:
         bpy.context.window.scene = sc
     vl = bpy.context.view_layer
     vl.update()
@@ -1258,9 +1389,10 @@ def main():
         bpy.data.objects.remove(ob, do_unlink=True)
     for coll_ in (bpy.data.meshes, bpy.data.armatures):
         for d in list(coll_):
-            if d.users == 0 and d.name.startswith(("Yurchik3", "Hammer3")):
+            if d.users == 0 and d.name.startswith(("Yurchik3", "Hammer3", "HammerL3")):
                 coll_.remove(d)
-    bpy.context.window.scene = sc
+    if bpy.context.window:
+        bpy.context.window.scene = sc
     coll = sc.collection
 
     mb, grip = build_all()
@@ -1269,8 +1401,10 @@ def main():
     mats = [make_material("Yur3Body", img, False), make_material("Yur3Hair", img, True)]
     body, fsel_b, used_b = make_object(mb, 0, "Yurchik3Mesh", coll, mats)
     ham, fsel_h, used_h = make_object(mb, 1, "Hammer3", coll, mats[:1], origin=grip)
+    ham_l, _, _ = make_object(mb, 2, "HammerL3", coll, mats[:1], origin=mx(grip, -1))
     info = {"tris_body": sum(len(mb.faces[f]) - 2 for f in fsel_b), "tris_hammer": sum(len(mb.faces[f]) - 2 for f in fsel_h),
-            "verts": len(used_b), "density_px_per_m": round(D, 1)}
+            "verts": len(used_b), "density_px_per_m": round(D, 1),
+            "fist": {n: tuple(round(a) for a in v) for n, v in FIST.items()}}
     if STAGE == "geo":
         return info
 
@@ -1285,9 +1419,10 @@ def main():
 
     arm = rig(body, used_b, mb, coll, sc)
     attach_to_bone(ham, arm, "HandR", sc)
+    attach_to_bone(ham_l, arm, "HandL", sc)
     info["objects"] = [o.name for o in sc.objects]
     if globals().get("YUR_EXPORT", True):
-        export_gltf(sc, arm, body, ham)
+        export_gltf(sc, arm, body, ham, ham_l)
     scene_extras(sc)
     select_only(sc, [arm], arm)
     return info
@@ -1318,9 +1453,9 @@ def scene_extras(sc):
     sc.view_settings.view_transform = 'Standard'
 
 
-def export_gltf(sc, arm, body, ham):
+def export_gltf(sc, arm, body, ham, ham_l):
     """Экспорт в assets/models/yurchik.gltf. Игра ищет узлы по именам, поэтому в файле они без номера версии."""
-    names = {arm: "Yurchik", body: "YurchikMesh", ham: "Hammer"}
+    names = {arm: "Yurchik", body: "YurchikMesh", ham: "Hammer", ham_l: "HammerL"}
     taken = {}
     for ob, n in names.items():                                       # временно освобождаем имена, занятые старыми сценами
         other = bpy.data.objects.get(n)

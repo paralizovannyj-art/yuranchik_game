@@ -113,6 +113,7 @@ var _sprinting := false
 var _run := 0.0                        ## 0 — шаг, 1 — полный бег
 var armed := true                      ## молоток в руке (false — убран в сумку)
 var _hammer: Node3D
+var _hammer_l: Node3D                  ## копия молотка в левой руке — пока правая держит телефон
 var _swap_at := -1.0                   ## когда в BUSY убрать/достать молоток (по _timer); < 0 — не трогаем
 var _punch := false                    ## текущий удар — кулаком
 var _punch_alt := false                ## следующий удар кулаком — второй рукой (Punch2)
@@ -562,6 +563,18 @@ func _setup_hammer() -> void:
 	var nodes := model.find_children("Hammer", "Node3D", true, false)
 	if not nodes.is_empty():
 		_hammer = nodes[0] as Node3D
+	nodes = model.find_children("HammerL", "Node3D", true, false)
+	if not nodes.is_empty():
+		_hammer_l = nodes[0] as Node3D
+		_hammer_l.visible = false
+
+
+## Телефон в правой руке (phone.gd): молоток на это время — в левой.
+func phone_hand(up: bool) -> void:
+	if _hammer:
+		_hammer.visible = armed and not up
+	if _hammer_l:
+		_hammer_l.visible = armed and up
 
 
 ## Достать (true) или убрать в сумку (false).
