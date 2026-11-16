@@ -1,5 +1,6 @@
 [gd_scene format=3 uid="uid://rrqth1gst2c6"]
 
+[ext_resource type="PackedScene" uid="uid://b2v10hwbmdio1" path="res://assets/models/gaming_chair.gltf" id="14_x75pi"]
 [ext_resource type="Script" uid="uid://dxqi43eh4md3p" path="res://scripts/world/door.gd" id="door"]
 [ext_resource type="Script" uid="uid://bsrgiiid28yqq" path="res://scripts/world/flicker_light.gd" id="flicker"]
 [ext_resource type="Script" uid="uid://cle5irdo5k1bj" path="res://scripts/world/interactable.gd" id="inter"]
@@ -10,9 +11,9 @@
 [ext_resource type="Shader" uid="uid://507jlrfn4qwu" path="res://shaders/ps2_post.gdshader" id="post"]
 [ext_resource type="PackedScene" uid="uid://jcujcrvodxj5" path="res://assets/models/room_door.gltf" id="rdoor"]
 [ext_resource type="PackedScene" uid="uid://denmsb1irwg0b" path="res://assets/models/yurchik_room.gltf" id="room"]
+[ext_resource type="PackedScene" uid="uid://dofehnsuy624m" path="res://assets/models/room_window.gltf" id="rwindow"]
 [ext_resource type="PackedScene" path="res://scenes/characters/sergey.tscn" id="sergey"]
 [ext_resource type="PackedScene" uid="uid://c7ajfkmkpjxd" path="res://assets/models/window_view.gltf" id="view"]
-[ext_resource type="PackedScene" uid="uid://dofehnsuy624m" path="res://assets/models/room_window.gltf" id="rwindow"]
 
 [sub_resource type="Environment" id="env"]
 background_mode = 1
@@ -299,3 +300,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="GamingChair" type="Node3D" parent="." unique_id=1568008533 instance=ExtResource("14_x75pi")]
+transform = Transform3D(0.9781476, 0, 0.2079117, 0, 1, 0, -0.2079117, 0, 0.9781476, -6.97, 8.4, -2.72)
