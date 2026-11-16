@@ -105,17 +105,17 @@
 		{
 			"mimeType":"image/png",
 			"name":"hand_skin",
-			"uri":"hand_skin.png"
+			"uri":"../textures/hand_skin.png"
 		},
 		{
 			"mimeType":"image/png",
 			"name":"hand_knit",
-			"uri":"hand_knit.png"
+			"uri":"../textures/hand_knit.png"
 		},
 		{
 			"mimeType":"image/png",
 			"name":"hand_sleeve",
-			"uri":"hand_sleeve.png"
+			"uri":"../textures/hand_sleeve.png"
 		}
 	],
 	"accessors":[

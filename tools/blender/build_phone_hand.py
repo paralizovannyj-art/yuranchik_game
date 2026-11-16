@@ -335,6 +335,7 @@ def main():
         o.select_set(o == ob)
     bpy.context.view_layer.objects.active = ob
     bpy.ops.export_scene.gltf(filepath=os.path.join(OUT, "phone_hand.gltf"), use_selection=True, use_active_scene=True,
+                              export_keep_originals=True,
                               export_format='GLTF_SEPARATE', export_apply=True, export_yup=True)
     return {"tris": sum(len(p.vertices) - 2 for p in me.polygons)}
 
