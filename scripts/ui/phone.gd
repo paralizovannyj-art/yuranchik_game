@@ -1,6 +1,6 @@
-## Телефон Юрчика «ОРБИТА»: кнопочный QWERTY-брусок, который он поднимает перед собой (Tab).
+## Телефон Юрчика — Nokia X2-00 (кнопочный QWERTY-брусок), который он поднимает перед собой (Tab).
 ## Модель — assets/models/phone.gltf (tools/blender/build_phone.py). Экран — SubViewport с PhoneScreen,
-## «печать» лицевой стороны (буквы, иконки, надпись) — второй SubViewport, нарисованный один раз
+## «печать» лица и спины (буквы, иконки, надписи, шов крышки) — второй SubViewport, нарисованный один раз
 ## по phone_layout.json. Висит на камере игрока; мир за ним размывается (DOF).
 ## Пауза не ставится: пока телефон в руке, Юрчик идёт шагом, не бьёт и не бегает (player.phone_up).
 class_name Phone
@@ -9,7 +9,7 @@ extends Node3D
 const MODEL := preload("res://assets/models/phone.gltf")
 const LAYOUT := preload("res://assets/models/phone_layout.json")
 const SCALE := 1.6                               ## крупнее настоящего, чтобы экран читался на 854×480
-const OPEN_POS := Vector3(0.022, -0.052, -0.118)
+const OPEN_POS := Vector3(0.022, -0.046, -0.118)
 const CLOSED_POS := Vector3(0.05, -0.2, -0.12)
 ## Отдельный слой: фонарик в голове (player.tscn) телефон не освещает, иначе экран засвечивается.
 const LAYER := 1 << 18
@@ -80,6 +80,11 @@ func _build_model() -> void:
 	pm.emission_enabled = true
 	pm.emission_texture = _print_vp.get_texture()
 	pm.emission_energy_multiplier = 0.3
+	# спина: тот же лист печати (правая половина), матовый пластик
+	var bm := StandardMaterial3D.new()
+	bm.albedo_texture = _print_vp.get_texture()
+	bm.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	bm.roughness = 0.6
 	for mi: MeshInstance3D in model.find_children("*", "MeshInstance3D", true, false):
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		for i in mi.mesh.get_surface_count():
@@ -87,6 +92,7 @@ func _build_model() -> void:
 			match mat.resource_name if mat else "":
 				"PhScreen": mi.set_surface_override_material(i, sm)
 				"PhPrint": mi.set_surface_override_material(i, pm)
+				"PhBackPrint": mi.set_surface_override_material(i, bm)
 	# экран подсвечивает лицо и руки голубым
 	_light = OmniLight3D.new()
 	_light.light_color = Color("9fd0c8")
@@ -180,103 +186,194 @@ func _process(_delta: float) -> void:
 	screen.signal_bars = clampi(1 + int(3.0 * clampf((near - SERGEY_NEAR) / (SERGEY_FAR - SERGEY_NEAR), 0.0, 1.0)), 1, 4)
 
 
-## «Печать» лицевой стороны: фон панели, динамик, надпись, буквы на клавишах, иконки на кнопках.
-## Рисуется один раз в SubViewport; UV модели — плоская проекция всей лицевой стороны (1 мм = PX_MM пикселей).
+## «Печать» корпуса: лист 2W×H, слева лицо (фон панели, динамик, NOKIA, буквы на клавишах, иконки),
+## справа спина (шов крышки, камера, VGA, решётка динамика, NOKIA). Рисуется один раз в SubViewport;
+## UV модели — плоская проекция (1 мм = PX_MM пикселей), координаты в phone_layout.json — мм от левого верхнего угла.
 class PhonePrint extends Control:
 	const PX_MM := 10.0
-	const PANEL := Color("0b0c0e")
-	const KEY := Color("15171a")
-	const LABEL := Color("e8e9eb")
-	const CYR := Color("c4c7cc")
-	const NUM := Color("d9a441")
+	const PANEL := Color("08090a")
+	const BACK := Color("141517")
+	const KEY := Color("101113")
+	const WHITE := Color("eceef0")
+	const GRAY := Color("8a8d92")
+	const SILVER := Color("9a9ea4")
 	var layout: Dictionary
+	var _bold: FontVariation
 
 	func layout_size() -> Vector2:
-		return Vector2(layout["size"][0], layout["size"][1])
+		return Vector2(layout["size"][0] * 2.0, layout["size"][1])
 
 	func _ready() -> void:
 		size = layout_size() * PX_MM
+		_bold = FontVariation.new()
+		_bold.base_font = ThemeDB.fallback_font
+		_bold.variation_embolden = 1.1
+		_bold.spacing_glyph = 2
 
-	func _r(a: Array) -> Rect2:
-		return Rect2(Vector2(a[0], a[1]) * PX_MM, Vector2(a[2] - a[0], a[3] - a[1]) * PX_MM)
+	func _r(a: Array, ox := 0.0) -> Rect2:
+		return Rect2(Vector2(a[0] + ox, a[1]) * PX_MM, Vector2(a[2] - a[0], a[3] - a[1]) * PX_MM)
+
+	func _sb(col: Color, radius: float, border := Color.TRANSPARENT, bw := 0) -> StyleBoxFlat:
+		var s := StyleBoxFlat.new()
+		s.bg_color = col
+		s.set_corner_radius_all(int(radius))
+		s.border_color = border
+		s.set_border_width_all(bw)
+		s.anti_aliasing = true
+		return s
+
+	## Текст по центру прямоугольника (по вертикали — по высоте прописных).
+	func _center(f: Font, r: Rect2, text: String, fs: int, col: Color) -> void:
+		var base := r.position.y + r.size.y / 2.0 + f.get_ascent(fs) * 0.36
+		draw_string(f, Vector2(r.position.x, base), text, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, fs, col)
 
 	func _draw() -> void:
 		var f := ThemeDB.fallback_font
-		draw_rect(Rect2(Vector2.ZERO, size), PANEL)
-		# рамка стекла вокруг экрана
-		var scr := _r(layout["screen"])
-		draw_rect(scr.grow(6), Color("15171b"))
-		draw_rect(scr.grow(6), Color("23262c"), false, 2.0)
-		draw_rect(scr, Color.BLACK)
-		# динамик: щель с сеткой
-		var ear := _r(layout["earpiece"])
-		draw_rect(ear, Color("030304"))
-		for i in int(ear.size.x / 6):
-			draw_line(ear.position + Vector2(3 + i * 6, 2), ear.position + Vector2(3 + i * 6, ear.size.y - 2), Color("1c1e22"), 1.0)
-		draw_rect(ear, Color("2a2d33"), false, 1.0)
-		var bp := Vector2(layout["brand"][0], layout["brand"][1]) * PX_MM
-		draw_string(f, bp + Vector2(-100, 8), "ОРБИТА", HORIZONTAL_ALIGNMENT_CENTER, 200, 26, Color("b9bcc0"))
-		draw_circle(Vector2(layout["mic"][0], layout["mic"][1]) * PX_MM, 4.0, Color("030304"))
-		for k: Dictionary in layout["keys"]:
-			_key(f, k)
+		var w: float = layout["size"][0]
+		draw_rect(Rect2(Vector2.ZERO, Vector2(w * PX_MM, size.y)), PANEL)
+		draw_rect(Rect2(Vector2(w * PX_MM, 0), Vector2(w * PX_MM, size.y)), BACK)
+		for it: Dictionary in layout["front"]:
+			_front(f, it)
+		for it: Dictionary in layout["back"]:
+			_back(f, it, _r(it.rect, w))
 
-	func _key(f: Font, k: Dictionary) -> void:
-		var r := _r(k.rect)
-		var kind: String = k.kind
-		var bg := KEY
-		if kind == "dpad":
-			bg = Color("0f1013")
-		elif kind == "dpad_c":
-			bg = Color("1a1d21")
-		draw_rect(r, bg)
-		draw_rect(Rect2(r.position + Vector2(0, 2), Vector2(r.size.x, 3)), bg.lightened(0.08))   # блик по верхней кромке
+	# ------------------------------------------------------------------ лицо
+	func _front(f: Font, it: Dictionary) -> void:
+		var r := _r(it.rect)
 		var c := r.get_center()
-		match kind:
-			"key":
-				var lat: String = k.lat
-				var big := 26 if lat.length() == 1 else 20
-				var shift := -6.0 if k.num != "" else 0.0       # с цифрой буква сдвинута влево, цифра справа сверху
-				draw_string(f, Vector2(r.position.x + shift, c.y - 4), lat, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, big, LABEL)
-				draw_string(f, Vector2(r.position.x, c.y + 26), k.cyr, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, 20, CYR)
-				if k.num != "":
-					draw_string(f, r.position + Vector2(r.size.x - 12, 18), k.num, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, NUM)
-			"back":
-				_arrow(c + Vector2(0, -10), Vector2.LEFT)
-				draw_string(f, Vector2(r.position.x, c.y + 26), k.cyr, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, 22, CYR)
-			"enter":
-				draw_polyline(PackedVector2Array([c + Vector2(10, -24), c + Vector2(10, -10), c + Vector2(-10, -10)]), LABEL, 3.0)
-				draw_polyline(PackedVector2Array([c + Vector2(-4, -16), c + Vector2(-10, -10), c + Vector2(-4, -4)]), LABEL, 3.0)
-				draw_string(f, Vector2(r.position.x, c.y + 26), k.cyr, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, 22, CYR)
-			"shift":
-				_arrow(c, Vector2.UP)
-			"space":
-				draw_polyline(PackedVector2Array([c + Vector2(-40, -8), c + Vector2(-40, 4), c + Vector2(40, 4), c + Vector2(40, -8)]), LABEL, 3.0)
-				draw_string(f, r.position + Vector2(r.size.x - 15, 20), k.num, HORIZONTAL_ALIGNMENT_LEFT, -1, 17, NUM)
-			"soft_music":
-				draw_circle(c + Vector2(-6, 8), 6.0, LABEL)
-				draw_line(c + Vector2(-1, 8), c + Vector2(-1, -14), LABEL, 3.0)
-				draw_line(c + Vector2(-1, -14), c + Vector2(9, -9), LABEL, 3.0)
-			"soft_mail":
-				var e := Rect2(c - Vector2(15, 10), Vector2(30, 20))
-				draw_rect(e, LABEL, false, 2.5)
-				draw_polyline(PackedVector2Array([e.position, c + Vector2(0, 2), e.position + Vector2(30, 0)]), LABEL, 2.5)
-			"call":
-				_handset(c, 0.0, Color("3fc35a"))
-			"end":
-				_handset(c, PI * 0.8, Color("e2463b"))
+		match it.kind as String:
+			"screen":
+				draw_style_box(_sb(Color("121417"), 6), r.grow(5))
+				draw_rect(r, Color.BLACK)
+			"earpiece":
+				draw_style_box(_sb(Color("a5121b"), r.size.y / 2.0), r)
+				draw_line(r.position + Vector2(6, 3), r.end - Vector2(6, r.size.y - 3), Color("d23a40"), 1.0)
+			"brand":
+				_center(_bold, r, "NOKIA", 30, SILVER)
+			"model":
+				_center(f, r, "X2", 15, GRAY)
+			"mic":
+				draw_circle(c, 4.0, Color("020202"))
+			"lsk", "rsk":
+				draw_style_box(_sb(KEY, 14), r)
+				_gloss(r)
+				var top := Vector2(c.x, r.position.y + r.size.y * 0.27)
+				draw_line(top - Vector2(15, 0), top + Vector2(15, 0), WHITE, 3.0)
+				var bot := Vector2(c.x, r.position.y + r.size.y * 0.76)
+				if it.kind == "lsk":
+					_handset(bot, Color("3fbf55"))
+				else:
+					_handset(bot, Color("e3383a"))
+					draw_arc(bot + Vector2(0, 5), 4.5, -PI * 0.3, PI * 1.3, 10, Color("e3383a"), 1.8)
+					draw_line(bot + Vector2(0, -1), bot + Vector2(0, 5), Color("e3383a"), 1.8)
+			"mid":
+				draw_style_box(_sb(KEY, 10), r)
+				_gloss(r)
+				_music(Vector2(r.position.x + 44, c.y + 6))
+				_mail(Vector2(r.end.x - 45, c.y + 6))
 			"dpad":
-				draw_rect(r, Color("2c3036"), false, 2.0)
+				draw_style_box(_sb(Color("0c0d0f"), 38, Color("7d8187"), 3), r)
+				draw_style_box(_sb(Color.TRANSPARENT, 34, Color("2c2f34"), 2), r.grow(-5))
 			"dpad_c":
-				draw_rect(r, Color("3a3f46"), false, 1.5)
+				draw_style_box(_sb(Color("050607"), 22, Color("1d2024"), 2), r)
+				draw_rect(Rect2(r.position + Vector2(10, 6), Vector2(r.size.x - 20, 6)), Color(1, 1, 1, 0.06))
+			_:
+				_key(f, it, r, c)
 
-	func _arrow(c: Vector2, d: Vector2) -> void:
-		var n := Vector2(-d.y, d.x)
-		draw_colored_polygon(PackedVector2Array([c + d * 12, c + n * 10, c + n * 4, c - d * 10 + n * 4, c - d * 10 - n * 4, c - n * 4, c - n * 10]), LABEL)
+	func _gloss(r: Rect2) -> void:
+		draw_rect(Rect2(r.position + Vector2(6, 3), Vector2(r.size.x - 12, r.size.y * 0.3)), Color(1, 1, 1, 0.018))
+
+	func _key(f: Font, it: Dictionary, r: Rect2, c: Vector2) -> void:
+		draw_style_box(_sb(KEY, 8, Color("1e2024"), 1), r)
+		_gloss(r)
+		var p := r.position
+		var bottom := r.end.y - 14
+		match it.kind as String:
+			"key":
+				var lat: String = it.lat
+				var sym: String = it.sym
+				if lat != "":
+					draw_string(f, p + Vector2(7, 26), lat, HORIZONTAL_ALIGNMENT_LEFT, -1, 23, WHITE)
+					var sc := GRAY if sym in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "#"] else WHITE
+					draw_string(f, p + Vector2(27, 25), sym, HORIZONTAL_ALIGNMENT_LEFT, -1, 19, sc)
+				else:
+					draw_string(f, p + Vector2(14, 26), sym, HORIZONTAL_ALIGNMENT_LEFT, -1, 21, WHITE)
+				draw_string(f, p + Vector2(7, 57), it.cyr, HORIZONTAL_ALIGNMENT_LEFT, -1, 23, WHITE)
+			"back":
+				var b := c + Vector2(2, -2)
+				draw_polyline(PackedVector2Array([b + Vector2(-14, 0), b + Vector2(-7, -7), b + Vector2(12, -7),
+					b + Vector2(12, 7), b + Vector2(-7, 7), b + Vector2(-14, 0)]), WHITE, 2.0)
+				draw_line(b + Vector2(-2, -3), b + Vector2(5, 3), WHITE, 2.0)
+				draw_line(b + Vector2(-2, 3), b + Vector2(5, -3), WHITE, 2.0)
+			"enter":
+				var e := c + Vector2(2, -2)
+				draw_polyline(PackedVector2Array([e + Vector2(12, -9), e + Vector2(12, 5), e + Vector2(-11, 5)]), WHITE, 3.0)
+				draw_colored_polygon(PackedVector2Array([e + Vector2(-15, 5), e + Vector2(-7, -1), e + Vector2(-7, 11)]), WHITE)
+			"fn":
+				var a := p + Vector2(16, 20)
+				draw_line(a + Vector2(-6, 6), a + Vector2(6, -6), WHITE, 2.5)
+				draw_colored_polygon(PackedVector2Array([a + Vector2(8, -8), a + Vector2(-2, -8), a + Vector2(8, 2)]), WHITE)
+			"shift":
+				var s := Vector2(c.x, bottom - 6)
+				draw_polyline(PackedVector2Array([s + Vector2(0, -12), s + Vector2(11, 0), s + Vector2(5, 0), s + Vector2(5, 9),
+					s + Vector2(-5, 9), s + Vector2(-5, 0), s + Vector2(-11, 0), s + Vector2(0, -12)]), WHITE, 2.0)
+			"sym":
+				draw_string(f, Vector2(p.x, bottom), "Sym", HORIZONTAL_ALIGNMENT_CENTER, r.size.x, 17, WHITE)
+			"space":
+				var sp := Vector2(c.x, bottom - 4)
+				draw_polyline(PackedVector2Array([sp + Vector2(-17, -6), sp + Vector2(-17, 2), sp + Vector2(17, 2), sp + Vector2(17, -6)]), WHITE, 3.0)
+			"comma", "period":
+				draw_string(f, p + Vector2(28, 30), "?" if it.kind == "comma" else ":", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, WHITE)
+				draw_string(f, Vector2(p.x, bottom + 2), "," if it.kind == "comma" else ".", HORIZONTAL_ALIGNMENT_CENTER, r.size.x, 26, WHITE)
+			"ctrl":
+				draw_string(f, p + Vector2(12, 30), "з", HORIZONTAL_ALIGNMENT_LEFT, -1, 19, WHITE)
+				var q := p + Vector2(31, 24)
+				draw_line(q + Vector2(-5, 5), q + Vector2(5, -6), WHITE, 2.5)
+				draw_string(f, Vector2(p.x, bottom), "Ctrl", HORIZONTAL_ALIGNMENT_CENTER, r.size.x, 17, WHITE)
 
 	## Трубка: дуга с утолщениями на концах.
-	func _handset(c: Vector2, rot: float, col: Color) -> void:
-		var a0 := PI * 1.1 + rot
-		var a1 := PI * 1.9 + rot
-		draw_arc(c + Vector2(0, 14).rotated(rot), 16.0, a0, a1, 12, col, 6.0)
-		for a: float in [a0, a1]:
-			draw_circle(c + Vector2(0, 14).rotated(rot) + Vector2.from_angle(a) * 16.0, 5.0, col)
+	func _handset(c: Vector2, col: Color) -> void:
+		var o := c + Vector2(0, 12)
+		draw_arc(o, 13.0, PI * 1.15, PI * 1.85, 12, col, 4.0)
+		for a: float in [PI * 1.15, PI * 1.85]:
+			draw_circle(o + Vector2.from_angle(a) * 13.0, 3.2, col)
+
+	func _music(c: Vector2) -> void:
+		var col := Color("b9bcc1")
+		draw_circle(c + Vector2(-8, 6), 4.0, col)
+		draw_circle(c + Vector2(4, 4), 4.0, col)
+		draw_line(c + Vector2(-4.5, 6), c + Vector2(-4.5, -10), col, 2.0)
+		draw_line(c + Vector2(7.5, 4), c + Vector2(7.5, -12), col, 2.0)
+		draw_line(c + Vector2(-4.5, -10), c + Vector2(7.5, -12), col, 3.0)
+		draw_arc(c + Vector2(10, -1), 6.0, -PI * 0.5, PI * 0.5, 8, col, 1.5)
+
+	func _mail(c: Vector2) -> void:
+		var col := Color("b9bcc1")
+		var e := Rect2(c - Vector2(11, 7), Vector2(22, 14))
+		draw_rect(e, col, false, 2.0)
+		draw_polyline(PackedVector2Array([e.position, c + Vector2(0, 1), e.position + Vector2(22, 0)]), col, 2.0)
+
+	# ------------------------------------------------------------------ спина
+	func _back(f: Font, it: Dictionary, r: Rect2) -> void:
+		var c := r.get_center()
+		match it.kind as String:
+			"cover":
+				draw_style_box(_sb(Color.TRANSPARENT, 26, Color("040405"), 2), r)
+				draw_style_box(_sb(Color.TRANSPARENT, 26, Color("26282c"), 1), r.grow(1.5))
+			"camera":
+				draw_style_box(_sb(Color("040506"), 20), r)
+				draw_circle(c, 24.0, Color("1e2228"))
+				draw_circle(c, 19.0, Color("0a1626"))
+				draw_circle(c, 11.0, Color("10243f"))
+				draw_circle(c + Vector2(-6, -6), 4.0, Color(1, 1, 1, 0.35))
+			"vga":
+				_center(f, r, "VGA", 24, GRAY)
+			"grille":
+				for g: float in [0.0, 0.62]:
+					for row in 3:
+						for col in 9:
+							var d := r.position + Vector2(8 + col * 13.0, 10 + g * r.size.y + row * 12.0)
+							draw_circle(d, 3.6, Color("030304"))
+							draw_circle(d + Vector2(0, 1.5), 2.0, Color("2a2c30", 0.4))
+			"brand":
+				_center(_bold, r, "NOKIA", 38, Color("8e9196"))
