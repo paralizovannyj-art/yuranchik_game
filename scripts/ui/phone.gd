@@ -1,11 +1,13 @@
-## Телефон Юрчика «ОРБИТА Q2»: кнопочный QWERTY-брусок, который он поднимает перед собой (Tab).
-## Модель собрана из простых коробок прямо здесь, экран — SubViewport с PhoneScreen, клавиатура —
-## второй SubViewport, нарисованный один раз. Висит на камере игрока; мир за ним размывается (DOF).
+## Телефон Юрчика «ОРБИТА»: кнопочный QWERTY-брусок, который он поднимает перед собой (Tab).
+## Модель — assets/models/phone.gltf (tools/blender/build_phone.py). Экран — SubViewport с PhoneScreen,
+## «печать» лицевой стороны (буквы, иконки, надпись) — второй SubViewport, нарисованный один раз
+## по phone_layout.json. Висит на камере игрока; мир за ним размывается (DOF).
 ## Пауза не ставится: пока телефон в руке, Юрчик идёт шагом, не бьёт и не бегает (player.phone_up).
 class_name Phone
 extends Node3D
 
-const SIZE := Vector3(0.052, 0.112, 0.011)
+const MODEL := preload("res://assets/models/phone.gltf")
+const LAYOUT := preload("res://assets/models/phone_layout.json")
 const SCALE := 1.6                               ## крупнее настоящего, чтобы экран читался на 854×480
 const OPEN_POS := Vector3(0.022, -0.052, -0.118)
 const CLOSED_POS := Vector3(0.05, -0.2, -0.12)
@@ -22,7 +24,7 @@ var screen: PhoneScreen
 var player: Player
 
 var _screen_vp: SubViewport
-var _keys_vp: SubViewport
+var _print_vp: SubViewport
 var _light: OmniLight3D
 var _tween: Tween
 var _attrs: CameraAttributesPractical
@@ -53,80 +55,38 @@ func _build_screen() -> void:
 	screen = PhoneScreen.new()
 	screen.player = player
 	_screen_vp.add_child(screen)
-	_keys_vp = SubViewport.new()
-	_keys_vp.size = Vector2i(256, 288)
-	_keys_vp.render_target_update_mode = SubViewport.UPDATE_ONCE
-	add_child(_keys_vp)
-	var keys := PhoneKeys.new()
-	_keys_vp.add_child(keys)
-
-
-func _box(size: Vector3, pos: Vector3, mat: Material) -> MeshInstance3D:
-	var m := MeshInstance3D.new()
-	var b := BoxMesh.new()
-	b.size = size
-	m.mesh = b
-	m.position = pos
-	m.material_override = mat
-	m.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(m)
-	return m
-
-
-func _quad(size: Vector2, pos: Vector3, mat: Material) -> MeshInstance3D:
-	var m := MeshInstance3D.new()
-	var q := QuadMesh.new()
-	q.size = size
-	m.mesh = q
-	m.position = pos
-	m.material_override = mat
-	m.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(m)
-	return m
-
-
-func _mat(col: Color, rough := 0.6, metal := 0.0) -> StandardMaterial3D:
-	var m := StandardMaterial3D.new()
-	m.albedo_color = col
-	m.roughness = rough
-	m.metallic = metal
-	return m
+	var pr := PhonePrint.new()
+	pr.layout = LAYOUT.data
+	_print_vp = SubViewport.new()
+	_print_vp.size = Vector2i(pr.layout_size() * PhonePrint.PX_MM)
+	_print_vp.render_target_update_mode = SubViewport.UPDATE_ONCE
+	add_child(_print_vp)
+	_print_vp.add_child(pr)
 
 
 func _build_model() -> void:
-	var front := SIZE.z / 2.0 + 0.0002
-	_box(SIZE, Vector3.ZERO, _mat(Color("141618"), 0.45, 0.2))
-	var red := _mat(Color("7a1414"), 0.35, 0.3)
-	for sx: float in [-1.0, 1.0]:                # красные боковины, как на примере
-		_box(Vector3(0.0022, SIZE.y - 0.006, SIZE.z + 0.001), Vector3(sx * (SIZE.x / 2.0 + 0.0005), 0, 0), red)
+	var model: Node3D = MODEL.instantiate()
+	add_child(model)
 	# экран: светится сам и не зависит от освещения
 	var sm := StandardMaterial3D.new()
 	sm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	sm.albedo_texture = _screen_vp.get_texture()
 	sm.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR
-	_quad(Vector2(0.046, 0.0345) + Vector2(0.004, 0.004), Vector3(0, 0.025, front - 0.0001), _mat(Color("050608"), 0.2))
-	_quad(Vector2(0.046, 0.0345), Vector3(0, 0.025, front), sm)
-	# клавиатура и крестовина
-	var km := StandardMaterial3D.new()
-	km.albedo_texture = _keys_vp.get_texture()
-	km.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR
-	km.roughness = 0.5
-	km.emission_enabled = true                   # подсветка клавиатуры
-	km.emission_texture = _keys_vp.get_texture()
-	km.emission_energy_multiplier = 0.35
-	_quad(Vector2(0.046, 0.0518), Vector3(0, -0.0275, front), km)
-	# динамик и надпись сверху
-	_box(Vector3(0.012, 0.0012, 0.0006), Vector3(0, 0.052, front), _mat(Color("050608")))
-	var brand := Label3D.new()
-	brand.text = "ОРБИТА"
-	brand.font_size = 30
-	brand.pixel_size = 0.000055
-	brand.outline_size = 0
-	brand.modulate = Color("b9bcc0")
-	brand.position = Vector3(0, 0.0478, front + 0.0001)
-	brand.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	brand.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(brand)
+	# лицевая панель и клавиши: глянцевый чёрный пластик с напечатанными буквами, буквы подсвечены
+	var pm := StandardMaterial3D.new()
+	pm.albedo_texture = _print_vp.get_texture()
+	pm.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	pm.roughness = 0.32
+	pm.emission_enabled = true
+	pm.emission_texture = _print_vp.get_texture()
+	pm.emission_energy_multiplier = 0.3
+	for mi: MeshInstance3D in model.find_children("*", "MeshInstance3D", true, false):
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		for i in mi.mesh.get_surface_count():
+			var mat := mi.mesh.surface_get_material(i)
+			match mat.resource_name if mat else "":
+				"PhScreen": mi.set_surface_override_material(i, sm)
+				"PhPrint": mi.set_surface_override_material(i, pm)
 	# экран подсвечивает лицо и руки голубым
 	_light = OmniLight3D.new()
 	_light.light_color = Color("9fd0c8")
@@ -220,37 +180,103 @@ func _process(_delta: float) -> void:
 	screen.signal_bars = clampi(1 + int(3.0 * clampf((near - SERGEY_NEAR) / (SERGEY_FAR - SERGEY_NEAR), 0.0, 1.0)), 1, 4)
 
 
-## Клавиатура и крестовина: рисуются один раз в маленький SubViewport и ложатся текстурой на модель.
-class PhoneKeys extends Control:
-	const ROWS := [["QЙ", "WЦ", "EУ", "RК", "TЕ", "YН", "UГ", "IШ", "OЩ", "PЗ"],
-		["AФ", "SЫ", "DВ", "FА", "GП", "HР", "JО", "KЛ", "LД", "Ж"],
-		["⇧", "ZЯ", "XЧ", "CС", "VМ", "BИ", "NТ", "MЬ", "Б", "<"],
-		["Alt", "Sym", "0", " ", " ", " ", "Ю", "Х", "Э", "OK"]]
+## «Печать» лицевой стороны: фон панели, динамик, надпись, буквы на клавишах, иконки на кнопках.
+## Рисуется один раз в SubViewport; UV модели — плоская проекция всей лицевой стороны (1 мм = PX_MM пикселей).
+class PhonePrint extends Control:
+	const PX_MM := 10.0
+	const PANEL := Color("0b0c0e")
+	const KEY := Color("15171a")
+	const LABEL := Color("e8e9eb")
+	const CYR := Color("c4c7cc")
+	const NUM := Color("d9a441")
+	var layout: Dictionary
+
+	func layout_size() -> Vector2:
+		return Vector2(layout["size"][0], layout["size"][1])
 
 	func _ready() -> void:
-		size = Vector2(256, 288)
+		size = layout_size() * PX_MM
+
+	func _r(a: Array) -> Rect2:
+		return Rect2(Vector2(a[0], a[1]) * PX_MM, Vector2(a[2] - a[0], a[3] - a[1]) * PX_MM)
 
 	func _draw() -> void:
 		var f := ThemeDB.fallback_font
-		draw_rect(Rect2(Vector2.ZERO, size), Color("141618"))
-		# софт-клавиши, крестовина, зелёная и красная трубки
-		draw_rect(Rect2(10, 10, 74, 30), Color("1e2125"))
-		draw_rect(Rect2(172, 10, 74, 30), Color("1e2125"))
-		draw_rect(Rect2(97, 6, 62, 52), Color("0e1012"))
-		draw_rect(Rect2(97, 6, 62, 52), Color("2c3036"), false, 2.0)
-		draw_rect(Rect2(115, 20, 26, 24), Color("16191c"))
-		draw_rect(Rect2(115, 20, 26, 24), Color("3a3f46"), false, 1.0)
-		draw_rect(Rect2(24, 48, 30, 8), Color("3fc35a"))
-		draw_rect(Rect2(202, 48, 30, 8), Color("e2463b"))
-		var kw := 22.0
-		var kh := 46.0
-		for r in ROWS.size():
-			for c in ROWS[r].size():
-				var k: String = ROWS[r][c]
-				var rect := Rect2(6 + c * (kw + 3.2), 74 + r * (kh + 6), kw, kh)
-				draw_rect(rect, Color("0c0d0f"))
-				draw_rect(rect, Color("23262b"), false, 1.0)
-				var lat := k.substr(0, 1) if k.length() == 2 else k
-				draw_string(f, rect.position + Vector2(0, 20), lat, HORIZONTAL_ALIGNMENT_CENTER, kw, 14, Color("e6e7e9"))
-				if k.length() == 2:
-					draw_string(f, rect.position + Vector2(0, 40), k.substr(1, 1), HORIZONTAL_ALIGNMENT_CENTER, kw, 13, Color("c9a24a"))
+		draw_rect(Rect2(Vector2.ZERO, size), PANEL)
+		# рамка стекла вокруг экрана
+		var scr := _r(layout["screen"])
+		draw_rect(scr.grow(6), Color("15171b"))
+		draw_rect(scr.grow(6), Color("23262c"), false, 2.0)
+		draw_rect(scr, Color.BLACK)
+		# динамик: щель с сеткой
+		var ear := _r(layout["earpiece"])
+		draw_rect(ear, Color("030304"))
+		for i in int(ear.size.x / 6):
+			draw_line(ear.position + Vector2(3 + i * 6, 2), ear.position + Vector2(3 + i * 6, ear.size.y - 2), Color("1c1e22"), 1.0)
+		draw_rect(ear, Color("2a2d33"), false, 1.0)
+		var bp := Vector2(layout["brand"][0], layout["brand"][1]) * PX_MM
+		draw_string(f, bp + Vector2(-100, 8), "ОРБИТА", HORIZONTAL_ALIGNMENT_CENTER, 200, 26, Color("b9bcc0"))
+		draw_circle(Vector2(layout["mic"][0], layout["mic"][1]) * PX_MM, 4.0, Color("030304"))
+		for k: Dictionary in layout["keys"]:
+			_key(f, k)
+
+	func _key(f: Font, k: Dictionary) -> void:
+		var r := _r(k.rect)
+		var kind: String = k.kind
+		var bg := KEY
+		if kind == "dpad":
+			bg = Color("0f1013")
+		elif kind == "dpad_c":
+			bg = Color("1a1d21")
+		draw_rect(r, bg)
+		draw_rect(Rect2(r.position + Vector2(0, 2), Vector2(r.size.x, 3)), bg.lightened(0.08))   # блик по верхней кромке
+		var c := r.get_center()
+		match kind:
+			"key":
+				var lat: String = k.lat
+				var big := 26 if lat.length() == 1 else 20
+				var shift := -6.0 if k.num != "" else 0.0       # с цифрой буква сдвинута влево, цифра справа сверху
+				draw_string(f, Vector2(r.position.x + shift, c.y - 4), lat, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, big, LABEL)
+				draw_string(f, Vector2(r.position.x, c.y + 26), k.cyr, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, 20, CYR)
+				if k.num != "":
+					draw_string(f, r.position + Vector2(r.size.x - 12, 18), k.num, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, NUM)
+			"back":
+				_arrow(c + Vector2(0, -10), Vector2.LEFT)
+				draw_string(f, Vector2(r.position.x, c.y + 26), k.cyr, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, 22, CYR)
+			"enter":
+				draw_polyline(PackedVector2Array([c + Vector2(10, -24), c + Vector2(10, -10), c + Vector2(-10, -10)]), LABEL, 3.0)
+				draw_polyline(PackedVector2Array([c + Vector2(-4, -16), c + Vector2(-10, -10), c + Vector2(-4, -4)]), LABEL, 3.0)
+				draw_string(f, Vector2(r.position.x, c.y + 26), k.cyr, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, 22, CYR)
+			"shift":
+				_arrow(c, Vector2.UP)
+			"space":
+				draw_polyline(PackedVector2Array([c + Vector2(-40, -8), c + Vector2(-40, 4), c + Vector2(40, 4), c + Vector2(40, -8)]), LABEL, 3.0)
+				draw_string(f, r.position + Vector2(r.size.x - 15, 20), k.num, HORIZONTAL_ALIGNMENT_LEFT, -1, 17, NUM)
+			"soft_music":
+				draw_circle(c + Vector2(-6, 8), 6.0, LABEL)
+				draw_line(c + Vector2(-1, 8), c + Vector2(-1, -14), LABEL, 3.0)
+				draw_line(c + Vector2(-1, -14), c + Vector2(9, -9), LABEL, 3.0)
+			"soft_mail":
+				var e := Rect2(c - Vector2(15, 10), Vector2(30, 20))
+				draw_rect(e, LABEL, false, 2.5)
+				draw_polyline(PackedVector2Array([e.position, c + Vector2(0, 2), e.position + Vector2(30, 0)]), LABEL, 2.5)
+			"call":
+				_handset(c, 0.0, Color("3fc35a"))
+			"end":
+				_handset(c, PI * 0.8, Color("e2463b"))
+			"dpad":
+				draw_rect(r, Color("2c3036"), false, 2.0)
+			"dpad_c":
+				draw_rect(r, Color("3a3f46"), false, 1.5)
+
+	func _arrow(c: Vector2, d: Vector2) -> void:
+		var n := Vector2(-d.y, d.x)
+		draw_colored_polygon(PackedVector2Array([c + d * 12, c + n * 10, c + n * 4, c - d * 10 + n * 4, c - d * 10 - n * 4, c - n * 4, c - n * 10]), LABEL)
+
+	## Трубка: дуга с утолщениями на концах.
+	func _handset(c: Vector2, rot: float, col: Color) -> void:
+		var a0 := PI * 1.1 + rot
+		var a1 := PI * 1.9 + rot
+		draw_arc(c + Vector2(0, 14).rotated(rot), 16.0, a0, a1, 12, col, 6.0)
+		for a: float in [a0, a1]:
+			draw_circle(c + Vector2(0, 14).rotated(rot) + Vector2.from_angle(a) * 16.0, 5.0, col)
