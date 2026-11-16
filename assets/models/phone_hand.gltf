@@ -20,36 +20,13 @@
 	],
 	"materials":[
 		{
-			"doubleSided":true,
-			"name":"HandSkin",
+			"name":"Yur3Body",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
 					"index":0
 				},
 				"metallicFactor":0,
-				"roughnessFactor":0.6000000238418579
-			}
-		},
-		{
-			"doubleSided":true,
-			"name":"HandGlove",
-			"pbrMetallicRoughness":{
-				"baseColorTexture":{
-					"index":1
-				},
-				"metallicFactor":0,
-				"roughnessFactor":0.949999988079071
-			}
-		},
-		{
-			"doubleSided":true,
-			"name":"HandSleeve",
-			"pbrMetallicRoughness":{
-				"baseColorTexture":{
-					"index":2
-				},
-				"metallicFactor":0,
-				"roughnessFactor":0.949999988079071
+				"roughnessFactor":0.8999999761581421
 			}
 		}
 	],
@@ -65,24 +42,6 @@
 					},
 					"indices":3,
 					"material":0
-				},
-				{
-					"attributes":{
-						"POSITION":4,
-						"NORMAL":5,
-						"TEXCOORD_0":6
-					},
-					"indices":7,
-					"material":1
-				},
-				{
-					"attributes":{
-						"POSITION":8,
-						"NORMAL":9,
-						"TEXCOORD_0":10
-					},
-					"indices":11,
-					"material":2
 				}
 			]
 		}
@@ -91,208 +50,74 @@
 		{
 			"sampler":0,
 			"source":0
-		},
-		{
-			"sampler":0,
-			"source":1
-		},
-		{
-			"sampler":0,
-			"source":2
 		}
 	],
 	"images":[
 		{
 			"mimeType":"image/png",
-			"name":"hand_skin",
-			"uri":"../textures/hand_skin.png"
-		},
-		{
-			"mimeType":"image/png",
-			"name":"hand_knit",
-			"uri":"../textures/hand_knit.png"
-		},
-		{
-			"mimeType":"image/png",
-			"name":"hand_sleeve",
-			"uri":"../textures/hand_sleeve.png"
+			"name":"yur3_atlas",
+			"uri":"../textures/yur3_atlas.png"
 		}
 	],
 	"accessors":[
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":1593,
+			"count":177,
 			"max":[
-				0.048441655933856964,
-				0.009521225467324257,
-				0.021268164739012718
+				0.14336444437503815,
+				0.009501033462584019,
+				0.03385934606194496
 			],
 			"min":[
-				-0.04545852541923523,
-				-0.06253749877214432,
-				-0.0065407417714595795
+				-0.06551720201969147,
+				-0.19242529571056366,
+				-0.07106037437915802
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":1593,
+			"count":177,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":1593,
+			"count":177,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
 			"componentType":5123,
-			"count":8304,
-			"type":"SCALAR"
-		},
-		{
-			"bufferView":4,
-			"componentType":5126,
-			"count":2265,
-			"max":[
-				0.0649385154247284,
-				0.005943035241216421,
-				0.010634632781147957
-			],
-			"min":[
-				-0.04632190614938736,
-				-0.0825122818350792,
-				-0.0397624634206295
-			],
-			"type":"VEC3"
-		},
-		{
-			"bufferView":5,
-			"componentType":5126,
-			"count":2265,
-			"type":"VEC3"
-		},
-		{
-			"bufferView":6,
-			"componentType":5126,
-			"count":2265,
-			"type":"VEC2"
-		},
-		{
-			"bufferView":7,
-			"componentType":5123,
-			"count":11856,
-			"type":"SCALAR"
-		},
-		{
-			"bufferView":8,
-			"componentType":5126,
-			"count":197,
-			"max":[
-				0.17049086093902588,
-				-0.04419400170445442,
-				0.07120019197463989
-			],
-			"min":[
-				0.01791151985526085,
-				-0.22528590261936188,
-				-0.03435951843857765
-			],
-			"type":"VEC3"
-		},
-		{
-			"bufferView":9,
-			"componentType":5126,
-			"count":197,
-			"type":"VEC3"
-		},
-		{
-			"bufferView":10,
-			"componentType":5126,
-			"count":197,
-			"type":"VEC2"
-		},
-		{
-			"bufferView":11,
-			"componentType":5123,
-			"count":864,
+			"count":486,
 			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":19116,
+			"byteLength":2124,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":19116,
-			"byteOffset":19116,
+			"byteLength":2124,
+			"byteOffset":2124,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":12744,
-			"byteOffset":38232,
+			"byteLength":1416,
+			"byteOffset":4248,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":16608,
-			"byteOffset":50976,
-			"target":34963
-		},
-		{
-			"buffer":0,
-			"byteLength":27180,
-			"byteOffset":67584,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":27180,
-			"byteOffset":94764,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":18120,
-			"byteOffset":121944,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":23712,
-			"byteOffset":140064,
-			"target":34963
-		},
-		{
-			"buffer":0,
-			"byteLength":2364,
-			"byteOffset":163776,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":2364,
-			"byteOffset":166140,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":1576,
-			"byteOffset":168504,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":1728,
-			"byteOffset":170080,
+			"byteLength":972,
+			"byteOffset":5664,
 			"target":34963
 		}
 	],
@@ -304,7 +129,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":171808,
+			"byteLength":6636,
 			"uri":"phone_hand.bin"
 		}
 	]

@@ -8,7 +8,7 @@ extends Node3D
 
 const MODEL := preload("res://assets/models/phone.gltf")
 const LAYOUT := preload("res://assets/models/phone_layout.json")
-## Левая рука в вязаной перчатке без пальцев, держит телефон (tools/blender/build_phone_hand.py) — в тех же координатах.
+## Правая кисть Юрчика (из его модели, tools/blender/build_phone_hand.py) держит телефон — в тех же координатах.
 const HAND := preload("res://assets/models/phone_hand.gltf")
 const SCALE := 1.6                               ## крупнее настоящего, чтобы экран читался на 854×480
 const OPEN_POS := Vector3(0.03, -0.042, -0.185)   ## подальше: в кадре весь телефон и рука, как на фото
