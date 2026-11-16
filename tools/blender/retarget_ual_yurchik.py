@@ -2,8 +2,7 @@
 #
 # Источник: tools/blender/ual/UAL1_Standard.glb (без root motion), лицензия CC0 —
 #   https://quaternius.itch.io/universal-animation-library
-# Цель:     скелет «Yurchik3» из tools/blender/yurchik_v3.blend (15 костей тела + по 15 костей пальцев, A-поза).
-#           Пальцы не переносятся: в клипах они в покое (кулак), позу пальцев задаёт игра.
+# Цель:     скелет «Yurchik3» из tools/blender/yurchik_v3.blend (15 костей, A-поза).
 #
 # Как переносим: для каждой нашей кости берём кость-источник и её поворот относительно
 # собственной rest-позы в мировых осях (delta). Rest-позы у скелетов разные (у них T-поза,
@@ -434,11 +433,10 @@ def export():
     arm = bpy.data.objects["Yurchik3"]
     body = bpy.data.objects["Yurchik3Mesh"]
     ham = bpy.data.objects["Hammer3"]
-    ham_l = bpy.data.objects["HammerL3"]          # молоток в левой руке — пока правая держит телефон
     for o in sc.objects:
-        o.select_set(o in (arm, body, ham, ham_l))
+        o.select_set(o in (arm, body, ham))
     bpy.context.view_layer.objects.active = arm
-    ren = [(arm, "Yurchik"), (body, "YurchikMesh"), (ham, "Hammer"), (ham_l, "HammerL")]
+    ren = [(arm, "Yurchik"), (body, "YurchikMesh"), (ham, "Hammer")]
     old = [(o, o.name) for o, _ in ren]
     try:
         for o, n in ren:
