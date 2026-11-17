@@ -15,6 +15,7 @@ enum S { IDLE, WANDER, INVESTIGATE, CHASE, ATTACK, GRAB, STAGGER, DOWN, GETUP, S
 @export_enum("random", "a", "b", "c") var variant: String = "random"   ## расцветка одежды
 @export var is_stalker := false         ## Сергей: нельзя убить, только оглушить
 @export var model_scale := 1.0
+@export var eye_height := 1.55           ## высота глаз (м, до model_scale) — отсюда идёт луч «видит ли игрока»
 @export var max_hp := 4.0
 
 @export_group("Движение")
@@ -191,7 +192,7 @@ func _can_see(player: Player, use_fov: bool) -> bool:
 		var flat := Vector3(to.x, 0.0, to.z)
 		if rad_to_deg((-global_basis.z).angle_to(flat)) > sight_fov * 0.5:
 			return false
-	var q := PhysicsRayQueryParameters3D.create(global_position + Vector3.UP * 1.55 * model_scale,
+	var q := PhysicsRayQueryParameters3D.create(global_position + Vector3.UP * eye_height * model_scale,
 		player.global_position + Vector3.UP * 1.3, 1)
 	return get_world_3d().direct_space_state.intersect_ray(q).is_empty()
 

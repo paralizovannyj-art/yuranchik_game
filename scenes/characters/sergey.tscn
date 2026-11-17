@@ -1,19 +1,19 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://bg5dquyqdt2p4"]
 
-[ext_resource type="Script" path="res://scripts/enemies/enemy.gd" id="1"]
-[ext_resource type="PackedScene" path="res://assets/models/sergey.gltf" id="2"]
+[ext_resource type="Script" uid="uid://dflwp0fde62yp" path="res://scripts/enemies/enemy.gd" id="1"]
+[ext_resource type="PackedScene" uid="uid://v5suu556tu5o" path="res://assets/models/sergey.gltf" id="2"]
 
 [sub_resource type="CapsuleShape3D" id="capsule"]
-radius = 0.36
-height = 2.1
+radius = 0.38
+height = 2.2
 
-[node name="Sergey" type="CharacterBody3D"]
+[node name="Sergey" type="CharacterBody3D" unique_id=295224548]
 collision_layer = 4
 collision_mask = 7
 script = ExtResource("1")
 display_name = "Сергей"
 is_stalker = true
-model_scale = 1.18
+eye_height = 2.0
 max_hp = 9.0
 walk_speed = 1.0
 chase_speed = 2.0
@@ -22,10 +22,10 @@ wander_radius = 0.0
 idle_anim = "Idle"
 wander_anim = "Walk"
 chase_anim = "Walk"
-chase_anim_speed = 0.9
+chase_anim_speed = 1.1
 sight_range = 40.0
 lose_time = 9999.0
-attack_range = 1.45
+attack_range = 1.7
 attack_damage = 30.0
 attack_anim = "Hook"
 attack_anim_rate = 0.55
@@ -34,13 +34,12 @@ attack_total = 1.1
 attack_cooldown = 1.4
 heavy_hits = true
 can_grab = false
-stun_time = 10.0
 
-[node name="Collision" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 0)
+[node name="Collision" type="CollisionShape3D" parent="." unique_id=460379396]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
 shape = SubResource("capsule")
 
-[node name="Model" type="Node3D" parent="."]
-transform = Transform3D(-1.18, 0, 0, 0, 1.18, 0, 0, 0, -1.18, 0, 0, 0)
+[node name="Model" type="Node3D" parent="." unique_id=457980641]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
 
-[node name="Mesh" parent="Model" instance=ExtResource("2")]
+[node name="Mesh" parent="Model" unique_id=1728111513 instance=ExtResource("2")]
