@@ -24,7 +24,7 @@ PREVIEW = ARGS[1] if len(ARGS) > 1 else None
 
 def load(name, cut):
     src = open(os.path.join(HERE, name), encoding="utf-8").read()
-    ns = {"YUR_ROOT": ROOT, "__file__": os.path.join(HERE, name)}
+    ns = {"YUR_ROOT": ROOT, "__file__": os.path.join(HERE, name), "YUR_DETAILED_HANDS": False}   # у врагов — простые кисти
     exec(compile(src[:src.rindex(cut)], name, "exec"), ns)
     return ns
 
