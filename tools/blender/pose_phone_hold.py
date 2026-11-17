@@ -12,8 +12,9 @@
   * ни одна фаланга и ладонь не входили в телефон (телефон — скруглённый брусок 56×111 мм, phone.gltf),
   * ладонь прилегала к спинке, большой палец — к правому ребру у TARGET_THUMB_V,
   * ни одна точка кисти не заслоняла экран (проверка лучами из камеры — occlusion()).
-Считается всё в миллиметрах настоящего телефона: в игре телефон увеличен в SCALE = 1.6 раза (phone.gd), и кисть
-увеличивается вместе с ним (hand_scale в JSON) — пропорции кисти и телефона остаются настоящими.
+Считается всё в миллиметрах настоящего телефона: в игре телефон увеличен в SCALE раз (phone.gd), а кисть — в
+HAND_SCALE раз (hand_scale в JSON). HAND_SCALE < SCALE — телефон в ладони чуть крупнее настоящего; в мм телефона
+кисть уменьшена в HAND_K = HAND_SCALE / SCALE раз.
 
 Запуск в Blender после tools/blender/build_yurchik_v3.py (сцена Yurchik3):
     ns = {"YUR_ROOT": r"<repo>"}; exec(open(r"<repo>/tools/blender/pose_phone_hold.py", encoding="utf-8").read(), ns)
@@ -47,7 +48,7 @@ SCREEN = (-23.4, 23.4, 2.6, 37.9)                  # прямоугольник 
 # Высоты подушечек (мм от центра телефона), сняты с references/hands/hold_photo_glove.webp и hold_game_black.png:
 # указательный — у нижней части экрана, средний — у софт-клавиш, безымянный — у клавиш 4–7 на лицевой стороне;
 # мизинец подогнут под нижний торец и подпирает телефон снизу (UNDER).
-TARGET_V = {"Index": 20.0, "Middle": -12.0, "Ring": -37.0, "Pinky": -62.0}
+TARGET_V = {"Index": 13.0, "Middle": -12.0, "Ring": -35.0, "Pinky": -62.0}   # лесенка сжата по HAND_K
 # насколько подушечка заходит на лицевую сторону (u): кончики лежат на лице, а не на ребре; указательный —
 # на рамке рядом с экраном, средний — на левой софт-клавише, безымянный — на столбце 1/4/7
 TARGET_U = {"Index": -25.8, "Middle": -22.5, "Ring": -19.5}   # на 3 / 6 / 8 мм внутрь от ребра
@@ -56,7 +57,7 @@ KNUCKLE_OUT = 17.0                                 # средний сустав
 UNDER = {"Pinky"}
 PINKY_U = 3.0                                      # мизинец под торцом заходит к середине
 TARGET_THUMB_V = 58.0                              # кончик большого пальца — у верхнего правого угла, смотрит вверх
-THUMB_TIP = (0.15, -1.0)                            # кончик большого: (u, w) от заднего правого угла в радиусах пальца
+THUMB_TIP = (0.7, -0.45)                            # кончик большого: (u, w) от заднего правого угла в радиусах пальца
 THUMB_IP_MAX = 20.0                                # большой палец почти прямой (сгиб в межфаланговом ≤ 20°)
 FINGERS = ["Index", "Middle", "Ring", "Pinky", "Thumb"]
 POSE_BONES = ["HandR"] + [f"{n}R{k}" for n in FINGERS for k in (1, 2, 3)]
@@ -79,6 +80,17 @@ def phone_consts():
     rot = tuple(float(x) for x in re.search(r"OPEN_ROT := Vector3\(" + ", ".join([r"deg_to_rad\(" + num + r"\)"] * 3), s).groups())
     scale = float(re.search(r"const SCALE := " + num, s).group(1))
     return pos, rot, scale
+
+
+def hand_scale():
+    """HAND_SCALE из phone.gd (масштаб кисти в игре); если его нет — как у телефона."""
+    m = re.search(r"const HAND_SCALE := (-?[\d.]+)", open(PHONE_GD, encoding="utf-8").read())
+    return float(m.group(1)) if m else phone_consts()[2]
+
+
+def hand_k():
+    """Во сколько раз кисть меньше в мм телефона, чем настоящая."""
+    return hand_scale() / phone_consts()[2]
 
 
 def g2b(v):
@@ -125,6 +137,7 @@ class Hand:
         R = rot_about(W, math.radians(pitch)) @ rot_about(L, math.radians(roll))
         self.L, self.W, self.P = R @ L, R @ W, R @ P
         self.o = np.array(o, float)
+        self.k = hand_k()
 
     def hand_sign(self):
         """Правая кисть — зеркальная копия левой: тройка (L, W, P) у неё левая. Знак W при W = ±(L × P)."""
@@ -133,7 +146,7 @@ class Hand:
         return float(np.sign(np.cross(Lr, Pr) @ Wr))
 
     def pt(self, lwp):
-        lwp = np.asarray(lwp, float) * 1000.0
+        lwp = np.asarray(lwp, float) * (1000.0 * self.k)
         return self.o + lwp[..., :1] * self.L + lwp[..., 1:2] * self.W + lwp[..., 2:3] * self.P
 
 
@@ -164,7 +177,7 @@ def finger_fk(Y, name, a1, a2, a3, s):
 
 def solve_finger(Y, hand, name, fine=False):
     """Лучшие углы (a1, a2, a3, spread) пальца для данной кисти и их стоимость."""
-    r = next(f for f in Y["FINGERS"] if f[0] == name)[4] * 1000.0
+    r = next(f for f in Y["FINGERS"] if f[0] == name)[4] * 1000.0 * hand.k
     a1, a2, a3, s = np.meshgrid(A1, A2, A3, SPREAD, indexing="ij") if fine else \
         np.meshgrid(A1[::2], A2[::2], A3[::2], SPREAD[::2], indexing="ij")
     J = [hand.pt(p) for p in finger_fk(Y, name, a1, a2, a3, s)]
@@ -215,8 +228,8 @@ def solve_thumb(Y, hand):
     у TARGET_THUMB_V. Суставы ищутся FABRIK: цепочка тянется к цели, суставы выталкиваются из телефона.
     Возвращает стоимость и суставы (мм телефона): основание, MCP, IP, кончик."""
     C = [np.array(c) for c, _ in Y["THUMB_J"]]
-    lens = [float(np.linalg.norm(C[k + 1] - C[k])) * 1000 for k in range(3)]
-    rs = [r_ * 1000 for _, r_ in Y["THUMB_J"]]
+    lens = [float(np.linalg.norm(C[k + 1] - C[k])) * 1000 * hand.k for k in range(3)]
+    rs = [r_ * 1000 * hand.k for _, r_ in Y["THUMB_J"]]
     base = hand.pt(C[0])
     # кончик — на правом ребре; высота такая, чтобы палец был почти прямой (~95 %) (в пределах верхней половины)
     # кончик — за задним правым углом: из камеры телефон частично закрывает палец (как на всех референсах)
@@ -401,7 +414,7 @@ def setup_scene():
 
 def apply_pose(Y, sc, arm, root, hand, fing, th):
     """Кость кисти — подобие «кисть в покое → кисть у телефона»; пальцы — наведение костей на суставы."""
-    _, _, scale = phone_consts()
+    scale = hand_scale()
     P2A = phone_to_arm()
     rest_o = Y["mx"](Y["HAND_W"], -1)
     Rr = Matrix((Y["mx"](Y["HAND_L"], -1), Y["mx"](Y["HAND_WD"], -1), Y["mx"](Y["HAND_PN"], -1))).transposed()
@@ -453,7 +466,7 @@ def save_pose(sc, arm, root, path=POSE_JSON, extra=None):
     hs = (arm.pose.bones["HandR"].matrix.to_scale()[0])
     data = {"about": "Поза правой кисти с телефоном (tools/blender/pose_phone_hold.py, решается автоматически). "
                      "Повороты костей — кватернионы [x, y, z, w] в осях узла Phone в Godot, origin — начало кости HandR "
-                     "в тех же осях (без масштаба телефона), hand_scale — масштаб кисти (= масштаб телефона).",
+                     "в тех же осях (без масштаба телефона), hand_scale — масштаб кисти (HAND_SCALE в phone.gd).",
             "hand_scale": round(hs, 4), "origin": [round(o.x, 6), round(o.y, 6), round(o.z, 6)], "bones": bones}
     if extra:
         data["solver"] = extra
