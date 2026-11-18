@@ -2,16 +2,18 @@
 # Сергей v2 (YUR-23): бессмертный преследователь. Рост ~2.2 м (≈1.25 Юрчика, как на картинке-сравнении).
 #
 # Референсы: docs/references/sergey/
-#   sergey_photo_main.png      — ГЛАВНЫЙ: лицо (аура, ухмылка, взгляд) — проецируется на голову;
-#   sergey_turnaround.png      — силуэт и одежда спереди/сбоку/сзади (с него сняты сечения и текстура одежды);
+#   sergey_turnaround.png      — ГЛАВНЫЙ: лицо, шапка, ворот, одежда спереди/сбоку/сзади (как концепт у Юрчика);
+#   sergey_photo_main.png      — живое фото: по нему сверяли ауру и ухмылку (в текстуру больше не идёт);
 #   sergey_vs_yurchik_scale.png — рост и массивность относительно Юрчика.
 #
 # Как устроено (пайплайн Юрчика, tools/blender/build_yurchik_v3.py, подключён через build_enemies.py):
 #   * сетка строится «в пространстве Юрчика» (рост 1.78), затем вся модель масштабируется K = SERGEY_HEIGHT / 1.783;
 #   * сечения парки, ног и капюшона сняты с тёрнэраунда (в единицах Юрчика), корпус — с запасом BULK («громаднее»);
-#   * голова — плотнее, чем у Юрчика (≈1000 треугольников), черты лица — гладкие «бугры» (нос, надбровья, скулы, губы);
-#   * текстура 1024: одежда — проекция тёрнэраунда, лицо — проекция фото по трём точкам (глаза + рот),
-#     вязаные шапка/снуд/подкладка — процедурно, цвета сняты с фото; свет «запечён»;
+#   * голова и шапка сняты с тёрнэраунда (профиль сбоку, ширины спереди, ориентиры — TURN_HEAD ниже),
+#     голова плотнее, чем у Юрчика (≈1100 треугольников), черты лица — гладкие «бугры» по тем же ориентирам;
+#   * текстура 1024 — как у Юрчика: всё (лицо, шапка, ворот, одежда) — проекция тёрнэраунда спереди/сбоку/сзади
+#     по нормали; голова — со своей привязкой видов (вид сбоку и сзади на тёрнэраунде нарисован на ~5 px ниже);
+#     свет «запечён»;
 #   * скелет — те же 15 костей, что у Юрчика и офников; анимации Quaternius UAL (CC0) — те же 15 клипов, что были.
 #
 # Запуск — ТОЛЬКО в открытом Blender (через Blender MCP или вкладку Scripting), без temp_override:
@@ -44,13 +46,16 @@ HAND_SCALE = 1.12                # кисти крупнее
 T_S = SERGEY_HEIGHT / (689 - 30)
 T_GY = 689.0
 T_CXF, T_CXS, T_CXB = 240.5, 629.8, 1058.0
-# --- фото: точки лица (px оригинала) и те же точки на модели (единицы Юрчика: x, z) ---
-PH_EYE_R, PH_EYE_L, PH_MOUTH = (300.0, 116.7), (360.0, 125.0), (330.0, 182.7)
-# контур лица на фото (px): с фото берём только то, что внутри (снаружи — шапка, снуд, фон)
-PH_FACE = [(266, 113), (281, 101), (300, 88), (320, 79), (345, 80), (364, 87), (376, 99), (380, 112), (381, 140),
-           (379, 158), (370, 171), (364, 185), (356, 199), (345, 209), (330, 215), (312, 213), (291, 205), (275, 193),
-           (265, 177), (262, 155), (262, 130)]
-M_EYE_X, M_EYE_Z, M_MOUTH_Z = 0.031, 1.622, 1.5525
+# --- голова на тёрнэраунде: свой центр вида спереди и сдвиг видов сбоку/сзади по вертикали (px) ---
+# Ориентиры, снятые с картинки (px спереди -> единицы Юрчика: z = (689 - py) * T_S / K):
+#   макушка шапки 30 -> 1.782, край шапки по центру 60 -> 1.702, брови 72.5 -> 1.668, глаза 78.7 -> 1.651
+#   (x = 228 / 254 -> ±0.035), низ носа 93 -> 1.612, рот 104 -> 1.582, низ бородки 120 -> 1.540;
+#   профиль (вид сбоку, px x -> y = -(px - T_CXS) * T_S / K): лоб 690 -> -0.163, кончик носа 692.5 -> -0.169,
+#   под носом 685 -> -0.150, губы 683 -> -0.145, подбородок 680 -> -0.137, под челюстью 676 -> -0.125,
+#   шапка сзади 613 -> +0.045. Ширина шапки ±0.092, лица на уровне рта ±0.064.
+TH_CXF = 241.3
+TH_DY_SIDE = 5.0
+TH_DY_BACK = 5.0
 
 
 def load(name, cut):
@@ -68,7 +73,7 @@ col, fbm, vnoise = Y["col"], Y["fbm"], Y["vnoise"]
 toplight, mix, nsmooth = E["toplight"], E["mix"], E["nsmooth"]
 Y["ATLAS"] = ATLAS
 Y["RLEG_OVR"] = {}
-HYC = Y["HYC"]
+HYC = -0.064                    # центр головы по Y: лицо Сергея на тёрнэраунде на 1.6 см впереди, чем у Юрчика
 
 
 # =====================================================================================
@@ -231,37 +236,84 @@ def build_hood_down(mb):
 
 def build_snood(mb):
     """Толстый серый вязаный снуд/ворот под подбородком."""
-    spec = [  # z спереди, z сзади, a, bf, bb, yc, вес Head
-        (1.536, 1.580, 0.074, 0.100, 0.074, -0.046, 1.0),
-        (1.512, 1.548, 0.084, 0.104, 0.082, -0.044, 0.7),
-        (1.488, 1.512, 0.090, 0.098, 0.090, -0.036, 0.3),
-        (1.450, 1.450, 0.092, 0.090, 0.096, -0.026, 0.0),
+    spec = [  # z спереди, z сзади, a, bf, bb, yc, вес Head, «флис» — спереди не выступает за линию челюсти (профиль)
+        (1.536, 1.636, 0.083, 0.072, 0.088, -0.050, 1.0, True),     # край флиса: за челюстью заходит под шапку
+        (1.534, 1.607, 0.110, 0.075, 0.097, -0.050, 1.0, True),     # скругление верха валика
+        (1.530, 1.585, 0.122, 0.078, 0.100, -0.050, 1.0, True),     # широкий мягкий валик вокруг лица (вид спереди ±0.12)
+        (1.506, 1.552, 0.118, 0.082, 0.100, -0.046, 0.7, False),
+        (1.482, 1.516, 0.110, 0.084, 0.100, -0.038, 0.3, False),
+        (1.450, 1.450, 0.100, 0.084, 0.098, -0.026, 0.0, False),
     ]
+    def make(rows, d):
+        rings = []
+        for zf, zb, a, bf, bb, yc, wh, fleece in rows:
+            pts = []
+            for j in range(18):
+                th = rad(360 / 18 * j)
+                x, y = sellipse(a - d, bf - d, bb - d, yc, th, 2.1)
+                if fleece:                                      # флис: поднимается только позади линии челюсти (y > -0.065)
+                    z = zf + (zb - zf) * smooth((y + 0.065) / 0.015)
+                else:
+                    z = zf + (zb - zf) * ((1 - math.cos(th)) / 2) ** 0.8
+                pts.append((x, y, z))
+            rings.append(mb.ring(pts, {"Head": wh, "Spine": 1 - wh}))
+        return rings
+    loft(mb, make(spec, 0.0), "neck", "neck", seam=9)
+    # изнанка ворота (односторонние грани в Godot): верхний край флиса и внутренняя стенка до шеи
+    inner = [(1.536, 1.636, 0.083, 0.072, 0.088, -0.050, 1.0, True), (1.500, 1.560, 0.074, 0.060, 0.076, -0.045, 0.8, False),
+             (1.450, 1.470, 0.062, 0.052, 0.060, -0.040, 0.3, False)]
+    fis = loft(mb, make(inner, 0.003), "snood_in", "snood_in", seam=9, inside=Vector((0, -0.05, 1.5)))
+    for f in fis:                                       # нормали внутрь
+        mb.faces[f] = tuple(reversed(mb.faces[f])); mb.fuv[f] = list(reversed(mb.fuv[f]))
+
+
+def build_throat(mb):
+    """Шея и тень внутри ворота: заполняет просвет между челюстью и флисом (сквозь ворот не видно фона)."""
+    spec = [  # z, a, bf, bb, yc, вес Head — верх спрятан в голове спереди и под шапкой сзади
+        (1.640, 0.078, 0.030, 0.072, -0.030, 1.0), (1.600, 0.072, 0.035, 0.068, -0.035, 1.0),
+        (1.560, 0.056, 0.042, 0.060, -0.040, 1.0), (1.510, 0.050, 0.048, 0.054, -0.045, 0.6),
+        (1.450, 0.048, 0.048, 0.052, -0.045, 0.0)]
     rings = []
-    for zf, zb, a, bf, bb, yc, wh in spec:
+    for z, a, bf, bb, yc, wh in spec:
         pts = []
-        for j in range(14):
-            th = rad(360 / 14 * j)
-            x, y = sellipse(a, bf, bb, yc, th, 2.1)
-            pts.append((x, y, zf + (zb - zf) * ((1 - math.cos(th)) / 2) ** 0.8))
+        for j in range(10):
+            th = rad(36 * j)
+            x, y = sellipse(a, bf, bb, yc, th, 2.0)
+            pts.append((x, y, z))
         rings.append(mb.ring(pts, {"Head": wh, "Spine": 1 - wh}))
-    loft(mb, rings, "neck", "neck", seam=7)
+    loft(mb, rings, "throat", "throat", seam=5)
 
 
 # =====================================================================================
-#  Голова: плотная сетка + гладкие «бугры» черт лица (по фото: длинное лицо, скулы, прямой нос, бородка)
+#  Голова: сечения сняты с тёрнэраунда (профиль сбоку + ширины спереди) + гладкие «бугры» черт лица
 # =====================================================================================
-# колонки (градусы): гуще спереди, где черты лица; кольца (индекс в H_RINGS Юрчика, дробный): гуще от бровей до подбородка
+# колонки (градусы): гуще спереди, где черты лица
 HEAD_COLS = [0, 5, 10, 15, 21, 28, 36, 45, 56, 70, 90, 110, 135, 160, 180, -160, -135, -110, -90, -70, -56, -45, -36,
              -28, -21, -15, -10, -5]
-HEAD_T = [0, 1, 1.6, 2.1, 2.5, 2.85, 3.2, 3.55, 3.9, 4.25, 4.6, 4.95, 5.3, 5.6, 5.9, 6.2, 6.5, 6.8, 7.1, 7.4, 7.7, 8.0]
-H_RINGS = Y["H_RINGS"]
+# кольца: z спереди, z сзади, полуширина, глубина вперёд, назад (от HYC). Перед лица по центру = HYC - bf:
+# лоб -0.159, переносица -0.151, под носом -0.146, рот -0.141, подбородок -0.133, под челюстью -0.119.
+H_RINGS_S = [
+    (1.745, 1.745, 0.060, 0.065, 0.070),     # 0  макушка (под шапкой)
+    (1.715, 1.715, 0.072, 0.090, 0.088),     # 1
+    (1.690, 1.690, 0.076, 0.095, 0.094),     # 2  лоб
+    (1.668, 1.668, 0.076, 0.093, 0.094),     # 3  брови
+    (1.651, 1.650, 0.075, 0.087, 0.092),     # 4  глаза
+    (1.630, 1.628, 0.073, 0.084, 0.088),     # 5  скулы
+    (1.612, 1.606, 0.071, 0.082, 0.083),     # 6  кончик носа
+    (1.598, 1.592, 0.068, 0.082, 0.078),     # 7  под носом
+    (1.581, 1.578, 0.064, 0.077, 0.070),     # 8  рот
+    (1.565, 1.566, 0.055, 0.074, 0.064),     # 9  под губой
+    (1.548, 1.558, 0.044, 0.069, 0.058),     # 10 подбородок с бородкой (челюсть сужается к подбородку)
+    (1.537, 1.556, 0.032, 0.058, 0.054),     # 11 под челюстью
+    (1.528, 1.552, 0.020, 0.040, 0.048),     # 12 низ подбородка — скруглён к шее
+]
+HEAD_T = [0, 1, 2, 2.5, 3, 3.5, 4, 4.33, 4.67, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 10.5, 11, 12]
 
 
 def head_params(t):
-    t = clamp(t, 0, len(H_RINGS) - 1)
-    i = min(int(t), len(H_RINGS) - 2); f = t - i
-    return [lerp(H_RINGS[i][k], H_RINGS[i + 1][k], f) for k in range(5)]
+    t = clamp(t, 0, len(H_RINGS_S) - 1)
+    i = min(int(t), len(H_RINGS_S) - 2); f = t - i
+    return [lerp(H_RINGS_S[i][k], H_RINGS_S[i + 1][k], f) for k in range(5)]
 
 
 def g(x, s):
@@ -269,34 +321,33 @@ def g(x, s):
 
 
 def face_disp(x, z, th):
-    """Смещение поверхности лица вперёд (fwd) и вверх (up), единицы Юрчика."""
+    """Смещение поверхности лица вперёд (fwd) и вверх (up), единицы Юрчика. Ориентиры — в начале файла."""
     ax = abs(x); front = max(0.0, math.cos(th)) ** 1.5
     fwd = 0.0; up = 0.0
-    # лицо не плоское: боковые части лица (виски, щёки у ушей) уходят назад, центр вынесен вперёд
-    fwd -= 0.016 * smooth((ax - 0.030) / 0.040) * (1 - smooth((1.528 - z) / 0.02))
-    fwd += 0.006 * g(ax, 0.030) * smooth((1.66 - z) / 0.03)
-    # нос: спинка от переносицы к кончику, крылья, тень под носом
-    prof = smooth((1.622 - z) / 0.036) * (1 - smooth((1.578 - z) / 0.010))
-    fwd += 0.032 * prof * g(ax, 0.0095)
-    fwd += 0.010 * g(ax - 0.014, 0.007) * g(z - 1.581, 0.007)               # крылья носа
-    fwd -= 0.006 * g(ax, 0.012) * g(z - 1.570, 0.004)
+    # лицо не плоское: боковые части лица (виски, щёки у ушей) уходят назад
+    fwd -= 0.010 * smooth((ax - 0.032) / 0.040) * (1 - smooth((1.540 - z) / 0.02))
+    # нос: переносица (+0.005 на уровне глаз) -> кончик (+0.023 на 1.612), крылья, тень под носом
+    mask = smooth((1.668 - z) / 0.012) * (1 - smooth((1.604 - z) / 0.008))
+    fwd += (0.005 + 0.018 * smooth((1.651 - z) / 0.039)) * mask * g(ax, 0.011)
+    fwd += 0.008 * g(ax - 0.015, 0.007) * g(z - 1.607, 0.006)               # крылья носа
+    fwd -= 0.003 * g(ax, 0.012) * g(z - 1.596, 0.004)
     # надбровья и глазницы (глаза глубже — тяжёлый взгляд)
-    fwd += 0.011 * g(z - 1.641, 0.009) * (1 - smooth((ax - 0.052) / 0.014))
-    fwd -= 0.017 * g(ax - 0.031, 0.015) * g(z - 1.622, 0.010)
+    fwd += 0.003 * g(z - 1.668, 0.008) * (1 - smooth((ax - 0.050) / 0.014))
+    fwd -= 0.006 * g(ax - 0.035, 0.014) * g(z - 1.651, 0.009)
     # скулы
-    fwd += 0.011 * g(ax - 0.050, 0.013) * g(z - 1.599, 0.013)
+    fwd += 0.008 * g(ax - 0.052, 0.013) * g(z - 1.632, 0.013)
     # носогубные складки
-    fwd -= 0.004 * g(ax - 0.024 - (1.585 - z) * 0.35, 0.004) * g(z - 1.567, 0.016)
+    fwd -= 0.003 * g(ax - 0.026 - (1.600 - z) * 0.35, 0.004) * g(z - 1.590, 0.014)
     # губы: верхняя/нижняя, щель рта; ухмылка — левый (у персонажа) уголок чуть выше
-    lip = 1 - smooth((ax - 0.021) / 0.006)
-    fwd += 0.0065 * g(z - 1.559, 0.005) * lip + 0.006 * g(z - 1.546, 0.005) * lip
-    fwd -= 0.002 * g(z - 1.5525, 0.0025) * lip
-    fwd -= 0.004 * g(ax, 0.016) * g(z - 1.539, 0.004)                    # ямка под нижней губой
+    lip = 1 - smooth((ax - 0.026) / 0.006)
+    fwd += 0.004 * g(z - 1.587, 0.005) * lip + 0.004 * g(z - 1.575, 0.005) * lip
+    fwd -= 0.0015 * g(z - 1.581, 0.0025) * lip
+    fwd -= 0.002 * g(ax, 0.016) * g(z - 1.566, 0.004)                    # ямка под нижней губой
     if x > 0:
-        up += 0.003 * g(ax - 0.020, 0.008) * g(z - 1.552, 0.008)
-    # подбородок с бородкой выступает, челюсть пошире
-    fwd += 0.012 * g(ax, 0.021) * g(z - 1.531, 0.011)
-    fwd -= 0.007 * g(ax - 0.042, 0.012) * g(z - 1.566, 0.013)            # впалые щёки
+        up += 0.002 * g(ax - 0.026, 0.008) * g(z - 1.581, 0.008)
+    # подбородок с бородкой, впалые щёки
+    fwd += 0.004 * g(ax, 0.020) * g(z - 1.548, 0.009)
+    fwd -= 0.005 * g(ax - 0.045, 0.012) * g(z - 1.592, 0.013)
     return fwd * front, up * front
 
 
@@ -307,7 +358,7 @@ def build_head_s(mb):
         pts = []
         for deg in HEAD_COLS:
             th = rad(deg)
-            x, y = sellipse(a * 1.03, bf, bb, HYC, th, 2.2 if math.cos(th) > 0 else 2.0)   # челюсть чуть шире
+            x, y = sellipse(a, bf, bb, HYC, th, 2.2 if math.cos(th) > 0 else 2.0)
             z = zf + (zb - zf) * (1 - math.cos(th)) / 2
             fwd, up = face_disp(x, z, th)
             pts.append((x, y - fwd, z + up))
@@ -323,6 +374,55 @@ def build_head_s(mb):
 # =====================================================================================
 #  Сборка
 # =====================================================================================
+def beanie_rim(th):
+    """Нижний край шапки (тёрнэраунд): спереди по центру 1.702, у висков 1.663, перед ухом 1.639, над ухом 1.625,
+    сзади 1.605 (спереди и сбоку — совпадает с линией края на виде сбоку)."""
+    c = math.cos(th)
+    return 1.625 + 0.077 * max(c, 0.0) ** 1.6 - 0.020 * max(-c, 0.0)
+
+
+# шапка: нижние кольца — от края (dz), верхние — по абсолютной высоте; спереди/сзади — граница по Y (профиль сбоку):
+# спереди 1.69 -> -0.163, 1.716 -> -0.158, 1.743 -> -0.144, 1.770 -> -0.114; сзади +0.043 до 1.74, 1.770 -> +0.027;
+# макушка 1.784 над y = -0.033 (купол чуть откинут назад); ширина спереди ±0.0925, на 1.756 — ±0.081, на 1.77 — ±0.061
+BEANIE_LO = [(0.000, 0.0850, -0.161, 0.042), (0.010, 0.0930, -0.163, 0.046), (0.030, 0.0930, -0.157, 0.046),
+             (0.040, 0.0910, -0.151, 0.045)]
+BEANIE_HI = [(1.758, 1.700, 0.0830, -0.135, 0.043), (1.772, 1.750, 0.0680, -0.108, 0.038),
+             (1.781, 1.772, 0.0450, -0.070, 0.024)]
+BEANIE_YC = -0.059
+
+
+def build_beanie_s(mb):
+    NC = 16
+    rings = []
+
+    def ring(zfn, a, yf, yb):
+        pts = []
+        for j in range(NC):
+            th = rad(360 / NC * j)
+            x, y = sellipse(a, BEANIE_YC - yf, yb - BEANIE_YC, BEANIE_YC, th, 2.15)
+            pts.append((x, y, zfn(th)))
+        rings.append(mb.ring(pts, {"Head": 1.0}))
+
+    for dz, a, yf, yb in BEANIE_LO:
+        ring(lambda th, dz=dz: beanie_rim(th) + dz, a, yf, yb)
+    for zf, zb, a, yf, yb in BEANIE_HI:
+        ring(lambda th, zf=zf, zb=zb: zf + (zb - zf) * (1 - math.cos(th)) / 2, a, yf, yb)
+    pole = mb.vert((0, -0.030, 1.785), {"Head": 1.0})
+    loft(mb, rings, "beanie", "beanie", seam=NC // 2, pole=pole)
+    # изнанка шапки (тёмные волосы/тень): без неё в Godot (односторонние грани) сквозь бока шапки виден фон
+    inner = []
+    for k, (dz, a, yf, yb) in enumerate(BEANIE_LO[:3]):
+        pts = []
+        for j in range(NC):
+            th = rad(360 / NC * j)
+            x, y = sellipse(a - 0.004, BEANIE_YC - yf - 0.004, yb - BEANIE_YC - 0.004, BEANIE_YC, th, 2.15)
+            pts.append((x, y, beanie_rim(th) + dz))
+        inner.append(mb.ring(pts, {"Head": 1.0}))
+    fis = loft(mb, inner, "beanie_in", "beanie_in", seam=NC // 2, inside=Vector((0, BEANIE_YC, 1.70)))
+    for f in fis:                                       # нормали внутрь — видна только изнутри шапки
+        mb.faces[f] = tuple(reversed(mb.faces[f])); mb.fuv[f] = list(reversed(mb.fuv[f]))
+
+
 SLEEVE_S = [(t, h * 1.10, tb, hb * 1.10, rd * 1.12, yc) for t, h, tb, hb, rd, yc in Y["SLEEVE"]]
 P_RINGS_S = [(0.845, 0.178, 0.112, 0.108), (0.765, 0.214, 0.116, 0.112), (0.695, 0.222, 0.112, 0.112)]
 LEG_S = [  # z, центр x, центр y, радиус x, радиус y — прямые джинсы (с тёрнэраунда)
@@ -362,7 +462,7 @@ def build_all_s():
         Y["build_boot"](mb, sx)
         for i in range(n0, len(mb.co)):
             mb.co[i] = mb.co[i] + Vector((sx * DX_LEG, 0, 0))
-    build_head_s(mb); build_snood(mb); Y["build_beanie"](mb)
+    build_head_s(mb); build_throat(mb); build_snood(mb); build_beanie_s(mb)
     build_hood_down(mb)
     build_flap_pockets(mb)
     E["drop_faces"](mb, lambda i: mb.ftag[i] == "band_tail" or mb.fisl[i].startswith("pocket"))
@@ -402,49 +502,16 @@ def prep_refs():
     bg = np.median(turn[5:40, -40:-5].reshape(-1, 3), axis=0)
     fg = np.abs(turn - bg).max(axis=2) > 0.07
     fg = Y["erode"](fg, 3)                                          # без чернильной обводки контуров
-    photo = load_rgb(os.path.join(REF_DIR, "sergey_photo_main.png"))
-    # аффинная привязка фото к голове: (x, z) модели (ед. Юрчика) -> (px, py) фото
-    A = np.array([[-M_EYE_X, M_EYE_Z, 1], [M_EYE_X, M_EYE_Z, 1], [0.0, M_MOUTH_Z, 1]], np.float64)
-    bx = np.linalg.solve(A, [PH_EYE_R[0], PH_EYE_L[0], PH_MOUTH[0]])
-    by = np.linalg.solve(A, [PH_EYE_R[1], PH_EYE_L[1], PH_MOUTH[1]])
-    # цвета, снятые с фото
     def patch(x0, x1, y0, y1):
-        return np.median(photo[y0:y1, x0:x1].reshape(-1, 3), axis=0)
-    tones = {"skin": patch(285, 300, 140, 160), "skin2": patch(355, 372, 145, 165), "beanie": patch(290, 370, 25, 55),
-             "parka": patch(300, 420, 300, 420)}
-    tones["snood"] = np.array((0.36, 0.39, 0.42), np.float32)      # серо-голубой вязаный снуд (на фото он в тени)
-    fm = face_mask(photo.shape[:2])
-    w = (fm[..., 0] > 0.9).astype(np.float32)
-    rows = (photo * w[..., None]).sum(axis=1) / np.maximum(w.sum(axis=1), 1)[:, None]   # средний цвет кожи по строкам
-    ok = w.sum(axis=1) > 5
-    idx = np.arange(len(rows))
-    ker = np.exp(-(np.arange(-18, 19) / 7.0) ** 2); ker /= ker.sum()
-    mean = (photo * w[..., None]).sum(axis=(0, 1)) / w.sum()
-    for k in range(3):
-        rows[:, k] = np.interp(idx, idx[ok], rows[ok, k])
-        rows[:, k] = np.convolve(np.pad(rows[:, k], 18, mode="edge"), ker, mode="valid")
-    rows = rows * 0.55 + mean[None, :] * 0.45
-    return {"turn": Y["fill_invalid"](turn, fg, 30), "photo": photo, "bx": bx, "by": by, "tones": tones,
-            "face_mask": fm, "skin_rows": rows}
-
-
-def face_mask(shape):
-    """Маска лица на фото: многоугольник PH_FACE с мягким краем (≈4 px)."""
-    H, W = shape
-    yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
-    inside = np.zeros((H, W), bool)
-    pts = PH_FACE
-    for k in range(len(pts)):
-        (x0, y0), (x1, y1) = pts[k], pts[(k + 1) % len(pts)]
-        if y0 == y1:
-            continue
-        cond = ((yy >= min(y0, y1)) & (yy < max(y0, y1)))
-        xc = x0 + (yy - y0) * (x1 - x0) / (y1 - y0)
-        inside ^= cond & (xx < xc)
-    m = inside.astype(np.float32)
-    for _ in range(4):                                         # размытие края
-        m = (m + np.roll(m, 1, 0) + np.roll(m, -1, 0) + np.roll(m, 1, 1) + np.roll(m, -1, 1)) / 5
-    return np.repeat(m[..., None], 3, axis=2)
+        return np.median(turn[y0:y1, x0:x1].reshape(-1, 3), axis=0)
+    # цвета, снятые с тёрнэраунда (px, вид спереди): щёки, шапка, серый флис ворота
+    tones = {"skin": patch(224, 232, 86, 94), "skin2": patch(250, 258, 86, 94), "beanie": patch(228, 254, 36, 52),
+             "snood": patch(198, 210, 95, 110)}
+    fl = np.concatenate([turn[92:130, 190:215].reshape(-1, 3), turn[92:130, 268:293].reshape(-1, 3)])
+    fl = fl[(fl[:, 2] - fl[:, 0] > 0.02) & (fl.mean(axis=1) > 0.25)]           # только серо-голубой флис
+    if len(fl) > 20:
+        tones["snood"] = np.median(fl, axis=0)
+    return {"turn": Y["fill_invalid"](turn, fg, 30), "tones": tones}
 
 
 def sample(img, px, py):
@@ -464,6 +531,41 @@ def project_turn(refs, P, N, front=1.0, back=1.0, side=0.0):
     return c / (wf + wb + ws)[:, None]
 
 
+def skinness(c):
+    """0..1: насколько цвет похож на кожу лица с тёрнэраунда (тёплый и светлый)."""
+    return nsmooth(((c[:, 0] - c[:, 2]) - 0.10) / 0.06) * nsmooth((c[:, 0] - 0.33) / 0.08)
+
+
+def coolness(c):
+    """0..1: холодный серо-голубой цвет (флис ворота), а не кожа, шапка или оливковая парка."""
+    return 1 - nsmooth(((c[:, 0] - c[:, 2]) + 0.005) / 0.035)
+
+
+def project_head(refs, P, N, front=1.0, back=1.0, side=1.0, no_skin=None, keep=None):
+    """Как project_turn, но для головы: свой центр вида спереди (TH_CXF) и сдвиг видов сбоку/сзади вниз
+    (на тёрнэраунде фигуры сбоку и сзади нарисованы на ~5 px ниже, чем спереди).
+    no_skin = цвет: для шапки и ворота вид, где в этой точке кожа (лицо рядом), не берём; если все виды — кожа,
+    остаётся этот запасной цвет. keep(c) -> 0..1 — своё правило, какие цвета с видов брать (вместо «не кожа»)."""
+    side = np.broadcast_to(np.asarray(side, np.float32), (len(P),))
+    wf = np.clip(-N[:, 1], 0, 1) ** 2 * front + 0.02 * front
+    wb = np.clip(N[:, 1], 0, 1) ** 2 * back + 0.02 * back
+    ws = np.abs(N[:, 0]) ** 2 * side
+    pz = T_GY - P[:, 2] / T_S
+    img = refs["turn"]
+    cf = sample(img, TH_CXF + P[:, 0] / T_S, pz)
+    cb = sample(img, T_CXB - P[:, 0] / T_S, pz + TH_DY_BACK)
+    cs = sample(img, T_CXS - P[:, 1] / T_S, pz + TH_DY_SIDE)
+    if no_skin is not None:
+        ok = keep or (lambda c: 1 - 0.97 * skinness(c))
+        wf = wf * ok(cf); wb = wb * ok(cb); ws = ws * ok(cs)
+    acc = cf * wf[:, None] + cb * wb[:, None] + cs * ws[:, None]
+    tot = wf + wb + ws
+    if no_skin is not None:
+        acc = acc + col(no_skin)[None, :] * 0.01
+        tot = tot + 0.01
+    return acc / (tot + 1e-6)[:, None]
+
+
 def knit_rib(base, u, v, n, rib=True):
     c = col(base) * (0.80 + 0.30 * fbm(u * 40, v * 40, 3))[:, None]
     if rib:
@@ -472,38 +574,28 @@ def knit_rib(base, u, v, n, rib=True):
 
 
 def paint_face_s(refs, P, N, LUV):
+    """Лицо — как у Юрчика: проекция тёрнэраунда спереди и сбоку (затылок под шапкой — немного вида сзади)."""
     Pu = P / K
-    x, y, z = Pu[:, 0], Pu[:, 1], Pu[:, 2]
+    x, z = Pu[:, 0], Pu[:, 2]
     ax = np.abs(x)
-    th = np.degrees(np.arctan2(ax, -(y - HYC)))
-    bx, by = refs["bx"], refs["by"]
-    px = bx[0] * x + bx[1] * z + bx[2]
-    py = by[0] * x + by[1] * z + by[2]
-    ph = sample(refs["photo"], px, py)
-    inmask = sample(refs["face_mask"], px, py)[:, 0]
-    t = refs["tones"]
-    rows = refs["skin_rows"]                                      # бок головы: тон кожи из той же строки фото
-    skin = rows[np.clip(np.rint(py).astype(int), 0, len(rows) - 1)]
-    skin = skin * (0.88 + 0.16 * fbm(x * 230, z * 230, 31))[:, None]
-    skin = skin * (0.82 + 0.18 * np.clip(-N[:, 1], 0, 1))[:, None]
-    hair = nsmooth((th - 98) / 14) * (z > 1.555)
-    skin = mix(skin, col((0.09, 0.075, 0.07)) * (0.7 + 0.6 * vnoise(x * 600, z * 600, 41))[:, None], hair)
-    wp = inmask * np.clip(-N[:, 1] * 1.6, 0, 1) ** 0.5
-    c = mix(skin, ph, wp)
-    # «бессмертная» аура: чуть бледнее, глазницы темнее — лицо остаётся узнаваемым
-    c = mix(c, col((0.55, 0.55, 0.56)) * c.mean(axis=1, keepdims=True) / 0.45, 0.10)
-    sock = np.exp(-((ax - 0.031) / 0.020) ** 2 - ((z - 1.624) / 0.011) ** 2)
-    c = c * (1 - 0.20 * sock)[:, None]
-    # запечённый объём: лицо темнеет к бокам, тени под носом, губой и подбородком
-    g2 = lambda a, s: np.exp(-(a / s) ** 2)
-    ao = 1 - 0.22 * np.clip(1 + N[:, 1] * 1.25, 0, 1) ** 1.5
-    ao -= 0.12 * g2(ax, 0.014) * g2(z - 1.571, 0.005)
-    ao -= 0.08 * g2(ax, 0.018) * g2(z - 1.540, 0.004)
-    ao -= 0.15 * g2(ax, 0.030) * nsmooth((1.524 - z) / 0.010)
-    ao += 0.06 * g2(ax - 0.050, 0.013) * g2(z - 1.600, 0.012)             # блик на скулах
-    ao += 0.05 * g2(ax, 0.007) * g2(z - 1.596, 0.014)                     # спинка носа
-    c = c * np.clip(ao, 0.5, 1.1)[:, None]
-    return c
+    c = project_head(refs, P, N, back=0.3)
+    th = np.degrees(np.arctan2(ax, -(Pu[:, 1] - HYC)))
+    hair = nsmooth((th - 95) / 14)
+    # полоса под краем шапки: на висках и над ушами — тёмные волосы, надо лбом — тень от края
+    tb = np.arctan2(ax, -(Pu[:, 1] - BEANIE_YC)); cb = np.cos(tb)
+    rim = 1.625 + 0.077 * np.clip(cb, 0, 1) ** 1.6 - 0.020 * np.clip(-cb, 0, 1)
+    under = nsmooth((z - (rim - 0.016)) / 0.010)
+    side = nsmooth((np.degrees(tb) - 30) / 15)
+    hair = np.maximum(hair, under * side)
+    c = c * (1 - 0.35 * under * (1 - side))[:, None]
+    c = mix(c, col((0.09, 0.075, 0.07)) * (0.7 + 0.6 * vnoise(x * 600, z * 600, 41))[:, None], hair)
+    # «бессмертная» аура: чуть бледнее, глазницы чуть темнее — лицо остаётся тем же, что на тёрнэраунде
+    c = mix(c, col((0.55, 0.55, 0.56)) * c.mean(axis=1, keepdims=True) / 0.45, 0.05)
+    sock = np.exp(-((ax - 0.035) / 0.016) ** 2 - ((z - 1.651) / 0.009) ** 2)
+    c = c * (1 - 0.05 * sock)[:, None]
+    # лёгкий запечённый объём: к бокам лица темнее
+    c = c * (1 - 0.06 * np.clip(1 + N[:, 1] * 1.25, 0, 1) ** 1.5)[:, None]
+    return np.clip(c, 0, 1) ** 0.92                                  # средние тона чуть светлее — как на тёрнэраунде
 
 
 def make_painter_s(refs):
@@ -524,12 +616,23 @@ def make_painter_s(refs):
             c = knit_rib(t["snood"] * 0.95, Pu[:, 0] * 8 + Pu[:, 1] * 8, Pu[:, 2] * 8, 0, rib=False)
             c = c * (0.70 + 0.55 * vnoise(Pu[:, 0] * 900, Pu[:, 2] * 900, 13))[:, None] * toplight(N, 0.6)
         elif tag == "neck":
-            c = knit_rib(t["snood"], u, v, 46) * toplight(N, 0.65)
+            side = 1 - nsmooth((-0.075 - Pu[:, 1]) / 0.03)                                 # под подбородком — без вида сбоку
+            c = project_head(refs, P, N, back=1.0, side=side, no_skin=t["snood"],          # серый флис ворота — с тёрнэраунда
+                             keep=lambda c: 0.03 + 0.97 * coolness(c))
+            c = mix(c * 1.15, col(t["snood"]) * 1.05, 0.30)                                # мягкий светлый флис, как на тёрнэраунде
+            c = c * (1 - 0.50 * np.clip(N[:, 2], 0, 1))[:, None]                          # верх ворота под челюстью — в тени
+            under = (nsmooth((-0.085 - Pu[:, 1]) / 0.03) * (1 - nsmooth((np.abs(Pu[:, 0]) - 0.03) / 0.05))
+                     * nsmooth((Pu[:, 2] - 1.505) / 0.02))
+            c = c * (1 - 0.50 * under)[:, None]                                           # спереди под подбородком — тень шеи
         elif tag == "beanie":
-            c = knit_rib(t["beanie"] * 0.95, u, v, 70)
-            c = np.where((v < 0.16)[:, None], c * 0.85, c) * toplight(N, 0.7)
+            c = project_head(refs, P, N, back=1.0, no_skin=t["beanie"])                    # шапка — с тёрнэраунда, как у Юрчика
         elif tag == "face":
             c = paint_face_s(refs, P, N, LUV)
+        elif tag in ("throat", "snood_in"):                                                              # глубина ворота — с тёрнэраунда, в тени
+            c = project_head(refs, P, N, back=1.0, side=0.3, no_skin=t["snood"], keep=lambda c: 0.03 + 0.97 * coolness(c))
+            c = mix(c, col(t["snood"]), 0.25) * 0.62
+        elif tag == "beanie_in":
+            c = col((0.055, 0.045, 0.040)) * (0.8 + 0.4 * vnoise(Pu[:, 0] * 300, Pu[:, 2] * 300, 9))[:, None]
         elif tag in ("pants", "boot"):
             c = project_turn(refs, P, N, side=1.0 if tag == "boot" else 0.4)
             if tag == "pants":
@@ -558,7 +661,7 @@ def make_painter_s(refs):
     return paint
 
 
-ISL_DENS_S = {"head": 3.6, "neck": 0.9, "beanie": 1.0, "hand": 1.3, "thumb": 1.3, "pelvis": 0.35, "sole": 0.5,
+ISL_DENS_S = {"throat": 0.3, "snood_in": 0.3, "beanie_in": 0.2, "head": 3.6, "neck": 0.9, "beanie": 1.0, "hand": 1.3, "thumb": 1.3, "pelvis": 0.35, "sole": 0.5,
               "sole_cap": 0.3, "hood": 0.85, "hood_cap": 0.5, "boot": 1.0, "dark": 0.4, "pflapL": 1.0, "pflapR": 1.0,
               "pbagL": 0.8, "pbagR": 0.8}
 
@@ -683,6 +786,7 @@ def preview(sc, tag, height=SERGEY_HEIGHT):
     sc.display.shading.light = 'FLAT' if STAGE != "geo" else 'STUDIO'
     sc.display.shading.color_type = 'TEXTURE' if STAGE != "geo" else 'MATERIAL'
     sc.display.shading.show_specular_highlight = False      # без пластикового блеска — как в игре
+    sc.display.shading.show_backface_culling = True          # изнанки не видно — как в игре
     sc.display.shading.studiolight_rotate_z = math.radians(-25)
     sc.render.resolution_x, sc.render.resolution_y = 1000, 1000
     sc.render.film_transparent = False
