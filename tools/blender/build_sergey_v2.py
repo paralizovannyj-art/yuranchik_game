@@ -272,25 +272,31 @@ def face_disp(x, z, th):
     """Смещение поверхности лица вперёд (fwd) и вверх (up), единицы Юрчика."""
     ax = abs(x); front = max(0.0, math.cos(th)) ** 1.5
     fwd = 0.0; up = 0.0
+    # лицо не плоское: боковые части лица (виски, щёки у ушей) уходят назад, центр вынесен вперёд
+    fwd -= 0.016 * smooth((ax - 0.030) / 0.040) * (1 - smooth((1.528 - z) / 0.02))
+    fwd += 0.006 * g(ax, 0.030) * smooth((1.66 - z) / 0.03)
     # нос: спинка от переносицы к кончику, крылья, тень под носом
-    prof = smooth((1.618 - z) / 0.034) * (1 - smooth((1.580 - z) / 0.010))
-    fwd += 0.021 * prof * g(ax, 0.0085)
-    fwd += 0.006 * g(ax - 0.013, 0.006) * g(z - 1.580, 0.006)
-    fwd -= 0.004 * g(ax, 0.012) * g(z - 1.571, 0.004)
-    # надбровья и глазницы (глаза чуть глубже — тяжёлый взгляд)
-    fwd += 0.006 * g(z - 1.640, 0.008) * (1 - smooth((ax - 0.050) / 0.015))
-    fwd -= 0.010 * g(ax - 0.031, 0.014) * g(z - 1.621, 0.009)
+    prof = smooth((1.622 - z) / 0.036) * (1 - smooth((1.578 - z) / 0.010))
+    fwd += 0.032 * prof * g(ax, 0.0095)
+    fwd += 0.010 * g(ax - 0.014, 0.007) * g(z - 1.581, 0.007)               # крылья носа
+    fwd -= 0.006 * g(ax, 0.012) * g(z - 1.570, 0.004)
+    # надбровья и глазницы (глаза глубже — тяжёлый взгляд)
+    fwd += 0.011 * g(z - 1.641, 0.009) * (1 - smooth((ax - 0.052) / 0.014))
+    fwd -= 0.017 * g(ax - 0.031, 0.015) * g(z - 1.622, 0.010)
     # скулы
-    fwd += 0.007 * g(ax - 0.050, 0.012) * g(z - 1.598, 0.012)
+    fwd += 0.011 * g(ax - 0.050, 0.013) * g(z - 1.599, 0.013)
+    # носогубные складки
+    fwd -= 0.004 * g(ax - 0.024 - (1.585 - z) * 0.35, 0.004) * g(z - 1.567, 0.016)
     # губы: верхняя/нижняя, щель рта; ухмылка — левый (у персонажа) уголок чуть выше
-    lip = 1 - smooth((ax - 0.020) / 0.006)
-    fwd += 0.0045 * g(z - 1.559, 0.005) * lip + 0.0045 * g(z - 1.546, 0.005) * lip
-    fwd -= 0.0015 * g(z - 1.5525, 0.0025) * lip
+    lip = 1 - smooth((ax - 0.021) / 0.006)
+    fwd += 0.0065 * g(z - 1.559, 0.005) * lip + 0.006 * g(z - 1.546, 0.005) * lip
+    fwd -= 0.002 * g(z - 1.5525, 0.0025) * lip
+    fwd -= 0.004 * g(ax, 0.016) * g(z - 1.539, 0.004)                    # ямка под нижней губой
     if x > 0:
-        up += 0.0025 * g(ax - 0.020, 0.008) * g(z - 1.552, 0.008)
-    # подбородок с бородкой, челюсть пошире
-    fwd += 0.007 * g(ax, 0.020) * g(z - 1.533, 0.010)
-    fwd -= 0.004 * g(ax - 0.040, 0.012) * g(z - 1.565, 0.012)            # впалые щёки
+        up += 0.003 * g(ax - 0.020, 0.008) * g(z - 1.552, 0.008)
+    # подбородок с бородкой выступает, челюсть пошире
+    fwd += 0.012 * g(ax, 0.021) * g(z - 1.531, 0.011)
+    fwd -= 0.007 * g(ax - 0.042, 0.012) * g(z - 1.566, 0.013)            # впалые щёки
     return fwd * front, up * front
 
 
@@ -487,7 +493,16 @@ def paint_face_s(refs, P, N, LUV):
     # «бессмертная» аура: чуть бледнее, глазницы темнее — лицо остаётся узнаваемым
     c = mix(c, col((0.55, 0.55, 0.56)) * c.mean(axis=1, keepdims=True) / 0.45, 0.10)
     sock = np.exp(-((ax - 0.031) / 0.020) ** 2 - ((z - 1.624) / 0.011) ** 2)
-    c = c * (1 - 0.16 * sock)[:, None]
+    c = c * (1 - 0.20 * sock)[:, None]
+    # запечённый объём: лицо темнеет к бокам, тени под носом, губой и подбородком
+    g2 = lambda a, s: np.exp(-(a / s) ** 2)
+    ao = 1 - 0.22 * np.clip(1 + N[:, 1] * 1.25, 0, 1) ** 1.5
+    ao -= 0.12 * g2(ax, 0.014) * g2(z - 1.571, 0.005)
+    ao -= 0.08 * g2(ax, 0.018) * g2(z - 1.540, 0.004)
+    ao -= 0.15 * g2(ax, 0.030) * nsmooth((1.524 - z) / 0.010)
+    ao += 0.06 * g2(ax - 0.050, 0.013) * g2(z - 1.600, 0.012)             # блик на скулах
+    ao += 0.05 * g2(ax, 0.007) * g2(z - 1.596, 0.014)                     # спинка носа
+    c = c * np.clip(ao, 0.5, 1.1)[:, None]
     return c
 
 
@@ -667,6 +682,8 @@ def preview(sc, tag, height=SERGEY_HEIGHT):
     sc.render.engine = 'BLENDER_WORKBENCH'
     sc.display.shading.light = 'FLAT' if STAGE != "geo" else 'STUDIO'
     sc.display.shading.color_type = 'TEXTURE' if STAGE != "geo" else 'MATERIAL'
+    sc.display.shading.show_specular_highlight = False      # без пластикового блеска — как в игре
+    sc.display.shading.studiolight_rotate_z = math.radians(-25)
     sc.render.resolution_x, sc.render.resolution_y = 1000, 1000
     sc.render.film_transparent = False
     sc.view_settings.view_transform = 'Standard'
@@ -680,9 +697,12 @@ def preview(sc, tag, height=SERGEY_HEIGHT):
              ("side", Vector((1, 0, 0.0)), Vector((0, 0.62, height * 0.5)), height * 1.08),
              ("back", Vector((0, 1, 0.0)), Vector((0.62, 0, height * 0.5)), height * 1.08),
              ("face", Vector((0, -1, 0.04)), Vector((0, 0, 2.00)), 0.42),
-             ("face34", Vector((0.55, -1, 0.04)), Vector((0, 0, 2.00)), 0.46)]
+             ("face34", Vector((0.55, -1, 0.04)), Vector((0, 0, 2.00)), 0.46),
+             ("faceside", Vector((1, -0.08, 0.02)), Vector((0, 0, 2.00)), 0.46)]
     for name, d, tgt, scale in shots:
         d = d.normalized()
+        # крупные планы лица — со светом, чтобы был виден объём; общие — плоско, как текстура
+        sc.display.shading.light = 'STUDIO' if (STAGE == "geo" or name.startswith("face")) else 'FLAT'
         for o in refs:                                   # Юрчик рядом: сбоку — позади по Y, иначе — справа по X
             o.location = (0, 1.25, 0) if name == "side" else (1.25, 0, 0)
         cam_d.ortho_scale = scale
