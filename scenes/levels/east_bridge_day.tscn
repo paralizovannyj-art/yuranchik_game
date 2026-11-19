@@ -1,0 +1,132 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/east_bridge_day.gd" id="lvl"]
+[ext_resource type="PackedScene" path="res://scenes/east_bridge/eb_location.tscn" id="loc"]
+[ext_resource type="Shader" uid="uid://507jlrfn4qwu" path="res://shaders/ps2_post.gdshader" id="post"]
+
+[sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
+sky_top_color = Color(0.6, 0.62, 0.66, 1)
+sky_horizon_color = Color(0.78, 0.79, 0.8, 1)
+sky_curve = 0.2
+ground_bottom_color = Color(0.5, 0.51, 0.53, 1)
+ground_horizon_color = Color(0.78, 0.79, 0.8, 1)
+sun_angle_max = 0.0
+sun_curve = 0.01
+
+[sub_resource type="Sky" id="sky_res"]
+sky_material = SubResource("sky_mat")
+radiance_size = 0
+
+[sub_resource type="Environment" id="env"]
+background_mode = 2
+sky = SubResource("sky_res")
+ambient_light_source = 3
+ambient_light_color = Color(0.8, 0.82, 0.86, 1)
+ambient_light_sky_contribution = 0.85
+ambient_light_energy = 0.9
+tonemap_mode = 2
+tonemap_exposure = 1.0
+glow_enabled = true
+glow_intensity = 0.5
+glow_bloom = 0.04
+fog_enabled = true
+fog_light_color = Color(0.76, 0.78, 0.81, 1)
+fog_density = 0.011
+fog_aerial_perspective = 0.4
+fog_sky_affect = 0.55
+
+[sub_resource type="ParticleProcessMaterial" id="pm_snow"]
+emission_shape = 3
+emission_box_extents = Vector3(40, 1, 40)
+direction = Vector3(0, -1, 0)
+spread = 25.0
+initial_velocity_min = 0.8
+initial_velocity_max = 1.6
+gravity = Vector3(1.2, -0.7, 0.3)
+turbulence_enabled = true
+turbulence_noise_strength = 0.6
+turbulence_noise_scale = 5.0
+
+[sub_resource type="StandardMaterial3D" id="mat_flake"]
+shading_mode = 0
+albedo_color = Color(0.96, 0.97, 1, 1)
+billboard_mode = 3
+particles_anim_h_frames = 1
+particles_anim_v_frames = 1
+particles_anim_loop = false
+
+[sub_resource type="QuadMesh" id="mesh_flake"]
+material = SubResource("mat_flake")
+size = Vector2(0.06, 0.06)
+
+[sub_resource type="ShaderMaterial" id="mat_post"]
+shader = ExtResource("post")
+shader_parameter/blur_px = 0.55
+shader_parameter/color_levels = 32.0
+shader_parameter/dither_strength = 1.0
+shader_parameter/black_crush = 0.03
+shader_parameter/s_curve = 0.35
+shader_parameter/saturation = 0.7
+shader_parameter/exposure = 1.0
+shader_parameter/shadow_tint = Color(0.06, 0.07, 0.09, 1)
+shader_parameter/highlight_tint = Color(0.97, 0.98, 1, 1)
+shader_parameter/halo = 0.1
+shader_parameter/grain = 0.04
+shader_parameter/vignette = 0.35
+
+[node name="EastBridgeDay" type="Node3D"]
+script = ExtResource("lvl")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("env")
+
+[node name="Overcast" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.94, -0.21, 0.27, 0, 0.79, 0.61, -0.34, -0.57, 0.75, 0, 60, 0)
+light_color = Color(0.9, 0.92, 0.97, 1)
+light_energy = 0.45
+shadow_enabled = true
+shadow_blur = 3.0
+directional_shadow_max_distance = 90.0
+
+[node name="Snowfall" type="GPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 23, 50)
+amount = 9000
+lifetime = 14.0
+preprocess = 14.0
+visibility_aabb = AABB(-45, -30, -45, 90, 35, 90)
+process_material = SubResource("pm_snow")
+draw_pass_1 = SubResource("mesh_flake")
+
+[node name="PS2Post" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="Filter" type="ColorRect" parent="PS2Post"]
+material = SubResource("mat_post")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Location" parent="." instance=ExtResource("loc")]
+
+[node name="Lights" parent="Location"]
+visible = false
+
+[node name="Backdrop" parent="Location"]
+lit_windows = 0.0
+haze_color = Color(0.76, 0.78, 0.81, 1)
+haze_density = 0.009
+wall_color = Color(0.3, 0.31, 0.33, 1)
+aerial = 0.0
+
+[node name="Camera" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.996, -0.087, 0, 0.087, 0.996, 0, 9.1, 52)
+fov = 60.0
+
+[node name="ShotFrom" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.996, -0.087, 0, 0.087, 0.996, 0, 9.1, 52)
+
+[node name="ShotTo" type="Marker3D" parent="."]
+transform = Transform3D(0.966, 0, 0.259, 0.022, 0.996, -0.083, -0.258, 0.087, 0.962, 0.4, 9.1, 12)

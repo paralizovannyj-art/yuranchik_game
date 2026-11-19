@@ -1,0 +1,362 @@
+[
+ {
+  "kind": "bridge",
+  "color": "green",
+  "base": [
+   -1.62,
+   7.52,
+   50.0
+  ],
+  "head": [
+   -0.57,
+   12.2,
+   50.0
+  ],
+  "energy": null
+ },
+ {
+  "kind": "bridge",
+  "color": "green",
+  "base": [
+   1.62,
+   7.52,
+   35.0
+  ],
+  "head": [
+   0.57,
+   12.2,
+   35.0
+  ],
+  "energy": null
+ },
+ {
+  "kind": "bridge",
+  "color": "green",
+  "base": [
+   -1.62,
+   7.52,
+   16.0
+  ],
+  "head": [
+   -0.57,
+   12.2,
+   16.0
+  ],
+  "energy": null
+ },
+ {
+  "kind": "bridge",
+  "color": "green",
+  "base": [
+   1.62,
+   7.52,
+   3.0
+  ],
+  "head": [
+   0.57,
+   12.2,
+   3.0
+  ],
+  "energy": null
+ },
+ {
+  "kind": "bridge",
+  "color": "green",
+  "base": [
+   -1.62,
+   7.52,
+   -10.0
+  ],
+  "head": [
+   -0.57,
+   12.2,
+   -10.0
+  ],
+  "energy": null
+ },
+ {
+  "kind": "bridge",
+  "color": "green",
+  "base": [
+   1.62,
+   7.52,
+   -22.0
+  ],
+  "head": [
+   0.57,
+   12.2,
+   -22.0
+  ],
+  "energy": null
+ },
+ {
+  "kind": "bridge",
+  "color": "green",
+  "base": [
+   -1.62,
+   7.52,
+   -32.0
+  ],
+  "head": [
+   -0.57,
+   12.2,
+   -32.0
+  ],
+  "energy": null
+ },
+ {
+  "kind": "mast",
+  "color": "orange",
+  "base": [
+   -30.0,
+   0,
+   41.5
+  ],
+  "head": [
+   -30.0,
+   18.0,
+   41.5
+  ],
+  "energy": 90.0
+ },
+ {
+  "kind": "mast",
+  "color": "orange",
+  "base": [
+   46.0,
+   0,
+   -10.0
+  ],
+  "head": [
+   46.0,
+   18.0,
+   -10.0
+  ],
+  "energy": 90.0
+ },
+ {
+  "kind": "platform",
+  "color": "green",
+  "base": [
+   -60.0,
+   1.0,
+   26.0
+  ],
+  "head": [
+   -60.0,
+   7.1,
+   24.88
+  ],
+  "energy": null
+ },
+ {
+  "kind": "platform",
+  "color": "green",
+  "base": [
+   -42.0,
+   1.0,
+   26.0
+  ],
+  "head": [
+   -42.0,
+   7.1,
+   24.88
+  ],
+  "energy": null
+ },
+ {
+  "kind": "platform",
+  "color": "green",
+  "base": [
+   -24.0,
+   1.0,
+   26.0
+  ],
+  "head": [
+   -24.0,
+   7.1,
+   24.88
+  ],
+  "energy": null
+ },
+ {
+  "kind": "platform",
+  "color": "green",
+  "base": [
+   24.0,
+   1.0,
+   26.0
+  ],
+  "head": [
+   24.0,
+   7.1,
+   24.88
+  ],
+  "energy": null
+ },
+ {
+  "kind": "platform",
+  "color": "green",
+  "base": [
+   42.0,
+   1.0,
+   26.0
+  ],
+  "head": [
+   42.0,
+   7.1,
+   24.88
+  ],
+  "energy": null
+ },
+ {
+  "kind": "platform",
+  "color": "green",
+  "base": [
+   60.0,
+   1.0,
+   26.0
+  ],
+  "head": [
+   60.0,
+   7.1,
+   24.88
+  ],
+  "energy": null
+ },
+ {
+  "kind": "platform",
+  "color": "green",
+  "base": [
+   -58.0,
+   1.0,
+   -3.0
+  ],
+  "head": [
+   -58.0,
+   7.1,
+   -4.12
+  ],
+  "energy": null
+ },
+ {
+  "kind": "platform",
+  "color": "green",
+  "base": [
+   -40.0,
+   1.0,
+   -3.0
+  ],
+  "head": [
+   -40.0,
+   7.1,
+   -4.12
+  ],
+  "energy": null
+ },
+ {
+  "kind": "platform",
+  "color": "green",
+  "base": [
+   -22.0,
+   1.0,
+   -3.0
+  ],
+  "head": [
+   -22.0,
+   7.1,
+   -4.12
+  ],
+  "energy": null
+ },
+ {
+  "kind": "platform",
+  "color": "orange",
+  "base": [
+   20.0,
+   1.0,
+   -3.0
+  ],
+  "head": [
+   20.0,
+   7.1,
+   -4.12
+  ],
+  "energy": null
+ },
+ {
+  "kind": "platform",
+  "color": "orange",
+  "base": [
+   40.0,
+   1.0,
+   -3.0
+  ],
+  "head": [
+   40.0,
+   7.1,
+   -4.12
+  ],
+  "energy": null
+ },
+ {
+  "kind": "platform",
+  "color": "orange",
+  "base": [
+   58.0,
+   1.0,
+   -3.0
+  ],
+  "head": [
+   58.0,
+   7.1,
+   -4.12
+  ],
+  "energy": null
+ },
+ {
+  "kind": "station",
+  "color": "orange",
+  "base": [
+   -17.0,
+   0,
+   -43.5
+  ],
+  "head": [
+   -17.0,
+   3.1,
+   -43.5
+  ],
+  "energy": 6.0
+ },
+ {
+  "kind": "ground",
+  "color": "orange",
+  "base": [
+   4.0,
+   0,
+   74.0
+  ],
+  "head": [
+   2.5,
+   7.4,
+   74.0
+  ],
+  "energy": null
+ },
+ {
+  "kind": "ground",
+  "color": "green",
+  "base": [
+   -4.0,
+   0,
+   -50.0
+  ],
+  "head": [
+   -2.5,
+   7.4,
+   -50.0
+  ],
+  "energy": null
+ }
+]

@@ -284,6 +284,11 @@ TEXTURES = {
     # персонажи и предметы
     "yur3_atlas": "char", "sergey": "char", "enemy_a": "char", "enemy_b": "char", "enemy_c": "char", "monkey": "fur",
     "items": "item",
+    # «Восточный ж/д мост» (YUR-7, east_bridge_textures.py); eb_mesh и плафоны фонарей — без обработки
+    "eb_ballast": "floor", "eb_trackbed": "floor", "eb_deck": "floor", "eb_platform": "floor",
+    "eb_platform_edge": "wall", "eb_white": "metal", "eb_booth": "metal", "eb_cabinet": "metal",
+    "eb_tank": "metal", "eb_gondola": "metal", "eb_container": "metal", "eb_coach": "sign",
+    "eb_lattice": "metal", "eb_station": "wall", "eb_sign_station": "sign",
 }
 
 # у этих текстур есть «пара»-свечение: его надо размыть так же, чтобы окна совпали
@@ -292,7 +297,7 @@ EMISSION_OF = {
     "facade_c_emission": "facade_c_albedo", "khr_emission": "khr_albedo", "school_emission": "school_albedo",
     "ind_window_emission": "ind_window", "kiosk_emission": "kiosk", "shopfront_emission": "shopfront",
     "underpass_sign_emission": "underpass_sign", "pod_window_emission": "pod_window", "tv_emission": "tv",
-    "details_emission": "details",
+    "details_emission": "details", "eb_coach_emission": "eb_coach",
 }
 
 

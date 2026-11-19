@@ -21,6 +21,14 @@ extends Node3D
 	set(v):
 		lights_energy = v
 		_apply()
+@export var wall_color := Color(0.035, 0.04, 0.055):          ## цвет стен домов (днём светлее — серые панельки в дымке)
+	set(v):
+		wall_color = v
+		_apply()
+@export_range(0.0, 1.0) var aerial := 0.75:                   ## сколько дымка берёт от ночного зарева у горизонта (днём — 0)
+	set(v):
+		aerial = v
+		_apply()
 
 @export var balka_tint := Color(0.42, 0.45, 0.55)             ## оттенок снега в балке (темнее — глубже провал)
 
@@ -66,4 +74,6 @@ func _apply() -> void:
 	_house.set_shader_parameter("lit_scale", lit_windows)
 	_house.set_shader_parameter("haze_color", haze_color)
 	_house.set_shader_parameter("haze_density", haze_density)
+	_house.set_shader_parameter("wall_color", wall_color)
+	_house.set_shader_parameter("aerial", aerial)
 	_glow.set_shader_parameter("energy", lights_energy)
