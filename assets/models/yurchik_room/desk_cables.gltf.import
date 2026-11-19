@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://denmsb1irwg0b"
-path="res://.godot/imported/yurchik_room.gltf-d654cd53d76e69d4c67f7b9ac97a13ab.scn"
+uid="uid://dlay8hesc10p8"
+path="res://.godot/imported/desk_cables.gltf-421b8daf2397673b1d70e91967b3fbe7.scn"
 
 [deps]
 
-source_file="res://assets/models/yurchik_room.gltf"
-dest_files=["res://.godot/imported/yurchik_room.gltf-d654cd53d76e69d4c67f7b9ac97a13ab.scn"]
+source_file="res://assets/models/yurchik_room/desk_cables.gltf"
+dest_files=["res://.godot/imported/desk_cables.gltf-421b8daf2397673b1d70e91967b3fbe7.scn"]
 
 [params]
 

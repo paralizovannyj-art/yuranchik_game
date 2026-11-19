@@ -18,18 +18,24 @@
 #
 # Запуск (Blender 5.2, из корня проекта; надписи рисуются шрифтами Windows Segoe Print и Ink Free):
 #   blender -b --factory-startup --python tools/blender/build_yurchik_room.py
-# Результат: assets/textures/yr_*.png (yr_writing.png — с прозрачностью), assets/models/yurchik_room.gltf
+# или через Blender MCP: exec(open(r"<путь>/tools/blender/build_yurchik_room.py", encoding="utf-8").read(), {"__file__": <путь>, "__name__": "__main__"})
+# Результат: assets/textures/yr_*.png (yr_writing.png — с прозрачностью) и комната по предметам —
+# assets/models/yurchik_room/<предмет>.gltf: каждый предмет (стены, диван, плед, кресло, комод, стол, монитор,
+# системник, колонки, люстра, батарея, мелочь на комоде и подоконнике…) — отдельная модель с точкой опоры
+# у основания по центру (у люстры — сверху). Позиции предметов — assets/models/yurchik_room/layout.json (в координатах
+# Godot); в stairwell.tscn они стоят дочерними узлами YurchikRoom. В Blender каждый предмет — своя коллекция yr_<имя>.
 #
 # Координаты — те же, что у подъезда (build_mvp_assets.py): комната на 4-м этаже, x −10.5…−6.32, y 0.95…3.9,
-# пол на z = 8.4. Поэтому модель ставится в stairwell.tscn без смещения.
-# Объекты: YurRoom — стены и жёсткая мебель (с коллизией), YurRoomSoft_nocol — мягкое с гладким затенением: диван,
-# кресла, плед, гора одежды; его коллизия — простые ящики YurRoomSoftCol-colonly (невидимые); YurRoomSoftProps_nocol и YurRoomProps_nocol — мелочь, PCScreen_nocol —
-# экран монитора (отдельно, чтобы игра могла его «включить»), EastWriting_nocol — прозрачная наклейка с надписями,
-# LightSwitchKey_nocol — клавиша выключателя (отдельно, чтобы игра могла её щёлкать).
+# пол на z = 8.4.
+# Объекты внутри файла предмета (см. Items): <Предмет> — жёсткое (Godot делает коллизию по сетке),
+# <Предмет>_nocol — мелочь без коллизии, <Предмет>Soft_nocol — мягкое с гладким затенением,
+# <Предмет>Col-colonly — невидимые ящики-коллизии мягкого. Особые имена, которые ищет игра (stairwell.gd):
+# PCScreen_nocol — экран монитора (игра его «включает»), LightSwitchKey_nocol — клавиша выключателя,
+# Chandelier_nocol — люстра (плафоны гаснут и загораются). EastWriting_nocol — прозрачная наклейка с надписями.
 # Мягкие формы — soft() (скруглённый ящик с буграми) и drape() (ткань, наброшенная на прямоугольник, со свесами).
-import bpy, os, sys, math
+import bpy, os, sys, math, json
 import numpy as np
-from mathutils import Vector, Euler
+from mathutils import Vector, Euler, Matrix
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
@@ -975,6 +981,82 @@ def drape(sb, x0, x1, y0, y1, zt, hang, m, rect, rng, n=(10, 12), nh=4, amp=0.01
             sb.mi.append(mi)
 
 
+# =====================================================================================
+#  Предметы: каждый — отдельная модель assets/models/yurchik_room/<имя>.gltf
+# =====================================================================================
+ITEM_DIR = os.path.join(OUT, "yurchik_room")
+ANCHOR_TOP = ("chandelier",)               # висит на потолке — точка опоры сверху, у остальных — снизу по центру
+
+
+def camel(item):
+    return "".join(w.capitalize() for w in item.split("_"))
+
+
+class Items:
+    """Предметы комнаты. I("sofa", "soft") — сетка нужного вида для предмета (создаётся при первом обращении):
+    solid  — жёсткое, Godot сделает коллизию по сетке (ps2_import.gd);
+    detail — мелочь без коллизии (…_nocol);
+    soft   — мягкое с гладким затенением, без коллизии (…Soft_nocol);
+    col    — невидимые простые ящики-коллизии (…Col-colonly).
+    name — своё имя объекта (игра ищет PCScreen_nocol, LightSwitchKey_nocol)."""
+    KINDS = {"solid": (B, ""), "detail": (B, "_nocol"), "soft": (SB, "Soft_nocol"), "col": (B, "Col-colonly")}
+
+    def __init__(self):
+        self.items = {}
+
+    def _it(self, item):
+        return self.items.setdefault(item, {"parts": {}, "extra": []})
+
+    def __call__(self, item, kind="detail", name=None):
+        parts = self._it(item)["parts"]
+        key = name or kind
+        if key not in parts:
+            parts[key] = (self.KINDS[kind][0](), name or camel(item) + self.KINDS[kind][1])
+        return parts[key][0]
+
+    def extra(self, item, ob):
+        """Готовый объект со своей точкой вращения (клавиша выключателя)."""
+        self._it(item)["extra"].append(ob)
+
+
+def export_items(I, coll):
+    """Каждый предмет: своя коллекция yr_<имя> в Blender, точка опоры у основания, свой файл .gltf.
+    Возвращает {предмет: позиция в Godot} — туда его ставит stairwell.tscn (узел YurchikRoom)."""
+    os.makedirs(ITEM_DIR, exist_ok=True)
+    layout = {}
+    for item, it in I.items.items():
+        sub = bpy.data.collections.new("yr_" + item)
+        coll.children.link(sub)
+        obs = [b.build(nm, sub) for (b, nm) in it["parts"].values()]
+        for ob in obs:
+            if ob.name.endswith("-colonly"):            # невидимые в игре ящики-коллизии: в Blender — каркасом
+                ob.display_type = 'WIRE'
+        for ob in it["extra"]:
+            for c in list(ob.users_collection):
+                c.objects.unlink(ob)
+            sub.objects.link(ob)
+        pts = [v.co for ob in obs for v in ob.data.vertices] + \
+              [ob.location + v.co for ob in it["extra"] for v in ob.data.vertices]
+        lo = [min(p[i] for p in pts) for i in range(3)]
+        hi = [max(p[i] for p in pts) for i in range(3)]
+        A = Vector((round((lo[0] + hi[0]) / 2, 3), round((lo[1] + hi[1]) / 2, 3),
+                    round(hi[2] if item in ANCHOR_TOP else lo[2], 3)))
+        for ob in obs:
+            ob.data.transform(Matrix.Translation(-A))
+        for ob in it["extra"]:
+            ob.location -= A
+        allobs = obs + it["extra"]
+        export(os.path.join("yurchik_room", item), allobs)
+        for ob in obs:                       # в Blender предмет остаётся на своём месте, начало координат — у основания
+            ob.location = A
+        for ob in it["extra"]:
+            ob.parent = obs[0]
+        layout[item] = [round(A.x, 3), round(A.z, 3), round(-A.y, 3)]      # Blender Z-up → Godot Y-up
+    with open(os.path.join(ITEM_DIR, "layout.json"), "w", encoding="utf-8", newline="\n") as f:
+        json.dump(layout, f, ensure_ascii=False, indent=1)
+    return layout
+
+
 def export(name, obs):
     for o in bpy.context.scene.objects:
         o.select_set(o in obs)
@@ -990,100 +1072,103 @@ def room(M):
     import random
     rng = random.Random(47)
     coll = bpy.context.scene.collection
-    b, p, scr = B(), B(), B()
-    s, sp = SB(), SB()                       # мягкое (без коллизии — у него простые ящики в col)
-    col = B()                                # невидимые ящики-коллизии для мягкой мебели
+    I = Items()
     srng = np.random.default_rng(306)
     at = M["atlas"]
     BL, WH = RC("black"), RC("white")
+    shell = I("room_shell", "solid")
 
     # --- пол, потолок ---
-    b.box((X0, Y0, Z - 0.1), (XF, Y1, Z), {'+Z': M["floor"]}, scale=(2.0, 2.0))
-    b.box((X0, Y0, ZT), (XF, Y1, ZT + 0.1), {'-Z': M["ceiling"]}, scale=(1.6, 1.6))
+    shell.box((X0, Y0, Z - 0.1), (XF, Y1, Z), {'+Z': M["floor"]}, scale=(2.0, 2.0))
+    shell.box((X0, Y0, ZT), (XF, Y1, ZT + 0.1), {'-Z': M["ceiling"]}, scale=(1.6, 1.6))
 
     # --- северная стена: фактурные панели ---
-    b.box((X0, Y1, Z), (X1, Y1 + 0.2, ZT), {'-Y': (M["panels"], (0, 0, 1, 1))})   # одна текстура на всю стену
+    shell.box((X0, Y1, Z), (X1, Y1 + 0.2, ZT), {'-Y': (M["panels"], (0, 0, 1, 1))})   # одна текстура на всю стену
     # --- южная стена: одна текстура на всю стену (левый край = у двери) ---
-    b.box((X0, Y0 - 0.2, Z), (X1, Y0, ZT), {'+Y': (M["south"], (0, 0, 1, 1))})
+    shell.box((X0, Y0 - 0.2, Z), (X1, Y0, ZT), {'+Y': (M["south"], (0, 0, 1, 1))})
     # --- восточная стена с проёмом в коридор ---
     ue = lambda y: (Y1 - y) / (Y1 - Y0)
     vz = lambda z: (z - Z) / H
     for (ya, yb, za, zb) in ((Y0, DOOR_Y0, Z, ZT), (DOOR_Y1, Y1, Z, ZT), (DOOR_Y0, DOOR_Y1, Z + DOOR_H, ZT)):
-        b.box((X1, ya, za), (X1 + 0.12, yb, zb), {'-X': (M["east"], (ue(yb), vz(za), ue(ya), vz(zb)))})
+        shell.box((X1, ya, za), (X1 + 0.12, yb, zb), {'-X': (M["east"], (ue(yb), vz(za), ue(ya), vz(zb)))})
     # --- западная стена с окном (ниша глубиной 22 см) ---
     WY0, WY1, WZ0, WZ1 = 1.76, 3.13, Z + 0.9, Z + 2.34      # как на фото: 1.37 x 1.44 м, подоконник на 0.9 м
     XW = X0 - 0.22
     WS = (2.5, 2.5)
     for (ya, yb, za, zb) in ((Y0, WY0, Z, ZT), (WY1, Y1, Z, ZT), (WY0, WY1, Z, WZ0), (WY0, WY1, WZ1, ZT)):
-        b.box((X0 - 0.2, ya, za), (X0, yb, zb), {'+X': M["west"]}, scale=WS)
+        shell.box((X0 - 0.2, ya, za), (X0, yb, zb), {'+X': M["west"]}, scale=WS)
     # Откосы, рама со стёклами и подоконник — отдельная 3D-модель (tools/blender/build_room_window.py →
     # room_window.gltf), стоит в stairwell.tscn в точке (X0, WY0, WZ0). Текстура yr_window больше не нужна
     # (tex_window только тратит случайности, чтобы не сдвинуть остальные текстуры).
     # батарея и стояк
     # чугунная батарея МС-140 под левой половиной окна (как на фото): 8 секций — по две круглые колонки с перемычкой,
     # сверху и снизу секции соединены ниппелями (сквозные трубы). Коллизия — простой ящик (см. col ниже)
+    rad = I("radiator")
     NS_, RY0, RY1 = 8, 2.08, 2.80
     sw = (RY1 - RY0) / NS_
     for k in range(NS_):
         yc = RY0 + sw * (k + 0.5)
         for xc in (X0 + 0.065, X0 + 0.115):
-            cylr(p, (xc, yc, Z + 0.15), (xc, yc, Z + 0.75), 0.021, 0.021, at, WH, segs=8)
-        abox(p, (X0 + 0.065, yc - 0.006, Z + 0.20), (X0 + 0.115, yc + 0.006, Z + 0.70), at, WH)
+            cylr(rad, (xc, yc, Z + 0.15), (xc, yc, Z + 0.75), 0.021, 0.021, at, WH, segs=8)
+        abox(rad, (X0 + 0.065, yc - 0.006, Z + 0.20), (X0 + 0.115, yc + 0.006, Z + 0.70), at, WH)
     for zc in (Z + 0.19, Z + 0.71):
-        cylr(p, (X0 + 0.09, RY0 + 0.004, zc), (X0 + 0.09, RY1 - 0.004, zc), 0.03, 0.03, at, WH, segs=8)
+        cylr(rad, (X0 + 0.09, RY0 + 0.004, zc), (X0 + 0.09, RY1 - 0.004, zc), 0.03, 0.03, at, WH, segs=8)
     for z in (Z + 0.22, Z + 0.68):
-        cylr(p, (X0 + 0.06, 1.5, z), (X0 + 0.06, 2.08, z), 0.016, 0.016, M["radiator_m"], (0, 0, 1, 1), segs=6, caps=False)
-    cylr(p, (X0 + 0.06, 1.5, Z), (X0 + 0.06, 1.5, ZT), 0.022, 0.022, M["radiator_m"], (0, 0, 1, 1), segs=6, caps=False)
+        cylr(rad, (X0 + 0.06, 1.5, z), (X0 + 0.06, 2.08, z), 0.016, 0.016, M["radiator_m"], (0, 0, 1, 1), segs=6, caps=False)
+    cylr(rad, (X0 + 0.06, 1.5, Z), (X0 + 0.06, 1.5, ZT), 0.022, 0.022, M["radiator_m"], (0, 0, 1, 1), segs=6, caps=False)
 
-    # --- дверь: наличник; само полотно — отдельная модель room_door.gltf (build_room_door.py), игра её открывает ---
+    # --- дверь: наличник (часть стены); само полотно — отдельная модель room_door.gltf (build_room_door.py) ---
     for (mn, mx) in (((X1 - 0.02, DOOR_Y0 - 0.08, Z), (X1, DOOR_Y0, Z + DOOR_H + 0.08)),
                      ((X1 - 0.02, DOOR_Y1, Z), (X1, DOOR_Y1 + 0.08, Z + DOOR_H + 0.08)),
                      ((X1 - 0.02, DOOR_Y0, Z + DOOR_H), (X1, DOOR_Y1, Z + DOOR_H + 0.08))):
-        abox(p, mn, mx, at, WH)
+        abox(I("room_shell"), mn, mx, at, WH)
 
-    # --- люстра: три плафона ---
+    # --- люстра: три плафона (игра ищет Chandelier_nocol — гасит и зажигает плафоны) ---
+    lamp = I("chandelier")
     cx, cy = (X0 + X1) / 2, (Y0 + Y1) / 2
     # цилиндры строим снизу вверх: иначе грани смотрят внутрь
-    cylr(p, (cx, cy, ZT - 0.2), (cx, cy, ZT), 0.008, 0.008, at, RC("brass"), segs=4)
-    cylr(p, (cx, cy, ZT - 0.26), (cx, cy, ZT - 0.19), 0.02, 0.05, at, RC("brass"), segs=6)
+    cylr(lamp, (cx, cy, ZT - 0.2), (cx, cy, ZT), 0.008, 0.008, at, RC("brass"), segs=4)
+    cylr(lamp, (cx, cy, ZT - 0.26), (cx, cy, ZT - 0.19), 0.02, 0.05, at, RC("brass"), segs=6)
     for k in range(3):
         a = math.radians(90 + k * 120)
         ex, ey = cx + math.cos(a) * 0.22, cy + math.sin(a) * 0.22
-        cylr(p, (cx, cy, ZT - 0.22), (ex, ey, ZT - 0.18), 0.008, 0.008, at, RC("brass"), segs=4, caps=False)
-        cylr(p, (ex, ey, ZT - 0.30), (ex, ey, ZT - 0.17), 0.03, 0.085, M["glass"], (0, 0, 1, 1), segs=8)   # плафон-тюльпан
+        cylr(lamp, (cx, cy, ZT - 0.22), (ex, ey, ZT - 0.18), 0.008, 0.008, at, RC("brass"), segs=4, caps=False)
+        cylr(lamp, (ex, ey, ZT - 0.30), (ex, ey, ZT - 0.17), 0.03, 0.085, M["glass"], (0, 0, 1, 1), segs=8)   # плафон-тюльпан
 
     # --- комод под скатертью (как на фото): в углу у окна, от южной стены до левого края окна,
     #     4 ящика (нижний выдвинут), белая скатерть свисает спереди почти до пола, слева видны ящики ---
     cx0, cx1, cy0, cy1, ch = X0 + 0.07, X0 + 0.52, Y0 + 0.03, Y0 + 0.88, Z + 0.82          # отступ — за ним стояк
-    abox(b, (cx0, cy0, Z), (cx1, cy1, ch), at, RC("wood"), faces={'+X': (at, RC("drawer"))})
+    abox(I("dresser", "solid"), (cx0, cy0, Z), (cx1, cy1, ch), at, RC("wood"), faces={'+X': (at, RC("drawer"))})
     dr_ = RC("drawer")
-    abox(p, (cx1, cy0 + 0.03, Z + 0.03), (cx1 + 0.06, cy1 - 0.03, Z + 0.19), at, RC("wood"),        # нижний ящик выдвинут
+    abox(I("dresser"), (cx1, cy0 + 0.03, Z + 0.03), (cx1 + 0.06, cy1 - 0.03, Z + 0.19), at, RC("wood"),        # нижний ящик выдвинут
          faces={'+X': (at, (dr_[0], dr_[1], dr_[2], dr_[1] + (dr_[3] - dr_[1]) * 0.24))})
     # белая скатерть: на крышке, спереди свисает до выдвинутого нижнего ящика (у южной стены — коротко, там видны ящики), сбоку — до середины
     fhang = lambda y: 0.04 if y < cy0 + 0.22 else (ch - Z - 0.22) * min(1.0, (y - cy0 - 0.22) / 0.06)
-    drape(sp, cx0 - 0.01, cx1 + 0.065, cy0, cy1 + 0.01, ch + 0.006, {'+X': fhang, '+Y': 0.52, '-Y': 0.02, '-X': 0.0},
+    drape(I("tablecloth", "soft"), cx0 - 0.01, cx1 + 0.065, cy0, cy1 + 0.01, ch + 0.006, {'+X': fhang, '+Y': 0.52, '-Y': 0.02, '-X': 0.0},
           at, RC("cloth"), srng, n=(5, 8), nh=5, amp=0.004, edge=0.012, fold=0.012)
     t = ch + 0.012
-    plant(p, (cx0 + 0.15, cy0 + 0.16, t), 13, 0.40, M, rng, spread=60)                              # большой спатифиллум
-    obox(p, (cx0 + 0.34, cy0 + 0.17, t + 0.02), (0.20, 0.26, 0.035), at, RC("wood"),                # рамка лежит на краю
+    plant(I("spathiphyllum"), (cx0 + 0.15, cy0 + 0.16, t), 13, 0.40, M, rng, spread=60)                  # большой спатифиллум
+    obox(I("icon_frame"), (cx0 + 0.34, cy0 + 0.17, t + 0.02), (0.20, 0.26, 0.035), at, RC("wood"),      # рамка лежит на краю
          faces={'+Z': (at, RC("picture"))}, yaw=4)
-    abox(p, (cx0 + 0.10, cy0 + 0.32, t), (cx0 + 0.26, cy0 + 0.46, t + 0.11), at, BL)                 # чёрные коробочки
-    abox(p, (cx0 + 0.28, cy0 + 0.36, t), (cx0 + 0.40, cy0 + 0.48, t + 0.06), at, BL)
-    obox(p, (cx0 + 0.18, cy0 + 0.58, t + 0.03), (0.18, 0.24, 0.06), at, RC("book"), yaw=12)         # стопка книг
-    obox(p, (cx0 + 0.18, cy0 + 0.57, t + 0.075), (0.16, 0.22, 0.04), at, RC("book"), yaw=-8)
-    obox(p, (cx0 + 0.19, cy0 + 0.58, t + 0.11), (0.15, 0.20, 0.03), at, RC("book"), yaw=20)
-    abox(p, (cx0 + 0.08, cy0 + 0.70, t), (cx0 + 0.18, cy0 + 0.80, t + 0.07), at, WH)                 # зарядка/роутер
-    obox(p, (cx0 + 0.34, cy0 + 0.62, t + 0.005), (0.07, 0.14, 0.01), at, BL, yaw=20)                # телефон
-    for k_ in range(4):                                                                              # провода
-        cylr(p, (cx0 + 0.13, cy0 + 0.70, t + 0.01), (cx0 + 0.25 + k_ * 0.04, cy0 + 0.40 + k_ * 0.06, t + 0.004),
+    abox(I("black_boxes"), (cx0 + 0.10, cy0 + 0.32, t), (cx0 + 0.26, cy0 + 0.46, t + 0.11), at, BL)     # чёрные коробочки
+    abox(I("black_boxes"), (cx0 + 0.28, cy0 + 0.36, t), (cx0 + 0.40, cy0 + 0.48, t + 0.06), at, BL)
+    books = I("book_stack")                                                                          # стопка книг
+    obox(books, (cx0 + 0.18, cy0 + 0.58, t + 0.03), (0.18, 0.24, 0.06), at, RC("book"), yaw=12)
+    obox(books, (cx0 + 0.18, cy0 + 0.57, t + 0.075), (0.16, 0.22, 0.04), at, RC("book"), yaw=-8)
+    obox(books, (cx0 + 0.19, cy0 + 0.58, t + 0.11), (0.15, 0.20, 0.03), at, RC("book"), yaw=20)
+    abox(I("charger"), (cx0 + 0.08, cy0 + 0.70, t), (cx0 + 0.18, cy0 + 0.80, t + 0.07), at, WH)          # зарядка/роутер
+    obox(I("dresser_phone"), (cx0 + 0.34, cy0 + 0.62, t + 0.005), (0.07, 0.14, 0.01), at, BL, yaw=20)   # телефон
+    for k_ in range(4):                                                                              # провода от зарядки
+        cylr(I("charger"), (cx0 + 0.13, cy0 + 0.70, t + 0.01), (cx0 + 0.25 + k_ * 0.04, cy0 + 0.40 + k_ * 0.06, t + 0.004),
              0.004, 0.004, at, BL, segs=3, caps=False)
 
     # --- подоконник: цветок в оранжевом горшке, бутылка, ручка ---
-    plant(p, (X0 + 0.06, 1.95, WZ0), 7, 0.28, M, rng, spread=45)
-    cylr(p, (X0 + 0.08, 2.14, WZ0), (X0 + 0.08, 2.14, WZ0 + 0.26), 0.04, 0.04, at, RC("bottle"), segs=8)
-    cylr(p, (X0 + 0.08, 2.14, WZ0 + 0.26), (X0 + 0.08, 2.14, WZ0 + 0.31), 0.04, 0.014, at, RC("bottle"), segs=8, caps=False)
-    cylr(p, (X0 + 0.08, 2.14, WZ0 + 0.31), (X0 + 0.08, 2.14, WZ0 + 0.33), 0.015, 0.015, at, RC("cap"), segs=6)
-    obox(p, (X0 + 0.15, 2.75, WZ0 + 0.005), (0.012, 0.14, 0.01), at, RC("cap"), yaw=-25)
+    plant(I("sill_plant"), (X0 + 0.06, 1.95, WZ0), 7, 0.28, M, rng, spread=45)
+    sb_ = I("sill_bottle")
+    cylr(sb_, (X0 + 0.08, 2.14, WZ0), (X0 + 0.08, 2.14, WZ0 + 0.26), 0.04, 0.04, at, RC("bottle"), segs=8)
+    cylr(sb_, (X0 + 0.08, 2.14, WZ0 + 0.26), (X0 + 0.08, 2.14, WZ0 + 0.31), 0.04, 0.014, at, RC("bottle"), segs=8, caps=False)
+    cylr(sb_, (X0 + 0.08, 2.14, WZ0 + 0.31), (X0 + 0.08, 2.14, WZ0 + 0.33), 0.015, 0.015, at, RC("cap"), segs=6)
+    obox(I("sill_pen"), (X0 + 0.15, 2.75, WZ0 + 0.005), (0.012, 0.14, 0.01), at, RC("cap"), yaw=-25)
 
     # --- кресло с одеждой (как на фото): во весь угол — от стены с окном до подлокотника дивана,
     #     спинкой к стене с панелями; округлая спинка, тёмная обивка в цветах, гора одежды сползает к батарее ---
@@ -1094,15 +1179,17 @@ def room(M):
     ax0, ax1, ay0, ay1 = X0 + 0.02, sx0_ - 0.05, Y1 - 0.86, Y1 - 0.04
     AW = ax1 - ax0
     axc = (ax0 + ax1) / 2
-    soft(s, (axc, (ay0 + ay1 - 0.2) / 2, Z + 0.22), (AW - 0.30, ay1 - 0.2 - ay0, 0.44), fab, FS(AW, 0.6), r=0.07, n=(3, 3, 2), sag=0.03)
-    soft(s, (axc, ay1 - 0.13, Z + 0.46), (AW, 0.26, 0.92), fab, FS(AW, 1.0), r=0.12, n=(4, 1, 3), taper=0.97)        # спинка, округлый верх
+    chair = I("armchair", "soft")
+    soft(chair, (axc, (ay0 + ay1 - 0.2) / 2, Z + 0.22), (AW - 0.30, ay1 - 0.2 - ay0, 0.44), fab, FS(AW, 0.6), r=0.07, n=(3, 3, 2), sag=0.03)
+    soft(chair, (axc, ay1 - 0.13, Z + 0.46), (AW, 0.26, 0.92), fab, FS(AW, 1.0), r=0.12, n=(4, 1, 3), taper=0.97)        # спинка, округлый верх
     for xc in (ax0 + 0.08, ax1 - 0.08):                                                                         # толстые подлокотники
-        soft(s, (xc, (ay0 + 0.04 + ay1 - 0.2) / 2, Z + 0.30), (0.17, ay1 - 0.24 - ay0, 0.62), fab, FS(0.2, 0.6), r=0.08, n=(1, 3, 2))
+        soft(chair, (xc, (ay0 + 0.04 + ay1 - 0.2) / 2, Z + 0.30), (0.17, ay1 - 0.24 - ay0, 0.62), fab, FS(0.2, 0.6), r=0.08, n=(1, 3, 2))
     # на спинку наброшен серо-сиреневый плед с блёклыми цветами (как на фото)
-    drape(sp, ax0 + 0.02, ax1 - 0.02, ay1 - 0.24, ay1 - 0.02, Z + 0.925, {'-Y': 0.30, '+Y': 0.05, '-X': 0.12, '+X': 0.10},
+    drape(I("armchair_throw", "soft"), ax0 + 0.02, ax1 - 0.02, ay1 - 0.24, ay1 - 0.02, Z + 0.925, {'-Y': 0.30, '+Y': 0.05, '-X': 0.12, '+X': 0.10},
           af, (0, 0, 2.2, 1.2), srng, n=(6, 2), nh=3, amp=0.01, edge=0.06, fold=0.025)
     cl = CLQ(1)
     pile_i = [0]
+    pile = I("clothes_pile", "soft")
     # гора одежды (мягкие комья): выше подлокотников, ниже спинки; часть сползает к батарее и на пол
     for (dx, fy, dz, sx, sy, sz, yw, pt) in (
             (0.50, 0.45, 0.50, 0.55, 0.66, 0.20, 8, 0), (0.46, 0.58, 0.66, 0.44, 0.50, 0.18, -14, 4),
@@ -1111,119 +1198,119 @@ def room(M):
             (0.72, 0.45, 0.40, 0.52, 0.42, 0.30, -6, -25),
             (0.68, 0.10, 0.36, 0.40, 0.24, 0.44, 15, -18)):
         q_ = (0, 1, 0, 2, 3, 1, 0, 3)[pile_i[0] % 8]; pile_i[0] += 1
-        soft(s, (ax0 + fy * AW, ay1 - dx, Z + dz), (sy, sx, sz), at, CLQ(q_), r=min(sx, sy, sz) * 0.35, n=(2, 2, 1),
+        soft(pile, (ax0 + fy * AW, ay1 - dx, Z + dz), (sy, sx, sz), at, CLQ(q_), r=min(sx, sy, sz) * 0.35, n=(2, 2, 1),
              amp=0.028, rng=srng, yaw=yw, pitch=pt, freq=14)
-    soft(sp, (ax0 + 0.16, ay0 - 0.05, Z + 0.30), (0.30, 0.06, 0.56), at, cl, r=0.025, n=(2, 1, 3), amp=0.01, rng=srng, yaw=8, pitch=-14)   # джинсы свесились
-    soft(sp, (ax0 + 0.62 * AW, ay0 - 0.03, Z + 0.32), (0.12, 0.03, 0.44), at, WH, r=0.012, n=(1, 1, 3), amp=0.006, rng=srng, yaw=-4, pitch=-8)  # белое полотенце
-    soft(s, (ax0 + 0.55 * AW, ay0 - 0.30, Z + 0.20), (0.50, 0.08, 0.40), at, BL, r=0.01, n=(1, 1, 1), yaw=-8, pitch=-28)   # чёрная коробка у кресла
-    soft(sp, (ax0 + 0.22, ay0 - 0.22, Z + 0.06), (0.38, 0.30, 0.13), at, cl, r=0.06, n=(2, 2, 1), amp=0.015, rng=srng, yaw=20, freq=12)   # куча на полу
-    cylr(p, (ax0 + 0.50 * AW, ay0 - 0.12, Z + 0.62), (ax0 + 0.66 * AW, ay0 - 0.02, Z + 0.58), 0.04, 0.04, at, RC("bottle"), segs=8)   # бутылка в куче
+    soft(pile, (ax0 + 0.16, ay0 - 0.05, Z + 0.30), (0.30, 0.06, 0.56), at, cl, r=0.025, n=(2, 1, 3), amp=0.01, rng=srng, yaw=8, pitch=-14)   # джинсы свесились
+    soft(pile, (ax0 + 0.62 * AW, ay0 - 0.03, Z + 0.32), (0.12, 0.03, 0.44), at, WH, r=0.012, n=(1, 1, 3), amp=0.006, rng=srng, yaw=-4, pitch=-8)  # белое полотенце
+    soft(I("armchair_box", "soft"), (ax0 + 0.55 * AW, ay0 - 0.30, Z + 0.20), (0.50, 0.08, 0.40), at, BL, r=0.01, n=(1, 1, 1), yaw=-8, pitch=-28)   # чёрная коробка у кресла
+    soft(I("floor_clothes", "soft"), (ax0 + 0.22, ay0 - 0.22, Z + 0.06), (0.38, 0.30, 0.13), at, cl, r=0.06, n=(2, 2, 1), amp=0.015, rng=srng, yaw=20, freq=12)   # куча на полу
+    cylr(I("clothes_pile"), (ax0 + 0.50 * AW, ay0 - 0.12, Z + 0.62), (ax0 + 0.66 * AW, ay0 - 0.02, Z + 0.58), 0.04, 0.04, at, RC("bottle"), segs=8)   # бутылка в куче
     for k_ in range(2):                                                                            # провода из-под коробки
-        cylr(p, (ax0 + 0.5 * AW + k_ * 0.08, ay0 - 0.36, Z + 0.01), (ax0 + 0.5 * AW + 0.22 + k_ * 0.05, ay0 - 0.70, Z + 0.01), 0.005, 0.005, at, BL, segs=3, caps=False)
+        cylr(I("armchair_box"), (ax0 + 0.5 * AW + k_ * 0.08, ay0 - 0.36, Z + 0.01), (ax0 + 0.5 * AW + 0.22 + k_ * 0.05, ay0 - 0.70, Z + 0.01), 0.005, 0.005, at, BL, segs=3, caps=False)
     for (y_, yw) in ((2.78, 75), (2.56, 95)):                                                      # кроссовки у батареи
-        soft(sp, (X0 + 0.30, y_, Z + 0.06), (0.10, 0.27, 0.09), at, WH, r=0.04, n=(1, 2, 1), yaw=yw, taper=0.8)
-        soft(sp, (X0 + 0.30, y_, Z + 0.013), (0.115, 0.29, 0.026), at, BL, r=0.012, n=(1, 2, 1), yaw=yw)
+        soft(I("sneakers", "soft"), (X0 + 0.30, y_, Z + 0.06), (0.10, 0.27, 0.09), at, WH, r=0.04, n=(1, 2, 1), yaw=yw, taper=0.8)
+        soft(I("sneakers", "soft"), (X0 + 0.30, y_, Z + 0.013), (0.115, 0.29, 0.026), at, BL, r=0.012, n=(1, 2, 1), yaw=yw)
 
     # --- диван-кровать вдоль северной стены, разложен ---
     sx0, sx1 = X0 + 1.2, -7.58                                                 # вплотную к креслу; между комодом и кроватью — проход к окну
     sy1 = Y1 - 0.02
     SW = sx1 - sx0
     bl = M["blanket"]
-    soft(s, ((sx0 + sx1) / 2, (2.0 + sy1) / 2, Z + 0.16), (SW, sy1 - 2.0, 0.32), fab, FS(SW, 1.9), r=0.04, n=(4, 3, 1))
-    soft(s, ((sx0 + sx1) / 2, sy1 - 0.13, Z + 0.59), (SW, 0.26, 0.56), fab, FS(SW, 0.6), r=0.09, n=(5, 1, 2), sag=0.02)  # спинка
+    sofa = I("sofa", "soft")
+    soft(sofa, ((sx0 + sx1) / 2, (2.0 + sy1) / 2, Z + 0.16), (SW, sy1 - 2.0, 0.32), fab, FS(SW, 1.9), r=0.04, n=(4, 3, 1))
+    soft(sofa, ((sx0 + sx1) / 2, sy1 - 0.13, Z + 0.59), (SW, 0.26, 0.56), fab, FS(SW, 0.6), r=0.09, n=(5, 1, 2), sag=0.02)  # спинка
     for xc in (sx0 + 0.08, sx1 - 0.08):                                                         # подлокотники: толстые, скруглённые
-        soft(s, (xc, sy1 - 0.475, Z + 0.34), (0.26, 0.95, 0.68), fab, FS(0.3, 1.0), r=0.11, n=(1, 3, 2))
+        soft(sofa, (xc, sy1 - 0.475, Z + 0.34), (0.26, 0.95, 0.68), fab, FS(0.3, 1.0), r=0.11, n=(1, 3, 2))
     # разложенная часть выдвинута далеко от стены (как на фото): шириной с диван; до стены с мангой проход ~0.7 м
     by0, by1 = Y0 + 0.70, sy1 - 0.95                                           # by1 — перед подлокотниками
-    soft(s, ((sx0 + sx1) / 2, (by0 + 0.10 + sy1 - 0.26) / 2, Z + 0.20), (SW, sy1 - 0.26 - by0 - 0.10, 0.40), fab,
+    soft(sofa, ((sx0 + sx1) / 2, (by0 + 0.10 + sy1 - 0.26) / 2, Z + 0.20), (SW, sy1 - 0.26 - by0 - 0.10, 0.40), fab,
          FS(SW, 2.2), r=0.05, n=(4, 5, 1))
     # плед наброшен на кровать и свисает спереди и по бокам; ком посередине, складки
     side = lambda y: 0.28 if y < by1 - 0.05 else 0.0
-    drape(sp, sx0 - 0.02, sx1 + 0.02, by0 + 0.08, sy1 - 0.28, Z + 0.44, {'-Y': 0.32, '-X': side, '+X': side, '+Y': 0.02},
+    drape(I("sofa_blanket", "soft"), sx0 - 0.02, sx1 + 0.02, by0 + 0.08, sy1 - 0.28, Z + 0.44, {'-Y': 0.32, '-X': side, '+X': side, '+Y': 0.02},
           bl, (0, 0, 1, 1), srng, n=(12, 16), nh=4, amp=0.018, edge=0.05, fold=0.03,
           bumps=[(sx0 + 0.75, by0 + 0.80, 0.30, 0.12), (sx0 + 1.1, by0 + 1.35, 0.25, 0.07), (sx0 + 0.4, by0 + 0.4, 0.2, 0.05)])
-    soft(sp, (sx0 + 0.55, sy1 - 0.45, Z + 0.53), (0.38, 0.34, 0.12), at, RC("pillow"), r=0.06, n=(2, 2, 1), sag=-0.02, yaw=10)   # подушка
+    soft(I("pillow", "soft"), (sx0 + 0.55, sy1 - 0.45, Z + 0.53), (0.38, 0.34, 0.12), at, RC("pillow"), r=0.06, n=(2, 2, 1), sag=-0.02, yaw=10)   # подушка
 
     # --- компьютерный стол в северо-восточном углу ---
     dx0, dx1, dy0, dy1 = -7.48, X1 - 0.02, Y1 - 0.64, Y1 - 0.02
     dt = Z + 0.74
-    abox(b, (dx0, dy0, dt - 0.03), (dx1, dy1, dt), at, BL)
+    desk = I("desk", "solid")
+    abox(desk, (dx0, dy0, dt - 0.03), (dx1, dy1, dt), at, BL)
     for (x, y) in ((dx0 + 0.03, dy0 + 0.03), (dx1 - 0.03, dy0 + 0.03), (dx0 + 0.03, dy1 - 0.03), (dx1 - 0.03, dy1 - 0.03)):
-        abox(b, (x - 0.025, y - 0.025, Z), (x + 0.025, y + 0.025, dt - 0.03), at, BL)
-    abox(b, (dx0 + 0.03, dy1 - 0.05, Z + 0.12), (dx1 - 0.03, dy1 - 0.03, Z + 0.5), at, BL)     # задняя стенка
-    abox(p, (dx0 + 0.04, dy0 + 0.02, dt), (dx0 + 0.82, dy0 + 0.34, dt + 0.003), at, RC("mousepad"))
+        abox(desk, (x - 0.025, y - 0.025, Z), (x + 0.025, y + 0.025, dt - 0.03), at, BL)
+    abox(desk, (dx0 + 0.03, dy1 - 0.05, Z + 0.12), (dx1 - 0.03, dy1 - 0.03, Z + 0.5), at, BL)     # задняя стенка
+    abox(I("mousepad"), (dx0 + 0.04, dy0 + 0.02, dt), (dx0 + 0.82, dy0 + 0.34, dt + 0.003), at, RC("mousepad"))
     mx = -7.02
-    # монитор 19" 5:4 на подставке
-    abox(p, (mx - 0.12, dy1 - 0.30, dt), (mx + 0.12, dy1 - 0.12, dt + 0.015), at, BL)
-    abox(p, (mx - 0.03, dy1 - 0.20, dt + 0.015), (mx + 0.03, dy1 - 0.16, dt + 0.17), at, BL)
-    abox(b, (mx - 0.215, dy1 - 0.23, dt + 0.11), (mx + 0.215, dy1 - 0.17, dt + 0.47), at, BL)
-    abox(p, (mx - 0.12, dy1 - 0.17, dt + 0.17), (mx + 0.12, dy1 - 0.10, dt + 0.40), at, BL)
-    scr.box((mx - 0.19, dy1 - 0.232, dt + 0.135), (mx + 0.19, dy1 - 0.231, dt + 0.445), {'-Y': (M["screen"], (0, 0, 1, 1))})
+    # монитор 19" 5:4 на подставке; экран — отдельный объект PCScreen_nocol (игра его «включает»)
+    mon = I("monitor")
+    abox(mon, (mx - 0.12, dy1 - 0.30, dt), (mx + 0.12, dy1 - 0.12, dt + 0.015), at, BL)
+    abox(mon, (mx - 0.03, dy1 - 0.20, dt + 0.015), (mx + 0.03, dy1 - 0.16, dt + 0.17), at, BL)
+    abox(I("monitor", "solid"), (mx - 0.215, dy1 - 0.23, dt + 0.11), (mx + 0.215, dy1 - 0.17, dt + 0.47), at, BL)
+    abox(mon, (mx - 0.12, dy1 - 0.17, dt + 0.17), (mx + 0.12, dy1 - 0.10, dt + 0.40), at, BL)
+    I("monitor", "detail", name="PCScreen_nocol").box((mx - 0.19, dy1 - 0.232, dt + 0.135), (mx + 0.19, dy1 - 0.231, dt + 0.445),
+                                                      {'-Y': (M["screen"], (0, 0, 1, 1))})
     # системный блок на столе, справа от монитора
-    abox(b, (dx1 - 0.215, dy0 + 0.08, dt), (dx1 - 0.025, dy0 + 0.55, dt + 0.43), at, RC("tower_s"),
+    abox(I("pc_tower", "solid"), (dx1 - 0.215, dy0 + 0.08, dt), (dx1 - 0.025, dy0 + 0.55, dt + 0.43), at, RC("tower_s"),
          faces={'-Y': (at, RC("tower_f")), '+Z': (at, BL), '+Y': (at, BL)})
     # колонки 2.0
-    for x in (mx - 0.40, dx1 - 0.33):
-        abox(p, (x - 0.05, dy1 - 0.22, dt), (x + 0.05, dy1 - 0.13, dt + 0.18), at, BL, faces={'-Y': (at, RC("speaker"))})
+    for x, nm in ((mx - 0.40, "speaker_left"), (dx1 - 0.33, "speaker_right")):
+        abox(I(nm), (x - 0.05, dy1 - 0.22, dt), (x + 0.05, dy1 - 0.13, dt + 0.18), at, BL, faces={'-Y': (at, RC("speaker"))})
     # клавиатура, мышь, кружка, бутылки
-    abox(p, (mx - 0.23, dy0 + 0.06, dt + 0.003), (mx + 0.23, dy0 + 0.22, dt + 0.025), at, BL, faces={'+Z': (at, RC("keyb"))})
-    obox(p, (mx + 0.33, dy0 + 0.14, dt + 0.018), (0.062, 0.11, 0.03), at, BL, yaw=-8)
-    cylr(p, (mx + 0.33, dy0 + 0.19, dt + 0.03), (mx + 0.25, dy0 + 0.40, dt + 0.003), 0.003, 0.003, at, BL, segs=3, caps=False)
-    cylr(p, (dx0 + 0.12, dy0 + 0.26, dt), (dx0 + 0.12, dy0 + 0.26, dt + 0.10), 0.042, 0.042, at, RC("mug"), segs=8)
-    for (x, y, hh) in ((dx0 + 0.13, dy1 - 0.14, 0.30), (dx0 + 0.26, dy1 - 0.10, 0.24)):
-        cylr(p, (x, y, dt), (x, y, dt + hh), 0.045, 0.045, at, RC("bottle"), segs=8)
-        cylr(p, (x, y, dt + hh), (x, y, dt + hh + 0.06), 0.045, 0.015, at, RC("bottle"), segs=8, caps=False)
-        cylr(p, (x, y, dt + hh + 0.06), (x, y, dt + hh + 0.08), 0.016, 0.016, at, RC("cap"), segs=6)
+    abox(I("keyboard"), (mx - 0.23, dy0 + 0.06, dt + 0.003), (mx + 0.23, dy0 + 0.22, dt + 0.025), at, BL, faces={'+Z': (at, RC("keyb"))})
+    obox(I("mouse"), (mx + 0.33, dy0 + 0.14, dt + 0.018), (0.062, 0.11, 0.03), at, BL, yaw=-8)
+    cylr(I("mouse"), (mx + 0.33, dy0 + 0.19, dt + 0.03), (mx + 0.25, dy0 + 0.40, dt + 0.003), 0.003, 0.003, at, BL, segs=3, caps=False)
+    cylr(I("mug"), (dx0 + 0.12, dy0 + 0.26, dt), (dx0 + 0.12, dy0 + 0.26, dt + 0.10), 0.042, 0.042, at, RC("mug"), segs=8)
+    for (x, y, hh, nm) in ((dx0 + 0.13, dy1 - 0.14, 0.30, "desk_bottle_tall"), (dx0 + 0.26, dy1 - 0.10, 0.24, "desk_bottle_short")):
+        cylr(I(nm), (x, y, dt), (x, y, dt + hh), 0.045, 0.045, at, RC("bottle"), segs=8)
+        cylr(I(nm), (x, y, dt + hh), (x, y, dt + hh + 0.06), 0.045, 0.015, at, RC("bottle"), segs=8, caps=False)
+        cylr(I(nm), (x, y, dt + hh + 0.06), (x, y, dt + hh + 0.08), 0.016, 0.016, at, RC("cap"), segs=6)
     # миска с ложкой и красная мягкая игрушка на системнике (как на фото стены)
     bx_, by_ = dx0 + 0.17, dy0 + 0.09
-    cylr(p, (bx_, by_, dt), (bx_, by_, dt + 0.055), 0.035, 0.07, at, WH, segs=8)
-    cylr(p, (bx_, by_, dt + 0.05), (bx_, by_, dt + 0.052), 0.058, 0.058, at, RC("soil"), segs=8)
-    obox(p, (bx_ + 0.05, by_ + 0.04, dt + 0.07), (0.012, 0.17, 0.005), at, WH, yaw=-55, pitch=18)
-    cylr(p, (dx1 - 0.12, dy0 + 0.33, dt + 0.43), (dx1 - 0.12, dy0 + 0.33, dt + 0.54), 0.07, 0.06, at, RC("plush"), segs=8)
+    bowl = I("bowl")
+    cylr(bowl, (bx_, by_, dt), (bx_, by_, dt + 0.055), 0.035, 0.07, at, WH, segs=8)
+    cylr(bowl, (bx_, by_, dt + 0.05), (bx_, by_, dt + 0.052), 0.058, 0.058, at, RC("soil"), segs=8)
+    obox(bowl, (bx_ + 0.05, by_ + 0.04, dt + 0.07), (0.012, 0.17, 0.005), at, WH, yaw=-55, pitch=18)
+    cylr(I("plush_toy"), (dx1 - 0.12, dy0 + 0.33, dt + 0.43), (dx1 - 0.12, dy0 + 0.33, dt + 0.54), 0.07, 0.06, at, RC("plush"), segs=8)
     # провода из-под стола: вниз за столом, по полу вдоль стены к розетке под выключателем
     for k in range(3):
         y_, zz = 2.24 - k * 0.012, Z + 0.33 + k * 0.012
         pts_ = [(dx1 - 0.1 - k * 0.05, dy1 - 0.08, dt), (X1 - 0.03 - k * 0.01, Y1 - 0.3, Z + 0.015),
                 (X1 - 0.03 - k * 0.01, y_ + 0.06, Z + 0.015), (X1 - 0.015, y_, zz)]
         for a_, b_ in zip(pts_, pts_[1:]):
-            cylr(p, a_, b_, 0.004, 0.004, at, BL, segs=3, caps=False)
+            cylr(I("desk_cables"), a_, b_, 0.004, 0.004, at, BL, segs=3, caps=False)
 
     # надписи маркером — прозрачная наклейка в 4 мм от стены
-    wr = B()
-    wr.box((X1 - 0.005, WR_Y0, Z + WR_Z0), (X1 - 0.004, WR_Y1, Z + WR_Z1), {'-X': (M["writing"], (0, 0, 1, 1))})
+    I("wall_writing", "detail", name="EastWriting_nocol").box((X1 - 0.005, WR_Y0, Z + WR_Z0), (X1 - 0.004, WR_Y1, Z + WR_Z1),
+                                                             {'-X': (M["writing"], (0, 0, 1, 1))})
 
     # игровое кресло — отдельная модель gaming_chair.gltf (build_gaming_chair.py), стоит в stairwell.tscn у стола
 
     # --- коллизии мягкой мебели: простые ящики (сетка обивки слишком подробная для физики) ---
     CF = {k: at for k in ('+X', '-X', '+Y', '-Y', '+Z', '-Z')}
-    col.box((X0 + 0.04, 2.08, Z + 0.15), (X0 + 0.14, 2.80, Z + 0.75), CF)                         # батарея
-    col.box((ax0, ay0 - 0.05, Z), (ax1, ay1, Z + 0.92), CF)                                         # кресло с одеждой
-    obox(col, (ax0 + 0.55 * AW, ay0 - 0.30, Z + 0.20), (0.50, 0.08, 0.40), at, BL, yaw=-8, pitch=-28)   # коробка у кресла
-    col.box((sx0, 2.0, Z), (sx1, sy1, Z + 0.32), CF)                                                # диван: основание
-    col.box((sx0, sy1 - 0.26, Z), (sx1, sy1, Z + 0.87), CF)                                         # спинка
-    for (xa, xb) in ((sx0 - 0.05, sx0 + 0.21), (sx1 - 0.21, sx1 + 0.05)):                           # подлокотники
-        col.box((xa, sy1 - 0.95, Z), (xb, sy1, Z + 0.68), CF)
-    col.box((sx0, by0 + 0.10, Z), (sx1, sy1 - 0.26, Z + 0.44), CF)                                  # кровать с пледом
+    I("radiator", "col").box((X0 + 0.04, 2.08, Z + 0.15), (X0 + 0.14, 2.80, Z + 0.75), CF)               # батарея
+    I("armchair", "col").box((ax0, ay0 - 0.05, Z), (ax1, ay1, Z + 0.92), CF)                               # кресло с одеждой
+    obox(I("armchair_box", "col"), (ax0 + 0.55 * AW, ay0 - 0.30, Z + 0.20), (0.50, 0.08, 0.40), at, BL, yaw=-8, pitch=-28)   # коробка у кресла
+    sc = I("sofa", "col")
+    sc.box((sx0, 2.0, Z), (sx1, sy1, Z + 0.32), CF)                                                        # диван: основание
+    sc.box((sx0, sy1 - 0.26, Z), (sx1, sy1, Z + 0.87), CF)                                                 # спинка
+    for (xa, xb) in ((sx0 - 0.05, sx0 + 0.21), (sx1 - 0.21, sx1 + 0.05)):                                  # подлокотники
+        sc.box((xa, sy1 - 0.95, Z), (xb, sy1, Z + 0.68), CF)
+    sc.box((sx0, by0 + 0.10, Z), (sx1, sy1 - 0.26, Z + 0.44), CF)                                          # кровать с пледом
 
     # --- выключатель света у проёма (поверх нарисованного на стене): рамка и отдельная клавиша —
     #     игра качает клавишу (stairwell.gd: _toggle_light), ось — у поверхности рамки ---
     SWY, SWZ = 2.10, Z + 1.55
-    abox(p, (X1 - 0.012, SWY - 0.04, SWZ - 0.078), (X1, SWY + 0.04, SWZ + 0.078), at, WH, skip=('+X',))
+    abox(I("light_switch"), (X1 - 0.012, SWY - 0.04, SWZ - 0.078), (X1, SWY + 0.04, SWZ + 0.078), at, WH, skip=('+X',))
     kb = B()
     abox(kb, (-0.014, -0.025, -0.045), (0.0, 0.025, 0.045), at, WH, skip=('+X',))
     abox(kb, (-0.0145, -0.012, 0.028), (-0.0135, 0.012, 0.032), at, BL, faces=None, skip=('+X',))   # риска сверху
     key = kb.build("LightSwitchKey_nocol", coll)
     key.location = (X1 - 0.012, SWY, SWZ)
+    I.extra("light_switch", key)
 
-    main = b.build("YurRoom", coll)
-    softo = s.build("YurRoomSoft_nocol", coll)
-    colo = col.build("YurRoomSoftCol-colonly", coll)        # суффикс -colonly: Godot сделает из него только коллизию
-    softp = sp.build("YurRoomSoftProps_nocol", coll)
-    props = p.build("YurRoomProps_nocol", coll)
-    screen = scr.build("PCScreen_nocol", coll)
-    writing = wr.build("EastWriting_nocol", coll)
-    export("yurchik_room", [main, softo, softp, colo, props, screen, writing, key])
-    return {"room_polys": len(main.data.polygons), "soft_polys": len(softo.data.polygons) + len(softp.data.polygons), "props_polys": len(props.data.polygons)}
+    layout = export_items(I, coll)
+    return {"items": len(layout), "layout": layout}
 
 
 def mat_alpha(name, tex):
@@ -1239,6 +1326,9 @@ def mat_alpha(name, tex):
 def main():
     for ob in list(bpy.context.scene.objects):
         bpy.data.objects.remove(ob, do_unlink=True)
+    for c in list(bpy.context.scene.collection.children):     # коллекции предметов с прошлой сборки
+        if c.name.startswith("yr_"):
+            bpy.data.collections.remove(c)
     tex_panels(); tex_west(); tex_south(); tex_east(); tex_floor_ceiling()
     tex_blanket(); tex_fabric(); tex_window(); tex_screen(); tex_atlas()
     render_writing()
@@ -1252,7 +1342,9 @@ def main():
         "glass": mat("YrLampGlass", "lamp_glass", "lamp_glass", rough=0.3),
         "writing": mat_alpha("YrWriting", "yr_writing"),
     }
-    print("BUILD_YUR_ROOM " + str(room(M)))
+    res = room(M)
+    print("BUILD_YUR_ROOM " + json.dumps(res))
+    return res
 
 
 main()
