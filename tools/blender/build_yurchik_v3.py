@@ -878,12 +878,16 @@ def build_hood(mb):
 # Сумка висит ровно посередине правого бока: центр — на средней линии тела (y -0.012), задняя стенка —
 # вертикальная плоскость вдоль тела, прижата к куртке в середине. Правая рука висит снаружи сумки
 # (retarget_ual_yurchik.py, bag_out), а не проходит сквозь неё.
+# BAG_SIZE — масштаб сумки (ширина и высота; верх остаётся на месте, сумка висит на том же ремне),
+# BAG_THICK — толщина (насколько сумка выпирает от тела)
+BAG_SIZE, BAG_THICK = 0.82, 0.75
 BAG_TF = Vector((-0.214, -0.141, 0)); BAG_TB = Vector((-0.214, 0.117, 0))
 BAG_W = (BAG_TB - BAG_TF).normalized(); BAG_N = Vector((-BAG_W.y, BAG_W.x, 0))   # вдоль сумки (назад) / наружу
 BAG_M = (BAG_TF + BAG_TB) / 2 + BAG_N * 0.012
-BAG_HW = (BAG_TB - BAG_TF).length / 2
-BAG_FLAP_Z = 0.855                                           # нижний край клапана
-BAG_TOP, BAG_BOT = 1.008, 0.745                              # верх клапана и дно
+BAG_HW = (BAG_TB - BAG_TF).length / 2 * BAG_SIZE
+BAG_TOP = 1.008                                              # верх клапана
+def bag_z(z): return BAG_TOP - (BAG_TOP - z) * BAG_SIZE      # высота исходной сумки → уменьшенной
+BAG_FLAP_Z, BAG_BOT = bag_z(0.855), bag_z(0.745)             # нижний край клапана и дно
 # сумка на концепте (вид сбоку), углы (x, y): клапан и корпус — верх-зад, верх-перед, низ-перед, низ-зад
 BAG_QUADS = (((456, 268), (508, 283), (509, 303), (452, 291)),
              ((452, 291), (509, 303), (510, 335), (454, 327)))
@@ -902,11 +906,12 @@ def build_strap_bag(mb):
         return p
 
     # профиль (вынос от тела, z): край клапана — на z 0.855, как на концепте (вид сбоку: строка 305)
-    prof = [(0.000, 1.000), (0.060, 1.008), (0.086, 0.965), (0.092, 0.905), (0.090, 0.860), (0.078, BAG_FLAP_Z),
+    prof = [(0.000, 1.000), (0.060, 1.008), (0.086, 0.965), (0.092, 0.905), (0.090, 0.860), (0.078, 0.855),
             (0.076, 0.800), (0.072, 0.752), (0.000, 0.745)]
+    prof = [(d * BAG_THICK, bag_z(z)) for d, z in prof]
     last = len(prof) - 1
     cols = []
-    for w, bulge, taper in ((-hw, 0.0, 0.94), (0.0, 0.010, 1.0), (hw, 0.0, 0.94)):
+    for w, bulge, taper in ((-hw, 0.0, 0.94), (0.0, 0.010 * BAG_THICK, 1.0), (hw, 0.0, 0.94)):
         pts = []
         for k, (d, z) in enumerate(prof):
             ww = w * (taper if k in (0, 1) else 1.0)
@@ -920,7 +925,7 @@ def build_strap_bag(mb):
     ngon(mb, [cols[0][0], cols[1][0], cols[2][0], cols[2][last], cols[1][last], cols[0][last]], "bag_back", "bag_side", -Nb)
 
     # ремень: от сумки спереди через левое плечо к сумке сзади
-    path = [bag_pt(-hw + 0.012, 0.035, 0.985)]
+    path = [bag_pt(-hw + 0.012, 0.035 * BAG_THICK, bag_z(0.985))]
     path.append(Vector((-0.196, torso_y(-0.196, 0.990) - 0.006, 0.995)))
     for z in (1.03, 1.10, 1.19, 1.28, 1.36, 1.425):
         x = -0.174 + (z - 1.0) * 0.6865
@@ -929,7 +934,7 @@ def build_strap_bag(mb):
     for z in (1.425, 1.34, 1.25, 1.16, 1.07, 1.005):
         x = -0.106 + (z - 1.0) * 0.5745
         path.append(Vector((x, torso_y(x, z, False) + 0.007, z)))
-    path.append(bag_pt(hw - 0.012, 0.035, 0.985))
+    path.append(bag_pt(hw - 0.012, 0.035 * BAG_THICK, bag_z(0.985)))
     axis = lambda p: Vector((0, -0.01, p.z))
     rows = []; dist = 0.0
     for k, p in enumerate(path):
