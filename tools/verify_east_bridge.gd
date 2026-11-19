@@ -50,54 +50,66 @@ func _floor(x: float, z: float) -> float:
 	return hit.position.y if hit else -999.0
 
 
+func _walk(p: CharacterBody3D, name: String, pos: Vector3, yaw: float, frames: int) -> void:
+	_place(p, pos, yaw)
+	await _wait(5)
+	Input.action_press("move_forward")
+	var t0 := p.global_position
+	await _wait(frames)
+	Input.action_release("move_forward")
+	print("WALK %s from %s to %s" % [name, t0, p.global_position])
+
+
 func _night() -> void:
 	await _wait(30)
 	var p := level.get_node("Player") as CharacterBody3D
-	# высоты пола: мост, площадки, середины маршей, платформы, земля
-	for pt: Array in [["bridge_mid", 0, 10], ["bridge_south", 0, 54], ["south_stair_mid", 0, 59.3], ["south_landing", 0, 63.6],
-			["north_stair_mid", 0, -37.3], ["p1_stair_mid", 4.35, 24], ["p1_landing", 8.2, 24], ["p1_stair_low", 12.0, 24],
-			["p1_platform", -30, 24], ["p2_stair_mid", -4.35, -2], ["p2_platform", 30, -2], ["yard", 20, 31.75], ["ground_s", 10, 72]]:
+	# высоты пола (Godot: x вдоль путей, z: + город, − поле): мост, лестницы, площадки, платформы, спуск, земля
+	for pt: Array in [["deck_mid", 0, 0], ["deck_city_end", 0, 70], ["city_stair_mid", 0, 75.3], ["city_landing", 0, 79.6],
+			["city_stair_low", 0, 84], ["street", 0, 94], ["se_landing1", -3.9, 14.35], ["se_stair_mid", -8, 14.35],
+			["se_landing2", -11.75, 14.35], ["se_platform", -25, 14.35], ["nw_landing_w", -3.9, -13.65], ["nw_landing_e", 3.9, -13.65],
+			["nw_platform", 25, -13.65], ["leg_landing1", -4.75, -94], ["leg_mid", -25, -94], ["leg_landing5", -42, -94],
+			["field", -60, -110], ["field_road", 0, -115.5], ["yard", 20, -57.75], ["station_forecourt", 50, -21]]:
 		print("FLOOR %s %.2f" % [pt[0], _floor(pt[1], pt[2])])
-	_place(p, Vector3(0, 0.2, 74.5), 0)
+	_place(p, Vector3(0, 0.2, 92), 0)
 	await _wait(20)
-	await _shot("n01_spawn")
-	# проход: от низа южной лестницы вверх на мост (на север)
-	Input.action_press("move_forward")
-	var t0 := p.global_position
-	await _wait(600)
-	Input.action_release("move_forward")
-	print("WALK south_stairs from %s to %s" % [t0, p.global_position])
-	await _shot("n02_after_walk_up")
-	_place(p, Vector3(0, 7.6, 45), 0)
+	await _shot("n01_street")
+	await _walk(p, "city_stairs_up", Vector3(0, 0.2, 92), 0, 1500)
+	await _shot("n02_after_city_stairs")
+	_place(p, Vector3(0, 7.6, 66), 0)
 	await _wait(10)
-	await _shot("n03_bridge_north")
-	_place(p, Vector3(0, 7.6, 10), 90)
+	await _shot("n03_deck_from_city")
+	_place(p, Vector3(0, 7.6, 0), 90)
 	await _wait(10)
-	await _shot("n04_bridge_west")
-	_place(p, Vector3(0, 7.6, 10), -90)
+	await _shot("n04_deck_sw")
+	_place(p, Vector3(0, 7.6, 0), -90)
 	await _wait(10)
-	await _shot("n05_bridge_east")
-	# спуск по лестнице на первую платформу (на восток)
-	_place(p, Vector3(0.6, 7.6, 24), -90)
-	await _wait(5)
-	Input.action_press("move_forward")
-	t0 = p.global_position
-	await _wait(500)
-	Input.action_release("move_forward")
-	print("WALK p1_stairs from %s to %s" % [t0, p.global_position])
-	await _shot("n06_after_walk_down_p1")
-	_place(p, Vector3(-35, 1.2, 24), -70)
+	await _shot("n05_deck_ne_station")
+	await _walk(p, "se_stairs_down", Vector3(-0.6, 7.6, 14.35), 90, 900)
+	await _shot("n06_after_se_stairs")
+	await _walk(p, "nw_stairs_down_e", Vector3(0.6, 7.6, -13.65), -90, 900)
+	_place(p, Vector3(-30, 1.2, 14.35), -70)
 	await _wait(10)
-	await _shot("n07_platform1")
-	_place(p, Vector3(35, 1.2, -2), 110)
+	await _shot("n07_city_platform")
+	_place(p, Vector3(40, 1.2, -14), 110)
 	await _wait(10)
-	await _shot("n08_platform2")
-	_place(p, Vector3(-12, 0.2, -38), 15)
+	await _shot("n08_station_platform")
+	_place(p, Vector3(0, 7.6, -90), 0)
 	await _wait(10)
-	await _shot("n09_north_station")
-	_place(p, Vector3(25, 0.3, 31.75), 90)
+	await _shot("n09_deck_to_field")
+	await _walk(p, "leg_down", Vector3(-0.3, 7.6, -94), 90, 2600)
+	await _shot("n10_after_leg")
+	_place(p, Vector3(-60, 0.3, -125), 0)
 	await _wait(10)
-	await _shot("n10_yard")
+	await _shot("n11_field_village")
+	_place(p, Vector3(-30, 0.3, -135), 180)
+	await _wait(10)
+	await _shot("n12_field_back_to_bridge")
+	_place(p, Vector3(25, 0.3, -57.75), 90)
+	await _wait(10)
+	await _shot("n13_yard")
+	_place(p, Vector3(30, 0.3, 93), 180)
+	await _wait(10)
+	await _shot("n14_city")
 	quit()
 
 
@@ -112,12 +124,20 @@ func _day() -> void:
 	cam.global_transform = (level.get_node("ShotTo") as Marker3D).global_transform
 	await _wait(5)
 	await _shot("d02_end")
-	cam.global_position = Vector3(30, 14, 70)
-	cam.look_at(Vector3(0, 4, 10))
+	cam.global_position = Vector3(-40, 20, -170)
+	cam.look_at(Vector3(0, 5, 0))
 	await _wait(5)
-	await _shot("d03_overview")
-	cam.global_position = Vector3(-20, 2.2, 20)
-	cam.look_at(Vector3(10, 6, 24))
+	await _shot("d03_from_field")
+	cam.global_position = Vector3(12, 1.7, 95)
+	cam.look_at(Vector3(0, 7, 40))
 	await _wait(5)
-	await _shot("d04_platform")
+	await _shot("d04_from_street")
+	cam.global_position = Vector3(-50, 2, -200)
+	cam.look_at(Vector3(-110, 3, -300))
+	await _wait(5)
+	await _shot("d05_village")
+	cam.global_position = Vector3(-20, 2.8, 14.35)
+	cam.look_at(Vector3(10, 6, 5))
+	await _wait(5)
+	await _shot("d06_platform")
 	quit()

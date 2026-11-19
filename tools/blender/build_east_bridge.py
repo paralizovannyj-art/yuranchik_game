@@ -1,7 +1,11 @@
-# Локация «Восточный ж/д мост» (YUR-7): пешеходный мост над путями станции Одесса-Восточная, зима.
-# Референсы — фото из задачи YUR-7 (мост с белыми перилами и сеткой над проводами, лестницы на островные
-# платформы с будками, решётчатые ригели контактной сети, товарные составы, панельки на горизонте;
-# ночью — зелёные ртутные и оранжевые натриевые фонари).
+# Локация «Восточный ж/д мост» (YUR-7): пешеходный мост над путями станции Одеса-Східна, зима.
+# Планировка — по спутнику Google Maps и фото из задачи YUR-7 (сравнение — в описании PR):
+#   * мост ~168 м: от улицы Жолио-Кюри (город) над четырьмя восточными путями, двумя боковыми платформами
+#     с четырьмя главными путями, полосой с вокзалом и грузовым парком из семи путей; на краю поля
+#     поворачивает на 90° и длинным спуском идёт вдоль парка к полю;
+#   * со стороны поля — степь с бурьяном, грунтовки, замёрзший пруд, ЛЭП и село (частный сектор);
+#   * со стороны города — гаражи, рынок «Сільський», тополя, девятиэтажки и шестнадцатиэтажки вдали.
+# Ночью — зелёные ртутные лампы на мосту и платформе у вокзала, натрий в городе и на прожекторной мачте.
 #
 # Запуск в открытом Blender (через Blender MCP):
 #   EB_ROOT = r"<папка проекта>"; exec(open(EB_ROOT + r"\tools\blender\build_east_bridge.py", encoding="utf-8").read())
@@ -10,7 +14,8 @@
 # Выход — assets/models/east_bridge/*.gltf, по одному на часть локации, и lights.json (фонари для Godot),
 # сцена Blender «EastBridge», файл tools/blender/east_bridge.blend.
 #
-# Оси Blender: Z — вверх, X — вдоль путей (восток), Y — поперёк путей (север). В Godot: (x, z, -y).
+# Оси Blender: Z — вверх, X — вдоль путей (+X — на северо-восток), Y — поперёк путей:
+#   +Y — северо-запад (вокзал, грузовой парк, поле, село), −Y — юго-восток (город). В Godot: (x, z, -y).
 # Ноль — уровень земли и головки шпал; мост — вдоль Y на X = 0.
 # Имена объектов:
 #   «…_nocol»    — без коллизии (перила, провода, рельсы, ступени: по лестницам ходят по невидимым пандусам);
@@ -19,6 +24,7 @@ import bpy
 import json
 import math
 import os
+import random
 from mathutils import Vector
 
 ROOT = globals().get("EB_ROOT") or os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
@@ -35,26 +41,35 @@ ALL = ('+X', '-X', '+Y', '-Y', '+Z', '-Z')
 SIDES = ('+X', '-X', '+Y', '-Y')
 OPEN = ('+X', '-X', '+Y', '-Y', '+Z')
 
-# ------------------------------------------------------------------ план станции
-TRACKS = [-44.0, -39.0, -34.0, -29.5, -18.5, -13.5, -8.5, -3.5, 7.5, 12.5, 17.5, 22.5]   # оси путей по Y
-PLATFORMS = [(-27.75, -20.25), (-1.75, 5.75)]        # островные платформы (Y от, до)
-PLAT_X = 70.0                                         # платформы X −70…70, дальше пандусы к путям
-PLAT_H = 1.0
-YARD = (-49.0, 28.0)                                  # щебёночное поле путей по Y
-GROUND = (-80.0, 62.0)                                # играбельная земля по Y (за ней — заборы)
-XMAX = 100.0                                          # играбельная зона по X
-FAR = 170.0                                           # пути и провода тянутся до горизонта
-DECK = 7.4                                            # верх настила моста
-DECK_T = 0.6
-BR_W = 3.0                                            # ширина моста
-BR_Y = (-56.0, 34.0)                                  # мост по Y; дальше лестницы на землю
-BENTS = [-50.0, -36.5, -24.0, -11.0, 2.0, 15.0, 27.0]  # опоры моста (пары колонн)
-WIRE_C, WIRE_M = 5.8, 6.5                             # контактный провод и несущий трос
-GANTRY_X = [-140.0, -105.0, -70.0, -35.0, 35.0, 70.0, 105.0, 140.0]
-GANTRY_Y = (-48.0, 27.0)
-RISE, RUN = 0.168, 0.30                               # ступень
+# ------------------------------------------------------------------ план станции (по спутнику)
+TRACKS_EAST = [-52.0, -47.0, -42.0, -37.0]             # старые пути за городской платформой
+TRACKS_MAIN = [-10.1, -5.0, 3.2, 8.6]                  # главные: 2 + 2, между парами — широкое междупутье
+TRACKS_YARD = [55.0, 60.5, 66.0, 71.5, 77.0, 82.5, 88.0]   # грузовой парк со стороны поля
+TRACKS = TRACKS_EAST + TRACKS_MAIN + TRACKS_YARD
+BALLAST = [(-56.0, -33.0), (-12.0, 10.5), (51.0, 91.5)]
+PLATFORMS = [(-16.7, -12.0), (10.5, 16.8)]             # боковые: городская (синяя ограда), у вокзала (зелёная)
+PLAT_X = (-115.0, 145.0)
+PLAT_H = 1.1
+FAR = 260.0                                            # пути и провода тянутся до горизонта
+XMAX = 110.0                                           # играбельная зона по X
+Y_CITY, Y_FIELD = -104.0, 260.0                        # играбельная зона по Y: улица в городе … поле у села
+STREET = (-98.0, -90.0)                                # улица Жолио-Кюри
+DECK = 7.4                                             # верх настила моста
+DECK_T = 0.85
+BR_W = 3.0
+BR_Y = (-72.0, 95.5)                                   # мост по Y; на −Y лестница на улицу, на +Y — поворот вдоль парка
+LEG_Y = 94.0                                           # ось спуска к полю (вдоль −X)
+BENTS = [-72.0, -61.0, -49.5, -39.5, -27.0, -14.35, -0.9, 13.65, 27.0, 40.0, 50.0, 63.25, 74.25, 85.25, 94.0]
+SE_STAIR, NW_STAIR = -14.35, 13.65                     # оси лестниц на платформы (по Y)
+SW = 2.5                                               # ширина лестниц на платформы
+WIRE_C, WIRE_M = 5.8, 7.2                              # контактный провод и несущий трос
+GANTRY_X = [-150.0, -98.0, -46.0, 12.0, 60.0, 96.0, 145.0]   # жёсткие поперечины над главными путями
+PORTAL_X = [-137.0, -82.0, -27.0, 28.0, 83.0, 138.0]         # порталы над парком и восточными путями
+RISE, RUN = 0.168, 0.30                                # ступень
+RAIL_H = 1.1
 
-LIGHTS = []                                           # фонари для Godot: голова плафона + основание + цвет
+LIGHTS = []                                            # фонари для Godot: голова плафона + основание + цвет
+rnd = random.Random(2024)
 
 
 def gd(p):
@@ -67,12 +82,12 @@ def lamp(kind, color, base, head, energy=None):
 
 
 # ------------------------------------------------------------------ материалы
-def amat(name, tex):
-    """Материал с вырезом по альфе (решётки, сетка) — двусторонний."""
-    m = mat(name, tex, rough=0.8)
+def amat(name, tex, emi=None):
+    """Материал с вырезом по альфе (решётки, сетка, трава, деревья) — двусторонний."""
+    m = mat(name, tex, emi, rough=0.8)
     nt = m.node_tree
     bsdf = nt.nodes["Principled BSDF"]
-    t = next(n for n in nt.nodes if n.type == 'TEX_IMAGE')
+    t = next(n for n in nt.nodes if n.type == 'TEX_IMAGE' and n.image and n.image.name.startswith(tex))
     r = nt.nodes.new("ShaderNodeMath")
     r.operation = 'ROUND'
     nt.links.new(t.outputs["Alpha"], r.inputs[0])
@@ -83,11 +98,20 @@ def amat(name, tex):
     return m
 
 
-def flat(name, rgba):
+def flat(name, rgba, emit=0.0):
     m = bpy.data.materials.get(name) or bpy.data.materials.new(name)
     m.use_nodes = True
-    m.node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = rgba
+    bsdf = m.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs["Base Color"].default_value = rgba
+    if emit:
+        bsdf.inputs["Emission Color"].default_value = rgba
+        bsdf.inputs["Emission Strength"].default_value = emit
     m.diffuse_color = rgba
+    return m
+
+
+def two_sided(m):
+    m.use_backface_culling = False
     return m
 
 
@@ -113,7 +137,22 @@ def materials():
         "station": mat("EbStation", "eb_station"),
         "sign": mat("EbStationSign", "eb_sign_station", rough=0.5),
         "fence": mat("FenceConcrete", "fence_concrete"),
-        "house": flat("BackdropHouse", (0.05, 0.055, 0.07, 1)),
+        "blue": mat("EbBluePaint", "eb_blue_paint", rough=0.6),
+        "greenp": mat("EbGreenPaint", "eb_green_paint", rough=0.6),
+        "pole": mat("EbConcretePole", "eb_concrete_pole"),
+        "sheet": two_sided(mat("EbSheet", "eb_sheet", rough=0.6)),
+        "field": mat("EbField", "eb_field"),
+        "road": mat("EbRoad", "eb_road"),
+        "ice": mat("EbIce", "eb_ice", rough=0.3),
+        "grass": amat("EbGrass", "eb_grass"),
+        "tree": amat("EbTree", "eb_tree"),
+        "poplar": amat("EbPoplar", "eb_poplar"),
+        "house": mat("EbHouse", "eb_house", "eb_house_emission"),
+        "corr": two_sided(mat("EbCorrugated", "eb_corrugated", rough=0.6)),
+        "yellow": flat("EbYellowPaint", (0.80, 0.64, 0.18, 1)),
+        "lamp_w": flat("EbLampWhite", (0.85, 0.9, 1.0, 1), emit=2.0),
+        "dark": flat("EbDarkGlass", (0.03, 0.035, 0.04, 1)),
+        "house_bd": flat("BackdropHouse", (0.05, 0.055, 0.07, 1)),
         "glow": flat("BackdropGlow", (1.0, 0.5, 0.15, 1)),
     }
     M.update(E)
@@ -143,7 +182,7 @@ def quad(b, pts, m, out, s=(1.0, 1.0), uvs=None):
     b.poly(pts, uvs, m)
 
 
-def bar(b, p0, p1, w, m, keys=SIDES, s=(1.0, 1.0)):
+def bar(b, p0, p1, w, m, s=(1.0, 1.0)):
     """Брусок квадратного сечения w от p0 до p1 (любой наклон)."""
     p0, p1 = Vector(p0), Vector(p1)
     d = (p1 - p0)
@@ -154,12 +193,31 @@ def bar(b, p0, p1, w, m, keys=SIDES, s=(1.0, 1.0)):
     v = d.cross(u).normalized() * (w / 2)
     c = [p0 + u + v, p0 - u + v, p0 - u - v, p0 + u - v]
     e = [q + d * L for q in c]
-    mid = (p0 + p1) / 2
     for i in range(4):
         j = (i + 1) % 4
         b.poly([c[i], c[j], e[j], e[i]], [(0, 0), (w / s[0], 0), (w / s[0], L / s[1]), (0, L / s[1])], m)
-    # торцы не нужны: бруски упираются в другие детали
-    return mid
+    return (p0 + p1) / 2
+
+
+def strut(b, p, z0, z1, along, w, m):
+    """Тонкий пруток перил: две грани (лицом поперёк линии перил) — вдвое дешевле бруска."""
+    along = Vector(along).normalized()
+    n = Vector((-along.y, along.x, 0))
+    a = Vector(p) - along * (w / 2)
+    c = Vector(p) + along * (w / 2)
+    for o in (n, -n):
+        q = [a + o * w * 0.5, c + o * w * 0.5]
+        quad(b, [(q[0].x, q[0].y, z0), (q[1].x, q[1].y, z0), (q[1].x, q[1].y, z1), (q[0].x, q[0].y, z1)], m, (o.x, o.y, 0),
+             uvs=[(0, 0), (0.05, 0), (0.05, z1 - z0), (0, z1 - z0)])
+
+
+def crossed(b, x, y, z, w, h, m, ang=0.0, uv=(0, 0, 1, 1)):
+    """Билборд из двух скрещённых квадов (трава, деревья)."""
+    u0, v0, u1, v1 = uv
+    for a in (ang, ang + math.pi / 2):
+        dx, dy = math.cos(a) * w / 2, math.sin(a) * w / 2
+        b.poly([(x - dx, y - dy, z), (x + dx, y + dy, z), (x + dx, y + dy, z + h), (x - dx, y - dy, z + h)],
+               [(u0, v0), (u1, v0), (u1, v1), (u0, v1)], m)
 
 
 def build(b, name, coll):
@@ -169,10 +227,17 @@ def build(b, name, coll):
 # ------------------------------------------------------------------ земля, пути, платформы
 def ground(coll):
     b = B()
-    y0, y1 = YARD
-    quad(b, [(-FAR, y0, 0), (FAR, y0, 0), (FAR, y1, 0), (-FAR, y1, 0)], M["ballast"], (0, 0, 1), (4, 4))
-    for ya, yb in ((GROUND[0] - 40, y0), (y1, GROUND[1] + 40)):
-        quad(b, [(-FAR, ya, 0), (FAR, ya, 0), (FAR, yb, 0), (-FAR, yb, 0)], M["snow"], (0, 0, 1), (6, 6))
+    X = 700.0
+    for ya, yb in BALLAST:
+        quad(b, [(-FAR, ya, 0), (FAR, ya, 0), (FAR, yb, 0), (-FAR, yb, 0)], M["ballast"], (0, 0, 1), (4, 4))
+    # снег между группами путей и в городе
+    for ya, yb in ((-600.0, BALLAST[0][0]), (BALLAST[0][1], BALLAST[1][0]), (BALLAST[1][1], BALLAST[2][0])):
+        quad(b, [(-X, ya, 0), (X, ya, 0), (X, yb, 0), (-X, yb, 0)], M["snow"], (0, 0, 1), (6, 6))
+    # за парком — поле до самого села
+    quad(b, [(-X, BALLAST[2][1], 0), (X, BALLAST[2][1], 0), (X, 900.0, 0), (-X, 900.0, 0)], M["field"], (0, 0, 1), (8, 8))
+    # улица Жолио-Кюри
+    ya, yb = STREET
+    quad(b, [(-X, ya, 0.02), (X, ya, 0.02), (X, yb, 0.02), (-X, yb, 0.02)], M["platform"], (0, 0, 1), (4, 4))
     return build(b, "EbGround", coll)
 
 
@@ -191,41 +256,67 @@ def tracks(coll):
     return build(bed, "EbTrackbed", coll), build(rails, "EbRails_nocol", coll)
 
 
+def tube_fence(b, col, p0, p1, m, h=1.1, posts=2.5, gaps=()):
+    """Трубчатая ограда платформы: стойки и две трубы (по X), коллизия — стенка."""
+    x0, x1, y = p0[0], p1[0], p0[1]
+    cuts = sorted(gaps)
+    segs, a = [], x0
+    for g0, g1 in cuts:
+        segs.append((a, g0))
+        a = g1
+    segs.append((a, x1))
+    for a, c in segs:
+        n = max(1, round((c - a) / posts))
+        for i in range(n + 1):
+            x = a + (c - a) * i / n
+            bar(b, (x, y, PLAT_H), (x, y, PLAT_H + h), 0.06, m)
+        for z in (0.45, h - 0.03):
+            bar(b, (a, y, PLAT_H + z), (c, y, PLAT_H + z), 0.05, m, s=(1, 1))
+        col.box((a, y - 0.05, PLAT_H), (c, y + 0.05, PLAT_H + 1.4), fx(M["plinth"], ALL))
+
+
 def platforms(coll):
-    b = B()
-    for ya, yb in PLATFORMS:
-        b.box((-PLAT_X, ya, 0), (PLAT_X, yb, PLAT_H), {'+Z': M["platform"]}, scale=(4, 4))
-        b.box((-PLAT_X, ya, 0), (PLAT_X, yb, PLAT_H), {'+Y': M["pedge"], '-Y': M["pedge"]}, scale=(4, 1))
-        for sx in (-1, 1):                                    # пандусы с торцов к путям
-            x0, x1 = sx * PLAT_X, sx * (PLAT_X + 7.0)
+    b, rail, col = B(), B(), B()
+    xa, xb = PLAT_X
+    for i, (ya, yb) in enumerate(PLATFORMS):
+        b.box((xa, ya, 0), (xb, yb, PLAT_H), {'+Z': M["platform"]}, scale=(4, 4))
+        b.box((xa, ya, 0), (xb, yb, PLAT_H), {'+Y': M["pedge"], '-Y': M["pedge"]}, scale=(4, 1))
+        for sx, x0 in ((-1, xa), (1, xb)):                     # пандусы с торцов
+            x1 = x0 + sx * 8.0
             quad(b, [(x0, ya, PLAT_H), (x1, ya, 0.05), (x1, yb, 0.05), (x0, yb, PLAT_H)], M["platform"], (sx * 0.15, 0, 1), (4, 4))
             for ys, out in ((ya, -1), (yb, 1)):
                 quad(b, [(x0, ys, 0), (x1, ys, 0), (x1, ys, 0.05), (x0, ys, PLAT_H)], M["pedge"], (0, out, 0), (4, 1))
-        # белая полоса безопасности вдоль края — тонкая плашка
-        for ys in (ya + 0.3, yb - 0.6):
-            b.box((-PLAT_X, ys, PLAT_H), (PLAT_X, ys + 0.3, PLAT_H + 0.01), {'+Z': (M["white"], (0, 0, 40, 0.3))})
-    return build(b, "EbPlatforms", coll)
+        # белая полоса безопасности — только у края к путям
+        ys = ya + 0.3 if i == 0 else yb - 0.6
+        b.box((xa, ys, PLAT_H), (xb, ys + 0.3, PLAT_H + 0.01), {'+Z': (M["white"], (0, 0, 40, 0.3))})
+    # ограды по дальнему от путей краю: городская — синяя, у вокзала — зелёная (проход к вокзалу X 30…36)
+    tube_fence(rail, col, (xa, PLATFORMS[0][0] + 0.15), (xb, 0), M["blue"])
+    tube_fence(rail, col, (xa, PLATFORMS[1][1] - 0.15), (xb, 0), M["greenp"], gaps=[(30.0, 36.0)])
+    return build(b, "EbPlatforms", coll), build(rail, "EbPlatformRails_nocol", coll), build(col, "EbPlatformRailsCol-colonly", coll)
 
 
-def fences(coll):
-    """Бетонные заборы по краям (юг, север) и невидимые стенки по X — дальше не пройти."""
-    b = B()
-    for y in (GROUND[0], GROUND[1]):
-        for x0 in range(int(-XMAX), int(XMAX), 4):
-            b.box((x0, y - 0.08, 0), (x0 + 4, y + 0.08, 2.4), fx(M["fence"], ('+Y', '-Y')), scale=(4, 2.4))
-            b.box((x0, y - 0.1, 2.4), (x0 + 4, y + 0.1, 2.48), fx(M["snow"], ('+Y', '-Y', '+Z')), scale=(3, 3))
-        for x0 in range(int(-XMAX), int(XMAX) + 1, 4):
-            b.box((x0 - 0.12, y - 0.14, 0), (x0 + 0.12, y + 0.14, 2.6), fx(M["fence"], OPEN), scale=(1, 2.6))
-    f = build(b, "EbFences", coll)
-    w = B()
+def bounds(coll):
+    """Невидимые стенки по краю играбельной зоны и бетонный забор вдоль городской улицы (за ним — рынок и дома)."""
+    b, w = B(), B()
+    y = Y_CITY - 0.5
+    for x0 in range(int(-XMAX), int(XMAX), 4):
+        if -62 <= x0 < -26:                                     # тут стена рынка
+            continue
+        b.box((x0, y - 0.08, 0), (x0 + 4, y + 0.08, 2.4), fx(M["fence"], ('+Y', '-Y')), scale=(4, 2.4))
+        b.box((x0, y - 0.1, 2.4), (x0 + 4, y + 0.1, 2.48), fx(M["snow"], ('+Y', '-Y', '+Z')), scale=(3, 3))
+        b.box((x0 - 0.12, y - 0.14, 0), (x0 + 0.12, y + 0.14, 2.6), fx(M["fence"], OPEN), scale=(1, 2.6))
     for x in (-XMAX, XMAX):
-        w.box((x - 0.5, GROUND[0], -1), (x + 0.5, GROUND[1], 12), fx(M["plinth"], ALL))
-    return f, build(w, "EbBounds-colonly", coll)
+        w.box((x - 0.5, Y_CITY, -1), (x + 0.5, Y_FIELD, 14), fx(M["plinth"], ALL))
+    for y in (Y_CITY, Y_FIELD):
+        w.box((-XMAX, y - 0.5, -1), (XMAX, y + 0.5, 14), fx(M["plinth"], ALL))
+    return build(b, "EbFences", coll), build(w, "EbBounds-colonly", coll)
 
 
 # ------------------------------------------------------------------ мост
-def railing(b, p0, p1, h=1.1, posts=2.0):
-    """Перила по прямой p0→p1 (по низу). Стойки, три пояса, частые прутья; всё — белая краска."""
+def railing(b, p0, p1, h=RAIL_H, posts=2.2, skip=()):
+    """Перила (как на фото): квадратные стойки через ~2,2 м, поручень, второй пояс на 0,87 м, нижний на 0,1 м;
+    частые прутья (0,15 м) только между нижним и вторым поясом. skip — куски (t0, t1) вдоль линии без прутьев
+    (там сплошной лист ограждения)."""
     p0, p1 = Vector(p0), Vector(p1)
     d = p1 - p0
     L = d.length
@@ -234,224 +325,335 @@ def railing(b, p0, p1, h=1.1, posts=2.0):
     for i in range(n + 1):
         q = p0 + d * (i / n)
         bar(b, q, q + up * h, 0.07, M["white"])
-    for z in (0.1, h * 0.5, h - 0.04):
-        bar(b, p0 + up * z, p1 + up * z, 0.05, M["white"], s=(1, 1))
-    k = max(1, int(L / 0.22))
+    for z in (0.10, 0.87, h - 0.04):
+        bar(b, p0 + up * z, p1 + up * z, 0.05, M["white"])
+    k = max(1, int(L / 0.15))
     for i in range(1, k):
-        q = p0 + d * (i / k)
-        bar(b, q + up * 0.1, q + up * (h - 0.04), 0.022, M["white"])
+        t = i / k
+        if any(a <= t * L <= c for a, c in skip):
+            continue
+        q = p0 + d * t
+        strut(b, q, q.z + 0.10, q.z + 0.87, (d.x, d.y, 0), 0.02, M["white"])
 
 
-def mesh_panel(b, p0, p1, z0, h):
-    """Сетка-рабица над проводами: полотно (двустороннее) и рамка."""
-    p0, p1 = Vector(p0), Vector(p1)
-    L = (p1 - p0).length
-    a, c = p0 + Vector((0, 0, z0)), p1 + Vector((0, 0, z0))
-    b.poly([a, c, c + Vector((0, 0, h)), a + Vector((0, 0, h))], [(0, 0), (L, 0), (L, h), (0, h)], M["mesh"])
-    for q in (a, c):
-        bar(b, q, q + Vector((0, 0, h)), 0.06, M["white"])
-    bar(b, a + Vector((0, 0, h)), c + Vector((0, 0, h)), 0.05, M["white"])
+def guard_panel(b, x, ya, yb, z0):
+    """Над путём с контактной сетью: сплошной лист ниже поручня и рамы с сеткой-рабицей до 2,4 м над настилом."""
+    side = 1 if x > 0 else -1
+    xs = x - side * 0.02
+    quad(b, [(xs, ya, z0 + 0.10), (xs, yb, z0 + 0.10), (xs, yb, z0 + 1.06), (xs, ya, z0 + 1.06)], M["sheet"], (side, 0, 0),
+         uvs=[(0, 0), ((yb - ya) / 4, 0), ((yb - ya) / 4, 1), (0, 1)])
+    zt = z0 + 2.4
+    b.poly([(x, ya, z0 + RAIL_H), (x, yb, z0 + RAIL_H), (x, yb, zt), (x, ya, zt)],
+           [(0, 0), (yb - ya, 0), (yb - ya, zt - z0 - RAIL_H), (0, zt - z0 - RAIL_H)], M["mesh"])
+    n = max(1, math.ceil((yb - ya) / 1.4))
+    for i in range(n + 1):
+        y = ya + (yb - ya) * i / n
+        bar(b, (x, y, z0 + RAIL_H - 0.05), (x, y, zt), 0.08 if i in (0, n) else 0.05, M["white"])
+    bar(b, (x, ya, zt), (x, yb, zt), 0.06, M["white"])
 
 
-def lamp_post(b, x, y, side, z0):
-    """Изогнутый фонарный столб на мосту (как на фото): труба от перил вверх, дуга над настилом, плафон."""
-    s = -side                                             # дуга смотрит внутрь моста
+def lamp_post(b, x, y, z0, arm, color="green", kind="bridge"):
+    """Фонарь моста (фото 10019): труба 3,2 м от перил, загиб и наклонная консоль ~1 м над настилом, плоская «кобра»."""
+    arm = Vector(arm).normalized()
     base = Vector((x, y, z0))
-    top = base + Vector((0, 0, 4.4))
-    bar(b, base, top, 0.11, M["white"])
-    pts = [top]
-    for i in range(1, 5):
-        a = math.radians(90 * i / 4)
-        pts.append(top + Vector((s * 0.7 * (1 - math.cos(a)), 0, 0.55 * math.sin(a))))
-    for p, q in zip(pts, pts[1:]):
-        bar(b, p, q, 0.08, M["white"])
-    head = pts[-1] + Vector((s * 0.35, 0, -0.02))
-    b.box((pts[-1].x + (0 if s > 0 else -0.6), y - 0.17, head.z - 0.12), (pts[-1].x + (0.6 if s > 0 else 0), y + 0.17, head.z + 0.06),
-          fx(M["metal"], ('+X', '-X', '+Y', '-Y', '+Z')), scale=(1, 1))
-    b.box((pts[-1].x + (0.05 if s > 0 else -0.55), y - 0.13, head.z - 0.2), (pts[-1].x + (0.55 if s > 0 else -0.05), y + 0.13, head.z - 0.12),
-          fx(M["lamp_g"], ('+X', '-X', '+Y', '-Y', '-Z')), scale=(1, 1))
-    lamp("bridge", "green", base, (head.x, head.y, head.z - 0.25))
+    top = base + Vector((0, 0, 3.2))
+    bar(b, base, top, 0.09, M["white"])
+    p2 = top + arm * 0.25 + Vector((0, 0, 0.22))
+    p3 = p2 + arm * 0.95 + Vector((0, 0, 0.5))
+    bar(b, top, p2, 0.08, M["white"])
+    bar(b, p2, p3, 0.07, M["white"])
+    hc = p3 + arm * 0.2
+    ex, ey = (0.3, 0.1) if abs(arm.x) > 0.5 else (0.1, 0.3)
+    b.box((hc.x - ex, hc.y - ey, hc.z - 0.1), (hc.x + ex, hc.y + ey, hc.z + 0.04), fx(M["metal"], OPEN), scale=(1, 1))
+    lm = M["lamp_g"] if color == "green" else M["lamp_o"]
+    b.box((hc.x - ex * 0.8, hc.y - ey * 0.8, hc.z - 0.15), (hc.x + ex * 0.8, hc.y + ey * 0.8, hc.z - 0.1),
+          fx(lm, ('+X', '-X', '+Y', '-Y', '-Z')), scale=(1, 1))
+    lamp(kind, color, tuple(base), (hc.x, hc.y, hc.z - 0.2))
+    return top + Vector((0, 0, 0.1))
 
 
-def flight(b, col, x0, y0, z0, dx, dy, width, n, ramp_b):
+def cable(b, p0, p1, sag=0.6, n=6):
+    """Провисший провод между фонарями."""
+    pts = []
+    for i in range(n + 1):
+        t = i / n
+        q = Vector(p0).lerp(Vector(p1), t)
+        q.z -= sag * 4 * t * (1 - t)
+        pts.append(q)
+    for a, c in zip(pts, pts[1:]):
+        bar(b, a, c, 0.02, M["metal"])
+
+
+def flight(b, col, x0, y0, z0, dx, dy, width, n):
     """Марш лестницы вниз из (x0, y0, z0) в направлении (dx, dy); width — ширина поперёк.
-    Ступени и косоуры (без коллизии) + невидимый пандус. Возвращает (x, y, z) низа марша."""
+    Ступени, центральный косоур (без коллизии), перила + невидимый пандус. Возвращает (x, y, z) низа марша."""
     px, py = -dy, dx                                     # поперёк марша
     hw = width / 2
+    p = lambda s, t, z: (x0 + dx * s + px * t, y0 + dy * s + py * t, z)
     for i in range(n):
         a, c = i * RUN, (i + 1) * RUN
         zt = z0 - (i + 1) * RISE
-        pts = lambda s, t, z: (x0 + dx * s + px * t, y0 + dy * s + py * t, z)
-        quad(b, [pts(a, -hw, zt), pts(c, -hw, zt), pts(c, hw, zt), pts(a, hw, zt)], M["deck"], (0, 0, 1), (3, 3))
-        quad(b, [pts(a, -hw, zt), pts(a, hw, zt), pts(a, hw, zt + RISE), pts(a, -hw, zt + RISE)], M["plinth"], (dx, dy, 0), (3.6, 0.9))
-    L = n * RUN
-    H = n * RISE
-    for t in (-hw - 0.15, hw + 0.15):                     # косоуры — бетонные балки по бокам
-        p = lambda s, z: (x0 + dx * s + px * t, y0 + dy * s + py * t, z)
-        out = (px * (1 if t > 0 else -1), py * (1 if t > 0 else -1), 0)
-        quad(b, [p(0, z0 + 0.15), p(L, z0 - H + 0.15), p(L, z0 - H - 0.45), p(0, z0 - 0.45)], M["plinth"], out, (3.6, 0.9))
-    p = lambda s, t, z: (x0 + dx * s + px * t, y0 + dy * s + py * t, z)
-    quad(b, [p(0, -hw - 0.15, z0 - 0.45), p(L, -hw - 0.15, z0 - H - 0.45), p(L, hw + 0.15, z0 - H - 0.45), p(0, hw + 0.15, z0 - 0.45)],
-         M["plinth"], (0, 0, -1), (3.6, 0.9))
-    for t in (-hw - 0.1, hw + 0.1):                       # наклонные перила
+        quad(b, [p(a, -hw, zt), p(c, -hw, zt), p(c, hw, zt), p(a, hw, zt)], M["deck"], (0, 0, 1), (3, 3))
+        quad(b, [p(a, -hw, zt), p(a, hw, zt), p(a, hw, zt + RISE), p(a, -hw, zt + RISE)], M["plinth"], (dx, dy, 0), (3.6, 0.9))
+        for t in (-hw, hw):                              # торцы ступеней
+            o = 1 if t > 0 else -1
+            quad(b, [p(a, t, zt - 0.12), p(c, t, zt - 0.12), p(c, t, zt), p(a, t, zt)], M["plinth"], (px * o, py * o, 0), (3.6, 0.9))
+        quad(b, [p(a, -hw, zt - 0.12), p(c, -hw, zt - 0.12), p(c, hw, zt - 0.12), p(a, hw, zt - 0.12)], M["plinth"], (0, 0, -1), (3.6, 0.9))
+    L, H = n * RUN, n * RISE
+    for t in (-0.3, 0.3):                                # центральный наклонный косоур (фото 10026)
+        o = 1 if t > 0 else -1
+        quad(b, [p(0, t, z0 - 0.1), p(L, t, z0 - H - 0.1), p(L, t, z0 - H - 0.6), p(0, t, z0 - 0.6)], M["plinth"], (px * o, py * o, 0), (3.6, 0.9))
+    quad(b, [p(0, -0.3, z0 - 0.6), p(L, -0.3, z0 - H - 0.6), p(L, 0.3, z0 - H - 0.6), p(0, 0.3, z0 - 0.6)], M["plinth"], (0, 0, -1), (3.6, 0.9))
+    for t in (-hw - 0.05, hw + 0.05):                    # наклонные перила
         q0, q1 = Vector(p(0, t, z0)), Vector(p(L, t, z0 - H))
-        nn = max(2, round(L / 1.6))
+        nn = max(2, round(L / 1.5))
         for i in range(nn + 1):
             q = q0.lerp(q1, i / nn)
             bar(b, q, q + Vector((0, 0, 1.0)), 0.06, M["white"])
-        for zz in (0.1, 0.5, 0.96):
+        for zz in (0.10, 0.78, 0.96):
             bar(b, q0 + Vector((0, 0, zz)), q1 + Vector((0, 0, zz)), 0.05, M["white"])
-        k = int(L / 0.25)
+        k = int(L / 0.15)
         for i in range(1, k):
             q = q0.lerp(q1, i / k)
-            bar(b, q + Vector((0, 0, 0.1)), q + Vector((0, 0, 0.96)), 0.022, M["white"])
+            strut(b, q, q.z + 0.10, q.z + 0.78, (dx, dy, 0), 0.02, M["white"])
     # пандус-коллизия: клин под ступенями, верх — линия носков ступеней
     zt0, zt1 = z0, z0 - H
     corners = [p(0, -hw, zt0), p(L, -hw, zt1), p(L, hw, zt1), p(0, hw, zt0)]
-    low = [(c[0], c[1], c[2] - 0.3) for c in corners]
-    quad(ramp_b, corners, M["plinth"], (0, 0, 1))
-    quad(ramp_b, low, M["plinth"], (0, 0, -1))
-    for t in (-hw - 0.05, hw + 0.05):                     # стенки вдоль перил (две стороны — коллизия с обеих)
+    quad(col, corners, M["plinth"], (0, 0, 1))
+    quad(col, [(c[0], c[1], c[2] - 0.3) for c in corners], M["plinth"], (0, 0, -1))
+    for t in (-hw - 0.05, hw + 0.05):                    # стенки вдоль перил (две стороны — коллизия с обеих)
         for o in (1, -1):
-            quad(ramp_b, [p(0, t, zt0), p(L, t, zt1), p(L, t, zt1 + 1.2), p(0, t, zt0 + 1.2)], M["plinth"], (px * o, py * o, 0))
+            quad(col, [p(0, t, zt0), p(L, t, zt1), p(L, t, zt1 + 1.2), p(0, t, zt0 + 1.2)], M["plinth"], (px * o, py * o, 0))
     return x0 + dx * L, y0 + dy * L, z0 - H
 
 
-def landing(b, ramp_b, x0, y0, x1, y1, z, base=0.0, rails=()):
-    """Площадка между маршами: плита, колонны вниз, перила по сторонам rails ((p0, p1), …)."""
+def landing(b, col, x0, y0, x1, y1, z, base=0.0, rails=(), columns=1):
+    """Площадка: плита, колонна(ы) под ней, перила по сторонам rails ((p0, p1), …)."""
     xa, xb, ya, yb = min(x0, x1), max(x0, x1), min(y0, y1), max(y0, y1)
     b.box((xa, ya, z - 0.35), (xb, yb, z), {'+Z': M["deck"]}, scale=(3, 3))
     b.box((xa, ya, z - 0.35), (xb, yb, z), fx(M["plinth"], ('+X', '-X', '+Y', '-Y', '-Z')), scale=(3.6, 0.9))
-    ramp_b.box((xa, ya, z - 0.35), (xb, yb, z), fx(M["plinth"], ALL))
-    for x in (xa + 0.3, xb - 0.3):
-        for y in (ya + 0.3, yb - 0.3):
-            b.box((x - 0.2, y - 0.2, base), (x + 0.2, y + 0.2, z - 0.35), fx(M["plinth"], SIDES), scale=(3.6, 0.9))
-            ramp_b.box((x - 0.2, y - 0.2, base), (x + 0.2, y + 0.2, z - 0.35), fx(M["plinth"], ALL))
+    col.box((xa, ya, z - 0.35), (xb, yb, z), fx(M["plinth"], ALL))
+    cx, cy = (xa + xb) / 2, (ya + yb) / 2
+    long_x = (xb - xa) > (yb - ya)
+    pts = [(cx, cy)] if columns == 1 else \
+        [((xa + 0.6, cy) if long_x else (cx, ya + 0.6)), ((xb - 0.6, cy) if long_x else (cx, yb - 0.6))]
+    for x, y in pts:
+        if z - 0.35 - base > 0.2:
+            b.box((x - 0.24, y - 0.24, base), (x + 0.24, y + 0.24, z - 0.35), fx(M["plinth"], SIDES), scale=(3.6, 0.9))
+            col.box((x - 0.24, y - 0.24, base), (x + 0.24, y + 0.24, z - 0.35), fx(M["plinth"], ALL))
     for p0, p1 in rails:
         railing(b, (p0[0], p0[1], z), (p1[0], p1[1], z), h=1.0, posts=1.6)
-        ramp_b.box((min(p0[0], p1[0]) - 0.05, min(p0[1], p1[1]) - 0.05, z), (max(p0[0], p1[0]) + 0.05, max(p0[1], p1[1]) + 0.05, z + 1.2),
-                   fx(M["plinth"], ALL))
+        col.box((min(p0[0], p1[0]) - 0.05, min(p0[1], p1[1]) - 0.05, z), (max(p0[0], p1[0]) + 0.05, max(p0[1], p1[1]) + 0.05, z + 1.2),
+                fx(M["plinth"], ALL))
+
+
+def platform_stair(b, col, yc, side):
+    """Лестница на платформу: от края настила вдоль путей (−X или +X): 3 ступени, площадка 3 м,
+    марш, площадка 2,5 м, марш до платформы (фото 10007, 10022, 10026)."""
+    hw = BR_W / 2
+    e = SW / 2 + 0.1
+    x, _, z = flight(b, col, side * hw, yc, DECK, side, 0, SW, 3)
+    for ln, n in ((3.0, 17), (2.5, None)):
+        xl = x + side * ln
+        landing(b, col, x, yc - e, xl, yc + e, z, base=PLAT_H, rails=[((x, yc - e), (xl, yc - e)), ((x, yc + e), (xl, yc + e))])
+        n = n or max(1, round((z - PLAT_H) / RISE))
+        x, _, z = flight(b, col, xl, yc, z, side, 0, SW, n)
+    return x
 
 
 def bridge(coll):
-    b, col = B(), B()
+    b, col, lamps_b = B(), B(), B()
     hw = BR_W / 2
     y0, y1 = BR_Y
     zb = DECK - DECK_T
-    # настил: верх — своя развёртка (u поперёк), низ и бока — бетон
+    # настил: верх — своя развёртка (u поперёк), низ и бока — бетонная балка 0,85 м
     quad(b, [(-hw, y0, DECK), (hw, y0, DECK), (hw, y1, DECK), (-hw, y1, DECK)], M["deck"], (0, 0, 1),
          uvs=[(0, y0 / 3), (1, y0 / 3), (1, y1 / 3), (0, y1 / 3)])
-    b.box((-hw - 0.15, y0, zb), (hw + 0.15, y1, DECK), fx(M["plinth"], ('+X', '-X', '-Z')), scale=(3.6, 0.9))
+    b.box((-hw - 0.15, y0, zb), (hw + 0.15, y1, DECK), fx(M["plinth"], ('+X', '-X', '-Z', '+Y')), scale=(3.6, 0.9))
     b.box((-hw - 0.15, y0, DECK), (-hw, y1, DECK + 0.12), fx(M["plinth"], ('+X', '-X', '+Z')), scale=(3.6, 0.9))
     b.box((hw, y0, DECK), (hw + 0.15, y1, DECK + 0.12), fx(M["plinth"], ('+X', '-X', '+Z')), scale=(3.6, 0.9))
     col.box((-hw - 0.15, y0, zb), (hw + 0.15, y1, DECK), fx(M["plinth"], ALL))
-    # опоры: пара колонн и ригель
+    # опоры: на платформах — одна колонна с консолью (фото 10006, 10026), в остальных местах — пара колонн и ригель
     for yb in BENTS:
-        on_pl = any(a < yb < c for a, c in PLATFORMS)
+        on_pl = next((True for a, c in PLATFORMS if a < yb < c), False)
         z0 = PLAT_H if on_pl else 0.0
-        for x in (-1.05, 1.05):
-            b.box((x - 0.25, yb - 0.25, z0), (x + 0.25, yb + 0.25, zb), fx(M["plinth"], SIDES), scale=(3.6, 0.9))
-            col.box((x - 0.25, yb - 0.25, z0), (x + 0.25, yb + 0.25, zb), fx(M["plinth"], ALL))
-        b.box((-hw - 0.3, yb - 0.4, zb - 0.5), (hw + 0.3, yb + 0.4, zb), fx(M["plinth"], ('+X', '-X', '+Y', '-Y', '-Z')), scale=(3.6, 0.9))
-        b.box((-hw - 0.3, yb - 0.4, zb), (hw + 0.3, yb + 0.4, zb + 0.05), fx(M["snow"], ('+Y', '-Y')), scale=(3, 3))
-    # проёмы в перилах под лестницы на платформы: (сторона, центр по Y)
-    gaps = {1: [], -1: []}
-    stair_y = {1: (PLATFORMS[0][0] + PLATFORMS[0][1]) / 2, -1: (PLATFORMS[1][0] + PLATFORMS[1][1]) / 2}
-    SW = 2.2
-    for side, yc in stair_y.items():
-        gaps[side].append((yc - SW / 2 - 0.1, yc + SW / 2 + 0.1))
+        if on_pl:
+            b.box((-0.28, yb - 0.28, z0), (0.28, yb + 0.28, zb - 0.4), fx(M["plinth"], SIDES), scale=(3.6, 0.9))
+            b.box((-0.5, yb - 0.5, zb - 0.4), (0.5, yb + 0.5, zb), fx(M["plinth"], ('+X', '-X', '+Y', '-Y', '-Z')), scale=(3.6, 0.9))
+            col.box((-0.28, yb - 0.28, z0), (0.28, yb + 0.28, zb), fx(M["plinth"], ALL))
+        else:
+            for x in (-0.95, 0.95):
+                b.box((x - 0.27, yb - 0.27, z0), (x + 0.27, yb + 0.27, zb - 0.4), fx(M["plinth"], SIDES), scale=(3.6, 0.9))
+                col.box((x - 0.27, yb - 0.27, z0), (x + 0.27, yb + 0.27, zb), fx(M["plinth"], ALL))
+            b.box((-1.2, yb - 0.4, zb - 0.4), (1.2, yb + 0.4, zb), fx(M["plinth"], ('+X', '-X', '+Y', '-Y', '-Z')), scale=(3.6, 0.9))
+    # проёмы в перилах: лестницы на платформы и спуск к полю
+    e = SW / 2 + 0.1
+    gaps = {-1: [(SE_STAIR - e, SE_STAIR + e), (NW_STAIR - e, NW_STAIR + e), (LEG_Y - 1.5, y1)],
+            1: [(NW_STAIR - e, NW_STAIR + e)]}
     for side in (-1, 1):
         x = side * (hw + 0.05)
         segs = [y0]
-        for a, c in gaps[side]:
+        for a, c in sorted(gaps[side]):
             segs += [a, c]
         segs.append(y1)
         for a, c in zip(segs[0::2], segs[1::2]):
-            railing(b, (x, a, DECK + 0.12), (x, c, DECK + 0.12))
+            if c - a < 0.3:
+                continue
+            skip = []
+            for yc in TRACKS:
+                ya, yb_ = max(a, yc - 2.0), min(c, yc + 2.0)
+                if yb_ - ya > 0.5:
+                    skip.append((ya - a, yb_ - a))
+                    guard_panel(b, x, ya, yb_, DECK + 0.12)
+            railing(b, (x, a, DECK + 0.12), (x, c, DECK + 0.12), skip=skip)
             col.box((x - 0.06, a, DECK), (x + 0.06, c, DECK + 1.4), fx(M["plinth"], ALL))
-        for yc in TRACKS:                                  # сетка над проводами — над каждым путём
-            if not any(a - 2.2 < yc < c + 2.2 for a, c in gaps[side]):
-                mesh_panel(b, (x, yc - 2.0, 0), (x, yc + 2.0, 0), DECK + 1.25, 1.9)
-    # фонари: через 15 м, по очереди слева и справа
-    for i, y in enumerate((-50.0, -35.0, -16.0, -3.0, 10.0, 22.0, 32.0)):
-        side = 1 if i % 2 else -1
-        lamp_post(b, side * (hw + 0.12), y, side, DECK + 0.12)
-    # лестницы на платформы: с восточной стороны на первую, с западной — на вторую
-    n1 = 19                                               # 19 × 0.168 ≈ 3,2 м на марш
-    for side, yc in stair_y.items():
-        x0 = side * hw
-        xa, ya, za = flight(b, col, x0, yc, DECK, side, 0, SW, n1, col)
-        xl = xa + side * 2.0
-        e = SW / 2 + 0.15                                   # площадка в линию с маршами: перила только по бокам
-        landing(b, col, xa, yc - e, xl, yc + e, za, base=PLAT_H, rails=[((xa, yc - e), (xl, yc - e)), ((xa, yc + e), (xl, yc + e))])
-        xe, ye, ze = flight(b, col, xl, yc, za, side, 0, SW, round((za - PLAT_H) / RISE), col)
-    # лестницы на землю с концов моста: прямо по оси моста, два марша и площадка
-    n2 = 22
-    for sgn, ye in ((-1, y0), (1, y1)):
-        xa, ya, za = flight(b, col, 0, ye, DECK, 0, sgn, BR_W, n2, col)
-        yl = ya + sgn * 2.0
-        landing(b, col, -hw - 0.15, ya, hw + 0.15, yl, za, rails=[((-hw - 0.15, ya), (-hw - 0.15, yl)), ((hw + 0.15, ya), (hw + 0.15, yl))])
-        flight(b, col, 0, yl, za, 0, sgn, BR_W, round(za / RISE), col)
+    # торец моста у поворота к полю
+    railing(b, (-hw - 0.05, y1 + 0.05, DECK + 0.12), (hw + 0.05, y1 + 0.05, DECK + 0.12))
+    col.box((-hw, y1 - 0.06, DECK), (hw, y1 + 0.06, DECK + 1.4), fx(M["plinth"], ALL))
+    # фонари — все по юго-западной стороне (−X), через 12 м, консоль над настилом; между ними провисший провод
+    tops = []
+    for y in range(90, -67, -12):
+        c = "orange" if y == -66 else "green"
+        tops.append(lamp_post(lamps_b, -(hw + 0.12), float(y), DECK + 0.12, (1, 0, 0), color=c))
+    for a, c in zip(tops, tops[1:]):
+        cable(lamps_b, a, c)
+    # лестницы на платформы: на городскую — одна, на юго-запад; у вокзала — Т: на юго-запад и к вокзалу
+    platform_stair(b, col, SE_STAIR, -1)
+    platform_stair(b, col, NW_STAIR, -1)
+    platform_stair(b, col, NW_STAIR, 1)
+    # городская лестница: прямо по оси моста, два марша и площадка
+    xa, ya, za = flight(b, col, 0, y0, DECK, 0, -1, BR_W, 22)
+    yl = ya - 2.0
+    landing(b, col, -hw - 0.15, yl, hw + 0.15, ya, za, rails=[((-hw - 0.15, ya), (-hw - 0.15, yl)), ((hw + 0.15, ya), (hw + 0.15, yl))], columns=2)
+    flight(b, col, 0, yl, za, 0, -1, BR_W, round(za / RISE))
+    # спуск к полю: вдоль парка на юго-запад, шесть маршей и пять длинных площадок (средний уклон ~1:7)
+    e = BR_W / 2 + 0.15
+    x, z = -hw, DECK
+    lamp_x = []
+    for i, n in enumerate((7, 7, 7, 7, 8, 8)):
+        x, _, z = flight(b, col, x, LEG_Y, z, -1, 0, BR_W, n)
+        if i < 5:
+            xl = x - 7.7
+            landing(b, col, x, LEG_Y - e, xl, LEG_Y + e, z, rails=[((x, LEG_Y - e), (xl, LEG_Y - e)), ((x, LEG_Y + e), (xl, LEG_Y + e))], columns=2)
+            lamp_x.append(((x + xl) / 2, z))
+            x = xl
+    # фонари спуска — со стороны парка, консолью к дорожке
+    ltops = [tops[0]]
+    for i, (lx, lz) in enumerate(lamp_x):
+        if i % 2 == 0:
+            ltops.append(lamp_post(lamps_b, lx, LEG_Y - e - 0.07, lz + 0.05, (0, 1, 0)))
+    for a, c in zip(ltops, ltops[1:]):
+        cable(lamps_b, a, c, sag=0.8, n=8)
     vis = build(b, "EbBridge_nocol", coll)
-    return vis, build(col, "EbBridgeCol-colonly", coll)
+    return vis, build(lamps_b, "EbBridgeLamps_nocol", coll), build(col, "EbBridgeCol-colonly", coll)
 
 
 # ------------------------------------------------------------------ контактная сеть, прожекторы, светофоры
-def lattice_box(b, x, ya, yb, z0, z1, d):
-    """Ригель: коробка из решётчатых граней вдоль Y (u — по 2 м)."""
+def lattice_box(b, x, ya, yb, z0, z1, d, axis='Y'):
+    """Ригель: коробка из решётчатых граней вдоль оси axis (u — по 2 м)."""
     L = yb - ya
-    h = z1 - z0
     for xs in (x - d / 2, x + d / 2):
-        b.poly([(xs, ya, z0), (xs, yb, z0), (xs, yb, z1), (xs, ya, z1)], [(0, 0), (L / 2, 0), (L / 2, 1), (0, 1)], M["lattice"])
+        pts = [(xs, ya, z0), (xs, yb, z0), (xs, yb, z1), (xs, ya, z1)]
+        if axis == 'X':
+            pts = [(p[1], p[0], p[2]) for p in pts]
+        b.poly(pts, [(0, 0), (L / 2, 0), (L / 2, 1), (0, 1)], M["lattice"])
     for zs in (z0, z1):
-        b.poly([(x - d / 2, ya, zs), (x - d / 2, yb, zs), (x + d / 2, yb, zs), (x + d / 2, ya, zs)], [(0, 0), (L / 2, 0), (L / 2, 1), (0, 1)], M["lattice"])
-    b.box((x - d / 2, ya, z1), (x + d / 2, yb, z1 + 0.06), fx(M["snow"], ('+Z', '+X', '-X')), scale=(3, 3))
+        pts = [(x - d / 2, ya, zs), (x - d / 2, yb, zs), (x + d / 2, yb, zs), (x + d / 2, ya, zs)]
+        if axis == 'X':
+            pts = [(p[1], p[0], p[2]) for p in pts]
+        b.poly(pts, [(0, 0), (L / 2, 0), (L / 2, 1), (0, 1)], M["lattice"])
+    mn, mx = (x - d / 2, ya, z1), (x + d / 2, yb, z1 + 0.06)
+    if axis == 'X':
+        mn, mx = (ya, x - d / 2, z1), (yb, x + d / 2, z1 + 0.06)
+    b.box(mn, mx, fx(M["snow"], ('+Z', '+X', '-X', '+Y', '-Y')), scale=(3, 3))
 
 
-def lattice_mast(b, x, y, h, w=0.6):
-    for (ax, ay), (bx_, by) in (((-1, -1), (1, -1)), ((1, -1), (1, 1)), ((1, 1), (-1, 1)), ((-1, 1), (-1, -1))):
-        p0 = (x + ax * w / 2, y + ay * w / 2)
-        p1 = (x + bx_ * w / 2, y + by * w / 2)
-        b.poly([(p0[0], p0[1], 0), (p1[0], p1[1], 0), (p1[0], p1[1], h), (p0[0], p0[1], h)], [(0, 0), (0, 1), (h / 2, 1), (h / 2, 0)], M["lattice"])
-    b.box((x - w / 2 - 0.1, y - w / 2 - 0.1, 0), (x + w / 2 + 0.1, y + w / 2 + 0.1, 0.4), fx(M["plinth"], OPEN), scale=(3.6, 0.9))
+def concrete_pole(b, col, x, y, h, r0=0.22, r1=0.15):
+    """Конический бетонный столб контактной сети (фото 10005, 10021) с оголовком."""
+    b.cyl((x, y, 0), (x, y, h), r0, r1, M["pole"], segs=8, su=2)
+    b.box((x - r1 - 0.03, y - r1 - 0.03, h), (x + r1 + 0.03, y + r1 + 0.03, h + 0.12), fx(M["metal"], OPEN), scale=(1, 1))
+    b.box((x - r1 - 0.03, y - r1 - 0.03, h + 0.12), (x + r1 + 0.03, y + r1 + 0.03, h + 0.18), fx(M["snow"], ('+Z',)), scale=(3, 3))
+    col.box((x - r0, y - r0, 0), (x + r0, y + r0, h), fx(M["plinth"], ALL))
+
+
+def hanger(wires, x, yc, z_from):
+    """Подвес к несущему тросу: тяга вниз и изолятор."""
+    bar(wires, (x, yc, z_from), (x, yc, WIRE_M + 0.6), 0.035, M["metal"])
+    bar(wires, (x, yc, WIRE_M + 0.6), (x, yc, WIRE_M), 0.09, M["white"])
+
+
+def floodlight_tower(b, col, x, y, h, face, color):
+    """Прожекторная мачта (фото 10033): стальная труба с лестницей в ограждении, площадка с перилами,
+    прожекторы по одной стороне."""
+    bar(b, (x, y, 0), (x, y, h), 0.5, M["metal"], s=(1, 3))
+    col.box((x - 0.3, y - 0.3, 0), (x + 0.3, y + 0.3, h), fx(M["plinth"], ALL))
+    lx, ly = x - face[0] * 0.55, y - face[1] * 0.55                  # лестница — с тыла
+    for o in (-0.22, 0.22):
+        ox, oy = -face[1] * o, face[0] * o
+        bar(b, (lx + ox, ly + oy, 0.3), (lx + ox, ly + oy, h), 0.04, M["metal"])
+    z = 2.5
+    while z < h:                                                      # обручи ограждения лестницы
+        ring = []
+        for i in range(7):
+            a = math.pi * i / 6
+            ring.append((lx - face[0] * 0.35 * math.sin(a) - face[1] * 0.35 * math.cos(a),
+                         ly - face[1] * 0.35 * math.sin(a) + face[0] * 0.35 * math.cos(a), z))
+        for a, c in zip(ring, ring[1:]):
+            bar(b, a, c, 0.03, M["metal"])
+        z += 1.6
+    b.box((x - 1.3, y - 1.3, h), (x + 1.3, y + 1.3, h + 0.2), fx(M["metal"], ALL), scale=(1, 1))
+    for (ax, ay), (bx_, by) in (((-1.3, -1.3), (1.3, -1.3)), ((1.3, -1.3), (1.3, 1.3)), ((1.3, 1.3), (-1.3, 1.3)), ((-1.3, 1.3), (-1.3, -1.3))):
+        bar(b, (x + ax, y + ay, h + 1.0), (x + bx_, y + by, h + 1.0), 0.04, M["metal"])
+        bar(b, (x + ax, y + ay, h + 0.2), (x + ax, y + ay, h + 1.0), 0.04, M["metal"])
+    lm = M["lamp_o"] if color == "orange" else M["lamp_w"]
+    px, py = -face[1], face[0]
+    for i in range(4):
+        o = -1.05 + i * 0.7
+        hx, hy = x + face[0] * 1.0 + px * o, y + face[1] * 1.0 + py * o
+        b.box((hx - 0.3, hy - 0.3, h + 0.3), (hx + 0.3, hy + 0.3, h + 0.9), fx(M["metal"], OPEN), scale=(1, 1))
+        b.box((hx + face[0] * 0.3 - 0.25 * abs(py), hy + face[1] * 0.3 - 0.25 * abs(px), h + 0.35),
+              (hx + face[0] * 0.31 + 0.25 * abs(py), hy + face[1] * 0.31 + 0.25 * abs(px), h + 0.85), fx(lm, SIDES), scale=(1, 1))
+    lamp("mast", color, (x, y, 0), (x + face[0] * 1.5, y + face[1] * 1.5, h + 0.4))
 
 
 def catenary(coll):
     b, wires, col = B(), B(), B()
-    ya, yb = GANTRY_Y
-    for x in GANTRY_X:
+    ya, yb = PLATFORMS[0][0] + 0.6, PLATFORMS[1][1] - 0.5
+    for x in GANTRY_X:                                    # жёсткие поперечины над главными путями: мачты на платформах
         for y in (ya, yb):
-            lattice_mast(b, x, y, 10.6)
-            col.box((x - 0.35, y - 0.35, 0), (x + 0.35, y + 0.35, 10.6), fx(M["plinth"], ALL))
-        lattice_box(b, x, ya - 0.4, yb + 0.4, 9.4, 10.4, 0.7)
-        for yc in TRACKS:                                  # подвесы к несущему тросу и изоляторы
-            bar(wires, (x, yc, 9.4), (x, yc, WIRE_M), 0.035, M["metal"])
-            bar(wires, (x, yc, WIRE_M + 0.6), (x, yc, WIRE_M + 0.2), 0.09, M["white"])
-    for yc in TRACKS:                                      # провода: несущий трос и контактный, струны между ними
+            concrete_pole(b, col, x, y, 10.4)
+        lattice_box(b, x, ya - 0.3, yb + 0.3, 9.4, 10.4, 0.8)
+        for y in (ya + 6, 0.0, yb - 6):                   # стойки с изоляторами над ригелем
+            bar(b, (x, y, 10.4), (x, y, 11.6), 0.08, M["metal"])
+        bar(b, (x, ya + 6, 11.6), (x, yb - 6, 11.6), 0.06, M["metal"])
+        for yc in TRACKS_MAIN:
+            hanger(wires, x, yc, 9.4)
+    for x in PORTAL_X:                                    # порталы: два столба и лёгкий ригель на 2–3 пути
+        for a, c in ((-55.5, -33.8), (51.6, 68.75), (68.75, 91.2)):
+            for y in (a, c):
+                concrete_pole(b, col, x, y, 9.6, 0.2, 0.14)
+            lattice_box(b, x, a, c, 8.7, 9.2, 0.45)
+            for yc in TRACKS:
+                if a < yc < c:
+                    hanger(wires, x, yc, 8.7)
+    for yc in TRACKS:                                     # провода: несущий трос и контактный, струны между ними
         for z in (WIRE_C, WIRE_M):
             wires.box((-FAR, yc - 0.015, z - 0.015), (FAR, yc + 0.015, z + 0.015), fx(M["metal"], ('+Y', '-Y', '-Z', '+Z')), scale=(8, 1))
         x = -FAR
         while x < FAR:
             wires.box((x - 0.01, yc - 0.01, WIRE_C), (x + 0.01, yc + 0.01, WIRE_M), fx(M["metal"], ('+X', '-Y')), scale=(1, 1))
             x += 8.75
-    # прожекторные мачты (как на дневном фото): высокая труба, площадка, четыре прожектора
-    for x, y in ((-30.0, -41.5), (46.0, 10.0)):
-        bar(b, (x, y, 0), (x, y, 18.0), 0.45, M["metal"], s=(1, 3))
-        b.box((x - 1.2, y - 1.2, 18.0), (x + 1.2, y + 1.2, 18.25), fx(M["metal"], ALL), scale=(1, 1))
-        for i in range(4):
-            a = i * math.pi / 2 + math.pi / 4
-            hx, hy = x + math.cos(a) * 0.8, y + math.sin(a) * 0.8
-            b.box((hx - 0.35, hy - 0.35, 18.3), (hx + 0.35, hy + 0.35, 18.9), fx(M["metal"], ('+X', '-X', '+Y', '-Y', '+Z')), scale=(1, 1))
-            b.box((hx - 0.3, hy - 0.3, 18.2), (hx + 0.3, hy + 0.3, 18.3), fx(M["lamp_o"], ('-Z', '+X', '-X', '+Y', '-Y')), scale=(1, 1))
-        col.box((x - 0.3, y - 0.3, 0), (x + 0.3, y + 0.3, 18), fx(M["plinth"], ALL))
-        lamp("mast", "orange", (x, y, 0), (x, y, 18.0), energy=90.0)
-    # светофоры в концах платформ: столбик, головка с двумя огнями (зелёный горит)
-    for x, y in ((-74.0, -31.8), (74.0, -16.2), (-74.0, -5.8), (74.0, 9.8)):
-        bar(b, (x, y, 0), (x, y, 4.2), 0.14, M["metal"])
-        b.box((x - 0.18, y - 0.18, 4.2), (x + 0.18, y + 0.18, 5.2), fx(M["metal"], ALL), scale=(1, 1))
-        fs = -1 if x > 0 else 1
-        b.box((x + fs * 0.18, y - 0.1, 4.75), (x + fs * 0.2, y + 0.1, 4.95), fx(M["lamp_g"], ('+X', '-X')), scale=(1, 1))
-        col.box((x - 0.2, y - 0.2, 0), (x + 0.2, y + 0.2, 5.2), fx(M["plinth"], ALL))
+    # прожекторные мачты: тёплая у моста над парком, холодная белая на дальнем краю парка
+    floodlight_tower(b, col, -8.0, 49.0, 19.0, (0, 1), "orange")
+    floodlight_tower(b, col, 60.0, 92.5, 19.0, (0, -1), "white")
+    # светофоры: трёхлинзовые головки висят на ригеле над главными путями (фото 10005), карликовые — у путей
+    for yc in TRACKS_MAIN:
+        bar(b, (12.0, yc, 9.4), (12.0, yc, 8.4), 0.06, M["metal"])
+        b.box((11.8, yc - 0.22, 7.2), (12.2, yc + 0.22, 8.4), fx(M["dark"], ALL), scale=(1, 1))
+        b.box((11.78, yc - 0.12, 7.95), (11.8, yc + 0.12, 8.2), fx(M["lamp_g"], ('-X',)), scale=(1, 1))
+    for x, y in ((-62.0, -7.6), (70.0, 5.9), (-40.0, -44.5), (35.0, 63.2)):
+        b.box((x - 0.25, y - 0.2, 0), (x + 0.25, y + 0.2, 0.55), fx(M["dark"], OPEN), scale=(1, 1))
+        b.box((x - 0.26, y - 0.08, 0.3), (x - 0.25, y + 0.08, 0.45), fx(M["lamp_w"], ('-X',)), scale=(1, 1))
     return build(b, "EbCatenary_nocol", coll), build(wires, "EbWires_nocol", coll), build(col, "EbCatenaryCol-colonly", coll)
 
 
@@ -489,7 +691,7 @@ def tank_car(b, col, x0, y, row):
     col.box((x0, y - 1.5, 0.2), (x1, y + 1.5, zc + r), fx(M["plinth"], ALL))
 
 
-def gondola_car(b, col, x0, y):
+def gondola_car(b, col, x0, y, load=True):
     L = 13.9
     x1 = x0 + L
     bogies(b, x0, x1, y)
@@ -497,12 +699,31 @@ def gondola_car(b, col, x0, y):
     b.box((x0, y - 1.55, za), (x1, y + 1.55, zb_), {'+Y': (M["gondola"], (1, 0, 0, 1)), '-Y': (M["gondola"], (0, 0, 1, 1))})
     b.box((x0, y - 1.55, za), (x1, y + 1.55, zb_), fx(M["metal"], ('+X', '-X', '-Z')), scale=(1.5, 1.5))
     b.box((x0, y - 1.55, zb_), (x1, y + 1.55, zb_ + 0.08), fx(M["metal"], ('+Y', '-Y', '+Z')), scale=(2, 1))
-    # груз — щебень горкой, присыпан снегом
-    hx = [(x0 + 0.2, zb_ - 0.2), (x0 + L * 0.3, zb_ + 0.55), (x0 + L * 0.7, zb_ + 0.6), (x1 - 0.2, zb_ - 0.2)]
-    for (xa, za_), (xb, zb2) in zip(hx, hx[1:]):
-        quad(b, [(xa, y - 1.45, zb_ - 0.1), (xb, y - 1.45, zb_ - 0.1), (xb, y, zb2), (xa, y, za_)], M["ballast"], (0, -0.3, 1), (4, 4))
-        quad(b, [(xa, y + 1.45, zb_ - 0.1), (xb, y + 1.45, zb_ - 0.1), (xb, y, zb2), (xa, y, za_)], M["ballast"], (0, 0.3, 1), (4, 4))
+    if load:                                                            # щебень горкой, присыпан снегом
+        hx = [(x0 + 0.2, zb_ - 0.2), (x0 + L * 0.3, zb_ + 0.55), (x0 + L * 0.7, zb_ + 0.6), (x1 - 0.2, zb_ - 0.2)]
+        for (xa, za_), (xb, zb2) in zip(hx, hx[1:]):
+            quad(b, [(xa, y - 1.45, zb_ - 0.1), (xb, y - 1.45, zb_ - 0.1), (xb, y, zb2), (xa, y, za_)], M["ballast"], (0, -0.3, 1), (4, 4))
+            quad(b, [(xa, y + 1.45, zb_ - 0.1), (xb, y + 1.45, zb_ - 0.1), (xb, y, zb2), (xa, y, za_)], M["ballast"], (0, 0.3, 1), (4, 4))
+    else:
+        b.box((x0 + 0.1, y - 1.45, za + 0.3), (x1 - 0.1, y + 1.45, za + 0.32), fx(M["snow"], ('+Z',)), scale=(3, 3))
     col.box((x0, y - 1.6, 0.2), (x1, y + 1.6, zb_ + 0.6), fx(M["plinth"], ALL))
+
+
+def box_car(b, col, x0, y):
+    """Крытый вагон: высокий ржавый кузов (текстура полувагона), крыша под снегом."""
+    L = 14.7
+    x1 = x0 + L
+    bogies(b, x0, x1, y)
+    za, zb_ = 1.2, 4.3
+    b.box((x0, y - 1.55, za), (x1, y + 1.55, zb_), {'+Y': (M["gondola"], (1, 0, 0, 1)), '-Y': (M["gondola"], (0, 0, 1, 1))})
+    b.box((x0, y - 1.55, za), (x1, y + 1.55, zb_), fx(M["metal"], ('+X', '-X', '-Z')), scale=(1.5, 1.5))
+    prof = [(-1.6, zb_), (-0.8, zb_ + 0.3), (0.8, zb_ + 0.3), (1.6, zb_)]
+    for (ya_, za_), (yb_, zb2) in zip(prof, prof[1:]):
+        quad(b, [(x0, y + ya_, za_), (x1, y + ya_, za_), (x1, y + yb_, zb2), (x0, y + yb_, zb2)], M["snow"], (0, (ya_ + yb_) / 2, 1), (3, 3))
+    for xe, s in ((x0, -1), (x1, 1)):
+        quad(b, [(xe, y + p[0], p[1]) for p in prof], M["metal"], (s, 0, 0), uvs=[(0, 0)] * 4)
+    b.box((x0 + L / 2 - 1.5, y - 1.57, za + 0.2), (x0 + L / 2 + 1.5, y + 1.57, zb_ - 0.3), fx(M["metal"], ('+Y', '-Y')), scale=(1.5, 1.5))
+    col.box((x0, y - 1.6, 0.2), (x1, y + 1.6, zb_ + 0.3), fx(M["plinth"], ALL))
 
 
 def container_car(b, col, x0, y, row):
@@ -534,110 +755,508 @@ def coach_car(b, col, x0, y):
     col.box((x0, y - 1.6, 0.2), (x1, y + 1.6, zb_ + 0.5), fx(M["plinth"], ALL))
 
 
+def string(b, col, y, x0, x1, kinds, gaps=()):
+    """Состав на пути y от x0 до x1: вагоны по кругу из kinds, с разрывами gaps (номера вагонов)."""
+    x, i = x0, 0
+    while x < x1:
+        k = kinds[i % len(kinds)]
+        L = {"tank_y": 12.0, "tank_b": 12.0, "gondola": 13.9, "gondola_e": 13.9, "box": 14.7, "cont": 13.6}[k]
+        if i not in gaps:
+            if k == "tank_y":
+                tank_car(b, col, x, y, 0)
+            elif k == "tank_b":
+                tank_car(b, col, x, y, 1)
+            elif k == "gondola":
+                gondola_car(b, col, x, y)
+            elif k == "gondola_e":
+                gondola_car(b, col, x, y, load=False)
+            elif k == "box":
+                box_car(b, col, x, y)
+            else:
+                container_car(b, col, x, y, i % 4)
+        x += L + 0.8
+        i += 1
+
+
 def trains(coll):
     b, col = B(), B()
-    x = -96.0                                              # цистерны — у южного края, до самого моста
-    for i in range(7):
-        tank_car(b, col, x, TRACKS[0], 0 if i % 3 != 1 else 1)
-        x += 12.8
-    x = 9.0                                                # полувагоны со щебнем — за мостом на восток
-    for i in range(6):
-        gondola_car(b, col, x, TRACKS[2])
-        x += 14.6
-    x = -95.0                                              # контейнеры — у северного края
-    for i in range(6):
-        container_car(b, col, x, TRACKS[-1], i % 4)
-        x += 14.3
-    x = 14.0                                               # пассажирский состав, стоит в отстое
-    for i in range(3):
-        coach_car(b, col, x, TRACKS[6])
+    # грузовой парк (фото 10033, 10016, 10020): ближний к мосту ряд — жёлтые цистерны под снегом
+    string(b, col, TRACKS_YARD[0], -150, 40, ["tank_y"], gaps=(9,))
+    string(b, col, TRACKS_YARD[1], -140, 62, ["box", "box", "gondola", "box"], gaps=(4, 5))
+    string(b, col, TRACKS_YARD[2], -120, 22, ["cont"], gaps=(3,))
+    string(b, col, TRACKS_YARD[3], -95, 80, ["gondola", "gondola_e", "box"], gaps=(6,))
+    string(b, col, TRACKS_YARD[4], -150, -8, ["tank_b", "tank_y", "tank_b"])
+    string(b, col, TRACKS_YARD[5], -60, 40, ["gondola_e", "box"])
+    string(b, col, TRACKS_YARD[6], -130, -55, ["tank_b"])
+    # главные: полувагоны со щебнем прямо под мостом (10013), пассажирский у платформы вокзала (10016, 10020)
+    string(b, col, TRACKS_MAIN[2], -30, 62, ["gondola"])
+    x = -232.0
+    for i in range(9):
+        coach_car(b, col, x, TRACKS_MAIN[3])
         x += 25.3
+    # восточные пути: старые крытые вагоны в граффити (10008)
+    string(b, col, TRACKS_EAST[1], -120, -20, ["box"], gaps=(2,))
+    string(b, col, TRACKS_EAST[2], 30, 115, ["box", "gondola_e"])
     return build(b, "EbTrains_nocol", coll), build(col, "EbTrainsCol-colonly", coll)
 
 
-# ------------------------------------------------------------------ платформенные мелочи, вокзал
-def booth(b, col, x, y, w, d, h, m, door_side=-1):
-    b.box((x - w / 2, y - d / 2, PLAT_H), (x + w / 2, y + d / 2, PLAT_H + h), fx(m, SIDES), scale=(2, 2))
-    b.box((x - w / 2 - 0.2, y - d / 2 - 0.2, PLAT_H + h), (x + w / 2 + 0.2, y + d / 2 + 0.2, PLAT_H + h + 0.12), fx(M["metal"], ALL), scale=(1, 1))
-    b.box((x - w / 2 - 0.2, y - d / 2 - 0.2, PLAT_H + h + 0.12), (x + w / 2 + 0.2, y + d / 2 + 0.2, PLAT_H + h + 0.3), fx(M["snow"], OPEN), scale=(3, 3))
-    yd = y + door_side * (d / 2 + 0.01)
-    b.box((x - 0.45, yd - 0.01, PLAT_H), (x + 0.45, yd + 0.01, PLAT_H + 2.0), fx(M["door"], ('+Y', '-Y')), scale=(0.9, 2.0))
-    b.box((x + 0.7, yd - 0.01, PLAT_H + 1.0), (x + 1.3, yd + 0.01, PLAT_H + 1.6), fx(M["metal"], ('+Y', '-Y')), scale=(0.6, 0.6))
-    col.box((x - w / 2, y - d / 2, PLAT_H), (x + w / 2, y + d / 2, PLAT_H + h), fx(M["plinth"], ALL))
+# ------------------------------------------------------------------ платформы, вокзал
+def booth(b, col, x, y, w, d, h, z0=PLAT_H):
+    """Будка у подножия лестницы (10018, 10023): голубой профнастил, односкатная крыша с навесом к путям,
+    окно с решёткой и ставнями, дверь с торца."""
+    b.box((x - w / 2, y - d / 2, z0), (x + w / 2, y + d / 2, z0 + h), fx(M["booth"], SIDES), scale=(2, 2))
+    col.box((x - w / 2, y - d / 2, z0), (x + w / 2, y + d / 2, z0 + h), fx(M["plinth"], ALL))
+    ov = 0.5
+    pts = [(x - w / 2 - 0.2, y - d / 2 - 0.2, z0 + h + 0.25), (x + w / 2 + 0.2, y - d / 2 - 0.2, z0 + h + 0.25),
+           (x + w / 2 + 0.2, y + d / 2 + ov, z0 + h - 0.05), (x - w / 2 - 0.2, y + d / 2 + ov, z0 + h - 0.05)]
+    quad(b, pts, M["snow"], (0, 0.1, 1), (3, 3))
+    quad(b, [(p[0], p[1], p[2] - 0.08) for p in pts], M["metal"], (0, 0, -1), (2, 2))
+    quad(b, [(x - w / 2, y - d / 2 - 0.01, z0 + h), (x + w / 2, y - d / 2 - 0.01, z0 + h), (x + w / 2, y - d / 2 - 0.01, z0 + h + 0.2),
+             (x - w / 2, y - d / 2 - 0.01, z0 + h + 0.2)], M["booth"], (0, -1, 0), (2, 2))
+    yd = y + d / 2 + 0.01
+    b.box((x - 0.6, yd, z0 + 1.0), (x + 0.6, yd + 0.02, z0 + 2.0), fx(M["dark"], ('+Y',)), scale=(1, 1))
+    for i in range(5):
+        xx = x - 0.6 + i * 0.3
+        bar(b, (xx, yd + 0.05, z0 + 1.0), (xx, yd + 0.05, z0 + 2.0), 0.025, M["metal"])
+    for s in (-1, 1):
+        b.box((x + s * 0.6 + (0 if s > 0 else -0.6), yd, z0 + 1.0), (x + s * 0.6 + (0.6 if s > 0 else 0), yd + 0.03, z0 + 2.0),
+              fx(M["wood"], ('+Y', '-Y')), scale=(1, 1))
+    xd = x - w / 2 - 0.01
+    b.box((xd - 0.02, y - 0.45, z0), (xd, y + 0.45, z0 + 2.0), fx(M["door"], ('-X',)), scale=(0.9, 2.0))
 
 
-def bench(b, col, x, y):
+def bench(b, col, x, y, face):
     for dx in (-0.8, 0.8):
         b.box((x + dx - 0.05, y - 0.2, PLAT_H), (x + dx + 0.05, y + 0.2, PLAT_H + 0.45), fx(M["metal"], SIDES), scale=(1, 1))
-    b.box((x - 1.0, y - 0.22, PLAT_H + 0.45), (x + 1.0, y + 0.22, PLAT_H + 0.5), fx(M["wood"], ALL), scale=(1, 1))
+    b.box((x - 1.0, y - 0.22, PLAT_H + 0.45), (x + 1.0, y + 0.22, PLAT_H + 0.5), fx(M["blue"], ALL), scale=(1, 1))
+    yb = y - face * 0.2
+    b.box((x - 1.0, yb - 0.03, PLAT_H + 0.6), (x + 1.0, yb + 0.03, PLAT_H + 0.95), fx(M["blue"], ALL), scale=(1, 1))
     b.box((x - 1.0, y - 0.22, PLAT_H + 0.5), (x + 1.0, y + 0.22, PLAT_H + 0.56), fx(M["snow"], OPEN), scale=(3, 3))
     col.box((x - 1.0, y - 0.25, PLAT_H), (x + 1.0, y + 0.25, PLAT_H + 0.5), fx(M["plinth"], ALL))
 
 
-def platform_lamp(b, x, y, color):
-    """Фонарь платформы: бетонный столб и консоль с плафоном."""
-    b.cyl((x, y, PLAT_H), (x, y, PLAT_H + 6.5), 0.14, 0.09, M["plinth"], segs=6, su=2)
-    b.box((x - 0.04, y - 0.04, PLAT_H + 6.4), (x + 0.04, y + 1.2, PLAT_H + 6.48), fx(M["metal"], ALL), scale=(1, 1))
+def t_pole(b, col, x, y, color):
+    """Фонарь платформы (10022, 10024): бетонный столб 12 м, Т-траверса поперёк путей, плафоны на концах."""
+    b.cyl((x, y, PLAT_H), (x, y, PLAT_H + 12.0), 0.18, 0.11, M["pole"], segs=8, su=2)
+    col.box((x - 0.18, y - 0.18, PLAT_H), (x + 0.18, y + 0.18, PLAT_H + 12), fx(M["plinth"], ALL))
+    z = PLAT_H + 11.8
+    b.box((x - 0.05, y - 1.25, z), (x + 0.05, y + 1.25, z + 0.1), fx(M["metal"], ALL), scale=(1, 1))
     m = M["lamp_g"] if color == "green" else M["lamp_o"]
-    b.box((x - 0.22, y + 0.9, PLAT_H + 6.22), (x + 0.22, y + 1.35, PLAT_H + 6.42), fx(M["metal"], ('+X', '-X', '+Y', '-Y', '+Z')), scale=(1, 1))
-    b.box((x - 0.18, y + 0.95, PLAT_H + 6.14), (x + 0.18, y + 1.3, PLAT_H + 6.22), fx(m, ('-Z', '+X', '-X', '+Y', '-Y')), scale=(1, 1))
-    lamp("platform", color, (x, y, PLAT_H), (x, y + 1.12, PLAT_H + 6.1))
+    for s in (-1, 1):
+        hy = y + s * 1.2
+        b.box((x - 0.22, hy - 0.18, z - 0.18), (x + 0.22, hy + 0.18, z + 0.02), fx(M["metal"], OPEN), scale=(1, 1))
+        b.box((x - 0.18, hy - 0.14, z - 0.24), (x + 0.18, hy + 0.14, z - 0.18), fx(m, ('-Z', '+X', '-X', '+Y', '-Y')), scale=(1, 1))
+    lamp("platform", color, (x, y, PLAT_H), (x, y, z - 0.3))
+
+
+def street_lamp(b, col, x, y, arm, kind="street", color="orange", h=7.4, light=True):
+    """Уличная «кобра» на бетонном столбе."""
+    b.cyl((x, y, 0), (x, y, h), 0.15, 0.09, M["pole"], segs=6, su=2)
+    col.box((x - 0.15, y - 0.15, 0), (x + 0.15, y + 0.15, h), fx(M["plinth"], ALL))
+    ax, ay = arm
+    b.cyl((x, y, h - 0.1), (x + ax * 1.4, y + ay * 1.4, h + 0.3), 0.05, 0.045, M["metal"], segs=6)
+    hx, hy = x + ax * 1.6, y + ay * 1.6
+    b.box((hx - 0.3, hy - 0.18, h + 0.2), (hx + 0.3, hy + 0.18, h + 0.4), fx(M["metal"], ALL), scale=(1, 1))
+    b.box((hx - 0.25, hy - 0.14, h + 0.12), (hx + 0.25, hy + 0.14, h + 0.2), fx(M["lamp_o"] if color == "orange" else M["lamp_w"], ('-Z',)), scale=(1, 1))
+    if light:
+        lamp(kind, color, (x, y, 0), (hx, hy, h + 0.05))
+
+
+def gable(b, cx, cy, ang, w, d, wall_h, ridge, wall_m, roof_m=None, ov=0.4, wall_uv=None, lit=0.0, col=None, chimney=True):
+    """Дом с двускатной крышей (конёк вдоль локальной оси w), повёрнут на ang вокруг (cx, cy).
+    wall_uv(k) — функция клетки атласа стен; без неё — мировая проекция."""
+    c, s = math.cos(ang), math.sin(ang)
+    P = lambda lx, ly, z: (cx + lx * c - ly * s, cy + lx * s + ly * c, z)
+    N = lambda nx, ny: (nx * c - ny * s, nx * s + ny * c, 0)
+    hw, hd = w / 2, d / 2
+    for (ax, ay), (bx_, by), n in (((-hw, -hd), (hw, -hd), (0, -1)), ((hw, hd), (-hw, hd), (0, 1)),
+                                   ((hw, -hd), (hw, hd), (1, 0)), ((-hw, hd), (-hw, -hd), (-1, 0))):
+        L = math.hypot(bx_ - ax, by - ay)
+        k = max(1, round(L / 4.5))
+        for i in range(k):
+            t0, t1 = i / k, (i + 1) / k
+            p0 = (ax + (bx_ - ax) * t0, ay + (by - ay) * t0)
+            p1 = (ax + (bx_ - ax) * t1, ay + (by - ay) * t1)
+            pts = [P(p0[0], p0[1], 0), P(p1[0], p1[1], 0), P(p1[0], p1[1], wall_h), P(p0[0], p0[1], wall_h)]
+            if wall_uv:
+                u0, v0, u1, v1 = wall_uv(rnd.random() < lit)
+                quad(b, pts, wall_m, N(*n), uvs=[(u0, v0), (u1, v0), (u1, v1), (u0, v1)])
+            else:
+                quad(b, pts, wall_m, N(*n), (3, 3))
+    for sx in (-1, 1):                                    # фронтоны
+        pts = [P(sx * hw, -hd, wall_h), P(sx * hw, hd, wall_h), P(sx * hw, 0, wall_h + ridge)]
+        if wall_uv:
+            u0, v0, u1, v1 = wall_uv(False)
+            quad(b, pts, wall_m, N(sx, 0), uvs=[(u0 + 0.01, v1 - 0.06), (u1 - 0.01, v1 - 0.06), ((u0 + u1) / 2, v1 - 0.01)])
+        else:
+            quad(b, pts, wall_m, N(sx, 0), (3, 3))
+    roof_m = roof_m or M["roof"]
+    ez = wall_h - ov * ridge / hd
+    for sy in (-1, 1):                                    # скаты: сверху снег, снизу — кровля
+        pts = [P(-hw - ov, sy * (hd + ov), ez), P(hw + ov, sy * (hd + ov), ez), P(hw + ov, 0, wall_h + ridge), P(-hw - ov, 0, wall_h + ridge)]
+        nz = Vector(N(0, sy)) * ridge / hd + Vector((0, 0, 1))
+        quad(b, pts, M["snow"], tuple(nz), uvs=[(0, 0), (w / 3, 0), (w / 3, (hd + ov) / 3), (0, (hd + ov) / 3)])
+        quad(b, [(p[0], p[1], p[2] - 0.12) for p in pts], roof_m, (0, 0, -1), (3, 3))
+    if chimney:
+        lx, ly = hw * 0.4, hd * 0.3
+        zt = wall_h + ridge + 0.7
+        for (ax, ay), (bx_, by), n in (((-0.25, -0.25), (0.25, -0.25), (0, -1)), ((0.25, -0.25), (0.25, 0.25), (1, 0)),
+                                       ((0.25, 0.25), (-0.25, 0.25), (0, 1)), ((-0.25, 0.25), (-0.25, -0.25), (-1, 0))):
+            quad(b, [P(lx + ax, ly + ay, wall_h + ridge * 0.4), P(lx + bx_, ly + by, wall_h + ridge * 0.4), P(lx + bx_, ly + by, zt), P(lx + ax, ly + ay, zt)],
+                 M["plinth"], N(*n), (1, 1))
+        quad(b, [P(lx - 0.25, ly - 0.25, zt), P(lx + 0.25, ly - 0.25, zt), P(lx + 0.25, ly + 0.25, zt), P(lx - 0.25, ly + 0.25, zt)], M["snow"], (0, 0, 1), (1, 1))
+    if col is not None:
+        quad(col, [P(-hw, -hd, 0), P(hw, -hd, 0), P(hw, hd, 0), P(-hw, hd, 0)], M["plinth"], (0, 0, -1))
+        for (ax, ay), (bx_, by), n in (((-hw, -hd), (hw, -hd), (0, -1)), ((hw, -hd), (hw, hd), (1, 0)),
+                                       ((hw, hd), (-hw, hd), (0, 1)), ((-hw, hd), (-hw, -hd), (-1, 0))):
+            quad(col, [P(ax, ay, 0), P(bx_, by, 0), P(bx_, by, wall_h + ridge), P(ax, ay, wall_h + ridge)], M["plinth"], N(*n))
+
+
+def station(b, col):
+    """Вокзал «Одеса-Східна» (спутник + фото 10017): к северо-востоку от моста, между главными путями и парком.
+    Стены 18 × 9 м, со стороны моста — открытый портик под общей крышей (две квадратные колонны и фронтон),
+    двускатная крыша с коньком вдоль путей, синие буквы на белом фризе по стене к полю."""
+    x0, x1, y0, y1, wh = 44.0, 62.0, 25.5, 34.5, 3.3
+    yc = (y0 + y1) / 2
+    b.box((x0, y0, 0), (x1, y1, wh), fx(M["station"], SIDES), scale=(3, 3))
+    col.box((x0, y0, 0), (x1, y1, wh + 2.5), fx(M["plinth"], ALL))
+    b.box((x0 - 0.1, y0 - 0.1, 0), (x1 + 0.1, y1 + 0.1, 0.5), fx(M["plinth"], SIDES), scale=(3.6, 0.9))
+    for y in (y0 + 0.3, y1 - 0.3):                         # колонны портика
+        b.box((40.05, y - 0.25, 0), (40.55, y + 0.25, wh - 0.2), fx(M["station"], SIDES), scale=(3, 3))
+        col.box((40.05, y - 0.25, 0), (40.55, y + 0.25, wh), fx(M["plinth"], ALL))
+    b.box((40.0, y0 - 0.1, 0), (x0, y1 + 0.1, 0.25), fx(M["plinth"], OPEN), scale=(3.6, 0.9))     # пол портика
+    b.box((39.9, y0 - 0.2, wh - 0.6), (x0, y1 + 0.2, wh), fx(M["station"], ('-X', '+Y', '-Y', '-Z')), scale=(3, 3))   # фриз
+    ov, ridge = 0.8, 2.5
+    for sy in (-1, 1):
+        ya = yc + sy * (4.5 + ov)
+        pts = [(39.5, ya, wh - 0.2), (62.6, ya, wh - 0.2), (62.6, yc, wh + ridge), (39.5, yc, wh + ridge)]
+        quad(b, pts, M["snow"], (0, sy * 0.5, 1), (3, 3))
+        quad(b, [(p[0], p[1], p[2] - 0.15) for p in pts], M["roof"], (0, 0, -1), (3, 3))
+    for xe, sx in ((39.9, -1), (x1, 1)):                    # фронтоны
+        quad(b, [(xe, y0 - 0.2, wh), (xe, y1 + 0.2, wh), (xe, yc, wh + ridge - 0.1)], M["station"], (sx, 0, 0), (3, 3))
+    # вывеска: синие буквы на белом фризе по стене к полю (+Y), ближе к портику
+    b.box((44.8, y1 + 0.01, 2.55), (52.8, y1 + 0.03, 3.2), {'+Y': (M["sign"], (0, 0, 1, 1))})
+    # окна и двери
+    for x in (47.0, 51.0, 55.0, 59.0):
+        for y, face in ((y0 - 0.01, '-Y'), (y1 + 0.01, '+Y')):
+            if face == '+Y' and x < 53:
+                continue
+            m = M["glass"] if (x, face) == (55.0, '-Y') else M["dark"]
+            b.box((x - 0.7, y - 0.01, 1.0), (x + 0.7, y + 0.01, 2.4), fx(m, (face,)), scale=(1.4, 1.4))
+    b.box((x0 - 0.02, yc - 0.6, 0.25), (x0, yc + 0.6, 2.4), fx(M["door"], ('-X',)), scale=(1.2, 2.2))
+    lamp("station", "orange", (42.0, yc, 0), (42.0, yc, wh - 0.4))
+    b.box((41.75, yc - 0.15, wh - 0.65), (42.25, yc + 0.15, wh - 0.6), fx(M["lamp_o"], ('-Z',)), scale=(1, 1))
+    # перрон перед вокзалом и дорожка от прохода в ограде
+    quad(b, [(30.0, 16.8, 0.03), (66.0, 16.8, 0.03), (66.0, 25.3, 0.03), (30.0, 25.3, 0.03)], M["platform"], (0, 0, 1), (4, 4))
+    for x in (30.0, 36.0):                                  # ступени с платформы вниз к перрону
+        pass
+    quad(col, [(30.0, 16.95, PLAT_H), (36.0, 16.95, PLAT_H), (36.0, 19.5, 0.02), (30.0, 19.5, 0.02)], M["plinth"], (0, 0, 1))
+    quad(b, [(30.0, 16.95, PLAT_H), (36.0, 16.95, PLAT_H), (36.0, 19.5, 0.04), (30.0, 19.5, 0.04)], M["platform"], (0, 0.3, 1), (4, 4))
+    # служебные постройки: двухэтажное здание дальше по путям и сарай
+    b.box((102.0, 27.5, 0), (139.0, 42.5, 7.0), fx(M["station"], SIDES), scale=(3, 3))
+    b.box((102.0, 27.5, 7.0), (139.0, 42.5, 7.2), fx(M["snow"], OPEN), scale=(3, 3))
+    for i in range(8):
+        for z in (1.2, 4.4):
+            b.box((104.5 + i * 4.4, 27.49, z), (106.0 + i * 4.4, 27.5, z + 1.5), fx(M["dark"], ('-Y',)), scale=(1, 1))
+    col.box((102.0, 27.5, 0), (139.0, 42.5, 7.0), fx(M["plinth"], ALL))
+    b.box((67.0, 36.0, 0), (78.0, 41.0, 2.6), fx(M["corr"], SIDES), scale=(4, 3))
+    b.box((66.8, 35.8, 2.6), (78.2, 41.2, 2.8), fx(M["snow"], OPEN), scale=(3, 3))
+    col.box((67.0, 36.0, 0), (78.0, 41.0, 2.8), fx(M["plinth"], ALL))
 
 
 def props(coll):
     b, col = B(), B()
-    (a1, b1), (a2, b2) = PLATFORMS
-    c1, c2 = (a1 + b1) / 2, (a2 + b2) / 2
-    booth(b, col, -16.0, c1, 3.0, 2.2, 2.5, M["booth"], door_side=1)
-    booth(b, col, 22.0, c2, 2.6, 2.0, 2.4, M["white"], door_side=-1)
-    booth(b, col, 46.0, c1, 2.0, 1.6, 2.2, M["cabinet"], door_side=-1)
-    for x in (-40.0, -28.0, 30.0):
-        bench(b, col, x, c1 + 1.6)
-    for x in (-30.0, 36.0, 50.0):
-        bench(b, col, x, c2 - 1.6)
-    for x in (-60.0, -42.0, -24.0, 24.0, 42.0, 60.0):     # P1 — зелёные, P2 — натриевые
-        platform_lamp(b, x, c1 - 2.0, "green")
-    for x in (-58.0, -40.0, -22.0, 20.0, 40.0, 58.0):
-        platform_lamp(b, x, c2 + 1.0, "orange" if x > 0 else "green")
-    # релейные шкафы и будки у путей
-    for x, y in ((-20.0, -46.5), (-62.0, -46.8), (30.0, -31.7), (-48.0, 25.2), (58.0, 25.0), (-8.0, -16.0)):
-        b.box((x - 0.4, y - 0.3, 0), (x + 0.4, y + 0.3, 1.6), fx(M["cabinet"], SIDES), scale=(1, 1.6))
-        b.box((x - 0.45, y - 0.35, 1.6), (x + 0.45, y + 0.35, 1.75), fx(M["snow"], OPEN), scale=(3, 3))
-        col.box((x - 0.4, y - 0.3, 0), (x + 0.4, y + 0.3, 1.6), fx(M["plinth"], ALL))
-    # павильон «Одеса-Східна» на северной стороне (как на фото): стены, двускатная крыша на столбах, вывеска на фронтоне
-    sx0, sx1, sy0, sy1, wh = -26.0, -8.0, 44.0, 52.0, 3.4
-    b.box((sx0 + 2, sy0 + 1.5, 0), (sx1 - 2, sy1, wh), fx(M["station"], SIDES), scale=(3, 3))
-    col.box((sx0 + 2, sy0 + 1.5, 0), (sx1 - 2, sy1, wh), fx(M["plinth"], ALL))
-    for x in (sx0 + 0.5, sx1 - 0.5):
-        b.box((x - 0.25, sy0 + 0.2, 0), (x + 0.25, sy0 + 0.7, wh), fx(M["station"], SIDES), scale=(3, 3))
-        col.box((x - 0.25, sy0 + 0.2, 0), (x + 0.25, sy0 + 0.7, wh), fx(M["plinth"], ALL))
-    yr = (sy0 + sy1) / 2
-    ov = 0.8
-    for ya, yb in ((sy0 - ov, yr), (sy1 + ov, yr)):
-        pts = [(sx0 - ov, ya, wh), (sx1 + ov, ya, wh), (sx1 + ov, yb, wh + 2.2), (sx0 - ov, yb, wh + 2.2)]
-        quad(b, pts, M["snow"], (0, ya - yr, 1), (3, 3))
-        quad(b, [(p[0], p[1], p[2] - 0.15) for p in pts], M["roof"], (0, 0, -1), (3, 3))
-    for xe, s in ((sx0 - ov, -1), (sx1 + ov, 1)):
-        quad(b, [(xe, sy0 - ov, wh), (xe, sy1 + ov, wh), (xe, yr, wh + 2.2)], M["station"], (s, 0, 0), (3, 3))
-    b.box((sx0 + 3, sy0 - ov - 0.02, wh + 0.2), (sx1 - 3, sy0 - ov, wh + 0.9), {'-Y': (M["sign"], (0, 0, 1, 1))})
-    for x in range(int(sx0) + 4, int(sx1) - 2, 3):          # окна-проёмы тёмные, одно светится
-        b.box((x, sy0 + 1.49, 1.0), (x + 1.4, sy0 + 1.5, 2.4), fx(M["glass"] if x == int(sx0) + 7 else M["metal"], ('-Y',)), scale=(1.4, 1.4))
-    lamp("station", "orange", (-17.0, sy0 - 0.5, 0), (-17.0, sy0 - 0.5, wh - 0.3), energy=6.0)
-    # фонари на земле у лестниц моста
-    for x, y, c in ((4.0, -74.0, "orange"), (-4.0, 50.0, "green")):
-        b.cyl((x, y, 0), (x, y, 7.4), 0.13, 0.07, M["metal"], segs=8, su=2)
-        b.cyl((x, y, 7.3), (x - 1.4 * (1 if x > 0 else -1), y, 7.7), 0.05, 0.045, M["metal"], segs=6)
-        hx = x - 1.5 * (1 if x > 0 else -1)
-        b.box((hx - 0.3, y - 0.18, 7.55), (hx + 0.3, y + 0.18, 7.75), fx(M["metal"], ALL), scale=(1, 1))
-        b.box((hx - 0.25, y - 0.14, 7.47), (hx + 0.25, y + 0.14, 7.55), fx(M["lamp_o"] if c == "orange" else M["lamp_g"], ('-Z',)), scale=(1, 1))
-        col.box((x - 0.15, y - 0.15, 0), (x + 0.15, y + 0.15, 7.4), fx(M["plinth"], ALL))
-        lamp("ground", c, (x, y, 0), (hx, y, 7.4))
+    # будка у подножия городской лестницы, жёлтый ларёк у ограды, релейный шкаф на ножках между восточными путями
+    booth(b, col, -36.0, (PLATFORMS[0][0] + PLATFORMS[0][1]) / 2 + 0.1, 3.5, 3.0, 2.5)
+    b.box((-5.0, -19.5, 0), (-3.0, -17.5, 2.3), fx(M["yellow"], SIDES), scale=(1, 1))
+    b.box((-5.2, -19.7, 2.3), (-2.8, -17.3, 2.45), fx(M["snow"], OPEN), scale=(3, 3))
+    col.box((-5.0, -19.5, 0), (-3.0, -17.5, 2.3), fx(M["plinth"], ALL))
+    for x, y, legs in ((-28.0, -39.5, True), (-60.0, -0.9, False), (38.0, 46.0, False), (-70.0, 50.5, False), (24.0, -0.9, False)):
+        z0 = 1.0 if legs else 0.0
+        if legs:
+            for dx in (-0.35, 0.35):
+                bar(b, (x + dx, y, 0), (x + dx, y, z0), 0.08, M["metal"])
+        b.box((x - 0.45, y - 0.35, z0), (x + 0.45, y + 0.35, z0 + 1.6), fx(M["cabinet"], SIDES), scale=(1, 1.6))
+        b.box((x - 0.5, y - 0.4, z0 + 1.6), (x + 0.5, y + 0.4, z0 + 1.75), fx(M["snow"], OPEN), scale=(3, 3))
+        col.box((x - 0.45, y - 0.35, 0), (x + 0.45, y + 0.35, z0 + 1.6), fx(M["plinth"], ALL))
+    # скамейки (синие) лицом к путям
+    for x in (-80.0, -60.0, 30.0):
+        bench(b, col, x, PLATFORMS[0][0] + 1.2, 1)
+    for x in (-50.0, 25.0, 60.0):
+        bench(b, col, x, PLATFORMS[1][1] - 1.2, -1)
+    # фонари платформ: городская — натрий, у вокзала — зелёные ртутные
+    for x in (-100.0, -74.0, -48.0, -22.0, 4.0, 30.0, 56.0, 82.0, 106.0):           # шаг ~26 м, как на фото 10001
+        t_pole(b, col, x, PLATFORMS[0][0] + 0.7, "orange")
+        t_pole(b, col, x + 4.0, PLATFORMS[1][1] - 0.7, "green")
+    station(b, col)
+    # полоса между восточными путями и платформой: штабели плит и сараи
+    for x in (-62.0, -55.0):
+        for k in range(3):
+            b.box((x - 3, -27.5 - 0.6, k * 0.22), (x + 3, -27.5 + 0.6, k * 0.22 + 0.2), fx(M["plinth"], OPEN), scale=(3.6, 0.9))
+        col.box((x - 3, -28.1, 0), (x + 3, -26.9, 0.66), fx(M["plinth"], ALL))
+    for x in (22.0, 30.0, 42.0):
+        b.box((x - 2.5, -24.0, 0), (x + 2.5, -20.5, 2.4), fx(M["corr"], SIDES), scale=(4, 3))
+        b.box((x - 2.7, -24.2, 2.4), (x + 2.7, -20.3, 2.55), fx(M["snow"], OPEN), scale=(3, 3))
+        col.box((x - 2.5, -24.0, 0), (x + 2.5, -20.5, 2.55), fx(M["plinth"], ALL))
     return build(b, "EbProps", coll), build(col, "EbPropsCol-colonly", coll)
 
 
-# ------------------------------------------------------------------ фон: панельки, гаражи, дальние огни
+# ------------------------------------------------------------------ город: улица, гаражи, рынок, тополя
+def garage_row(b, col, x0, y, n, face):
+    """Ряд гаражей 3,2 × 6 × 2,6 м, ворота в сторону face (±1 по Y)."""
+    gw, gd, gh = 3.2, 6.0, 2.6
+    L = n * gw
+    ya, yb = y - gd / 2, y + gd / 2
+    b.box((x0, ya, 0), (x0 + L, yb, gh), {'+X': M["gwall"], '-X': M["gwall"], ('-Y' if face > 0 else '+Y'): M["gwall"]}, scale=(2, 2))
+    col.box((x0, ya, 0), (x0 + L, yb, gh + 0.3), fx(M["plinth"], ALL))
+    yf = yb if face > 0 else ya
+    k = '+Y' if face > 0 else '-Y'
+    for i in range(n):
+        x = x0 + i * gw
+        b.box((x, yf - 0.01, 0), (x + 0.3, yf + 0.01, gh), {k: M["gwall"]}, scale=(2, 2))
+        b.box((x + gw - 0.3, yf - 0.01, 0), (x + gw, yf + 0.01, gh), {k: M["gwall"]}, scale=(2, 2))
+        b.box((x + 0.3, yf - 0.01, 2.2), (x + gw - 0.3, yf + 0.01, gh), {k: M["gwall"]}, scale=(2, 2))
+        v = rnd.randint(0, 3)
+        b.box((x + 0.3, yf + face * 0.02, 0), (x + gw - 0.3, yf + face * 0.03, 2.2), {k: (M["gdoor"], (v / 4, 0, (v + 1) / 4, 1))})
+    b.box((x0 - 0.2, ya - 0.3, gh), (x0 + L + 0.2, yb + 0.3, gh + 0.15), fx(M["roof"], ('+X', '-X', '+Y', '-Y', '-Z')), scale=(3, 3))
+    b.box((x0 - 0.1, ya - 0.2, gh + 0.15), (x0 + L + 0.1, yb + 0.2, gh + 0.32), fx(M["snow"], OPEN), scale=(4, 4))
+
+
+def kiosk(b, col, x, y):
+    """Ларёк у улицы, витрина светится (к улице, −Y… +Y)."""
+    w, d, h = 3.0, 2.0, 2.6
+    b.box((x - w / 2, y - d / 2, 0), (x + w / 2, y + d / 2, h), {'+Y': (M["kiosk"], (0, 0, 1, 1))})
+    side = (M["kiosk"], (0, 0.02, 1, 0.3))
+    b.box((x - w / 2, y - d / 2, 0), (x + w / 2, y + d / 2, h), {'+X': side, '-X': side, '-Y': side})
+    b.box((x - w / 2 - 0.25, y - d / 2 - 0.1, h), (x + w / 2 + 0.25, y + d / 2 + 0.4, h + 0.12), fx(M["metal"], ('+X', '-X', '+Y', '-Y', '-Z')), scale=(1, 1))
+    b.box((x - w / 2 - 0.2, y - d / 2 - 0.05, h + 0.12), (x + w / 2 + 0.2, y + d / 2 + 0.35, h + 0.28), fx(M["snow"], OPEN), scale=(3, 3))
+    col.box((x - w / 2, y - d / 2, 0), (x + w / 2, y + d / 2, h), fx(M["plinth"], ALL))
+
+
+def city(coll):
+    b, col, veg = B(), B(), B()
+    # гаражи к северо-востоку от городской лестницы (спутник; на фото 10000, 10013 — заснеженные крыши)
+    for y, face in ((-63.0, -1), (-75.0, 1), (-81.5, -1)):
+        x = 14.0
+        while x < 104.0:
+            n = min(9, int((104.0 - x) / 3.2))
+            garage_row(b, col, x, y, n, face)
+            x += n * 3.2 + 4.0
+    # рынок «Сільський»: одноэтажный ангар с низкой крышей южнее улицы
+    mx0, mx1, my0, my1, mh = -62.0, -26.0, -150.0, -104.0, 6.0
+    b.box((mx0, my0, 0), (mx1, my1, mh), fx(M["corr"], SIDES), scale=(4, 6))
+    b.box((mx0 - 0.3, my0 - 0.3, mh), (mx1 + 0.3, my1 + 0.3, mh + 0.25), fx(M["roof"], ('+X', '-X', '+Y', '-Y', '-Z')), scale=(3, 3))
+    b.box((mx0 - 0.2, my0 - 0.2, mh + 0.25), (mx1 + 0.2, my1 + 0.2, mh + 0.4), fx(M["snow"], OPEN), scale=(4, 4))
+    for x in (-56.0, -44.0, -32.0):                        # ворота и витрины к улице
+        b.box((x - 2.0, my1 + 0.01, 0), (x + 2.0, my1 + 0.03, 3.2), fx(M["gdoor"], ('+Y',)), scale=(4, 3.2))
+    b.box((-50.0, my1 + 0.01, 3.6), (-38.0, my1 + 0.03, 4.8), {'+Y': (M["kiosk"], (0, 0.7, 1, 1))})
+    col.box((mx0, my0, 0), (mx1, my1, mh), fx(M["plinth"], ALL))
+    # ларьки и фонари вдоль улицы
+    for x in (-18.0, -10.0, 14.0):
+        kiosk(b, col, x, STREET[0] - 2.5)
+    for x in (-24.0, 20.0, 64.0):
+        street_lamp(b, col, x, STREET[1] + 0.8, (0, -1))
+    # частный сектор к северо-востоку (за гаражами) — двускатные дома
+    for i in range(10):
+        x = 130.0 + i * 24.0 + rnd.uniform(-4, 4)
+        for y in (-70.0, -120.0):
+            gable(b, x, y + rnd.uniform(-5, 5), rnd.choice((0.0, math.pi / 2)), rnd.uniform(7, 9), rnd.uniform(8, 10),
+                  3.0, 2.4, M["house"], wall_uv=house_uv(rnd.randint(0, 3)), lit=0.2)
+    # тополя рядами (10013, 10008) и деревья
+    for x in range(8, 104, 9):
+        h = rnd.uniform(18, 24)
+        crossed(veg, x + rnd.uniform(-1, 1), -88.5 + rnd.uniform(-0.5, 0.5), 0, h * 0.2, h, M["poplar"], rnd.uniform(0, 3))
+    for x, y in ((-80.0, -70.0), (-70.0, -64.0), (-95.0, -80.0), (-40.0, -78.0), (-52.0, -66.0), (-15.0, -62.0),
+                 (-88.0, -60.0), (-30.0, -84.0), (110.0, -100.0), (-75.0, -112.0)):
+        h = rnd.uniform(7, 11)
+        crossed(veg, x, y, 0, h, h, M["tree"], rnd.uniform(0, 3))
+    for i in range(30):                                    # тополя за рынком и у домов — фон
+        x, y = rnd.uniform(-220, 220), rnd.uniform(-240, -130)
+        h = rnd.uniform(18, 25)
+        crossed(veg, x, y, 0, h * 0.2, h, M["poplar"], rnd.uniform(0, 3))
+    return build(b, "EbCity", coll), build(veg, "EbCityTrees_nocol", coll), build(col, "EbCityCol-colonly", coll)
+
+
+# ------------------------------------------------------------------ поле, пруд, ЛЭП, село
+def house_uv(k):
+    """Клетка атласа eb_house: столбец k (цвет), строка — окно тёмное или горит."""
+    def f(lit):
+        u0, u1 = k / 4 + 0.004, (k + 1) / 4 - 0.004
+        return (u0, 0.004, u1, 0.496) if lit else (u0, 0.504, u1, 0.996)
+    return f
+
+
+def strip(b, pts, w, m, z=0.03):
+    """Дорога-лента по ломаной pts шириной w (u — поперёк, тайл 4 м; v — вдоль, 8 м)."""
+    v = 0.0
+    for (ax, ay), (bx_, by) in zip(pts, pts[1:]):
+        dx, dy = bx_ - ax, by - ay
+        L = math.hypot(dx, dy)
+        nx, ny = -dy / L * w / 2, dx / L * w / 2
+        quad(b, [(ax - nx, ay - ny, z), (ax + nx, ay + ny, z), (bx_ + nx, by + ny, z), (bx_ - nx, by - ny, z)], m, (0, 0, 1),
+             uvs=[(0, v / 8), (w / 4, v / 8), (w / 4, (v + L) / 8), (0, (v + L) / 8)])
+        v += L
+
+
+def pylon(b, col, x, y, along, h=30.0):
+    """Опора ЛЭП 110 кВ (10033, 10025): решётчатая пирамида 5 → 1,2 м, три траверсы, тросостойка."""
+    w0, w1 = 2.5, 0.6
+    cs = [(-1, -1), (1, -1), (1, 1), (-1, 1)]
+    for (ax, ay), (bx_, by) in zip(cs, cs[1:] + cs[:1]):
+        b.poly([(x + ax * w0, y + ay * w0, 0), (x + bx_ * w0, y + by * w0, 0), (x + bx_ * w1, y + by * w1, h), (x + ax * w1, y + ay * w1, h)],
+               [(0, 0), (0, 1), (h / 2, 1), (h / 2, 0)], M["lattice"])
+    for ax, ay in cs:
+        col.box((x + ax * w0 - 0.2, y + ay * w0 - 0.2, 0), (x + ax * w0 + 0.2, y + ay * w0 + 0.2, 4.0), fx(M["plinth"], ALL))
+    tips = []
+    axis = 'X' if abs(along[1]) > 0.5 else 'Y'             # траверсы поперёк линии
+    for z, half in ((h - 12, 4.5), (h - 7, 4.0), (h - 2, 3.5)):
+        if axis == 'X':
+            lattice_box(b, y, x - half, x + half, z - 0.8, z, 0.9, axis='X')
+            tips += [(x - half, y, z - 0.8), (x + half, y, z - 0.8)]
+        else:
+            lattice_box(b, x, y - half, y + half, z - 0.8, z, 0.9)
+            tips += [(x, y - half, z - 0.8), (x, y + half, z - 0.8)]
+    bar(b, (x, y, h), (x, y, h + 2.5), 0.25, M["metal"])
+    tips.append((x, y, h + 2.5))
+    return tips
+
+
+def power_line(b, wires, col, towers, along):
+    prev = None
+    for x, y in towers:
+        tips = pylon(b, col, x, y, along)
+        if prev:
+            for p0, p1 in zip(prev, tips):
+                ins = 1.6 if p0 != prev[-1] else 0.0
+                cable(wires, (p0[0], p0[1], p0[2] - ins), (p1[0], p1[1], p1[2] - ins), sag=4.0, n=6)
+        prev = tips
+    for p0 in prev[:-1]:                                   # гирлянды изоляторов
+        pass
+
+
+def village(b, veg, x0, y0, ang, streets, n_per_side, lit_p=0.2, plot_w=22.0, depth=45.0):
+    """Село: улицы вдоль направления ang, через 2·depth+6 м; по обе стороны — участки plot_w с домом,
+    забором из профлиста к улице, деревьями в саду."""
+    c, s = math.cos(ang), math.sin(ang)
+    P = lambda u, v: (x0 + u * c - v * s, y0 + u * s + v * c)
+    for si in range(streets):
+        v_st = si * (2 * depth + 6.0)
+        for side in (-1, 1):
+            for i in range(n_per_side):
+                if rnd.random() < 0.12:
+                    continue
+                u = i * plot_w + rnd.uniform(-2, 2)
+                vf = v_st + side * 4.0                      # линия забора у улицы
+                hx, hy = P(u + plot_w / 2, v_st + side * (4.0 + 5.0 + 4.5))
+                along = rnd.random() < 0.5
+                k = rnd.randint(0, 3)
+                gable(b, hx, hy, ang + (0 if along else math.pi / 2), rnd.uniform(7.5, 9.5), rnd.uniform(8.5, 11.0),
+                      rnd.uniform(2.8, 3.2), rnd.uniform(2.3, 2.8), M["house"], wall_uv=house_uv(k), lit=lit_p)
+                # забор к улице: профлист 1,9 м с калиткой
+                r = rnd.randint(0, 2)
+                v0, v1 = 1 - (r + 1) / 3 + 0.01, 1 - r / 3 - 0.01
+                for ua, ub in ((u + 0.5, u + plot_w * 0.6), (u + plot_w * 0.6 + 1.2, u + plot_w - 0.5)):
+                    a, e = P(ua, vf), P(ub, vf)
+                    L = math.hypot(e[0] - a[0], e[1] - a[1])
+                    b.poly([(a[0], a[1], 0), (e[0], e[1], 0), (e[0], e[1], 1.9), (a[0], a[1], 1.9)],
+                           [(0, v0), (L / 4, v0), (L / 4, v1), (0, v1)], M["corr"])
+                # сад: 1–3 голых дерева
+                for t in range(rnd.randint(1, 3)):
+                    tx, ty = P(u + rnd.uniform(3, plot_w - 3), v_st + side * rnd.uniform(22, depth - 3))
+                    h = rnd.uniform(5, 9)
+                    crossed(veg, tx, ty, 0, h, h, M["tree"], rnd.uniform(0, 3))
+        # столбы с фонарями вдоль улицы (головка светится, свет — только у ближних)
+        for i in range(0, n_per_side * int(plot_w), 45):
+            px, py = P(i, v_st - 3.5)
+            b.cyl((px, py, 0), (px, py, 8.0), 0.13, 0.08, M["pole"], segs=6, su=2)
+            hx, hy = P(i, v_st - 2.0)
+            b.box((hx - 0.25, hy - 0.25, 7.8), (hx + 0.25, hy + 0.25, 8.0), fx(M["metal"], OPEN), scale=(1, 1))
+            if rnd.random() < 0.5:
+                b.box((hx - 0.2, hy - 0.2, 7.74), (hx + 0.2, hy + 0.2, 7.8), fx(M["lamp_o"], ('-Z',)), scale=(1, 1))
+
+
+def field(coll):
+    b, veg, col, wires = B(), B(), B(), B()
+    # грунтовки: вдоль парка, ответвление в село мимо пруда, тропа от спуска с моста
+    strip(b, [(-350, 115.5), (-97, 115.5), (300, 115.5)], 3.5, M["road"])
+    strip(b, [(-97, 117.3), (-82, 250), (-60, 395), (-30, 470)], 3.5, M["road"])
+    strip(b, [(-56, 94), (-70, 104), (-80, 113.8)], 1.6, M["road"], z=0.035)
+    strip(b, [(-8, 117.3), (20, 200), (55, 300), (70, 390)], 1.4, M["road"], z=0.035)
+    # пруд: замёрзший, в кольце камыша
+    cx, cy, ra, rb, ang = 0.0, 410.0, 60.0, 27.5, math.radians(-52)
+    ring = []
+    for i in range(14):
+        a = 2 * math.pi * i / 14
+        r = 1 + 0.12 * math.sin(a * 3 + 1)
+        lx, ly = ra * r * math.cos(a), rb * r * math.sin(a)
+        ring.append((cx + lx * math.cos(ang) - ly * math.sin(ang), cy + lx * math.sin(ang) + ly * math.cos(ang)))
+    b.poly([(x, y, 0.03) for x, y in ring], [(x / 6, y / 6) for x, y in ring], M["ice"])
+    for i, (x, y) in enumerate(ring):
+        nx, ny = ring[(i + 1) % len(ring)]
+        for t in range(6):
+            px, py = x + (nx - x) * t / 6 + rnd.uniform(-2, 2), y + (ny - y) * t / 6 + rnd.uniform(-2, 2)
+            crossed(veg, px, py, 0, rnd.uniform(2.0, 3.0), rnd.uniform(1.6, 2.4), M["grass"], rnd.uniform(0, 3))
+    # лесополоса по балке: от пруда на северо-восток
+    belt = [(0, 395), (200, 295), (365, 215), (520, 160)]
+    for (ax, ay), (bx_, by) in zip(belt, belt[1:]):
+        L = math.hypot(bx_ - ax, by - ay)
+        for i in range(int(L / 6)):
+            t = i / (L / 6)
+            o = rnd.uniform(-22, 22)
+            nx, ny = -(by - ay) / L, (bx_ - ax) / L
+            x, y = ax + (bx_ - ax) * t + nx * o, ay + (by - ay) * t + ny * o
+            h = rnd.uniform(7, 12)
+            crossed(veg, x, y, 0, h, h, M["tree"], rnd.uniform(0, 3))
+    # кусты вдоль грунтовки у парка и край поля
+    for i in range(46):
+        x = rnd.uniform(-300, 280)
+        y = 112.0 + rnd.choice((-1, 1)) * rnd.uniform(3, 9)
+        h = rnd.uniform(2.5, 5.5)
+        crossed(veg, x, y, 0, h * 1.1, h, M["tree"], rnd.uniform(0, 3))
+    # сухая трава и бурьян из-под снега: густо у моста, реже дальше
+    for i in range(1800):
+        x, y = rnd.uniform(-115, 115), rnd.uniform(92, Y_FIELD + 10)
+        if abs(y - 115.5) < 2.2:
+            continue
+        s = rnd.uniform(0.8, 1.6)
+        crossed(veg, x, y, 0, s, s * rnd.uniform(0.6, 0.9), M["grass"], rnd.uniform(0, 3))
+    for i in range(1400):
+        x, y = rnd.uniform(-450, 450), rnd.uniform(Y_FIELD, 620)
+        s = rnd.uniform(1.0, 2.2)
+        crossed(veg, x, y, 0, s, s * 0.8, M["grass"], rnd.uniform(0, 3))
+    for i in range(250):                                   # полоса у вокзала и вдоль путей
+        x, y = rnd.uniform(-110, 110), rnd.uniform(18, 50)
+        if 38 < x < 66 and 15 < y < 38:
+            continue
+        s = rnd.uniform(0.7, 1.3)
+        crossed(veg, x, y, 0, s, s * 0.7, M["grass"], rnd.uniform(0, 3))
+    for x, y in ((20.0, 44.0), (28.0, 40.0), (66.0, 45.0), (75.0, 30.0), (84.0, 46.0), (-20.0, 40.0), (-35.0, 46.0),
+                 (-48.0, 38.0), (-62.0, 44.0), (90.0, 22.0)):
+        h = rnd.uniform(7, 12)
+        crossed(veg, x, y, 0, h, h, M["tree"], rnd.uniform(0, 3))
+    # край играбельного поля — снежный вал с кустами
+    for i in range(60):
+        x = -110 + i * 3.7
+        crossed(veg, x + rnd.uniform(-1, 1), Y_FIELD + rnd.uniform(0, 2), 0, 3.0, rnd.uniform(1.5, 3.0), M["tree"], rnd.uniform(0, 3))
+    quad(b, [(-XMAX, Y_FIELD - 3, 0.0), (XMAX, Y_FIELD - 3, 0.0), (XMAX, Y_FIELD + 1, 1.1), (-XMAX, Y_FIELD + 1, 1.1)], M["snow"], (0, -1, 1), (6, 6))
+    quad(b, [(-XMAX, Y_FIELD + 1, 1.1), (XMAX, Y_FIELD + 1, 1.1), (XMAX, Y_FIELD + 5, 0.0), (-XMAX, Y_FIELD + 5, 0.0)], M["snow"], (0, 1, 1), (6, 6))
+    # ЛЭП: одна поперёк путей через поле, другая вдоль, дальше
+    power_line(b, wires, col, [(75.0, 150.0), (75.0, 275.0), (75.0, 400.0), (75.0, 525.0), (75.0, 650.0)], (0, 1))
+    power_line(b, wires, col, [(-350.0, 345.0), (-120.0, 345.0), (180.0, 345.0), (430.0, 345.0)], (1, 0))
+    # сёла: юго-западное (Корсунці) — сразу за краем поля, улицы почти вдоль путей; северное (Польова) — за прудом
+    village(b, veg, -112.0, 238.0, math.radians(169), 4, 14, lit_p=0.35)
+    village(b, veg, -150.0, 470.0, math.radians(-52), 3, 11, lit_p=0.3)
+    village(b, veg, 120.0, 520.0, math.radians(-52), 2, 9, lit_p=0.18)
+    # ближние к полю фонари села — настоящие (свет)
+    for x, y in ((-114.0, 236.0), (-114.0, 340.0)):
+        street_lamp(b, col, x, y, (1, 0), kind="village", h=8.0)
+    return (build(b, "EbField", coll), build(veg, "EbFieldPlants_nocol", coll), build(wires, "EbPowerWires_nocol", coll),
+            build(col, "EbFieldCol-colonly", coll))
+
+
+# ------------------------------------------------------------------ фон: панельки в городе, огни сёл
 def backdrop(coll):
-    """Дома за заборами (шейдер окон shaders/backdrop_house.gdshader, как у района): UV — метры, UV2 — (номер+оттенок, доля окон)."""
+    """Дома за краем (шейдер окон shaders/backdrop_house.gdshader, как у района): UV — метры, UV2 — (номер+оттенок, доля окон)."""
     me = {"v": [], "f": [], "uv": [], "uv2": [], "mi": []}
 
     def poly(pts, uvs, uv2, mi=0):
@@ -661,33 +1280,28 @@ def backdrop(coll):
         poly([(x0, y0, h), (x1, y0, h), (x1, y1, h), (x0, y1, h)], [(0, 0)] * 4, (uv2[0], -1.0))
 
     def glow(x, y, z, s, kind=0.0):
-        """Дальний огонь: квадрат лицом к станции."""
+        """Дальний огонь: квадрат лицом к мосту."""
         ang = math.atan2(-y, -x)
         tx, ty = -math.sin(ang) * s, math.cos(ang) * s
         poly([(x - tx, y - ty, z - s), (x + tx, y + ty, z - s), (x + tx, y + ty, z + s), (x - tx, y - ty, z + s)],
              [(0, 0), (1, 0), (1, 1), (0, 1)], (kind, 0.0), 1)
 
     k = 0
-    # юг: ряд девятиэтажек за забором, за ними свечки
-    for i, x in enumerate(range(-150, 160, 70)):
-        house(k, x + (i % 2) * 12, -105 - (i % 3) * 6, 60, 12, 27.5, 0.35); k += 1
-    for x in (-120, -40, 30, 95):
-        house(k, x, -150, 18, 18, 48, 0.3); k += 1
-    # север: девятиэтажки и шестнадцатиэтажки (на ночных фото — за путями)
-    for i, x in enumerate(range(-160, 170, 64)):
-        house(k, x, 92 + (i % 2) * 10, 54, 12, 27.5 if i % 3 else 45, 0.4); k += 1
-    for x in (-90, 10, 120):
-        house(k, x, 140, 60, 12, 30, 0.3); k += 1
-    # частный сектор и склады у путей (низкие, на восток и запад, за краем)
-    for side in (-1, 1):
-        for i in range(6):
-            house(k, side * (190 + i * 22), -60 + i * 25, 16, 10, 6 if i % 2 else 9, 0.12); k += 1
-    # дальние огни: натрий над путями на востоке и западе, огни города
-    for side in (-1, 1):
-        for i in range(10):
-            glow(side * (180 + i * 18), -40 + (i * 13) % 70, 10, 0.9, 0.0)
-    for i in range(14):
-        glow(-200 + i * 30, 170, 6 + (i % 3) * 4, 0.7, 0.0)
+    # девятиэтажка с «Копійкой» — длинная, прямо по ходу с моста (10000)
+    house(k, 29.0, -157.0, 120.0, 13.0, 27.5, 0.38); k += 1
+    # пояс девяти- и двенадцатиэтажек
+    for x, y, w, h in ((-150, -215, 60, 27.5), (125, -230, 60, 27.5), (-60, -290, 72, 33.0), (230, -320, 60, 27.5),
+                       (-260, -260, 54, 27.5), (40, -380, 84, 33.0), (-200, -380, 60, 27.5), (300, -200, 54, 27.5)):
+        house(k, x, y, w, 13.0, h, 0.35); k += 1
+    # шестнадцатиэтажки-свечки (10013, 10008)
+    for x, y in ((-120, -330), (60, -350), (200, -420), (-30, -430), (330, -380)):
+        house(k, x, y, 24.0, 18.0, 48.0, 0.3); k += 1
+    # огни: город — натрий над крышами, сёла — тёплые окошки и редкие белые фонари
+    for i in range(16):
+        glow(-260 + i * 34, -175 - (i % 3) * 40, 8 + (i % 4) * 3, 0.8, 0.0)
+    for i in range(46):
+        x, y = rnd.uniform(-560, 260), rnd.uniform(240, 700)
+        glow(x, y, rnd.uniform(1.5, 6.5), rnd.uniform(0.3, 0.5), 0.0 if rnd.random() < 0.85 else 1.0)
 
     m = bpy.data.meshes.new("EbBackdrop_nocol")
     m.from_pydata(me["v"], [], me["f"])
@@ -696,7 +1310,7 @@ def backdrop(coll):
     for i in range(len(me["uv"])):
         l1.data[i].uv = me["uv"][i]
         l2.data[i].uv = me["uv2"][i]
-    m.materials.append(M["house"])
+    m.materials.append(M["house_bd"])
     m.materials.append(M["glow"])
     for p, mi in zip(m.polygons, me["mi"]):
         p.material_index = mi
@@ -708,17 +1322,20 @@ def backdrop(coll):
 
 # ------------------------------------------------------------------ сборка и экспорт
 PARTS = [
-    ("eb_ground", lambda c: [ground(c), *tracks(c), platforms(c), *fences(c)]),
+    ("eb_ground", lambda c: [ground(c), *tracks(c), *platforms(c), *bounds(c)]),
     ("eb_bridge", lambda c: list(bridge(c))),
     ("eb_catenary", lambda c: list(catenary(c))),
     ("eb_trains", lambda c: list(trains(c))),
     ("eb_props", lambda c: list(props(c))),
+    ("eb_city", lambda c: list(city(c))),
+    ("eb_field", lambda c: list(field(c))),
     ("eb_backdrop", lambda c: [backdrop(c)]),
 ]
 
 
 def main(export=True):
     LIGHTS.clear()
+    rnd.seed(2024)
     materials()
     sc = bpy.data.scenes.get("EastBridge") or bpy.data.scenes.new("EastBridge")
     if bpy.context.window:
@@ -739,8 +1356,12 @@ def main(export=True):
         c = bpy.data.collections.new(name)
         sc.collection.children.link(c)
         obs = fn(c)
-        stats[name] = sum(len(o.data.polygons) for o in obs)
+        stats[name] = sum(len(o.data.polygons) for o in obs if "colonly" not in o.name)
         groups.append((name, obs))
+    for o in sc.objects:                                   # коллизию в окне Blender — каркасом, чтобы не закрывала модели
+        if "colonly" in o.name:
+            o.display_type = 'WIRE'
+            o.hide_render = True
     if export:
         vl = sc.view_layers[0]
         for other in bpy.data.scenes:                      # в других сценах ничего не должно быть выделено

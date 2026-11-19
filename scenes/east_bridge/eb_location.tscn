@@ -5,6 +5,8 @@
 [ext_resource type="PackedScene" path="res://assets/models/east_bridge/eb_catenary.gltf" id="eb_catenary"]
 [ext_resource type="PackedScene" path="res://assets/models/east_bridge/eb_trains.gltf" id="eb_trains"]
 [ext_resource type="PackedScene" path="res://assets/models/east_bridge/eb_props.gltf" id="eb_props"]
+[ext_resource type="PackedScene" path="res://assets/models/east_bridge/eb_city.gltf" id="eb_city"]
+[ext_resource type="PackedScene" path="res://assets/models/east_bridge/eb_field.gltf" id="eb_field"]
 [ext_resource type="PackedScene" path="res://assets/models/east_bridge/eb_backdrop.gltf" id="eb_backdrop"]
 [ext_resource type="Script" path="res://scripts/world/backdrop.gd" id="bd"]
 [ext_resource type="PackedScene" path="res://scenes/props/street_light.tscn" id="sl"]
@@ -21,6 +23,10 @@
 
 [node name="Props" parent="." instance=ExtResource("eb_props")]
 
+[node name="City" parent="." instance=ExtResource("eb_city")]
+
+[node name="Field" parent="." instance=ExtResource("eb_field")]
+
 [node name="Backdrop" type="Node3D" parent="."]
 script = ExtResource("bd")
 
@@ -29,159 +35,345 @@ script = ExtResource("bd")
 [node name="Lights" type="Node3D" parent="."]
 
 [node name="BridgeLamp1" parent="Lights" instance=ExtResource("sl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, 50)
-color = Color(0.45, 1, 0.42, 1)
-energy = 30
-head_offset = Vector3(1.05, 4.68, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, -90)
+color = Color(0.62, 0.95, 0.7, 1)
+energy = 12
+head_offset = Vector3(1.4, 3.72, 0)
 
 [node name="BridgeLamp2" parent="Lights" instance=ExtResource("sl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.62, 7.52, 35)
-color = Color(0.45, 1, 0.42, 1)
-energy = 30
-head_offset = Vector3(-1.05, 4.68, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, -78)
+color = Color(0.62, 0.95, 0.7, 1)
+energy = 12
+head_offset = Vector3(1.4, 3.72, 0)
 
 [node name="BridgeLamp3" parent="Lights" instance=ExtResource("sl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, 16)
-color = Color(0.45, 1, 0.42, 1)
-energy = 30
-head_offset = Vector3(1.05, 4.68, 0)
-flicker = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, -66)
+color = Color(0.62, 0.95, 0.7, 1)
+energy = 12
+head_offset = Vector3(1.4, 3.72, 0)
 
 [node name="BridgeLamp4" parent="Lights" instance=ExtResource("sl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.62, 7.52, 3)
-color = Color(0.45, 1, 0.42, 1)
-energy = 30
-head_offset = Vector3(-1.05, 4.68, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, -54)
+color = Color(0.62, 0.95, 0.7, 1)
+energy = 12
+head_offset = Vector3(1.4, 3.72, 0)
+flicker = true
 
 [node name="BridgeLamp5" parent="Lights" instance=ExtResource("sl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, -10)
-color = Color(0.45, 1, 0.42, 1)
-energy = 30
-head_offset = Vector3(1.05, 4.68, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, -42)
+color = Color(0.62, 0.95, 0.7, 1)
+energy = 12
+head_offset = Vector3(1.4, 3.72, 0)
 
 [node name="BridgeLamp6" parent="Lights" instance=ExtResource("sl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.62, 7.52, -22)
-color = Color(0.45, 1, 0.42, 1)
-energy = 30
-head_offset = Vector3(-1.05, 4.68, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, -30)
+color = Color(0.62, 0.95, 0.7, 1)
+energy = 12
+head_offset = Vector3(1.4, 3.72, 0)
 
 [node name="BridgeLamp7" parent="Lights" instance=ExtResource("sl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, -32)
-color = Color(0.45, 1, 0.42, 1)
-energy = 30
-head_offset = Vector3(1.05, 4.68, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, -18)
+color = Color(0.62, 0.95, 0.7, 1)
+energy = 12
+head_offset = Vector3(1.4, 3.72, 0)
+
+[node name="BridgeLamp8" parent="Lights" instance=ExtResource("sl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, -6)
+color = Color(0.62, 0.95, 0.7, 1)
+energy = 12
+head_offset = Vector3(1.4, 3.72, 0)
+
+[node name="BridgeLamp9" parent="Lights" instance=ExtResource("sl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, 6)
+color = Color(0.62, 0.95, 0.7, 1)
+energy = 12
+head_offset = Vector3(1.4, 3.72, 0)
+
+[node name="BridgeLamp10" parent="Lights" instance=ExtResource("sl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, 18)
+color = Color(0.62, 0.95, 0.7, 1)
+energy = 12
+head_offset = Vector3(1.4, 3.72, 0)
+
+[node name="BridgeLamp11" parent="Lights" instance=ExtResource("sl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, 30)
+color = Color(0.62, 0.95, 0.7, 1)
+energy = 12
+head_offset = Vector3(1.4, 3.72, 0)
+
+[node name="BridgeLamp12" parent="Lights" instance=ExtResource("sl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, 42)
+color = Color(0.62, 0.95, 0.7, 1)
+energy = 12
+head_offset = Vector3(1.4, 3.72, 0)
+
+[node name="BridgeLamp13" parent="Lights" instance=ExtResource("sl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, 54)
+color = Color(0.62, 0.95, 0.7, 1)
+energy = 12
+head_offset = Vector3(1.4, 3.72, 0)
+
+[node name="BridgeLamp14" parent="Lights" instance=ExtResource("sl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, 66)
+color = Color(1, 0.52, 0.18, 1)
+energy = 12
+head_offset = Vector3(1.4, 3.72, 0)
+
+[node name="BridgeLamp15" parent="Lights" instance=ExtResource("sl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.45, 6.274, -92.28)
+color = Color(0.62, 0.95, 0.7, 1)
+energy = 12
+head_offset = Vector3(0, 3.72, -1.4)
+
+[node name="BridgeLamp16" parent="Lights" instance=ExtResource("sl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.05, 3.922, -92.28)
+color = Color(0.62, 0.95, 0.7, 1)
+energy = 12
+head_offset = Vector3(0, 3.72, -1.4)
+
+[node name="BridgeLamp17" parent="Lights" instance=ExtResource("sl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -46.95, 1.402, -92.28)
+color = Color(0.62, 0.95, 0.7, 1)
+energy = 12
+head_offset = Vector3(0, 3.72, -1.4)
 
 [node name="Floodlight1" parent="Lights" instance=ExtResource("sl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 0, 41.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, -49)
 color = Color(1, 0.52, 0.18, 1)
 energy = 260
-head_offset = Vector3(0, 18, 0)
+head_offset = Vector3(0, 19.4, -1.5)
 
 [node name="Floodlight2" parent="Lights" instance=ExtResource("sl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 46, 0, -10)
-color = Color(1, 0.52, 0.18, 1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60, 0, -92.5)
+color = Color(0.85, 0.9, 1, 1)
 energy = 260
-head_offset = Vector3(0, 18, 0)
+head_offset = Vector3(0, 19.4, 1.5)
 
 [node name="PlatformLamp1" parent="Lights" instance=ExtResource("sl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60, 1, 26)
-color = Color(0.45, 1, 0.42, 1)
-energy = 36
-head_offset = Vector3(0, 6.1, -1.12)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -100, 1.1, 16)
+color = Color(1, 0.52, 0.18, 1)
+energy = 60
+head_offset = Vector3(0, 11.5, 0)
 
 [node name="PlatformLamp2" parent="Lights" instance=ExtResource("sl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -42, 1, 26)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -96, 1.1, -16.1)
 color = Color(0.45, 1, 0.42, 1)
-energy = 36
-head_offset = Vector3(0, 6.1, -1.12)
+energy = 60
+head_offset = Vector3(0, 11.5, 0)
 
 [node name="PlatformLamp3" parent="Lights" instance=ExtResource("sl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 1, 26)
-color = Color(0.45, 1, 0.42, 1)
-energy = 36
-head_offset = Vector3(0, 6.1, -1.12)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -74, 1.1, 16)
+color = Color(1, 0.52, 0.18, 1)
+energy = 60
+head_offset = Vector3(0, 11.5, 0)
+flicker = true
 
 [node name="PlatformLamp4" parent="Lights" instance=ExtResource("sl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 1, 26)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -70, 1.1, -16.1)
 color = Color(0.45, 1, 0.42, 1)
-energy = 36
-head_offset = Vector3(0, 6.1, -1.12)
-flicker = true
+energy = 60
+head_offset = Vector3(0, 11.5, 0)
 
 [node name="PlatformLamp5" parent="Lights" instance=ExtResource("sl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 1, 26)
-color = Color(0.45, 1, 0.42, 1)
-energy = 36
-head_offset = Vector3(0, 6.1, -1.12)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48, 1.1, 16)
+color = Color(1, 0.52, 0.18, 1)
+energy = 60
+head_offset = Vector3(0, 11.5, 0)
 
 [node name="PlatformLamp6" parent="Lights" instance=ExtResource("sl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60, 1, 26)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -44, 1.1, -16.1)
 color = Color(0.45, 1, 0.42, 1)
-energy = 36
-head_offset = Vector3(0, 6.1, -1.12)
+energy = 60
+head_offset = Vector3(0, 11.5, 0)
 
 [node name="PlatformLamp7" parent="Lights" instance=ExtResource("sl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58, 1, -3)
-color = Color(0.45, 1, 0.42, 1)
-energy = 36
-head_offset = Vector3(0, 6.1, -1.12)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 1.1, 16)
+color = Color(1, 0.52, 0.18, 1)
+energy = 60
+head_offset = Vector3(0, 11.5, 0)
 
 [node name="PlatformLamp8" parent="Lights" instance=ExtResource("sl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40, 1, -3)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 1.1, -16.1)
 color = Color(0.45, 1, 0.42, 1)
-energy = 36
-head_offset = Vector3(0, 6.1, -1.12)
-
-[node name="PlatformLamp9" parent="Lights" instance=ExtResource("sl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 1, -3)
-color = Color(0.45, 1, 0.42, 1)
-energy = 36
-head_offset = Vector3(0, 6.1, -1.12)
+energy = 60
+head_offset = Vector3(0, 11.5, 0)
 flicker = true
 
-[node name="PlatformLamp10" parent="Lights" instance=ExtResource("sl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 1, -3)
+[node name="PlatformLamp9" parent="Lights" instance=ExtResource("sl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 1.1, 16)
 color = Color(1, 0.52, 0.18, 1)
-energy = 36
-head_offset = Vector3(0, 6.1, -1.12)
+energy = 60
+head_offset = Vector3(0, 11.5, 0)
+
+[node name="PlatformLamp10" parent="Lights" instance=ExtResource("sl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 1.1, -16.1)
+color = Color(0.45, 1, 0.42, 1)
+energy = 60
+head_offset = Vector3(0, 11.5, 0)
 
 [node name="PlatformLamp11" parent="Lights" instance=ExtResource("sl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 1, -3)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 1.1, 16)
 color = Color(1, 0.52, 0.18, 1)
-energy = 36
-head_offset = Vector3(0, 6.1, -1.12)
+energy = 60
+head_offset = Vector3(0, 11.5, 0)
 
 [node name="PlatformLamp12" parent="Lights" instance=ExtResource("sl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 58, 1, -3)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 1.1, -16.1)
+color = Color(0.45, 1, 0.42, 1)
+energy = 60
+head_offset = Vector3(0, 11.5, 0)
+
+[node name="PlatformLamp13" parent="Lights" instance=ExtResource("sl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 56, 1.1, 16)
 color = Color(1, 0.52, 0.18, 1)
-energy = 36
-head_offset = Vector3(0, 6.1, -1.12)
+energy = 60
+head_offset = Vector3(0, 11.5, 0)
+
+[node name="PlatformLamp14" parent="Lights" instance=ExtResource("sl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60, 1.1, -16.1)
+color = Color(0.45, 1, 0.42, 1)
+energy = 60
+head_offset = Vector3(0, 11.5, 0)
+
+[node name="PlatformLamp15" parent="Lights" instance=ExtResource("sl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 82, 1.1, 16)
+color = Color(1, 0.52, 0.18, 1)
+energy = 60
+head_offset = Vector3(0, 11.5, 0)
+
+[node name="PlatformLamp16" parent="Lights" instance=ExtResource("sl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 86, 1.1, -16.1)
+color = Color(0.45, 1, 0.42, 1)
+energy = 60
+head_offset = Vector3(0, 11.5, 0)
+
+[node name="PlatformLamp17" parent="Lights" instance=ExtResource("sl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 106, 1.1, 16)
+color = Color(1, 0.52, 0.18, 1)
+energy = 60
+head_offset = Vector3(0, 11.5, 0)
+
+[node name="PlatformLamp18" parent="Lights" instance=ExtResource("sl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 110, 1.1, -16.1)
+color = Color(0.45, 1, 0.42, 1)
+energy = 60
+head_offset = Vector3(0, 11.5, 0)
 
 [node name="StationLamp1" parent="Lights" instance=ExtResource("sl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17, 0, -43.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 0, -30)
 color = Color(1, 0.52, 0.18, 1)
 energy = 6
-head_offset = Vector3(0, 3.1, 0)
+head_offset = Vector3(0, 2.9, 0)
 
-[node name="YardLamp1" parent="Lights" instance=ExtResource("sl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, 74)
+[node name="StreetLamp1" parent="Lights" instance=ExtResource("sl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0, 89.2)
 color = Color(1, 0.52, 0.18, 1)
 energy = 36
-head_offset = Vector3(-1.5, 7.4, 0)
+head_offset = Vector3(0, 7.45, 1.6)
 
-[node name="YardLamp2" parent="Lights" instance=ExtResource("sl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, -50)
-color = Color(0.45, 1, 0.42, 1)
+[node name="StreetLamp2" parent="Lights" instance=ExtResource("sl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, 89.2)
+color = Color(1, 0.52, 0.18, 1)
 energy = 36
-head_offset = Vector3(1.5, 7.4, 0)
+head_offset = Vector3(0, 7.45, 1.6)
+
+[node name="StreetLamp3" parent="Lights" instance=ExtResource("sl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 64, 0, 89.2)
+color = Color(1, 0.52, 0.18, 1)
+energy = 36
+head_offset = Vector3(0, 7.45, 1.6)
+
+[node name="VillageLamp1" parent="Lights" instance=ExtResource("sl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -114, 0, -236)
+color = Color(1, 0.52, 0.18, 1)
+energy = 24
+head_offset = Vector3(1.6, 8.05, 0)
+
+[node name="VillageLamp2" parent="Lights" instance=ExtResource("sl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -114, 0, -340)
+color = Color(1, 0.52, 0.18, 1)
+energy = 24
+head_offset = Vector3(1.6, 8.05, 0)
 
 [node name="Spot" parent="Lights/Floodlight1"]
-spot_range = 34
+spot_range = 40
 spot_angle = 75
 
 [node name="Spot" parent="Lights/Floodlight2"]
-spot_range = 34
+spot_range = 40
 spot_angle = 75
+
+[node name="Spot" parent="Lights/PlatformLamp1"]
+spot_range = 26
+spot_angle = 70
+
+[node name="Spot" parent="Lights/PlatformLamp2"]
+spot_range = 26
+spot_angle = 70
+
+[node name="Spot" parent="Lights/PlatformLamp3"]
+spot_range = 26
+spot_angle = 70
+
+[node name="Spot" parent="Lights/PlatformLamp4"]
+spot_range = 26
+spot_angle = 70
+
+[node name="Spot" parent="Lights/PlatformLamp5"]
+spot_range = 26
+spot_angle = 70
+
+[node name="Spot" parent="Lights/PlatformLamp6"]
+spot_range = 26
+spot_angle = 70
+
+[node name="Spot" parent="Lights/PlatformLamp7"]
+spot_range = 26
+spot_angle = 70
+
+[node name="Spot" parent="Lights/PlatformLamp8"]
+spot_range = 26
+spot_angle = 70
+
+[node name="Spot" parent="Lights/PlatformLamp9"]
+spot_range = 26
+spot_angle = 70
+
+[node name="Spot" parent="Lights/PlatformLamp10"]
+spot_range = 26
+spot_angle = 70
+
+[node name="Spot" parent="Lights/PlatformLamp11"]
+spot_range = 26
+spot_angle = 70
+
+[node name="Spot" parent="Lights/PlatformLamp12"]
+spot_range = 26
+spot_angle = 70
+
+[node name="Spot" parent="Lights/PlatformLamp13"]
+spot_range = 26
+spot_angle = 70
+
+[node name="Spot" parent="Lights/PlatformLamp14"]
+spot_range = 26
+spot_angle = 70
+
+[node name="Spot" parent="Lights/PlatformLamp15"]
+spot_range = 26
+spot_angle = 70
+
+[node name="Spot" parent="Lights/PlatformLamp16"]
+spot_range = 26
+spot_angle = 70
+
+[node name="Spot" parent="Lights/PlatformLamp17"]
+spot_range = 26
+spot_angle = 70
+
+[node name="Spot" parent="Lights/PlatformLamp18"]
+spot_range = 26
+spot_angle = 70
 
 [node name="Spot" parent="Lights/StationLamp1"]
 spot_range = 7

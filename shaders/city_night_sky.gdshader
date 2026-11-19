@@ -10,6 +10,10 @@ uniform float glow_height : hint_range(0.02, 1.0) = 0.28;
 uniform float glow_energy : hint_range(0.0, 4.0) = 1.3;
 uniform float cloud_amount : hint_range(0.0, 1.0) = 0.6;
 uniform float cloud_speed : hint_range(0.0, 0.1) = 0.004;
+// откуда зарево: направление (x, z) на город; (0, 0) — зарево по всему горизонту.
+// С другой стороны (поле, сёла) зарево слабее в glow_back раз.
+uniform vec2 glow_dir = vec2(0.0, 0.0);
+uniform float glow_back : hint_range(0.0, 1.0) = 0.25;
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -40,6 +44,10 @@ void sky() {
 		COLOR = mix(horizon_color * 0.35, ground_color, clamp(-y * 6.0, 0.0, 1.0));
 	} else {
 		float g = exp(-y / glow_height);
+		if (dot(glow_dir, glow_dir) > 0.0001) {
+			vec2 d = EYEDIR.xz / max(length(EYEDIR.xz), 0.0001);
+			g *= mix(glow_back, 1.0, smoothstep(-0.6, 0.6, dot(d, normalize(glow_dir))));
+		}
 		vec3 col = mix(zenith_color, mid_color, exp(-y / 0.6));
 		col = mix(col, horizon_color * glow_energy, g * g);
 		// низкие облака: проекция на плоскость
