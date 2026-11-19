@@ -37,7 +37,7 @@
 		},
 		{
 			"doubleSided":true,
-			"name":"YrFabric",
+			"name":"YrArmchair",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
 					"index":1
@@ -95,8 +95,8 @@
 		},
 		{
 			"mimeType":"image/png",
-			"name":"yr_fabric",
-			"uri":"../../textures/yr_fabric.png"
+			"name":"yr_armchair",
+			"uri":"../../textures/yr_armchair.png"
 		}
 	],
 	"accessors":[
