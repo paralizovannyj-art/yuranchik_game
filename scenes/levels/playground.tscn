@@ -1,0 +1,430 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/playground.gd" id="lvl"]
+[ext_resource type="Script" path="res://scripts/tools/blockout_box.gd" id="box"]
+[ext_resource type="Script" path="res://scripts/tools/creature_showcase.gd" id="show"]
+[ext_resource type="Script" path="res://scripts/world/pickup.gd" id="pick"]
+[ext_resource type="PackedScene" path="res://scenes/characters/player.tscn" id="player"]
+[ext_resource type="PackedScene" path="res://scenes/characters/enemy.tscn" id="enemy"]
+[ext_resource type="PackedScene" path="res://scenes/characters/sergey.tscn" id="sergey"]
+[ext_resource type="PackedScene" path="res://assets/models/yurchik.gltf" id="m_yur"]
+[ext_resource type="PackedScene" path="res://assets/models/enemy.gltf" id="m_enemy"]
+[ext_resource type="PackedScene" path="res://assets/models/sergey.gltf" id="m_sergey"]
+[ext_resource type="PackedScene" path="res://assets/models/monkey.gltf" id="m_monkey"]
+[ext_resource type="Texture2D" path="res://assets/textures/enemy_a.png" id="tex_a"]
+[ext_resource type="Texture2D" path="res://assets/textures/enemy_b.png" id="tex_b"]
+[ext_resource type="Texture2D" path="res://assets/textures/enemy_c.png" id="tex_c"]
+[ext_resource type="Shader" path="res://shaders/ps2_post.gdshader" id="post"]
+
+[sub_resource type="Environment" id="env"]
+background_mode = 1
+background_color = Color(0.05, 0.06, 0.09, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.45, 0.52, 0.65, 1)
+ambient_light_energy = 0.55
+tonemap_mode = 2
+tonemap_exposure = 1.1
+glow_enabled = true
+glow_intensity = 0.8
+glow_hdr_threshold = 0.8
+fog_enabled = true
+fog_light_color = Color(0.1, 0.11, 0.14, 1)
+fog_density = 0.008
+
+[sub_resource type="ShaderMaterial" id="mat_post"]
+shader = ExtResource("post")
+shader_parameter/blur_px = 0.55
+shader_parameter/color_levels = 32.0
+shader_parameter/dither_strength = 1.0
+shader_parameter/black_crush = 0.06
+shader_parameter/s_curve = 0.55
+shader_parameter/saturation = 0.78
+shader_parameter/exposure = 1.1
+shader_parameter/shadow_tint = Color(0.03, 0.05, 0.09, 1)
+shader_parameter/highlight_tint = Color(1, 0.94, 0.86, 1)
+
+[node name="Playground" type="Node3D"]
+script = ExtResource("lvl")
+enemy_scene = ExtResource("enemy")
+sergey_scene = ExtResource("sergey")
+nav_bounds = AABB(-45, -1, -45, 90, 8, 90)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("env")
+
+[node name="Moon" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.894, -0.293, 0.338, 0, 0.756, 0.655, -0.447, -0.586, 0.676, 0, 30, 0)
+light_color = Color(0.6, 0.7, 0.95, 1)
+light_energy = 0.45
+shadow_enabled = true
+
+[node name="Ground" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
+script = ExtResource("box")
+size = Vector3(90, 1, 90)
+kind = "snow"
+
+[node name="Walls" type="Node3D" parent="."]
+
+[node name="North" type="Node3D" parent="Walls"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -45)
+script = ExtResource("box")
+size = Vector3(90, 3, 1)
+kind = "boundary"
+
+[node name="South" type="Node3D" parent="Walls"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 45)
+script = ExtResource("box")
+size = Vector3(90, 3, 1)
+kind = "boundary"
+
+[node name="West" type="Node3D" parent="Walls"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -45, 0, 0)
+script = ExtResource("box")
+size = Vector3(1, 3, 90)
+kind = "boundary"
+
+[node name="East" type="Node3D" parent="Walls"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 45, 0, 0)
+script = ExtResource("box")
+size = Vector3(1, 3, 90)
+kind = "boundary"
+
+[node name="Player" parent="." instance=ExtResource("player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 9)
+
+[node name="Showcase" type="Node3D" parent="."]
+
+[node name="Yurchik" type="Node3D" parent="Showcase"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 0, 0)
+script = ExtResource("show")
+model = ExtResource("m_yur")
+title = "Юрчик"
+
+[node name="OfnikA" type="Node3D" parent="Showcase"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0, 0)
+script = ExtResource("show")
+model = ExtResource("m_enemy")
+title = "Офник (a)"
+texture_override = ExtResource("tex_a")
+
+[node name="OfnikB" type="Node3D" parent="Showcase"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, 0)
+script = ExtResource("show")
+model = ExtResource("m_enemy")
+title = "Офник (b)"
+texture_override = ExtResource("tex_b")
+
+[node name="OfnikC" type="Node3D" parent="Showcase"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 0)
+script = ExtResource("show")
+model = ExtResource("m_enemy")
+title = "Офник (c)"
+texture_override = ExtResource("tex_c")
+
+[node name="Sergey" type="Node3D" parent="Showcase"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0, 0)
+script = ExtResource("show")
+model = ExtResource("m_sergey")
+title = "Сергей"
+double_sided = true
+
+[node name="Monkey" type="Node3D" parent="Showcase"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 0, 0)
+script = ExtResource("show")
+model = ExtResource("m_monkey")
+title = "Макака"
+
+[node name="LightL" type="OmniLight3D" parent="Showcase"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 4, 2.5)
+light_color = Color(1, 0.86, 0.68, 1)
+light_energy = 2.0
+shadow_enabled = true
+omni_range = 9.0
+
+[node name="LightR" type="OmniLight3D" parent="Showcase"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 4, 2.5)
+light_color = Color(1, 0.86, 0.68, 1)
+light_energy = 2.0
+shadow_enabled = true
+omni_range = 9.0
+
+[node name="Sign" type="Label3D" parent="Showcase"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.6, -1)
+pixel_size = 0.01
+text = "СУЩЕСТВА"
+font_size = 64
+outline_size = 12
+
+[node name="Items" type="Node3D" parent="."]
+
+[node name="Table" type="Node3D" parent="Items"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0, 7)
+script = ExtResource("box")
+size = Vector3(5, 0.8, 1.2)
+kind = "prop"
+label = "Предметы"
+
+[node name="Bottle" type="Node3D" parent="Items"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.1, 0.8, 7)
+script = ExtResource("pick")
+item_id = "bottle"
+
+[node name="Brick" type="Node3D" parent="Items"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.4, 0.8, 7)
+script = ExtResource("pick")
+item_id = "brick"
+
+[node name="Bandage" type="Node3D" parent="Items"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.7, 0.8, 7)
+script = ExtResource("pick")
+item_id = "bandage"
+
+[node name="Shawarma" type="Node3D" parent="Items"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0.8, 7)
+script = ExtResource("pick")
+item_id = "shawarma"
+
+[node name="Medkit" type="Node3D" parent="Items"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.3, 0.8, 7)
+script = ExtResource("pick")
+item_id = "medkit"
+
+[node name="KeyGarage" type="Node3D" parent="Items"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.6, 0.8, 7)
+script = ExtResource("pick")
+item_id = "key_garage"
+
+[node name="KeyHome" type="Node3D" parent="Items"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.9, 0.8, 7)
+script = ExtResource("pick")
+item_id = "key_home"
+
+[node name="BrickA" type="Node3D" parent="Items"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, -12)
+script = ExtResource("pick")
+item_id = "brick"
+
+[node name="BottleA" type="Node3D" parent="Items"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, -12)
+script = ExtResource("pick")
+item_id = "bottle"
+
+[node name="Light" type="OmniLight3D" parent="Items"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 3, 8.5)
+light_color = Color(1, 0.86, 0.68, 1)
+light_energy = 1.5
+omni_range = 6.0
+
+[node name="Arena" type="Node3D" parent="."]
+
+[node name="Sign" type="Label3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, -33)
+pixel_size = 0.012
+text = "АРЕНА"
+font_size = 64
+outline_size = 12
+
+[node name="Light" type="OmniLight3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7, -22)
+light_color = Color(0.85, 0.9, 1, 1)
+light_energy = 2.5
+shadow_enabled = true
+omni_range = 22.0
+
+[node name="Crate1" type="Node3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, -18)
+script = ExtResource("box")
+size = Vector3(1.2, 1.2, 1.2)
+kind = "prop"
+
+[node name="Crate2" type="Node3D" parent="Arena"]
+transform = Transform3D(0.866, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866, 6, 0, -21)
+script = ExtResource("box")
+size = Vector3(1.2, 1.2, 1.2)
+kind = "prop"
+
+[node name="Cover" type="Node3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -24)
+script = ExtResource("box")
+size = Vector3(5, 1.8, 0.4)
+kind = "fence"
+
+[node name="Pillar" type="Node3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 0, -27)
+script = ExtResource("box")
+size = Vector3(1, 3, 1)
+kind = "building"
+
+[node name="Spawns" type="Node3D" parent="Arena"]
+
+[node name="S1" type="Marker3D" parent="Arena/Spawns"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -6, 0, -30)
+
+[node name="S2" type="Marker3D" parent="Arena/Spawns"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 6, 0, -30)
+
+[node name="S3" type="Marker3D" parent="Arena/Spawns"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, -32)
+
+[node name="S4" type="Marker3D" parent="Arena/Spawns"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 10, 0, -26)
+
+[node name="Ofnik" parent="Arena" instance=ExtResource("enemy")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, -28)
+
+[node name="Course" type="Node3D" parent="."]
+
+[node name="Sign" type="Label3D" parent="Course"]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 13, 4, -2)
+pixel_size = 0.012
+text = "ПРЕПЯТСТВИЯ"
+font_size = 64
+outline_size = 12
+
+[node name="Light" type="OmniLight3D" parent="Course"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 7, -1)
+light_color = Color(0.85, 0.9, 1, 1)
+light_energy = 2.5
+shadow_enabled = true
+omni_range = 20.0
+
+[node name="Step15" type="Node3D" parent="Course"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, 5)
+script = ExtResource("box")
+size = Vector3(2, 0.15, 2)
+kind = "walkable"
+label = "15 см"
+
+[node name="Step25" type="Node3D" parent="Course"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, 2)
+script = ExtResource("box")
+size = Vector3(2, 0.25, 2)
+kind = "walkable"
+label = "25 см"
+
+[node name="Step35" type="Node3D" parent="Course"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, -1)
+script = ExtResource("box")
+size = Vector3(2, 0.35, 2)
+kind = "walkable"
+label = "35 см"
+
+[node name="Step50" type="Node3D" parent="Course"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, -4)
+script = ExtResource("box")
+size = Vector3(2, 0.5, 2)
+kind = "walkable"
+label = "50 см"
+
+[node name="Stairs" type="Node3D" parent="Course"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, 0)
+script = ExtResource("box")
+size = Vector3(3, 2, 4)
+kind = "walkable"
+shape = "stairs"
+label = "Лестница"
+
+[node name="StairsTop" type="Node3D" parent="Course"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, -4)
+script = ExtResource("box")
+size = Vector3(3, 2, 4)
+kind = "prop"
+
+[node name="Ramp" type="Node3D" parent="Course"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0, 0.5)
+script = ExtResource("box")
+size = Vector3(3, 2, 5)
+kind = "walkable"
+shape = "ramp"
+label = "Пандус 22°"
+
+[node name="RampTop" type="Node3D" parent="Course"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0, -3.5)
+script = ExtResource("box")
+size = Vector3(3, 2, 3)
+kind = "prop"
+
+[node name="SteepRamp" type="Node3D" parent="Course"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 0, 0.5)
+script = ExtResource("box")
+size = Vector3(3, 2.5, 2.5)
+kind = "walkable"
+shape = "ramp"
+label = "Крутой 45°"
+
+[node name="SteepTop" type="Node3D" parent="Course"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 0, -2.25)
+script = ExtResource("box")
+size = Vector3(3, 2.5, 3)
+kind = "prop"
+
+[node name="NarrowL" type="Node3D" parent="Course"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35.6, 0, -1)
+script = ExtResource("box")
+size = Vector3(0.4, 2.5, 8)
+kind = "building"
+label = "Узкий проход 0.8 м"
+
+[node name="NarrowR" type="Node3D" parent="Course"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 37, 0, -1)
+script = ExtResource("box")
+size = Vector3(0.4, 2.5, 8)
+kind = "building"
+
+[node name="DarkRoom" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0, -2)
+
+[node name="Sign" type="Label3D" parent="DarkRoom"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.8, 3)
+pixel_size = 0.012
+text = "ТЁМНАЯ КОМНАТА (F — фонарик)"
+font_size = 48
+outline_size = 12
+
+[node name="Back" type="Node3D" parent="DarkRoom"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -3)
+script = ExtResource("box")
+size = Vector3(6.6, 3, 0.3)
+
+[node name="Left" type="Node3D" parent="DarkRoom"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.15, 0, 0)
+script = ExtResource("box")
+size = Vector3(0.3, 3, 6)
+
+[node name="Right" type="Node3D" parent="DarkRoom"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.15, 0, 0)
+script = ExtResource("box")
+size = Vector3(0.3, 3, 6)
+
+[node name="FrontL" type="Node3D" parent="DarkRoom"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.15, 0, 3)
+script = ExtResource("box")
+size = Vector3(2.3, 3, 0.3)
+
+[node name="FrontR" type="Node3D" parent="DarkRoom"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.15, 0, 3)
+script = ExtResource("box")
+size = Vector3(2.3, 3, 0.3)
+
+[node name="Roof" type="Node3D" parent="DarkRoom"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
+script = ExtResource("box")
+size = Vector3(6.6, 0.3, 6.6)
+
+[node name="BottleIn" type="Node3D" parent="DarkRoom"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, -2)
+script = ExtResource("pick")
+item_id = "bottle"
+
+[node name="PS2Post" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="Filter" type="ColorRect" parent="PS2Post"]
+material = SubResource("mat_post")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2

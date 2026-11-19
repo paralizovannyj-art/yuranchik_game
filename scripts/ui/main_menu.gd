@@ -2,6 +2,7 @@
 extends Node3D
 
 const BACKDROP := "res://scenes/levels/district.tscn"
+const PLAYGROUND := "res://scenes/levels/playground.tscn"   ## отладка: полигон со всеми существами
 const ORBIT_CENTER := Vector3(-5.0, 3.0, -55.0)   ## двор Юрчика (точка телепорта F1), над ним идёт снег
 
 var _cam: Camera3D
@@ -49,6 +50,7 @@ func _ready() -> void:
 	var entries := [["Начать игру", Game.new_game], ["Управление", _toggle_help], ["Выход", get_tree().quit]]
 	if OS.is_debug_build():                       # отладка: сразу в комнату Юрчика (в собранной игре пункта нет)
 		entries.insert(1, ["Комната Юрчика", Game.start_in_room])
+		entries.insert(2, ["Полигон", Game.new_game.bind(PLAYGROUND)])
 	for e: Array in entries:
 		var b := Button.new()
 		b.text = e[0]
