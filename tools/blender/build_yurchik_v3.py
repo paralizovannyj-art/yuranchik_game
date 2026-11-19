@@ -875,22 +875,26 @@ def build_hood(mb):
 # =====================================================================================
 #  Сумка и ремень
 # =====================================================================================
-BAG_TF = Vector((-0.222, -0.035, 0)); BAG_TB = Vector((-0.128, 0.205, 0))
+# Сумка висит ровно на правом боку: задняя стенка — вертикальная плоскость вдоль тела (x = const),
+# лицевая сторона смотрит вбок (-X). Сдвинута назад, как на концепте: опущенная правая кисть (в Idle она на
+# y -0.05..0.02, x ≈ -0.30) висит перед сумкой, а не внутри неё.
+BAG_TF = Vector((-0.226, 0.045, 0)); BAG_TB = Vector((-0.226, 0.255, 0))
+BAG_W = (BAG_TB - BAG_TF).normalized(); BAG_N = Vector((-BAG_W.y, BAG_W.x, 0))   # вдоль сумки (назад) / наружу
+BAG_M = (BAG_TF + BAG_TB) / 2 + BAG_N * 0.012
+BAG_HW = (BAG_TB - BAG_TF).length / 2
+BAG_FLAP_Z = 0.855                                           # нижний край клапана
 
 
 def build_strap_bag(mb):
-    Wb = (BAG_TB - BAG_TF).normalized(); Nb = Vector((-Wb.y, Wb.x, 0))        # наружу: вправо-назад
-    M = (BAG_TF + BAG_TB) / 2 + Nb * 0.012
-    hw = (BAG_TB - BAG_TF).length / 2
+    Wb, Nb, M, hw = BAG_W, BAG_N, BAG_M, BAG_HW
 
     def bag_pt(w, d, z):
         p = M + Wb * w + Nb * d; p.z = z
         return p
 
-    # профиль (вынос от тела, z): край клапана — на z 0.855, как на концепте (вид сбоку: строка 305),
-    # иначе нарисованный клапан съезжает относительно ступеньки на модели
-    prof = [(0.000, 1.000), (0.060, 1.008), (0.086, 0.965), (0.092, 0.905), (0.090, 0.860), (0.078, 0.855),
-            (0.076, 0.800), (0.072, 0.752), (0.000, 0.745)]
+    # профиль (вынос от тела, z): клапан от верха до z 0.855, под ним — корпус
+    prof = [(0.000, 1.000), (0.053, 1.008), (0.076, 0.965), (0.081, 0.905), (0.079, 0.860), (0.068, BAG_FLAP_Z),
+            (0.067, 0.800), (0.063, 0.752), (0.000, 0.745)]
     last = len(prof) - 1
     cols = []
     for w, bulge, taper in ((-hw, 0.0, 0.94), (0.0, 0.010, 1.0), (hw, 0.0, 0.94)):
@@ -987,7 +991,7 @@ def build_all():
 ISL_DENS = {"head": 2.0, "neck": 1.25, "beanie": 1.1, "hand": 1.5, "thumb": 1.5, "glove_palm": 1.4,
             "finger_Index": 1.6, "finger_Middle": 1.6, "finger_Ring": 1.6, "finger_Pinky": 1.6, "finger_Thumb": 1.6,
             "pelvis": 0.5, "sole": 0.6,
-            "sole_cap": 0.35, "hair_bangs": 1.4, "hair_strand": 1.6, "bag_side": 0.7, "bag_back": 0.4, "hood": 0.9, "boot": 1.1,
+            "sole_cap": 0.35, "hair_bangs": 1.4, "hair_strand": 1.6, "bag_front": 1.4, "bag_side": 0.7, "bag_back": 0.4, "hood": 0.9, "boot": 1.1,
             "hammer_cap": 0.6, "dark": 1.0}
 
 
@@ -1248,12 +1252,7 @@ def paint(tag, refs, P, N, LUV):
     elif tag == "glove_palm" or tag.startswith("finger_"):
         c = paint_glove_hand(tag, P, N, u, v)
     elif tag == "bag":
-        # лицевая сторона — только с вида сбоку (сумка на концепте занимает x 446..520, y 258..340), без смешивания
-        # с видами спереди/сзади: там сумка видна с ребра, и смесь давала двоение. x > 517 — рука, не берём
-        pz = GY - P[:, 2] / S
-        c = sample(refs["orig"], np.clip(CXS - P[:, 1] / S, 447.0, 517.0), pz)
-        k = np.clip(np.abs(N[:, 2]) * 1.6 - 0.3, 0, 1)[:, None]                       # верх и дно — простая ткань
-        c = c * (1 - k) + paint_bag(tag, u, v, P) * k
+        c = paint_bag_front(P, N)                                                      # клапан, ремешок, пряжка
     elif tag == "bag_side":
         c = paint_bag(tag, u, v, P)                                                    # торцы и задняя стенка
     elif tag == "strap":
@@ -1391,6 +1390,50 @@ def paint_bag(tag, u, v, P):
         edge = np.minimum.reduce([u, 1 - u, v, 1 - v])
         c = c * np.where(edge < 0.05, 0.62, 1.0)[:, None]
     return c
+
+
+def paint_bag_front(P, N):
+    """Лицевая сторона сумки, нарисованная в её собственных координатах (w — вдоль сумки, z — высота):
+    брезент, клапан со строчкой по краю, тень под клапаном, ремешок по центру с металлической пряжкой и шлёвкой."""
+    d = P - np.array(BAG_M, np.float32)
+    w = d @ np.array(BAG_W, np.float32); z = P[:, 2]; nz = N[:, 2]
+    hw = BAG_HW; FZ = BAG_FLAP_Z
+    weave = 0.84 + 0.22 * fbm(w * 260, z * 260, 61) + 0.05 * np.sin(w * 2200) * np.sin(z * 2200)
+    c = col(BAG_CANVAS)[None, :] * weave[:, None]
+    flap = (z >= FZ) & (nz > -0.5)
+    under = nz <= -0.5                                                                   # низ клапана и дно
+    c = np.where(flap[:, None], c * 1.06, c * 0.90)
+    # строчка: по краю клапана и вдоль боковых кромок
+    ew = hw - np.abs(w)
+    stitch_dash = (np.floor((w + 1) * 140) % 2 == 0)
+    stitch_v = (np.floor((z + 1) * 140) % 2 == 0)
+    c = np.where((flap & (np.abs(z - (FZ + 0.009)) < 0.0017) & (ew > 0.010) & stitch_dash)[:, None], c * 0.55, c)
+    c = np.where((flap & (np.abs(ew - 0.008) < 0.0017) & (z > FZ + 0.009) & stitch_v)[:, None], c * 0.55, c)
+    c = np.where((flap & (z < FZ + 0.004))[:, None], c * 0.72, c)                     # подвёрнутый край клапана
+    c = np.where((ew < 0.004)[:, None], c * 0.70, c)                                     # швы на рёбрах
+    sh = np.clip((z - (FZ - 0.025)) / 0.025, 0, 1) * (z < FZ)                             # тень под клапаном
+    c = c * (1 - 0.45 * sh)[:, None]
+    # ремешок по центру: с клапана вниз, в шлёвку на корпусе
+    sw = np.abs(w)
+    strap = (sw < 0.014) & (z > 0.808) & (z < 0.975) & (nz > -0.5)
+    sc = col((0.165, 0.160, 0.118)) * (0.85 + 0.25 * fbm(w * 400, z * 120, 63))[:, None]
+    sc = np.where((np.abs(sw - 0.011) < 0.0011)[:, None], sc * 0.6, sc)                 # строчка ремешка
+    c = np.where(strap[:, None], sc, c)
+    c = np.where((strap & (z < 0.83))[:, None], c * 0.85, c)
+    hole = strap & (np.abs(sw) < 0.0022) & (np.abs(((z - 0.83) / 0.012) % 1.0 - 0.5) < 0.18) & (z < 0.85)
+    c = np.where(hole[:, None], col((0.05, 0.05, 0.04)), c)                              # дырочки
+    loop = (sw < 0.018) & (z > 0.808) & (z < 0.822) & (nz > -0.5)                         # шлёвка
+    c = np.where(loop[:, None], col((0.15, 0.145, 0.105)), c)
+    # пряжка: прямоугольная рамка с перемычкой, чуть ниже края клапана
+    bz0, bz1, bw = FZ - 0.006, FZ + 0.022, 0.019
+    inb = (sw < bw) & (z > bz0) & (z < bz1) & (nz > -0.5)
+    frame = inb & ((sw > bw - 0.0035) | (z < bz0 + 0.0035) | (z > bz1 - 0.0035) | (np.abs(z - (bz0 + bz1) / 2) < 0.0018))
+    metal = col((0.34, 0.33, 0.30)) * (0.8 + 0.35 * np.clip((z - bz0) / (bz1 - bz0), 0, 1))[:, None]
+    c = np.where(frame[:, None], metal, c)
+    c = np.where((inb & ~frame & (sw > bw - 0.006))[:, None], c * 0.6, c)                # тень внутри рамки
+    c = np.where(under[:, None], col(BAG_CANVAS) * 0.42 * weave[:, None], c)
+    c = c * (0.62 + 0.38 * np.clip((z - 0.745) / 0.08, 0, 1))[:, None]                  # низ корпуса темнее
+    return c * (0.86 + 0.20 * np.clip(nz, 0, 1))[:, None]
 
 
 def boot_local(P):
