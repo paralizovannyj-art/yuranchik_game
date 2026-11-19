@@ -169,6 +169,14 @@ func _make_first_person_body() -> void:
 		view.name = mi.name + "FirstPerson"
 		view.skin = skin
 		view.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		# Без блика: у камеры кисть в полуметре от лампочки, и стандартный specular 0.5 делает чёрную
+		# вязаную перчатку серой (references/hands/hold_fingerless_mitten.png — она матовая).
+		for s in view.mesh.get_surface_count():
+			var mat := view.get_active_material(s) as BaseMaterial3D
+			if mat:
+				mat = mat.duplicate() as BaseMaterial3D
+				mat.metallic_specular = 0.0
+				view.set_surface_override_material(s, mat)
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
 		mi.add_sibling(view)
 
@@ -563,6 +571,11 @@ func _setup_hammer() -> void:
 	if not nodes.is_empty():
 		_hammer = nodes[0] as Node3D
 
+
+## Телефон в правой руке (phone.gd): пока он поднят, молотка в этой руке не видно.
+func phone_hand(up: bool) -> void:
+	if _hammer:
+		_hammer.visible = armed and not up
 
 ## Достать (true) или убрать в сумку (false).
 func _place_hammer(in_hand: bool) -> void:
