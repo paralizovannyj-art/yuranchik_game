@@ -7,7 +7,7 @@
 @tool
 extends EditorScenePostImport
 
-const NO_COLLISION := ["yurchik.gltf", "character", "enemy", "sergey", "monkey", "item_", "window_view"]   # yurchik_room.gltf — комната, ей коллизия нужна
+const NO_COLLISION := ["yurchik.gltf", "character", "enemy", "sergey", "monkey", "item_", "window_view"]   # yurchik_room/*.gltf — предметы комнаты, им коллизия нужна
 const NO_FOG := ["window_view"]
 const NO_SPECULAR := ["RwGlass"]   # стекло окна в комнате: без блика от лампы (иначе на стекле горит «звезда»)
 const VIEW_SHADER := "res://shaders/window_view.gdshader"

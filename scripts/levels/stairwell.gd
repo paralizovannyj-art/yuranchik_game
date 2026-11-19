@@ -143,14 +143,14 @@ func _setup_room_light() -> void:
 	room_light.light_energy = 0.0
 	room_light.visible = false
 	_switch_key = $YurchikRoom.find_child("LightSwitchKey_nocol", true, false) as Node3D
-	var props := $YurchikRoom.find_child("YurRoomProps_nocol", true, false) as MeshInstance3D
-	if props and props.mesh:
-		for i in props.mesh.get_surface_count():
-			var m := props.mesh.surface_get_material(i) as StandardMaterial3D
+	var lamp := $YurchikRoom.find_child("Chandelier_nocol", true, false) as MeshInstance3D
+	if lamp and lamp.mesh:
+		for i in lamp.mesh.get_surface_count():
+			var m := lamp.mesh.surface_get_material(i) as StandardMaterial3D
 			if m and m.resource_name == "YrLampGlass":
 				_bulbs = m.duplicate() as StandardMaterial3D
 				_bulb_glow = _bulbs.emission_energy_multiplier
-				props.set_surface_override_material(i, _bulbs)
+				lamp.set_surface_override_material(i, _bulbs)
 	_set_bulbs(0.0)
 	_set_key(false, false)
 	light_use.prompt = "Включить свет"
