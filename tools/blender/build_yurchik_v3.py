@@ -661,39 +661,44 @@ def build_pants(mb):
     mb.orient([fi], direction=Vector((-0.6, -0.8, 0)))
 
 
+# Ботинок строится горизонтальными сечениями (как колодка): низ верха повторяет контур подошвы, поэтому
+# верх везде стоит на подошве — без щели у пятки и без «платформы» перед носком.
+# Координаты левого ботинка: a — вдоль стопы (носок развёрнут наружу на 18°), b — поперёк (+ наружу), от точки BOOT_A.
+BOOT_A = Vector((0.120, 0.020, 0.0)); BOOT_ANG = rad(18)
+BOOT_F = Vector((math.sin(BOOT_ANG), -math.cos(BOOT_ANG), 0)); BOOT_O = Vector((math.cos(BOOT_ANG), math.sin(BOOT_ANG), 0))
+BOOT_N = 12                                                  # точек в сечении; 0 — носок, 6 — пятка
+# z, центр по a, длина вперёд, назад, полуширина спереди, сзади, «квадратность»
+SOLE_SPEC = (0.072, 0.168, 0.168, 0.066, 0.052, 3.0)         # носок 0.240, пятка -0.096
+BOOT_SPEC = [
+    (SOLE_Z + 0.001, 0.072, 0.158, 0.160, 0.060, 0.047, 3.0),  # низ — на 6 мм внутри канта подошвы
+    (0.050, 0.071, 0.155, 0.159, 0.060, 0.048, 3.0),           # борт
+    (0.066, 0.062, 0.146, 0.150, 0.056, 0.047, 2.6),           # верх носка
+    (0.083, 0.042, 0.130, 0.130, 0.052, 0.047, 2.4),           # начало подъёма
+    (0.104, 0.020, 0.104, 0.107, 0.050, 0.048, 2.3),           # подъём, шнуровка
+    (0.128, 0.010, 0.068, 0.068, 0.054, 0.054, 2.2),           # щиколотка (под штаниной)
+    (0.180, 0.006, 0.056, 0.052, 0.051, 0.050, 2.0),           # голенище (под штаниной)
+]
+
+
+def boot_pt(z, ac, lf, lb, wf, wb, n, j):
+    ph = rad(360.0 / BOOT_N * j); c, s = math.cos(ph), math.sin(ph); e = 2.0 / n
+    a = ac + (lf if c >= 0 else lb) * sgnpow(c, e)
+    b = (wb + (wf - wb) * smooth((c + 0.6) / 1.2)) * sgnpow(s, e)
+    return BOOT_A + BOOT_F * a + BOOT_O * b + Vector((0, 0, z))
+
+
 def build_boot(mb, sx):
     s = "L" if sx > 0 else "R"; FT, SH = "Foot" + s, "Shin" + s
     bake = sx > 0
-    A = Vector((0.120, 0.020, 0.0)); ang = rad(18)
-    f = Vector((math.sin(ang), -math.cos(ang), 0)); o = Vector((math.cos(ang), math.sin(ang), 0)); Z = Vector((0, 0, 1))
-
-    def ringpts(C, U, ru, rs, flat):
-        pts = []
-        for j in range(8):
-            ph = rad(45 * j); c, sn = math.cos(ph), math.sin(ph)
-            p = C + U * (ru * c) + o * (rs * sn)
-            if flat and c < -0.1:                                    # плоский низ — стоит на подошве
-                p = C + o * (rs * 0.88 * (1 if sn > 0.1 else (-1 if sn < -0.1 else 0)))
-                p.z = SOLE_Z
-            pts.append(mx(p, sx))
-        return pts
-
-    U2 = (f * 0.889 + Z * 0.457).normalized()
-    spec = [(A + Z * 0.180, f, 0.055, 0.050, False, {SH: 1.0}),
-            (A + Z * 0.125 + f * 0.006, f, 0.062, 0.056, False, {SH: 0.5, FT: 0.5}),
-            (A + f * -0.0015 + Z * 0.0905, U2, 0.0973, 0.060, False, {FT: 1.0}),
-            (A + f * 0.105 + Z * 0.076, Z, 0.036, 0.063, True, {FT: 1.0}),
-            (A + f * 0.170 + Z * 0.071, Z, 0.031, 0.064, True, {FT: 1.0}),
-            (A + f * 0.212 + Z * 0.063, Z, 0.023, 0.050, True, {FT: 1.0})]
-    rings = [mb.ring(ringpts(C, U, ru, rs, fl), w) for C, U, ru, rs, fl, w in spec]
-    tip = mb.vert(mx(A + f * 0.233 + Z * 0.056, sx), {FT: 1.0})
-    loft(mb, rings, "boot", "boot", seam=4, pole=tip, bake=bake)
-    # подошва
-    outline = [(-0.097, 0.0), (-0.085, 0.040), (-0.02, 0.055), (0.10, 0.062), (0.185, 0.060), (0.225, 0.035),
-               (0.240, 0.0), (0.225, -0.035), (0.185, -0.060), (0.10, -0.061), (-0.02, -0.053), (-0.085, -0.040)]
-    top = mb.ring([mx(A + f * a + o * b + Z * (SOLE_Z + 0.002), sx) for a, b in outline], {FT: 1.0})
-    bot = mb.ring([mx(A + f * (a * 0.985) + o * (b * 0.94), sx) for a, b in outline], {FT: 1.0})
-    loft(mb, [top, bot], "sole", "sole", bake=bake)
+    wts = [{FT: 1.0}] * (len(BOOT_SPEC) - 2) + [{SH: 0.5, FT: 0.5}, {SH: 1.0}]
+    rings = [mb.ring([mx(boot_pt(*sp, j), sx) for j in range(BOOT_N)], w) for sp, w in zip(BOOT_SPEC, wts)]
+    loft(mb, rings, "boot", "boot", seam=BOOT_N // 2, bake=bake)
+    # подошва: верх чуть выше низа ботинка, низ слегка сужен
+    top = mb.ring([mx(boot_pt(SOLE_Z + 0.002, *SOLE_SPEC, j), sx) for j in range(BOOT_N)], {FT: 1.0})
+    ac = SOLE_SPEC[0]
+    bot = mb.ring([mx(BOOT_A + BOOT_F * (ac + ((boot_pt(0, *SOLE_SPEC, j) - BOOT_A).dot(BOOT_F) - ac) * 0.985)
+                      + BOOT_O * ((boot_pt(0, *SOLE_SPEC, j) - BOOT_A).dot(BOOT_O) * 0.95), sx) for j in range(BOOT_N)], {FT: 1.0})
+    loft(mb, [top, bot], "sole", "sole", seam=BOOT_N // 2, bake=bake)
     ngon(mb, bot, "sole_cap", "sole", (0, 0, -1), bake=bake)
     ngon(mb, top, "sole_cap", "sole", (0, 0, 1), bake=bake)
 
@@ -783,6 +788,9 @@ def build_beanie(mb):
         rings.append(mb.ring(pts, {"Head": 1.0}))
     pole = mb.vert((0, yc + 0.006, ZTOP + 0.002), {"Head": 1.0})
     loft(mb, rings, "beanie", "beanie", seam=6, pole=pole)
+    # тёмное «дно» под краем шапки: кольцо от края внутрь головы. Без него между краем и головой щель,
+    # а изнанка шапки не рисуется — снизу сквозь шапку видно небо
+    dark_cap(mb, rings[0], (0, yc, 1.625), 0.6, (0, 0, 0.010), (0, 0, -1))
 
 
 HAIR_CAP = [30, 48, 70, 100, 135, 180, -135, -100, -70, -48, -30]
@@ -879,19 +887,24 @@ def build_strap_bag(mb):
         p = M + Wb * w + Nb * d; p.z = z
         return p
 
-    prof = [(0.000, 1.000), (0.060, 1.008), (0.088, 0.955), (0.094, 0.870), (0.090, 0.805), (0.078, 0.800),
-            (0.074, 0.752), (0.000, 0.745)]
+    # профиль (вынос от тела, z): край клапана — на z 0.855, как на концепте (вид сбоку: строка 305),
+    # иначе нарисованный клапан съезжает относительно ступеньки на модели
+    prof = [(0.000, 1.000), (0.060, 1.008), (0.086, 0.965), (0.092, 0.905), (0.090, 0.860), (0.078, 0.855),
+            (0.076, 0.800), (0.072, 0.752), (0.000, 0.745)]
+    last = len(prof) - 1
     cols = []
     for w, bulge, taper in ((-hw, 0.0, 0.94), (0.0, 0.010, 1.0), (hw, 0.0, 0.94)):
         pts = []
         for k, (d, z) in enumerate(prof):
             ww = w * (taper if k in (0, 1) else 1.0)
-            pts.append(bag_pt(ww, d + (bulge if 1 <= k <= 6 else 0), z))
+            pts.append(bag_pt(ww, d + (bulge if 1 <= k < last else 0), z))
         cols.append(mb.ring(pts, [torso_w(p.z, p.x) for p in pts]))
     rows = [[cols[0][k], cols[1][k], cols[2][k]] for k in range(len(prof))]      # u — поперёк сумки, v — сверху вниз
     loft(mb, rows, "bag_front", "bag", closed=False, inside=M + Vector((0, 0, 0.87)) - Nb * 0.2)
     ngon(mb, cols[0], "bag_side", "bag_side", -Wb)
     ngon(mb, cols[2], "bag_side", "bag_side", Wb)
+    # задняя стенка (к телу): без неё сумка со спины пустая — грани односторонние, сквозь неё видно фон
+    ngon(mb, [cols[0][0], cols[1][0], cols[2][0], cols[2][last], cols[1][last], cols[0][last]], "bag_back", "bag_side", -Nb)
 
     # ремень: от сумки спереди через левое плечо к сумке сзади
     path = [bag_pt(-hw + 0.012, 0.035, 0.985)]
@@ -974,7 +987,7 @@ def build_all():
 ISL_DENS = {"head": 2.0, "neck": 1.25, "beanie": 1.1, "hand": 1.5, "thumb": 1.5, "glove_palm": 1.4,
             "finger_Index": 1.6, "finger_Middle": 1.6, "finger_Ring": 1.6, "finger_Pinky": 1.6, "finger_Thumb": 1.6,
             "pelvis": 0.5, "sole": 0.6,
-            "sole_cap": 0.35, "hair_bangs": 1.4, "hair_strand": 1.6, "bag_side": 0.7, "hood": 0.9, "boot": 1.1,
+            "sole_cap": 0.35, "hair_bangs": 1.4, "hair_strand": 1.6, "bag_side": 0.7, "bag_back": 0.4, "hood": 0.9, "boot": 1.1,
             "hammer_cap": 0.6, "dark": 1.0}
 
 
@@ -1210,10 +1223,9 @@ def paint(tag, refs, P, N, LUV):
         c = col((0.66, 0.66, 0.68)) * (0.7 + 0.3 * vnoise(u * 5, v * 14, 71))[:, None]
         alpha = ((np.abs(u - 0.5) < 0.46 - 0.25 * v ** 2) & (v < 0.80 + 0.2 * (np.floor(u * 7) % 2))).astype(np.float32)
     elif tag == "boot":
-        c = project(refs, "orig", P, N, side=1.0)
+        c = paint_boot(P, N, u)
     elif tag == "sole":
-        c = col((0.085, 0.082, 0.078)) * (0.7 + 0.6 * fbm(P[:, 0] * 90, P[:, 1] * 90, 5))[:, None]
-        c = c * np.where((np.abs(N[:, 2]) < 0.5) & (np.floor(u * 22) % 2 == 0), 0.6, 1.0)[:, None]    # протектор по ранту
+        c = paint_sole(P, N, u)
     elif tag == "face":
         c = project(refs, "orig", P, N, back=0.0, side=1.0)
     elif tag == "neck":
@@ -1221,21 +1233,29 @@ def paint(tag, refs, P, N, LUV):
         k = np.clip((N[:, 1] - 0.05) * 3.0, 0, 1)[:, None]            # сзади шея в тени волос и капюшона
         c = c * (1 - k) + col((0.05, 0.048, 0.055)) * k
     elif tag == "beanie":
-        c = project(refs, "orig", P, N, side=1.0)
+        # на концепте край шапки выше, чем на модели (спереди на ~1.5 см), и под ним — чёлка и лоб.
+        # Сжимаем шапку по высоте к краю шапки на концепте, чтобы волосы не попадали на шапку
+        th = np.arctan2(P[:, 0], -(P[:, 1] + 0.047)); cs = np.cos(th)
+        rz = 1.625 + 0.040 * cs
+        zc = rz + 0.008 + 0.016 * np.clip(cs, 0, 1) + 0.014 * np.sin(th) ** 2
+        zt = 1.783
+        P2 = P.copy(); P2[:, 2] = zt - (zt - P[:, 2]) * ((zt - zc) / (zt - rz))
+        c = project(refs, "orig", P2, N, side=1.0)
     elif tag.startswith("hair"):
         c, alpha = paint_hair(tag, u, v)
     elif tag in ("hand", "thumb"):
         c = paint_hand(tag, P, N, v)
     elif tag == "glove_palm" or tag.startswith("finger_"):
         c = paint_glove_hand(tag, P, N, u, v)
-    elif tag in ("bag", "bag_side"):
-        # сумка целиком с концепта: лицевая сторона — с вида сбоку, торцы — с видов спереди и сзади
+    elif tag == "bag":
+        # лицевая сторона — только с вида сбоку (сумка на концепте занимает x 446..520, y 258..340), без смешивания
+        # с видами спереди/сзади: там сумка видна с ребра, и смесь давала двоение. x > 517 — рука, не берём
         pz = GY - P[:, 2] / S
-        wf = np.clip(-N[:, 1], 0, 1) ** 2 + 0.02; wb = np.clip(N[:, 1], 0, 1) ** 2 + 0.02; ws = N[:, 0] ** 2
-        c = (sample(refs["orig"], CXF + P[:, 0] / S, pz) * wf[:, None] + sample(refs["orig"], CXB - P[:, 0] / S, pz) * wb[:, None]
-             + sample(refs["orig"], np.minimum(CXS - P[:, 1] / S, 512.0), pz) * ws[:, None]) / (wf + wb + ws)[:, None]
+        c = sample(refs["orig"], np.clip(CXS - P[:, 1] / S, 447.0, 517.0), pz)
         k = np.clip(np.abs(N[:, 2]) * 1.6 - 0.3, 0, 1)[:, None]                       # верх и дно — простая ткань
         c = c * (1 - k) + paint_bag(tag, u, v, P) * k
+    elif tag == "bag_side":
+        c = paint_bag(tag, u, v, P)                                                    # торцы и задняя стенка
     elif tag == "strap":
         c = col((0.215, 0.215, 0.160)) * (0.8 + 0.4 * vnoise(u * 300, v * 9, 3))[:, None]
         c = c * np.where((np.abs(v - 0.5) > 0.36), 0.62, 1.0)[:, None]                 # прострочка по краям
@@ -1359,11 +1379,67 @@ def paint_glove_hand(tag, P, N, u, v):
     return np.where(edge[:, None], col((0.22, 0.215, 0.225)) * (0.8 + 0.35 * vnoise(u * 60, v * 9, 61))[:, None], c)
 
 
+BAG_CANVAS = (0.235, 0.228, 0.178)     # средний цвет сумки на концепте — чтобы торцы и верх не отличались по тону
+
+
 def paint_bag(tag, u, v, P):
-    """Оливковый брезент для верха и дна сумки (остальное берётся с концепта)."""
-    weave = 0.75 + 0.35 * fbm(P[:, 1] * 240 + P[:, 0] * 240, P[:, 2] * 240, 61)
-    c = col((0.175, 0.175, 0.125))[None, :] * weave[:, None]
-    return c * (0.55 + 0.6 * np.clip((P[:, 2] - 0.745) / 0.26, 0, 1))[:, None]             # дно темнее
+    """Оливковый брезент: верх и дно сумки, торцы и задняя стенка (лицевая сторона — с концепта)."""
+    weave = 0.80 + 0.30 * fbm(P[:, 1] * 240 + P[:, 0] * 240, P[:, 2] * 240, 61)
+    c = col(BAG_CANVAS)[None, :] * weave[:, None]
+    c = c * (0.55 + 0.50 * np.clip((P[:, 2] - 0.745) / 0.26, 0, 1))[:, None]           # дно темнее
+    if tag == "bag_side":                                                               # шов по краю торца
+        edge = np.minimum.reduce([u, 1 - u, v, 1 - v])
+        c = c * np.where(edge < 0.05, 0.62, 1.0)[:, None]
+    return c
+
+
+def boot_local(P):
+    """Координаты левого ботинка: a — вдоль стопы, b — поперёк (наружу +), z."""
+    d = P - np.array(BOOT_A, np.float32)
+    return d @ np.array(BOOT_F, np.float32), d @ np.array(BOOT_O, np.float32), P[:, 2]
+
+
+def paint_boot(P, N, u):
+    """Чёрный кожаный рабочий ботинок: потёртости, складки на сгибе, носок с бликом, шнуровка, строчка по ранту."""
+    a, b, z = boot_local(P)
+    nf = N @ np.array(BOOT_F, np.float32); nz = N[:, 2]
+    c = col((0.085, 0.083, 0.085)) * (0.70 + 0.60 * fbm(a * 140 + b * 60, z * 140, 81))[:, None]
+    flex = np.exp(-((a - 0.135) / 0.020) ** 2) * (z > 0.060)                            # складки на сгибе стопы
+    wr = np.abs(vnoise(b * 300, a * 70, 83) - 0.5) < 0.07
+    c = c * (1.0 - 0.45 * (flex * wr))[:, None]
+    cap = np.clip((a - 0.160) / 0.04, 0, 1) * np.clip(nz + 0.2, 0, 1)                   # блик на носке
+    c = c + col((0.10, 0.10, 0.10)) * cap[:, None]
+    seam = (np.abs(a - (0.168 - 0.9 * b ** 2 / 0.06)) < 0.0018) & (z > 0.042)           # строчка накладного носка
+    c = np.where(seam[:, None], c * 0.45, c)
+    # шнуровка по подъёму: язык, крест-накрест шнурки, люверсы
+    zone = (np.abs(b) < 0.024) & (nf + nz > 0.45) & (z > 0.070) & (a < 0.170)
+    t = (z - 0.070) / 0.011; ft = t - np.floor(t)
+    tongue = zone & (np.abs(b) < 0.015)
+    c = np.where(tongue[:, None], c * 0.70, c)
+    lace = zone & ((np.abs(b - 0.030 * (ft - 0.5)) < 0.0030) | (np.abs(b + 0.030 * (ft - 0.5)) < 0.0030))
+    c = np.where(lace[:, None], col((0.105, 0.10, 0.095)) * (0.75 + 0.4 * ft)[:, None], c)
+    eye = zone & (np.abs(np.abs(b) - 0.019) < 0.0025) & ((ft < 0.12) | (ft > 0.88))
+    c = np.where(eye[:, None], col((0.21, 0.205, 0.19)), c)
+    welt = (z < 0.042) & (z > 0.037) & (np.floor(u * 110) % 2 == 0)                     # строчка над рантом
+    c = np.where(welt[:, None], col((0.20, 0.19, 0.17)), c)
+    c = c * (0.55 + 0.45 * np.clip((z - SOLE_Z) / 0.03, 0, 1))[:, None]                 # тень у подошвы
+    dirt = np.clip((0.055 - z) / 0.025, 0, 1) * fbm(a * 90, b * 90 + z * 90, 85)        # грязь и соль снизу
+    c = c * (1 - 0.6 * dirt[:, None]) + col((0.22, 0.21, 0.20)) * (0.6 * dirt)[:, None]
+    return c * (0.80 + 0.30 * np.clip(nz, 0, 1))[:, None]
+
+
+def paint_sole(P, N, u):
+    """Резиновая подошва: светлый потёртый кант сверху, грунтозацепы снизу, тёмная полка вокруг ботинка."""
+    a, b, z = boot_local(P)
+    rub = 0.80 + 0.40 * fbm(a * 120, b * 120 + z * 120, 87)
+    side = np.abs(N[:, 2]) < 0.5
+    c = col((0.105, 0.102, 0.098)) * rub[:, None]
+    c = np.where((side & (z > SOLE_Z - 0.008))[:, None], col((0.17, 0.165, 0.155)) * rub[:, None], c)    # кант
+    lugs = side & (z < 0.014) & (np.floor(u * 40) % 2 == 0)
+    c = np.where(lugs[:, None], c * 0.45, c)                                                          # грунтозацепы
+    c = np.where((~side & (N[:, 2] > 0))[:, None], col((0.075, 0.072, 0.070)) * rub[:, None], c)         # полка вокруг верха
+    c = np.where((~side & (N[:, 2] < 0))[:, None], col((0.05, 0.05, 0.05)) * rub[:, None], c)            # низ
+    return c
 
 
 def bake_atlas(mb, me_by_obj, refs):
