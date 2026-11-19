@@ -257,6 +257,7 @@ PRESETS = {
     # персонажи и предметы: без разводов (они легли бы поперёк лица), только хрусткость, тени и лёгкая грязь
     "char":    dict(soften=1.0, sat=0.92, tint=(1.0, 0.98, 0.95), contrast=1.1, clarity=0.6, mottle=0.08, mottle_cells=6),
     "item":    dict(soften=1.0, sat=0.95, contrast=1.08, clarity=0.5, mottle=0.06, mottle_cells=6),
+    "fur":     dict(soften=1.0, sat=0.95, tint=(1.0, 0.99, 0.96), contrast=1.03, clarity=0.15, mottle=0.05, mottle_cells=5),  # мех животных: без «хрусткости» (она рябит пятнами)
     "hero":    dict(soften=1.0, sat=1.0, tint=(1, 1, 1), contrast=1.0, clarity=0.0, crush=False, mottle=0.0),  # уже нарисованы
 }
 
@@ -281,7 +282,7 @@ TEXTURES = {
     "apt_doors": "sign", "mailboxes": "metal", "pod_window": "atlas", "radiator": "metal",
     "wallpaper": "hero", "carpet": "fabric", "fabric": "fabric", "tv": "atlas",
     # персонажи и предметы
-    "yur3_atlas": "char", "sergey": "char", "enemy_a": "char", "enemy_b": "char", "enemy_c": "char",
+    "yur3_atlas": "char", "sergey": "char", "enemy_a": "char", "enemy_b": "char", "enemy_c": "char", "monkey": "fur",
     "items": "item",
 }
 
