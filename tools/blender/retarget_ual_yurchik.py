@@ -95,15 +95,15 @@ BASE = {
     "arm_out": 0.15, "forearm_in": 0.0, "arm_in": 0.0, "hand_in": 0.0,
     "hammer_arm": 0.8, "hammer_twist": 50.0, "hammer_flex": 0.0, "wrist": 0.0,
     "flight": 0.0, "flight_from": 0.32,
+    "bag_out": 0.28,          # правая рука разведена сильнее: сумка на правом боку, рука висит поверх неё
 }
 
 LOCOMOTION = {
-    # спокойная стойка: вес на правой ноге, левое колено чуть согнуто, руки висят, лёгкое покачивание и дыхание.
-    # Руки чуть впереди бёдер (arm_mid > 0), как на концепте: правая кисть с молотком — перед сумкой, а не в ней
+    # спокойная стойка: вес на правой ноге, левое колено чуть согнуто, руки висят, лёгкое покачивание и дыхание
     "Idle": {
         "frames": 90,
         "k": dict(BASE, sway=0.012, pelvis_roll=1.5, lean_side=0.018, lean=1.0, lean_pulse=1.2,
-                  head_pitch=-1.0, head_nod=1.0, arm_mid=5.0, arm_amp=1.5, elbow=14.0, elbow_amp=2.0,
+                  head_pitch=-1.0, head_nod=1.0, arm_mid=-3.0, arm_amp=1.5, elbow=14.0, elbow_amp=2.0,
                   arm_out=0.30, forearm_in=-0.08, wrist=2.0, hammer_twist=0.0, hammer_flex=20.0),
         "knee": [(0.0, 6), (0.5, 6)],
         "foot": [(0.0, 0), (0.5, 0)],
@@ -212,9 +212,10 @@ def make_cycle(dst, order, name, spec, reverse=False):
             sh = k["arm_mid"] + amp * c
             el = k["elbow"] + k["elbow_amp"] * math.cos(2 * math.pi * (ph[s] - k["arm_phase"] - k["elbow_lag"]))
             rs = R(Z, syaw)
-            rot["UpperArm" + sfx] = aim("UpperArm" + sfx, rs @ sag(s, sh, k["arm_out"] - k["arm_in"] * fwd))
+            bag = k["bag_out"] if s < 0 else 0.0
+            rot["UpperArm" + sfx] = aim("UpperArm" + sfx, rs @ sag(s, sh, k["arm_out"] - k["arm_in"] * fwd + bag))
             rot["Forearm" + sfx] = aim("Forearm" + sfx,
-                                       rs @ sag(s, sh + el, -k["forearm_in"] - k["hand_in"] * fwd))
+                                       rs @ sag(s, sh + el, -k["forearm_in"] - k["hand_in"] * fwd + bag))
             fd = rot["Forearm" + sfx] @ rest_q["Forearm" + sfx].inverted()
             twist = k["hammer_twist"] if s < 0 else 0.0
             fdir = rot["Forearm" + sfx] @ Vector((0, 1, 0))
