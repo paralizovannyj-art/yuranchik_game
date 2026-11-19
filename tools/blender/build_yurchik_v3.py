@@ -878,13 +878,13 @@ def build_hood(mb):
 # Сумка висит ровно посередине правого бока: центр — на средней линии тела (y -0.012), задняя стенка —
 # вертикальная плоскость вдоль тела, прижата к куртке в середине. Правая рука висит снаружи сумки
 # (retarget_ual_yurchik.py, bag_out), а не проходит сквозь неё.
-# BAG_SIZE — масштаб сумки (ширина и высота; верх остаётся на месте, сумка висит на том же ремне),
+# BAG_SIZE — масштаб высоты сумки (верх остаётся на месте, сумка висит на том же ремне), BAG_WIDTH — ширины,
 # BAG_THICK — толщина (насколько сумка выпирает от тела)
-BAG_SIZE, BAG_THICK = 0.82, 0.75
+BAG_SIZE, BAG_WIDTH, BAG_THICK = 0.82, 0.94, 0.75
 BAG_TF = Vector((-0.214, -0.141, 0)); BAG_TB = Vector((-0.214, 0.117, 0))
 BAG_W = (BAG_TB - BAG_TF).normalized(); BAG_N = Vector((-BAG_W.y, BAG_W.x, 0))   # вдоль сумки (назад) / наружу
 BAG_M = (BAG_TF + BAG_TB) / 2 + BAG_N * 0.012
-BAG_HW = (BAG_TB - BAG_TF).length / 2 * BAG_SIZE
+BAG_HW = (BAG_TB - BAG_TF).length / 2 * BAG_WIDTH
 BAG_TOP = 1.008                                              # верх клапана
 def bag_z(z): return BAG_TOP - (BAG_TOP - z) * BAG_SIZE      # высота исходной сумки → уменьшенной
 BAG_FLAP_Z, BAG_BOT = bag_z(0.855), bag_z(0.745)             # нижний край клапана и дно
@@ -924,22 +924,46 @@ def build_strap_bag(mb):
     # задняя стенка (к телу): без неё сумка со спины пустая — грани односторонние, сквозь неё видно фон
     ngon(mb, [cols[0][0], cols[1][0], cols[2][0], cols[2][last], cols[1][last], cols[0][last]], "bag_back", "bag_side", -Nb)
 
-    # ремень: от сумки спереди через левое плечо к сумке сзади
-    path = [bag_pt(-hw + 0.012, 0.035 * BAG_THICK, bag_z(0.985))]
-    path.append(Vector((-0.196, torso_y(-0.196, 0.990) - 0.006, 0.995)))
-    for z in (1.03, 1.10, 1.19, 1.28, 1.36, 1.425):
-        x = -0.174 + (z - 1.0) * 0.6865
-        path.append(Vector((x, torso_y(x, z) - 0.007, z)))
+    # ремень: от сумки спереди через левое плечо к сумке сзади. Сумка тянет его вниз, поэтому от плеча до сумки
+    # он идёт натянутой прямой и лишь огибает тело там, где прямая ушла бы внутрь куртки (впадины не повторяет).
+    def outside_body(p, gap=0.007):
+        a, bf, bb, yc, n = torso_ring_at(p.z)
+        a += gap; b = (bf if p.y < yc else bb) + gap
+        r = (abs(p.x) / a) ** n + (abs(p.y - yc) / b) ** n
+        if r >= 1.0:
+            return p
+        f = r ** (-1.0 / n)                                         # выталкиваем из центра сечения на поверхность
+        return Vector((p.x * f, yc + (p.y - yc) * f, p.z))
+
+    def taut(a, b, steps):
+        return [outside_body(a.lerp(b, i / steps)) for i in range(1, steps)]
+
+    top_z = bag_z(0.985); att_d = prof[2][0] * 0.55                # крепления — на боковинах сумки, у верха
+    a_front = bag_pt(-hw, att_d, top_z) - Wb * 0.004; a_back = bag_pt(hw, att_d, top_z) + Wb * 0.004
+    sh_front = Vector((0.118, torso_y(0.118, 1.425) - 0.007, 1.425))
+    sh_back = Vector((0.137, torso_y(0.137, 1.425, False) + 0.007, 1.425))
+    path = [a_front] + taut(a_front, sh_front, 12) + [sh_front]
     path += [Vector((0.132, -0.060, 1.458)), Vector((0.142, -0.012, 1.466)), Vector((0.146, 0.045, 1.458))]
-    for z in (1.425, 1.34, 1.25, 1.16, 1.07, 1.005):
-        x = -0.106 + (z - 1.0) * 0.5745
-        path.append(Vector((x, torso_y(x, z, False) + 0.007, z)))
-    path.append(bag_pt(hw - 0.012, 0.035 * BAG_THICK, bag_z(0.985)))
+    path += [sh_back] + taut(sh_back, a_back, 12) + [a_back]
+    last_p = len(path) - 1
+
+    def body_normal(p):                                             # нормаль к сечению куртки на высоте точки
+        a, bf, bb, yc, n = torso_ring_at(p.z)
+        b = bf if p.y < yc else bb
+        gx = math.copysign((abs(p.x) / a) ** (n - 1) / a, p.x)
+        gy = math.copysign((abs(p.y - yc) / b) ** (n - 1) / b, p.y - yc)
+        return Vector((gx, gy, 0)).normalized()
+
     axis = lambda p: Vector((0, -0.01, p.z))
     rows = []; dist = 0.0
     for k, p in enumerate(path):
         t = (path[min(k + 1, len(path) - 1)] - path[max(k - 1, 0)]).normalized()
-        out = (p - axis(p)); out.z = 0.25 * out.length if 1.43 < p.z else 0.0
+        if 1.43 < p.z:                                              # на плече — как было: наружу от оси тела
+            out = (p - axis(p)); out.z = 0.25 * out.length
+        else:                                                       # у сумки ремень лежит плашмя на боковине
+            e = min(k, last_p - k)
+            gus = -Wb if k < last_p / 2 else Wb
+            out = gus.lerp(body_normal(p), smooth(e / 3.0))
         out.normalize()
         side = t.cross(out).normalized()
         if k:
