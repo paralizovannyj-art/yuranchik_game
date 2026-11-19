@@ -14,13 +14,10 @@
 [ext_resource type="PackedScene" uid="uid://bg5dquyqdt2p4" path="res://scenes/characters/sergey.tscn" id="sergey"]
 [ext_resource type="PackedScene" uid="uid://c7ajfkmkpjxd" path="res://assets/models/window_view.gltf" id="view"]
 [ext_resource type="PackedScene" uid="uid://dux86p24prqhf" path="res://assets/models/yurchik_room/armchair.gltf" id="yr_armchair"]
-[ext_resource type="PackedScene" uid="uid://1ie2anyp0e07" path="res://assets/models/yurchik_room/armchair_box.gltf" id="yr_armchair_box"]
-[ext_resource type="PackedScene" uid="uid://cjbxln4mphotk" path="res://assets/models/yurchik_room/armchair_throw.gltf" id="yr_armchair_throw"]
 [ext_resource type="PackedScene" uid="uid://b5okf31xfwfa8" path="res://assets/models/yurchik_room/black_boxes.gltf" id="yr_black_boxes"]
 [ext_resource type="PackedScene" uid="uid://dqmpqcuyapgbl" path="res://assets/models/yurchik_room/book_stack.gltf" id="yr_book_stack"]
 [ext_resource type="PackedScene" uid="uid://ci14q27j8p8u3" path="res://assets/models/yurchik_room/bowl.gltf" id="yr_bowl"]
 [ext_resource type="PackedScene" uid="uid://n12v7eeqlgg1" path="res://assets/models/yurchik_room/chandelier.gltf" id="yr_chandelier"]
-[ext_resource type="PackedScene" uid="uid://bi8dcke81rox7" path="res://assets/models/yurchik_room/charger.gltf" id="yr_charger"]
 [ext_resource type="PackedScene" uid="uid://cpu0ugtah0qc0" path="res://assets/models/yurchik_room/clothes_pile.gltf" id="yr_clothes_pile"]
 [ext_resource type="PackedScene" uid="uid://b8mlf03gmhcii" path="res://assets/models/yurchik_room/desk.gltf" id="yr_desk"]
 [ext_resource type="PackedScene" uid="uid://d0boietr15u40" path="res://assets/models/yurchik_room/desk_bottle_short.gltf" id="yr_desk_bottle_short"]
@@ -38,13 +35,10 @@
 [ext_resource type="PackedScene" uid="uid://vogiy2mikf7a" path="res://assets/models/yurchik_room/mug.gltf" id="yr_mug"]
 [ext_resource type="PackedScene" uid="uid://cbt06h3rdmpx8" path="res://assets/models/yurchik_room/pc_tower.gltf" id="yr_pc_tower"]
 [ext_resource type="PackedScene" uid="uid://dc5r8n8bvfpm4" path="res://assets/models/yurchik_room/pillow.gltf" id="yr_pillow"]
-[ext_resource type="PackedScene" uid="uid://bw0e552bih20c" path="res://assets/models/yurchik_room/plush_toy.gltf" id="yr_plush_toy"]
 [ext_resource type="PackedScene" uid="uid://cbj0ve7tdn0vs" path="res://assets/models/yurchik_room/radiator.gltf" id="yr_radiator"]
 [ext_resource type="PackedScene" uid="uid://clgbxto85iccq" path="res://assets/models/yurchik_room/room_shell.gltf" id="yr_room_shell"]
 [ext_resource type="PackedScene" uid="uid://cr7o7tp1xdemv" path="res://assets/models/yurchik_room/sill_bottle.gltf" id="yr_sill_bottle"]
-[ext_resource type="PackedScene" uid="uid://cba660j6bl0vw" path="res://assets/models/yurchik_room/sill_pen.gltf" id="yr_sill_pen"]
 [ext_resource type="PackedScene" uid="uid://dyf8mc3n1ln5e" path="res://assets/models/yurchik_room/sill_plant.gltf" id="yr_sill_plant"]
-[ext_resource type="PackedScene" uid="uid://dh54wqbd2rbm3" path="res://assets/models/yurchik_room/sneakers.gltf" id="yr_sneakers"]
 [ext_resource type="PackedScene" uid="uid://by8gl4ooe272s" path="res://assets/models/yurchik_room/sofa.gltf" id="yr_sofa"]
 [ext_resource type="PackedScene" uid="uid://ba4xd6lh0lld0" path="res://assets/models/yurchik_room/sofa_blanket.gltf" id="yr_sofa_blanket"]
 [ext_resource type="PackedScene" uid="uid://dj0q7fad2tln" path="res://assets/models/yurchik_room/spathiphyllum.gltf" id="yr_spathiphyllum"]
@@ -171,49 +165,34 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.175, 8.4, -1.405)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.149, 8.438, -1.428)
 
 [node name="Spathiphyllum" parent="YurchikRoom" unique_id=1518979391 instance=ExtResource("yr_spathiphyllum")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.229, 9.232, -1.119)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.229, 9.232, -1.2085088)
 
 [node name="IconFrame" parent="YurchikRoom" unique_id=877009900 instance=ExtResource("yr_icon_frame")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.09, 9.234, -1.15)
 
 [node name="BlackBoxes" parent="YurchikRoom" unique_id=1738754333 instance=ExtResource("yr_black_boxes")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.18, 9.232, -1.38)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.1112175, 9.232, -1.3973588)
 
 [node name="BookStack" parent="YurchikRoom" unique_id=1740793533 instance=ExtResource("yr_book_stack")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.249, 9.232, -1.56)
-
-[node name="Charger" parent="YurchikRoom" unique_id=842515313 instance=ExtResource("yr_charger")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.204, 9.232, -1.579)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.155259, 9.232, -1.6427554)
 
 [node name="DresserPhone" parent="YurchikRoom" unique_id=1693370967 instance=ExtResource("yr_dresser_phone")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.09, 9.232, -1.6)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.991262, 9.232, -1.6)
 
 [node name="SillPlant" parent="YurchikRoom" unique_id=1749339416 instance=ExtResource("yr_sill_plant")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.447, 9.3, -1.938)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.447, 9.3, -1.9048826)
 
 [node name="SillBottle" parent="YurchikRoom" unique_id=1861531346 instance=ExtResource("yr_sill_bottle")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.42, 9.3, -2.14)
-
-[node name="SillPen" parent="YurchikRoom" unique_id=544343830 instance=ExtResource("yr_sill_pen")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.35, 9.3, -2.75)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.42, 9.3, -2.105378)
 
 [node name="Armchair" parent="YurchikRoom" unique_id=1257836494 instance=ExtResource("yr_armchair")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.915, 8.4, -3.425)
 
-[node name="ArmchairThrow" parent="YurchikRoom" unique_id=1594947146 instance=ExtResource("yr_armchair_throw")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.916, 9.034, -3.705)
-
 [node name="ClothesPile" parent="YurchikRoom" unique_id=1112819259 instance=ExtResource("yr_clothes_pile")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.965, 8.503, -3.27)
-
-[node name="ArmchairBox" parent="YurchikRoom" unique_id=661947186 instance=ExtResource("yr_armchair_box")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.858, 8.405, -2.62)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.901641, 8.554192, -3.4500864)
 
 [node name="FloorClothes" parent="YurchikRoom" unique_id=37806848 instance=ExtResource("yr_floor_clothes")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.265, 8.4, -2.823)
-
-[node name="Sneakers" parent="YurchikRoom" unique_id=392625124 instance=ExtResource("yr_sneakers")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.2, 8.404, -2.681)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.228529, 8.390604, -2.835948)
 
 [node name="Sofa" parent="YurchikRoom" unique_id=2021027730 instance=ExtResource("yr_sofa")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.44, 8.4, -2.815)
@@ -252,16 +231,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.712, 9.14, -3.501)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.36, 9.14, -3.52)
 
 [node name="DeskBottleTall" parent="YurchikRoom" unique_id=1731299009 instance=ExtResource("yr_desk_bottle_tall")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.35, 9.14, -3.74)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.319572, 9.14, -3.74)
 
 [node name="DeskBottleShort" parent="YurchikRoom" unique_id=937213482 instance=ExtResource("yr_desk_bottle_short")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.22, 9.14, -3.78)
 
 [node name="Bowl" parent="YurchikRoom" unique_id=1578976067 instance=ExtResource("yr_bowl")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.285, 9.14, -3.361)
-
-[node name="PlushToy" parent="YurchikRoom" unique_id=612267105 instance=ExtResource("yr_plush_toy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.46, 9.57, -3.59)
 
 [node name="DeskCables" parent="YurchikRoom" unique_id=991081321 instance=ExtResource("yr_desk_cables")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.437, 8.413, -3.008)
