@@ -888,6 +888,10 @@ BAG_TOP, BAG_BOT = 1.008, 0.745                              # верх клап
 BAG_QUADS = (((456, 268), (508, 283), (509, 303), (452, 291)),
              ((452, 291), (509, 303), (510, 335), (454, 327)))
 BAG_TEX = (128, 96); BAG_TEX_FLAP = 56                        # выпрямленная картинка: ширина, высота, строка края клапана
+# застёжка (язычок клапана, пряжка, хвост ремешка) на выпрямленной картинке: (строка, x центра). На концепте ремешок
+# под пряжкой уходит наискось — каждая строка сдвигается так, чтобы застёжка шла вертикально ровно по середине сумки
+BAG_STRAP_C = ((0, 74.5), (60, 74.5), (64, 78.5), (71, 84.5), (80, 88.5), (89, 96.5), (96, 99.5))
+BAG_STRAP_HALF, BAG_SRC_HALF = 12.0, 55.0                     # полуширина застёжки (без растяжения) и взятой ткани
 
 
 def build_strap_bag(mb):
@@ -1201,7 +1205,23 @@ def bag_reference(a, fg):
         bot = bl[None, None] * (1 - front[..., None]) + br[None, None] * front[..., None]
         p = top * (1 - vv[..., None]) + bot * vv[..., None]
         tex[r0:r1] = sample(src, (p[..., 0] - X0).ravel(), (p[..., 1] - Y0).ravel()).reshape(r1 - r0, BAG_TEX[0], 3)
-    return tex
+    return center_bag_strap(tex)
+
+
+def center_bag_strap(tex):
+    """Застёжку — в середину сумки и вертикально: в каждой строке центр застёжки (BAG_STRAP_C) уходит в середину
+    картинки, сама застёжка ±BAG_STRAP_HALF не растягивается, ткань по бокам равномерно тянется до краёв сумки."""
+    TH, TW = tex.shape[:2]
+    rr = np.arange(TH) + 0.5
+    c = np.interp(rr, [r for r, x in BAG_STRAP_C], [x for r, x in BAG_STRAP_C])[:, None]
+    o = (np.arange(TW) + 0.5 - TW / 2)[None, :]                     # от середины сумки
+    k = BAG_SRC_HALF / (TW / 2); oc = BAG_STRAP_HALF / k
+    xl = c - BAG_SRC_HALF; xr = np.minimum(c + BAG_SRC_HALF, TW)
+    x = np.where(np.abs(o) <= oc, c + o * k,
+                 np.where(o < 0, xl + (o + TW / 2) / (TW / 2 - oc) * ((c - BAG_STRAP_HALF) - xl),
+                          (c + BAG_STRAP_HALF) + (o - oc) / (TW / 2 - oc) * (xr - (c + BAG_STRAP_HALF))))
+    y = np.broadcast_to(rr[:, None], x.shape)
+    return sample(tex, (x - 0.5).ravel(), (y - 0.5).ravel()).reshape(TH, TW, 3)
 
 
 def sample(img, px, py):
