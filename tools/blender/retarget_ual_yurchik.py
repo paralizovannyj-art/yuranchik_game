@@ -95,6 +95,7 @@ BASE = {
     "arm_out": 0.15, "forearm_in": 0.0, "arm_in": 0.0, "hand_in": 0.0,
     "hammer_arm": 0.8, "hammer_twist": 50.0, "hammer_flex": 0.0, "wrist": 0.0,
     "flight": 0.0, "flight_from": 0.32,
+    "bag_out": 0.28,          # правая рука разведена сильнее: сумка на правом боку, рука висит поверх неё
 }
 
 LOCOMOTION = {
@@ -211,9 +212,10 @@ def make_cycle(dst, order, name, spec, reverse=False):
             sh = k["arm_mid"] + amp * c
             el = k["elbow"] + k["elbow_amp"] * math.cos(2 * math.pi * (ph[s] - k["arm_phase"] - k["elbow_lag"]))
             rs = R(Z, syaw)
-            rot["UpperArm" + sfx] = aim("UpperArm" + sfx, rs @ sag(s, sh, k["arm_out"] - k["arm_in"] * fwd))
+            bag = k["bag_out"] if s < 0 else 0.0
+            rot["UpperArm" + sfx] = aim("UpperArm" + sfx, rs @ sag(s, sh, k["arm_out"] - k["arm_in"] * fwd + bag))
             rot["Forearm" + sfx] = aim("Forearm" + sfx,
-                                       rs @ sag(s, sh + el, -k["forearm_in"] - k["hand_in"] * fwd))
+                                       rs @ sag(s, sh + el, -k["forearm_in"] - k["hand_in"] * fwd + bag))
             fd = rot["Forearm" + sfx] @ rest_q["Forearm" + sfx].inverted()
             twist = k["hammer_twist"] if s < 0 else 0.0
             fdir = rot["Forearm" + sfx] @ Vector((0, 1, 0))
