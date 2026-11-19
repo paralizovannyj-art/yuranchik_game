@@ -1052,7 +1052,7 @@ def export_items(I, coll):
         for ob in it["extra"]:
             ob.parent = obs[0]
         layout[item] = [round(A.x, 3), round(A.z, 3), round(-A.y, 3)]      # Blender Z-up → Godot Y-up
-    with open(os.path.join(ITEM_DIR, "layout.json"), "w", encoding="utf-8") as f:
+    with open(os.path.join(ITEM_DIR, "layout.json"), "w", encoding="utf-8", newline="\n") as f:
         json.dump(layout, f, ensure_ascii=False, indent=1)
     return layout
 
