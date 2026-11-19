@@ -6,7 +6,7 @@
 
 Открыть проект в Godot и нажать **F5**. Откроется главное меню → «Начать игру».
 Отдельный уровень можно запустить из редактора клавишей **F6** (район — `scenes/levels/district.tscn`,
-подъезд — `scenes/levels/stairwell.tscn`; старый двор с врагами — `scenes/levels/yard.tscn`).
+подъезд — `scenes/levels/stairwell.tscn`).
 
 ## Что в демо
 
@@ -20,9 +20,6 @@
 3. **Квартира 47.** Зашёл, дверь закрылась. Комната Юрчика сделана по фотографиям настоящей комнаты:
    окно с батареей, комод под скатертью, кресло с одеждой, диван с пледом, компьютер 2010–2011 года в углу.
    Юрчик включает комп (E), затем финальный экран.
-
-В старом дворе (`yard.tscn`, из меню туда не попасть) всё по-прежнему: офники, Сергей появляется, когда взяты
-ключи от дома, идёт следом по подъезду и ломится в дверь квартиры.
 
 ## Управление
 
@@ -66,7 +63,7 @@
 | Офник и Сергей (один скрипт, разные настройки) | `scripts/enemies/enemy.gd`, `scenes/characters/enemy.tscn`, `sergey.tscn` |
 | Предметы, двери, броски | `scripts/world/pickup.gd`, `interactable.gd`, `projectile.gd` |
 | Интерфейс, инвентарь, меню | `scripts/ui/hud.gd`, `inventory_ui.gd`, `main_menu.gd` |
-| Сценарии уровней | `scripts/levels/yard.gd`, `stairwell.gd` (общая основа — `level.gd`) |
+| Сценарии уровней | `scripts/levels/district.gd`, `stairwell.gd` (общая основа — `level.gd`) |
 | Сборка моделей врагов | `tools/blender/build_enemies.py` |
 | Подъезд, гараж, предметы, иконки | `tools/blender/build_mvp_assets.py` |
 | Комната Юрчика (модель и текстуры по фото) | `tools/blender/build_yurchik_room.py` |

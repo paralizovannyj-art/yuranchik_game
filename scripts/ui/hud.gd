@@ -416,7 +416,7 @@ func show_ending() -> void:
 	var mins := t / 60
 	_title.text = "ДОМА"
 	_title.label_settings.font_color = C_TEXT
-	if Game.flags.get("sergey", false):         # старый двор (yard.tscn): с Сергеем и офниками
+	if Game.flags.get("sergey", false):         # сюжет с Сергеем (флаг ставил удалённый старый двор)
 		_sub.text = "Сегодня ты добрался. Но он знает, где ты живёшь.\n\nВремя: %d:%02d     Офников уложено: %d     Смертей: %d\n\nКонец демо-версии. Продолжение следует." % [
 			mins, t % 60, Game.stats["kills"], Game.stats["deaths"]]
 	else:                                        # Паскот: пока без врагов
