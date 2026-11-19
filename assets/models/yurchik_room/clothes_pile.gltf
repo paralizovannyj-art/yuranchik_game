@@ -8,18 +8,13 @@
 		{
 			"name":"Scene",
 			"nodes":[
-				0,
-				1
+				0
 			]
 		}
 	],
 	"nodes":[
 		{
 			"mesh":0,
-			"name":"ClothesPile_nocol"
-		},
-		{
-			"mesh":1,
 			"name":"ClothesPileSoft_nocol"
 		}
 	],
@@ -38,7 +33,7 @@
 	],
 	"meshes":[
 		{
-			"name":"ClothesPile_nocol",
+			"name":"ClothesPileSoft_nocol",
 			"primitives":[
 				{
 					"attributes":{
@@ -47,20 +42,6 @@
 						"TEXCOORD_0":2
 					},
 					"indices":3,
-					"material":0
-				}
-			]
-		},
-		{
-			"name":"ClothesPileSoft_nocol",
-			"primitives":[
-				{
-					"attributes":{
-						"POSITION":4,
-						"NORMAL":5,
-						"TEXCOORD_0":6
-					},
-					"indices":7,
 					"material":0
 				}
 			]
@@ -83,119 +64,61 @@
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":48,
+			"count":1938,
 			"max":[
-				0.25127220153808594,
-				0.6311397552490234,
-				0.38306617736816406
+				0.5647506713867188,
+				0.7924089431762695,
+				0.41056156158447266
 			],
 			"min":[
-				0.02952861785888672,
-				0.5168609619140625,
-				0.2169337272644043
+				-0.564265251159668,
+				0.00026035308837890625,
+				-0.4114232063293457
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":48,
+			"count":1938,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":48,
+			"count":1938,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
 			"componentType":5123,
-			"count":84,
-			"type":"SCALAR"
-		},
-		{
-			"bufferView":4,
-			"componentType":5126,
-			"count":2185,
-			"max":[
-				0.5647506713867188,
-				0.8694095611572266,
-				0.41056156158447266
-			],
-			"min":[
-				-0.564265251159668,
-				-0.000152587890625,
-				-0.4114232063293457
-			],
-			"type":"VEC3"
-		},
-		{
-			"bufferView":5,
-			"componentType":5126,
-			"count":2185,
-			"type":"VEC3"
-		},
-		{
-			"bufferView":6,
-			"componentType":5126,
-			"count":2185,
-			"type":"VEC2"
-		},
-		{
-			"bufferView":7,
-			"componentType":5123,
-			"count":9582,
+			"count":8478,
 			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":576,
+			"byteLength":23256,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":576,
-			"byteOffset":576,
+			"byteLength":23256,
+			"byteOffset":23256,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":384,
-			"byteOffset":1152,
+			"byteLength":15504,
+			"byteOffset":46512,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":168,
-			"byteOffset":1536,
-			"target":34963
-		},
-		{
-			"buffer":0,
-			"byteLength":26220,
-			"byteOffset":1704,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":26220,
-			"byteOffset":27924,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":17480,
-			"byteOffset":54144,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":19164,
-			"byteOffset":71624,
+			"byteLength":16956,
+			"byteOffset":62016,
 			"target":34963
 		}
 	],
@@ -207,7 +130,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":90788,
+			"byteLength":78972,
 			"uri":"clothes_pile.bin"
 		}
 	]

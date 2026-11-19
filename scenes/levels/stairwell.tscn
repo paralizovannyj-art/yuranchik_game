@@ -204,7 +204,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.915, 8.4, -3.425)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.916, 9.034, -3.705)
 
 [node name="ClothesPile" parent="YurchikRoom" unique_id=1112819259 instance=ExtResource("yr_clothes_pile")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.965, 8.426, -3.27)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.965, 8.503, -3.27)
 
 [node name="ArmchairBox" parent="YurchikRoom" unique_id=661947186 instance=ExtResource("yr_armchair_box")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.858, 8.405, -2.62)

@@ -1200,11 +1200,10 @@ def room(M):
         q_ = (0, 1, 0, 2, 3, 1, 0, 3)[pile_i[0] % 8]; pile_i[0] += 1
         soft(pile, (ax0 + fy * AW, ay1 - dx, Z + dz), (sy, sx, sz), at, CLQ(q_), r=min(sx, sy, sz) * 0.35, n=(2, 2, 1),
              amp=0.028, rng=srng, yaw=yw, pitch=pt, freq=14)
-    soft(pile, (ax0 + 0.16, ay0 - 0.05, Z + 0.30), (0.30, 0.06, 0.56), at, cl, r=0.025, n=(2, 1, 3), amp=0.01, rng=srng, yaw=8, pitch=-14)   # джинсы свесились
+    soft(SB(), (ax0 + 0.16, ay0 - 0.05, Z + 0.30), (0.30, 0.06, 0.56), at, cl, r=0.025, n=(2, 1, 3), amp=0.01, rng=srng, yaw=8, pitch=-14)   # джинсы убраны; вызов оставлен в пустую сетку, чтобы не сдвинуть случайные числа у пледа и одежды на полу
     soft(pile, (ax0 + 0.62 * AW, ay0 - 0.03, Z + 0.32), (0.12, 0.03, 0.44), at, WH, r=0.012, n=(1, 1, 3), amp=0.006, rng=srng, yaw=-4, pitch=-8)  # белое полотенце
     soft(I("armchair_box", "soft"), (ax0 + 0.55 * AW, ay0 - 0.30, Z + 0.20), (0.50, 0.08, 0.40), at, BL, r=0.01, n=(1, 1, 1), yaw=-8, pitch=-28)   # чёрная коробка у кресла
     soft(I("floor_clothes", "soft"), (ax0 + 0.22, ay0 - 0.22, Z + 0.06), (0.38, 0.30, 0.13), at, cl, r=0.06, n=(2, 2, 1), amp=0.015, rng=srng, yaw=20, freq=12)   # куча на полу
-    cylr(I("clothes_pile"), (ax0 + 0.50 * AW, ay0 - 0.12, Z + 0.62), (ax0 + 0.66 * AW, ay0 - 0.02, Z + 0.58), 0.04, 0.04, at, RC("bottle"), segs=8)   # бутылка в куче
     for k_ in range(2):                                                                            # провода из-под коробки
         cylr(I("armchair_box"), (ax0 + 0.5 * AW + k_ * 0.08, ay0 - 0.36, Z + 0.01), (ax0 + 0.5 * AW + 0.22 + k_ * 0.05, ay0 - 0.70, Z + 0.01), 0.005, 0.005, at, BL, segs=3, caps=False)
     for (y_, yw) in ((2.78, 75), (2.56, 95)):                                                      # кроссовки у батареи
