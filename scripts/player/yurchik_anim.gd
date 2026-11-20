@@ -34,6 +34,7 @@ extends Node3D
 @export var hips_response := 8.0
 
 var step_phase := 0.0                ## читает камера для покачивания (одна «волна» на шаг)
+var crouch := 0.0                    ## присед 0..1 — ставит player.gd (присед, прыжок, приземление)
 
 const LOOPS := ["Idle", "Walk", "WalkBack", "Run", "AimIdle"]
 const UPPER := ["Spine", "Head", "UpperArmL", "ForearmL", "HandL", "UpperArmR", "ForearmR", "HandR"]
@@ -237,7 +238,8 @@ func update_anim(delta: float, speed: float, _sprint: float, state: int, yaw_rat
 	_hips = lerp_angle(_hips, twist * _move, 1.0 - exp(-hips_response * delta))
 	if _lean_mod:
 		var br := sin(_time * 1.6) * breath * _aim  # в стойке — заметное дыхание (клип стойки статичный)
-		_lean_mod.spine = Vector3(_lean.x + br, 0.0, _lean.y)
+		_lean_mod.spine = Vector3(_lean.x + br + crouch * 0.25, 0.0, _lean.y)
 		_lean_mod.hips_yaw = _hips
+		_lean_mod.crouch = crouch
 
 	_tree.advance(delta)
