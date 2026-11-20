@@ -377,27 +377,7 @@
   "loop": false,
   "root_speed": 0.0,
   "slide_cm": 0.0,
-  "src": "GMod/jump_c.smd"
- },
- "JumpApex": {
-  "foot_speed": 0.0,
-  "frames": 2,
-  "len_s": 0.033,
-  "lift": 0.0,
-  "loop": false,
-  "root_speed": 0.0,
-  "slide_cm": 0.0,
-  "src": "поза строится в скрипте (JUMP_POSES)"
- },
- "JumpFall": {
-  "foot_speed": 0.0,
-  "frames": 2,
-  "len_s": 0.033,
-  "lift": 0.0,
-  "loop": false,
-  "root_speed": 0.0,
-  "slide_cm": 0.0,
-  "src": "поза строится в скрипте (JUMP_POSES)"
+  "src": "GMod/jump_c.smd + верх base_m/Idle02.smd, кадр 0 (как $MakeJump)"
  },
  "JumpLand": {
   "foot_speed": 0.033,
@@ -408,16 +388,6 @@
   "root_speed": 0.0,
   "slide_cm": 0.0,
   "src": "GMod/jump_land.smd"
- },
- "JumpRise": {
-  "foot_speed": 0.0,
-  "frames": 2,
-  "len_s": 0.033,
-  "lift": 0.0,
-  "loop": false,
-  "root_speed": 0.0,
-  "slide_cm": 0.0,
-  "src": "поза строится в скрипте (JUMP_POSES)"
  },
  "Laugh": {
   "foot_speed": 0.015,

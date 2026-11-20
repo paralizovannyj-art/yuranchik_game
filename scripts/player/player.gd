@@ -28,10 +28,15 @@ enum State { NORMAL, AIM, ATTACK, HURT, GRABBED, THROW, BUSY, DEAD }
 @export var stop_response := 16.0      ## отклик остановки, когда отпустил клавиши
 @export var run_ramp := 2.2            ## 1/с — как быстро шаг переходит в бег
 @export var deceleration := 7.0        ## м/с² — торможение в ударе, броске, анимациях
-@export var gravity := 18.0
-@export var jump_height := 0.5         ## м — высота прыжка
+@export var gravity := 16.0
+@export var jump_height := 0.45        ## м — высота прыжка (взрослый в зимней одежде)
 @export var jump_cost := 10.0          ## выносливость за прыжок
 @export var air_control := 0.15        ## доля отклика шага в воздухе: направление прыжка почти не меняется
+@export var jump_windup_stand := 0.17  ## с — присед-замах перед отрывом с места
+@export var jump_windup_run := 0.07    ## с — то же на бегу (толчок прямо из шага)
+@export var tired_jump := 0.7          ## доля высоты прыжка при почти пустой выносливости (с половины полоски — ниже)
+@export var land_brake := 0.3          ## доля горизонтальной скорости, которую гасит жёсткое приземление
+@export var land_recover := 0.35       ## с — после жёсткого приземления шаг медленнее и прыгнуть нельзя
 @export var crouch_speed := 0.8        ## м/с вприсядку
 @export var crouch_height := 1.15      ## м — высота капсулы вприсядку (стоя — из player.tscn)
 @export var crouch_eye_drop := 0.6     ## м — насколько ниже глаза вприсядку
@@ -132,6 +137,10 @@ var _jump_buffer := 0.0
 var _coyote := 0.0                     ## ещё можно прыгнуть, только что сойдя с края
 var _jumped := false                   ## в воздухе после прыжка (а не просто упал со ступеньки)
 var _land := 0.0                       ## «присел» от приземления, 0..1
+var _windup := -1.0                    ## с с начала замаха прыжка; < 0 — не замахивается
+var _windup_len := 0.17
+var _jump_v0 := 0.0                    ## скорость отрыва текущего прыжка, м/с
+var _recover := 0.0                    ## с — отходит от жёсткого приземления
 var _shape: CapsuleShape3D
 var _stand_height := 1.8
 
@@ -263,6 +272,7 @@ func _physics_process(delta: float) -> void:
 	_jump_buffer = maxf(_jump_buffer - delta, 0.0)
 	_coyote = 0.12 if is_on_floor() else maxf(_coyote - delta, 0.0)
 	_land = move_toward(_land, 0.0, delta * 3.0)
+	_recover = maxf(_recover - delta, 0.0)
 
 	var look := Input.get_vector("look_left", "look_right", "look_up", "look_down")
 	_yaw_target -= look.x * stick_sensitivity * delta
@@ -369,10 +379,12 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.y = -0.5
 	_try_jump()
+	_update_windup(delta)
 	var fall := -velocity.y
+	var hv_before := Vector3(velocity.x, 0.0, velocity.z)
 	move_and_slide()
 	if is_on_floor() and not was_floor:
-		_landed(fall)
+		_landed(fall, hv_before)
 	# если упёрлись в стену — скорость тоже гаснет
 	move_speed = minf(move_speed, Vector3(velocity.x, 0, velocity.z).length() + 0.9)
 
@@ -392,6 +404,9 @@ func _physics_process(delta: float) -> void:
 	# поза: присед, подогнутые в прыжке ноги, «просел» при приземлении
 	var tuck := 0.3 if _jumped and not is_on_floor() else 0.0
 	model.set("crouch", maxf(_crouch, maxf(tuck, _land * 0.45)))
+	model.set("jump_windup", _windup / _windup_len if _windup >= 0.0 else -1.0)
+	model.set("jump_v0", _jump_v0 if _jumped and not is_on_floor() else 0.0)
+	model.set("land_eta", _ground_eta())
 	model.update_anim(delta, signed, _sprint_blend, _anim_state(), _yaw_rate, accel, move_angle,
 			crouching, not is_on_floor(), velocity.y)
 	_footsteps()
@@ -408,6 +423,8 @@ func _move(hv: Vector3, input: Vector2, base: float, delta: float) -> Vector3:
 	var speed := lerpf(base, sprint_speed, _run) if state == State.NORMAL else base
 	if crouching:
 		speed = minf(speed, crouch_speed)
+	if _recover > 0.0:               # отходит от жёсткого приземления
+		speed *= lerpf(1.0, 0.45, minf(_recover / land_recover * 2.0, 1.0))
 	var target := Basis(Vector3.UP, cam_yaw) * local * speed
 	var k := move_response if target.length() > 0.01 else stop_response
 	if not is_on_floor():
@@ -418,8 +435,9 @@ func _move(hv: Vector3, input: Vector2, base: float, delta: float) -> Vector3:
 
 
 # ----------------------------------------------------------------------------- прыжок и присед
+## Прыжок не мгновенный: сначала присед-замах (_windup_len, на бегу короче), отрыв — в _update_windup.
 func _try_jump() -> void:
-	if _jump_buffer <= 0.0 or _coyote <= 0.0:
+	if _jump_buffer <= 0.0 or _coyote <= 0.0 or _windup >= 0.0 or _recover > land_recover * 0.5:
 		return
 	if not control or phone_up or not (state == State.NORMAL or state == State.AIM):
 		return
@@ -429,21 +447,58 @@ func _try_jump() -> void:
 		return
 	if exhausted:
 		return
+	_windup = 0.0
+	_windup_len = lerpf(jump_windup_stand, jump_windup_run, smoothstep(0.5, 3.0, move_speed))
+
+
+func _update_windup(delta: float) -> void:
+	if _windup < 0.0:
+		return
+	if not control or not (state == State.NORMAL or state == State.AIM) or (not is_on_floor() and _coyote <= 0.0):
+		_windup = -1.0               # ударили, схватили, сорвался с края — прыжка нет
+		return
+	_windup += delta
+	if _windup < _windup_len and is_on_floor():
+		return
+	# отрыв (или сошёл с края во время замаха — толкается тем, что успел)
+	_windup = -1.0
 	_coyote = 0.0
 	_jumped = true
-	velocity.y = sqrt(2.0 * gravity * jump_height)
+	var tired := lerpf(tired_jump, 1.0, clampf(stamina / max_stamina * 2.0, 0.0, 1.0))
+	_jump_v0 = sqrt(2.0 * gravity * jump_height * tired)
+	velocity.y = _jump_v0
 	_spend(jump_cost)
 	Game.sfx_rand(step_sound, step_variants, null, -8.0)
 	Game.emit_noise(global_position, 3.0)
 
 
-func _landed(fall: float) -> void:
+func _landed(fall: float, hv: Vector3) -> void:
 	if _jumped or fall > 3.0:
 		_land = clampf(fall / 7.0, 0.25, 1.0)
+		# ноги гасят удар: часть скорости теряется, пару мгновений шаг тяжелее
+		var keep := 1.0 - land_brake * _land
+		velocity.x = hv.x * keep
+		velocity.z = hv.z * keep
+		move_speed = hv.length() * keep
+		_recover = land_recover * _land
 		Game.sfx_rand(step_sound, step_variants, null, -6.0)
 		Game.emit_noise(global_position, 5.0)
 		shake(clampf((fall - 4.0) * 0.1, 0.0, 0.5))
 	_jumped = false
+
+
+## Сколько секунд до касания земли при падении (9 — земли под ногами нет или не падает).
+func _ground_eta() -> float:
+	if is_on_floor() or velocity.y >= 0.0:
+		return 9.0
+	var q := PhysicsRayQueryParameters3D.create(global_position + Vector3.UP * 0.1,
+			global_position + Vector3.DOWN * 4.0, collision_mask, [get_rid()])
+	var hit := get_world_3d().direct_space_state.intersect_ray(q)
+	if hit.is_empty():
+		return 9.0
+	var d := maxf(global_position.y - (hit.position as Vector3).y, 0.0)
+	var v := -velocity.y           # d = v·t + g·t²/2
+	return (-v + sqrt(v * v + 2.0 * gravity * d)) / gravity
 
 
 func _update_crouch(delta: float) -> void:
