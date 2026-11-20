@@ -14,10 +14,20 @@ extends Node3D
 		flicker = v
 		_apply()
 @export var head_offset := Vector3(0, 6.3, 1.6)       ## где у модели столба плафон
-@export var show_halo := true:                       ## светящийся круг вокруг плафона (на мосту выключен)
+@export var show_halo := true:                       ## светящийся круг вокруг плафона
 	set(v):
 		show_halo = v
 		_apply()
+@export var sparkle := false:                        ## вместо мягкого круга — маленькая искра с лучами (мост)
+	set(v):
+		sparkle = v
+		_apply()
+@export var halo_size := 2.6:                        ## размер круга/искры, м
+	set(v):
+		halo_size = v
+		_apply()
+
+const SPARKLE_SHADER := preload("res://shaders/lamp_sparkle.gdshader")
 
 @onready var spot: SpotLight3D = $Spot
 @onready var fill: OmniLight3D = $Fill
@@ -39,9 +49,21 @@ func _apply() -> void:
 	fill.light_color = color.lerp(Color.WHITE, 0.08)
 	spot.light_energy = energy
 	spot.set("_base_energy", energy)
-	var m := halo.get_active_material(0)
-	if m and not Engine.is_editor_hint():
-		m = m.duplicate()
-		m.albedo_color = Color(color.r, color.g, color.b, 0.9)
-		halo.material_override = m
 	spot.set("flicker_chance", 0.15 if flicker else 0.0)
+	if Engine.is_editor_hint():
+		return
+	if halo.mesh is QuadMesh and not is_equal_approx(halo.mesh.size.x, halo_size):
+		var q: QuadMesh = halo.mesh.duplicate()
+		q.size = Vector2.ONE * halo_size
+		halo.mesh = q
+	if sparkle:
+		var s := ShaderMaterial.new()
+		s.shader = SPARKLE_SHADER
+		s.set_shader_parameter("color", color)
+		halo.material_override = s
+	else:
+		var m := halo.mesh.surface_get_material(0) if halo.mesh else null
+		if m:
+			m = m.duplicate()
+			m.albedo_color = Color(color.r, color.g, color.b, 0.9)
+			halo.material_override = m
