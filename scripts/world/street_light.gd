@@ -14,6 +14,10 @@ extends Node3D
 		flicker = v
 		_apply()
 @export var head_offset := Vector3(0, 6.3, 1.6)       ## где у модели столба плафон
+@export var show_halo := true:                       ## светящийся круг вокруг плафона (на мосту выключен)
+	set(v):
+		show_halo = v
+		_apply()
 
 @onready var spot: SpotLight3D = $Spot
 @onready var fill: OmniLight3D = $Fill
@@ -30,6 +34,7 @@ func _apply() -> void:
 	spot.position = head_offset
 	fill.position = head_offset - Vector3(0, 0.4, 0)
 	halo.position = head_offset
+	halo.visible = show_halo
 	spot.light_color = color
 	fill.light_color = color.lerp(Color.WHITE, 0.08)
 	spot.light_energy = energy
