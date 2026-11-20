@@ -260,7 +260,7 @@ energy = 60
 head_offset = Vector3(0, 11.5, 0)
 
 [node name="StationLamp1" parent="Lights" instance=ExtResource("sl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 0, -30)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 0, -30)
 color = Color(1, 0.52, 0.18, 1)
 energy = 6
 head_offset = Vector3(0, 2.9, 0)

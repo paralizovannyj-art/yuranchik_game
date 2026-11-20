@@ -492,10 +492,44 @@ def corrugated():
     save("eb_corrugated", arr)
 
 
+# ------------------------------------------------------------------ опоры и балка моста
+def girder():
+    """Балка настила и консоли опор 3×3 м: бетон, крашенный охрой, выгоревший; ржавые потёки сверху,
+    тёмный низ (панорамы Google 2019, вид с платформы у вокзала)."""
+    w = h = 128
+    base = photo("Concrete034", w, relief=0.9, sat=0.4, gain=0.75, tint=(1.0, 0.9, 0.78))
+    arr = base * 0.55 + rgb((0.46, 0.36, 0.27)) * 0.45
+    st = streaks(w, h, R, 0.9)[..., None]
+    arr = arr * (1 - st * 0.35) + rgb((0.30, 0.17, 0.08)) * st * 0.35
+    v = np.linspace(0, 1, h, dtype=np.float32)[:, None, None]
+    arr *= 1 - np.clip(v - 0.75, 0, 1) * 1.2                                        # низ балки в тени и копоти
+    arr[:6] = arr[:6] * 0.4 + SNOW * 0.6                                            # снег на кромке
+    save("eb_girder", arr)
+
+
+def pier():
+    """Колонны моста 3×3 м: серый бетон в потёках, обрывки объявлений и граффити по низу."""
+    w = h = 128
+    arr = photo("Concrete012", w, relief=0.9, sat=0.3, gain=0.7, tint=(0.95, 0.93, 0.9))
+    arr *= 1 - streaks(w, h, R, 1.0)[..., None] * 0.35
+    for _ in range(9):                                                              # объявления
+        x, y = int(R.integers(0, w - 14)), int(R.integers(int(h * 0.45), h - 16))
+        pw, ph = int(R.integers(6, 14)), int(R.integers(8, 16))
+        c = rgb((0.78, 0.76, 0.70)) * R.uniform(0.75, 1.05)
+        arr[y:y + ph, x:x + pw] = arr[y:y + ph, x:x + pw] * 0.25 + c * 0.75
+    x, y = 20.0, float(h - 30)
+    for _ in range(140):                                                            # тег
+        x = float(np.clip(x + R.normal(0.5, 1.4), 4, w - 4))
+        y = float(np.clip(y + R.normal(0, 2.0), h * 0.6, h - 6))
+        arr[int(y) - 1:int(y) + 1, int(x):int(x) + 2] = rgb((0.12, 0.12, 0.14))
+    arr[-5:] = arr[-5:] * 0.5 + SNOW * 0.5
+    save("eb_pier", arr)
+
+
 def main():
     for fn in (ballast, trackbed, white_paint, deck, platform, platform_edge, booth, cabinet,
                tank, gondola, container, coach, lattice, chainlink, lamps, station, station_sign,
-               paints, sheet, field, road, ice, grass_clump, trees, house, corrugated):
+               paints, sheet, field, road, ice, grass_clump, trees, house, corrugated, girder, pier):
         fn()
     return {"textures": sorted(f for f in os.listdir(tex_lib.TEX_DIR) if f.startswith("eb_") and f.endswith(".png"))}
 

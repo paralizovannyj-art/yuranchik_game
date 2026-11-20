@@ -42,11 +42,11 @@ SIDES = ('+X', '-X', '+Y', '-Y')
 OPEN = ('+X', '-X', '+Y', '-Y', '+Z')
 
 # ------------------------------------------------------------------ план станции (по спутнику)
-TRACKS_EAST = [-52.0, -47.0, -42.0, -37.0]             # старые пути за городской платформой
+TRACKS_EAST = [-47.5, -42.5, -37.5]                    # старые пути за городской платформой (спутник: полоса Y −50…−35)
 TRACKS_MAIN = [-10.1, -5.0, 3.2, 8.6]                  # главные: 2 + 2, между парами — широкое междупутье
 TRACKS_YARD = [55.0, 60.5, 66.0, 71.5, 77.0, 82.5, 88.0]   # грузовой парк со стороны поля
 TRACKS = TRACKS_EAST + TRACKS_MAIN + TRACKS_YARD
-BALLAST = [(-56.0, -33.0), (-12.0, 10.5), (51.0, 91.5)]
+BALLAST = [(-51.0, -34.0), (-12.0, 10.5), (51.0, 91.5)]
 PLATFORMS = [(-16.7, -12.0), (10.5, 16.8)]             # боковые: городская (синяя ограда), у вокзала (зелёная)
 PLAT_X = (-115.0, 145.0)
 PLAT_H = 1.1
@@ -59,8 +59,9 @@ DECK_T = 0.85
 BR_W = 3.0
 BR_Y = (-72.0, 95.5)                                   # мост по Y; на −Y лестница на улицу, на +Y — поворот вдоль парка
 LEG_Y = 94.0                                           # ось спуска к полю (вдоль −X)
-BENTS = [-72.0, -61.0, -49.5, -39.5, -27.0, -14.35, -0.9, 13.65, 27.0, 40.0, 50.0, 63.25, 74.25, 85.25, 94.0]
-SE_STAIR, NW_STAIR = -14.35, 13.65                     # оси лестниц на платформы (по Y)
+BENTS = [-72.0, -61.0, -51.5, -40.0, -27.0, -14.35, -0.9, 13.65, 22.0, 27.0, 40.0, 50.0, 63.25, 74.25, 85.25, 94.0]
+SE_STAIR, NW_STAIR = -14.35, 22.0                      # оси лестниц: городская — над платформой, у вокзала — за платформой
+NW_STEPS_X = 21.5                                      # у вокзала: проходы в ограде и ступени с земли на платформу (±X)
 SW = 2.5                                               # ширина лестниц на платформы
 WIRE_C, WIRE_M = 5.8, 7.2                              # контактный провод и несущий трос
 GANTRY_X = [-150.0, -98.0, -46.0, 12.0, 60.0, 96.0, 145.0]   # жёсткие поперечины над главными путями
@@ -140,6 +141,8 @@ def materials():
         "blue": mat("EbBluePaint", "eb_blue_paint", rough=0.6),
         "greenp": mat("EbGreenPaint", "eb_green_paint", rough=0.6),
         "pole": mat("EbConcretePole", "eb_concrete_pole"),
+        "girder": mat("EbGirder", "eb_girder"),
+        "pier": mat("EbPier", "eb_pier"),
         "sheet": two_sided(mat("EbSheet", "eb_sheet", rough=0.6)),
         "field": mat("EbField", "eb_field"),
         "road": mat("EbRoad", "eb_road"),
@@ -291,7 +294,21 @@ def platforms(coll):
         b.box((xa, ys, PLAT_H), (xb, ys + 0.3, PLAT_H + 0.01), {'+Z': (M["white"], (0, 0, 40, 0.3))})
     # ограды по дальнему от путей краю: городская — синяя, у вокзала — зелёная (проход к вокзалу X 30…36)
     tube_fence(rail, col, (xa, PLATFORMS[0][0] + 0.15), (xb, 0), M["blue"])
-    tube_fence(rail, col, (xa, PLATFORMS[1][1] - 0.15), (xb, 0), M["greenp"], gaps=[(30.0, 36.0)])
+    sx0, sx1 = NW_STEPS_X - SW / 2, NW_STEPS_X + SW / 2
+    # у вокзала синяя ограда — только у лестниц с моста (X −35…30), дальше по краю белёный бордюр (панорама p2 ya180/ya225)
+    tube_fence(rail, col, (-35.0, PLATFORMS[1][1] - 0.15), (30.0, 0), M["blue"], gaps=[(-sx1, -sx0), (sx0, sx1)])
+    for c0, c1 in ((xa, -35.0), (36.0, xb)):
+        b.box((c0, PLATFORMS[1][1] - 0.3, PLAT_H), (c1, PLATFORMS[1][1], PLAT_H + 0.18), fx(M["white"], ('+Y', '-Y', '+Z', '+X', '-X')), scale=(1, 1))
+    yp = PLATFORMS[1][1]
+    n = 7
+    for s_ in (-1, 1):                                       # 7 ступеней вниз от края платформы к лестницам с моста
+        xa_, xb_ = sorted((s_ * sx0, s_ * sx1))
+        for i in range(n):
+            ya_, yb_ = yp + i * RUN, yp + (i + 1) * RUN
+            z = PLAT_H - (i + 1) * PLAT_H / n
+            b.box((xa_, ya_, 0), (xb_, yb_, z), fx(M["pedge"], ('+X', '-X', '+Y', '+Z')), scale=(4, 1))
+        quad(col, [(xa_, yp, PLAT_H), (xb_, yp, PLAT_H), (xb_, yp + n * RUN, 0.0), (xa_, yp + n * RUN, 0.0)], M["plinth"], (0, 0.3, 1))
+        quad(col, [(xa_, yp, PLAT_H - 0.3), (xb_, yp, PLAT_H - 0.3), (xb_, yp + n * RUN, -0.3), (xa_, yp + n * RUN, -0.3)], M["plinth"], (0, 0, -1))
     return build(b, "EbPlatforms", coll), build(rail, "EbPlatformRails_nocol", coll), build(col, "EbPlatformRailsCol-colonly", coll)
 
 
@@ -315,7 +332,7 @@ def bounds(coll):
 # ------------------------------------------------------------------ мост
 def railing(b, p0, p1, h=RAIL_H, posts=2.2, skip=()):
     """Перила (как на фото): квадратные стойки через ~2,2 м, поручень, второй пояс на 0,87 м, нижний на 0,1 м;
-    частые прутья (0,15 м) только между нижним и вторым поясом. skip — куски (t0, t1) вдоль линии без прутьев
+    частые прутья (0,15 м, фото 10002, 10009, 10019) только между нижним и вторым поясом. skip — куски (t0, t1) вдоль линии без прутьев
     (там сплошной лист ограждения)."""
     p0, p1 = Vector(p0), Vector(p1)
     d = p1 - p0
@@ -447,16 +464,16 @@ def landing(b, col, x0, y0, x1, y1, z, base=0.0, rails=(), columns=1):
                 fx(M["plinth"], ALL))
 
 
-def platform_stair(b, col, yc, side):
-    """Лестница на платформу: от края настила вдоль путей (−X или +X): 3 ступени, площадка 3 м,
-    марш, площадка 2,5 м, марш до платформы (фото 10007, 10022, 10026)."""
+def platform_stair(b, col, yc, side, base=PLAT_H):
+    """Лестница вниз от края настила вдоль путей (−X или +X): 3 ступени, площадка 3 м,
+    марш, площадка 2,5 м, марш до платформы или земли base (фото 10007, 10022, 10026; панорамы p1, p2)."""
     hw = BR_W / 2
     e = SW / 2 + 0.1
     x, _, z = flight(b, col, side * hw, yc, DECK, side, 0, SW, 3)
     for ln, n in ((3.0, 17), (2.5, None)):
         xl = x + side * ln
-        landing(b, col, x, yc - e, xl, yc + e, z, base=PLAT_H, rails=[((x, yc - e), (xl, yc - e)), ((x, yc + e), (xl, yc + e))])
-        n = n or max(1, round((z - PLAT_H) / RISE))
+        landing(b, col, x, yc - e, xl, yc + e, z, base=base, rails=[((x, yc - e), (xl, yc - e)), ((x, yc + e), (xl, yc + e))])
+        n = n or max(1, round((z - base) / RISE))
         x, _, z = flight(b, col, xl, yc, z, side, 0, SW, n)
     return x
 
@@ -469,27 +486,32 @@ def bridge(coll):
     # настил: верх — своя развёртка (u поперёк), низ и бока — бетонная балка 0,85 м
     quad(b, [(-hw, y0, DECK), (hw, y0, DECK), (hw, y1, DECK), (-hw, y1, DECK)], M["deck"], (0, 0, 1),
          uvs=[(0, y0 / 3), (1, y0 / 3), (1, y1 / 3), (0, y1 / 3)])
-    b.box((-hw - 0.15, y0, zb), (hw + 0.15, y1, DECK), fx(M["plinth"], ('+X', '-X', '-Z', '+Y')), scale=(3.6, 0.9))
+    b.box((-hw - 0.15, y0, zb), (hw + 0.15, y1, DECK), fx(M["girder"], ('+X', '-X', '-Z', '+Y')), scale=(3, DECK_T))
     b.box((-hw - 0.15, y0, DECK), (-hw, y1, DECK + 0.12), fx(M["plinth"], ('+X', '-X', '+Z')), scale=(3.6, 0.9))
     b.box((hw, y0, DECK), (hw + 0.15, y1, DECK + 0.12), fx(M["plinth"], ('+X', '-X', '+Z')), scale=(3.6, 0.9))
     col.box((-hw - 0.15, y0, zb), (hw + 0.15, y1, DECK), fx(M["plinth"], ALL))
-    # опоры: на платформах — одна колонна с консолью (фото 10006, 10026), в остальных местах — пара колонн и ригель
+    # опоры: везде одна квадратная колонна 0,6 м с фасками и консоль-«шапка» поперёк моста под балкой
+    # (панорама p2 ya045/ya090, фото 10006, 10026)
     for yb in BENTS:
         on_pl = next((True for a, c in PLATFORMS if a < yb < c), False)
         z0 = PLAT_H if on_pl else 0.0
-        if on_pl:
-            b.box((-0.28, yb - 0.28, z0), (0.28, yb + 0.28, zb - 0.4), fx(M["plinth"], SIDES), scale=(3.6, 0.9))
-            b.box((-0.5, yb - 0.5, zb - 0.4), (0.5, yb + 0.5, zb), fx(M["plinth"], ('+X', '-X', '+Y', '-Y', '-Z')), scale=(3.6, 0.9))
-            col.box((-0.28, yb - 0.28, z0), (0.28, yb + 0.28, zb), fx(M["plinth"], ALL))
-        else:
-            for x in (-0.95, 0.95):
-                b.box((x - 0.27, yb - 0.27, z0), (x + 0.27, yb + 0.27, zb - 0.4), fx(M["plinth"], SIDES), scale=(3.6, 0.9))
-                col.box((x - 0.27, yb - 0.27, z0), (x + 0.27, yb + 0.27, zb), fx(M["plinth"], ALL))
-            b.box((-1.2, yb - 0.4, zb - 0.4), (1.2, yb + 0.4, zb), fx(M["plinth"], ('+X', '-X', '+Y', '-Y', '-Z')), scale=(3.6, 0.9))
+        r, c = 0.30, 0.07
+        ring = [(-r + c, -r), (r - c, -r), (r, -r + c), (r, r - c), (r - c, r), (-r + c, r), (-r, r - c), (-r, -r + c)]
+        for (ax, ay), (bx_, by) in zip(ring, ring[1:] + ring[:1]):
+            nx, ny = by - ay, -(bx_ - ax)
+            quad(b, [(ax, yb + ay, z0), (bx_, yb + by, z0), (bx_, yb + by, zb - 0.45), (ax, yb + ay, zb - 0.45)], M["pier"], (nx, ny, 0), (3, 3))
+        # консоль: снизу скошена, поперёк моста почти на всю ширину балки
+        cw, cd = 1.25, 0.45
+        b.box((-cw, yb - cd, zb - 0.25), (cw, yb + cd, zb), fx(M["girder"], ('+X', '-X', '+Y', '-Y', '-Z')), scale=(3, 3))
+        quad(b, [(-r, yb - cd, zb - 0.45), (r, yb - cd, zb - 0.45), (cw, yb - cd, zb - 0.25), (-cw, yb - cd, zb - 0.25)], M["girder"], (0, -1, 0), (3, 3))
+        quad(b, [(r, yb + cd, zb - 0.45), (-r, yb + cd, zb - 0.45), (-cw, yb + cd, zb - 0.25), (cw, yb + cd, zb - 0.25)], M["girder"], (0, 1, 0), (3, 3))
+        quad(b, [(r, yb - cd, zb - 0.45), (r, yb + cd, zb - 0.45), (cw, yb + cd, zb - 0.25), (cw, yb - cd, zb - 0.25)], M["girder"], (1, 0, -1), (3, 3))
+        quad(b, [(-r, yb + cd, zb - 0.45), (-r, yb - cd, zb - 0.45), (-cw, yb - cd, zb - 0.25), (-cw, yb + cd, zb - 0.25)], M["girder"], (-1, 0, -1), (3, 3))
+        col.box((-r, yb - r, z0), (r, yb + r, zb), fx(M["plinth"], ALL))
     # проёмы в перилах: лестницы на платформы и спуск к полю
     e = SW / 2 + 0.1
     gaps = {-1: [(SE_STAIR - e, SE_STAIR + e), (NW_STAIR - e, NW_STAIR + e), (LEG_Y - 1.5, y1)],
-            1: [(NW_STAIR - e, NW_STAIR + e)]}
+            1: [(SE_STAIR - e, SE_STAIR + e), (NW_STAIR - e, NW_STAIR + e)]}
     for side in (-1, 1):
         x = side * (hw + 0.05)
         segs = [y0]
@@ -517,10 +539,12 @@ def bridge(coll):
         tops.append(lamp_post(lamps_b, -(hw + 0.12), float(y), DECK + 0.12, (1, 0, 0), color=c))
     for a, c in zip(tops, tops[1:]):
         cable(lamps_b, a, c)
-    # лестницы на платформы: на городскую — одна, на юго-запад; у вокзала — Т: на юго-запад и к вокзалу
+    # лестницы-«Т»: на городскую платформу — оба марша на неё (панорама p1 ya045/ya135);
+    # у вокзала — за платформой, на землю за зелёной оградой (панорама p2 ya090/ya135, фото 10016)
     platform_stair(b, col, SE_STAIR, -1)
-    platform_stair(b, col, NW_STAIR, -1)
-    platform_stair(b, col, NW_STAIR, 1)
+    platform_stair(b, col, SE_STAIR, 1)
+    platform_stair(b, col, NW_STAIR, -1, base=0.0)
+    platform_stair(b, col, NW_STAIR, 1, base=0.0)
     # городская лестница: прямо по оси моста, два марша и площадка
     xa, ya, za = flight(b, col, 0, y0, DECK, 0, -1, BR_W, 22)
     yl = ya - 2.0
@@ -629,7 +653,7 @@ def catenary(coll):
         for yc in TRACKS_MAIN:
             hanger(wires, x, yc, 9.4)
     for x in PORTAL_X:                                    # порталы: два столба и лёгкий ригель на 2–3 пути
-        for a, c in ((-55.5, -33.8), (51.6, 68.75), (68.75, 91.2)):
+        for a, c in ((-52.0, -33.4), (51.6, 68.75), (68.75, 91.2)):
             for y in (a, c):
                 concrete_pole(b, col, x, y, 9.6, 0.2, 0.14)
             lattice_box(b, x, a, c, 8.7, 9.2, 0.45)
@@ -651,7 +675,7 @@ def catenary(coll):
         bar(b, (12.0, yc, 9.4), (12.0, yc, 8.4), 0.06, M["metal"])
         b.box((11.8, yc - 0.22, 7.2), (12.2, yc + 0.22, 8.4), fx(M["dark"], ALL), scale=(1, 1))
         b.box((11.78, yc - 0.12, 7.95), (11.8, yc + 0.12, 8.2), fx(M["lamp_g"], ('-X',)), scale=(1, 1))
-    for x, y in ((-62.0, -7.6), (70.0, 5.9), (-40.0, -44.5), (35.0, 63.2)):
+    for x, y in ((-62.0, -7.6), (70.0, 5.9), (-40.0, -45.0), (35.0, 63.2)):
         b.box((x - 0.25, y - 0.2, 0), (x + 0.25, y + 0.2, 0.55), fx(M["dark"], OPEN), scale=(1, 1))
         b.box((x - 0.26, y - 0.08, 0.3), (x - 0.25, y + 0.08, 0.45), fx(M["lamp_w"], ('-X',)), scale=(1, 1))
     return build(b, "EbCatenary_nocol", coll), build(wires, "EbWires_nocol", coll), build(col, "EbCatenaryCol-colonly", coll)
@@ -801,18 +825,19 @@ def trains(coll):
 
 
 # ------------------------------------------------------------------ платформы, вокзал
-def booth(b, col, x, y, w, d, h, z0=PLAT_H):
-    """Будка у подножия лестницы (10018, 10023): голубой профнастил, односкатная крыша с навесом к путям,
-    окно с решёткой и ставнями, дверь с торца."""
-    b.box((x - w / 2, y - d / 2, z0), (x + w / 2, y + d / 2, z0 + h), fx(M["booth"], SIDES), scale=(2, 2))
+def booth(b, col, x, y, w, d, h, z0=PLAT_H, kind="blue"):
+    """Будка на платформе (10018, 10023): голубой профнастил, односкатная крыша с навесом к путям,
+    окно с решёткой и ставнями, дверь с торца. kind="white" — белёная будка с крышей из листов фанеры (10007, 10022)."""
+    wall = M["booth"] if kind == "blue" else M["station"]
+    b.box((x - w / 2, y - d / 2, z0), (x + w / 2, y + d / 2, z0 + h), fx(wall, SIDES), scale=(2, 2))
     col.box((x - w / 2, y - d / 2, z0), (x + w / 2, y + d / 2, z0 + h), fx(M["plinth"], ALL))
     ov = 0.5
     pts = [(x - w / 2 - 0.2, y - d / 2 - 0.2, z0 + h + 0.25), (x + w / 2 + 0.2, y - d / 2 - 0.2, z0 + h + 0.25),
            (x + w / 2 + 0.2, y + d / 2 + ov, z0 + h - 0.05), (x - w / 2 - 0.2, y + d / 2 + ov, z0 + h - 0.05)]
     quad(b, pts, M["snow"], (0, 0.1, 1), (3, 3))
-    quad(b, [(p[0], p[1], p[2] - 0.08) for p in pts], M["metal"], (0, 0, -1), (2, 2))
+    quad(b, [(p[0], p[1], p[2] - 0.08) for p in pts], M["metal"] if kind == "blue" else M["wood"], (0, 0, -1), (2, 2))
     quad(b, [(x - w / 2, y - d / 2 - 0.01, z0 + h), (x + w / 2, y - d / 2 - 0.01, z0 + h), (x + w / 2, y - d / 2 - 0.01, z0 + h + 0.2),
-             (x - w / 2, y - d / 2 - 0.01, z0 + h + 0.2)], M["booth"], (0, -1, 0), (2, 2))
+             (x - w / 2, y - d / 2 - 0.01, z0 + h + 0.2)], wall, (0, -1, 0), (2, 2))
     yd = y + d / 2 + 0.01
     b.box((x - 0.6, yd, z0 + 1.0), (x + 0.6, yd + 0.02, z0 + 2.0), fx(M["dark"], ('+Y',)), scale=(1, 1))
     for i in range(5):
@@ -914,7 +939,7 @@ def gable(b, cx, cy, ang, w, d, wall_h, ridge, wall_m, roof_m=None, ov=0.4, wall
 
 def station(b, col):
     """Вокзал «Одеса-Східна» (спутник + фото 10017): к северо-востоку от моста, между главными путями и парком.
-    Стены 18 × 9 м, со стороны моста — открытый портик под общей крышей (две квадратные колонны и фронтон),
+    Стены 18 × 9 м, со стороны моста — открытый портик 8 м под общей крышей (крыша по спутнику X 35…62) (две квадратные колонны и фронтон),
     двускатная крыша с коньком вдоль путей, синие буквы на белом фризе по стене к полю."""
     x0, x1, y0, y1, wh = 44.0, 62.0, 25.5, 34.5, 3.3
     yc = (y0 + y1) / 2
@@ -922,17 +947,17 @@ def station(b, col):
     col.box((x0, y0, 0), (x1, y1, wh + 2.5), fx(M["plinth"], ALL))
     b.box((x0 - 0.1, y0 - 0.1, 0), (x1 + 0.1, y1 + 0.1, 0.5), fx(M["plinth"], SIDES), scale=(3.6, 0.9))
     for y in (y0 + 0.3, y1 - 0.3):                         # колонны портика
-        b.box((40.05, y - 0.25, 0), (40.55, y + 0.25, wh - 0.2), fx(M["station"], SIDES), scale=(3, 3))
-        col.box((40.05, y - 0.25, 0), (40.55, y + 0.25, wh), fx(M["plinth"], ALL))
-    b.box((40.0, y0 - 0.1, 0), (x0, y1 + 0.1, 0.25), fx(M["plinth"], OPEN), scale=(3.6, 0.9))     # пол портика
-    b.box((39.9, y0 - 0.2, wh - 0.6), (x0, y1 + 0.2, wh), fx(M["station"], ('-X', '+Y', '-Y', '-Z')), scale=(3, 3))   # фриз
+        b.box((36.05, y - 0.25, 0), (36.55, y + 0.25, wh - 0.2), fx(M["station"], SIDES), scale=(3, 3))
+        col.box((36.05, y - 0.25, 0), (36.55, y + 0.25, wh), fx(M["plinth"], ALL))
+    b.box((36.0, y0 - 0.1, 0), (x0, y1 + 0.1, 0.25), fx(M["plinth"], OPEN), scale=(3.6, 0.9))     # пол портика
+    b.box((35.9, y0 - 0.2, wh - 0.6), (x0, y1 + 0.2, wh), fx(M["station"], ('-X', '+Y', '-Y', '-Z')), scale=(3, 3))   # фриз
     ov, ridge = 0.8, 2.5
     for sy in (-1, 1):
         ya = yc + sy * (4.5 + ov)
-        pts = [(39.5, ya, wh - 0.2), (62.6, ya, wh - 0.2), (62.6, yc, wh + ridge), (39.5, yc, wh + ridge)]
+        pts = [(35.5, ya, wh - 0.2), (62.6, ya, wh - 0.2), (62.6, yc, wh + ridge), (35.5, yc, wh + ridge)]
         quad(b, pts, M["snow"], (0, sy * 0.5, 1), (3, 3))
         quad(b, [(p[0], p[1], p[2] - 0.15) for p in pts], M["roof"], (0, 0, -1), (3, 3))
-    for xe, sx in ((39.9, -1), (x1, 1)):                    # фронтоны
+    for xe, sx in ((35.9, -1), (x1, 1)):                    # фронтоны
         quad(b, [(xe, y0 - 0.2, wh), (xe, y1 + 0.2, wh), (xe, yc, wh + ridge - 0.1)], M["station"], (sx, 0, 0), (3, 3))
     # вывеска: синие буквы на белом фризе по стене к полю (+Y), ближе к портику
     b.box((44.8, y1 + 0.01, 2.55), (52.8, y1 + 0.03, 3.2), {'+Y': (M["sign"], (0, 0, 1, 1))})
@@ -944,8 +969,8 @@ def station(b, col):
             m = M["glass"] if (x, face) == (55.0, '-Y') else M["dark"]
             b.box((x - 0.7, y - 0.01, 1.0), (x + 0.7, y + 0.01, 2.4), fx(m, (face,)), scale=(1.4, 1.4))
     b.box((x0 - 0.02, yc - 0.6, 0.25), (x0, yc + 0.6, 2.4), fx(M["door"], ('-X',)), scale=(1.2, 2.2))
-    lamp("station", "orange", (42.0, yc, 0), (42.0, yc, wh - 0.4))
-    b.box((41.75, yc - 0.15, wh - 0.65), (42.25, yc + 0.15, wh - 0.6), fx(M["lamp_o"], ('-Z',)), scale=(1, 1))
+    lamp("station", "orange", (40.0, yc, 0), (40.0, yc, wh - 0.4))
+    b.box((39.75, yc - 0.15, wh - 0.65), (40.25, yc + 0.15, wh - 0.6), fx(M["lamp_o"], ('-Z',)), scale=(1, 1))
     # перрон перед вокзалом и дорожка от прохода в ограде
     quad(b, [(30.0, 16.8, 0.03), (66.0, 16.8, 0.03), (66.0, 25.3, 0.03), (30.0, 25.3, 0.03)], M["platform"], (0, 0, 1), (4, 4))
     for x in (30.0, 36.0):                                  # ступени с платформы вниз к перрону
@@ -964,14 +989,45 @@ def station(b, col):
     col.box((67.0, 36.0, 0), (78.0, 41.0, 2.8), fx(M["plinth"], ALL))
 
 
+def shelter(b, col, x0, x1):
+    """Навес на городской платформе (фото 10014, панорама p2): сзади белая стена в граффити,
+    спереди квадратные столбы, односкатная дощатая крыша к путям, скамейки вдоль стены."""
+    ya, yb = PLATFORMS[0][0] + 0.25, PLATFORMS[0][1] - 0.5
+    z0, hw_, hf = PLAT_H, 2.5, 2.9                            # высота стены, высота крыши у стены
+    b.box((x0, ya, z0), (x1, ya + 0.22, z0 + hw_), fx(M["station"], ('+Y', '-Y', '+X', '-X', '+Z')), scale=(3, 3))
+    col.box((x0, ya, z0), (x1, ya + 0.22, z0 + hw_), fx(M["plinth"], ALL))
+    n = max(1, round((x1 - x0) / 4.5))
+    for i in range(n + 1):
+        x = x0 + 0.15 + (x1 - x0 - 0.3) * i / n
+        if abs(x) < 0.9:                                   # тут опора моста
+            continue
+        for y, h in ((yb - 0.15, hf - 0.25), (ya + 0.35, hf)):
+            b.box((x - 0.14, y - 0.14, z0), (x + 0.14, y + 0.14, z0 + h), fx(M["pier"], SIDES), scale=(1.5, 1.5))
+        col.box((x - 0.14, yb - 0.29, z0), (x + 0.14, yb, z0 + hf), fx(M["plinth"], ALL))
+        b.box((x - 0.08, ya + 0.2, z0 + hf - 0.35), (x + 0.08, yb + 0.1, z0 + hf - 0.2), fx(M["wood"], ALL), scale=(1, 1))
+    pts = [(x0 - 0.2, ya - 0.1, z0 + hf + 0.05), (x1 + 0.2, ya - 0.1, z0 + hf + 0.05), (x1 + 0.2, yb + 0.4, z0 + hf - 0.3), (x0 - 0.2, yb + 0.4, z0 + hf - 0.3)]
+    quad(b, pts, M["snow"], (0, 0.1, 1), (3, 3))
+    quad(b, [(p_[0], p_[1], p_[2] - 0.06) for p_ in pts], M["wood"], (0, 0, -1), (2, 2))
+    quad(b, [(x0 - 0.2, yb + 0.4, z0 + hf - 0.36), (x1 + 0.2, yb + 0.4, z0 + hf - 0.36), (x1 + 0.2, yb + 0.4, z0 + hf - 0.3), (x0 - 0.2, yb + 0.4, z0 + hf - 0.3)],
+         M["wood"], (0, 1, 0), (2, 2))
+    for x in (x0 + 2.5, x0 + 7.0, x1 - 7.0, x1 - 2.5):
+        bench(b, col, x, ya + 0.75, 1)
+
+
 def props(coll):
     b, col = B(), B()
-    # будка у подножия городской лестницы, жёлтый ларёк у ограды, релейный шкаф на ножках между восточными путями
-    booth(b, col, -36.0, (PLATFORMS[0][0] + PLATFORMS[0][1]) / 2 + 0.1, 3.5, 3.0, 2.5)
+    # навес под мостом на городской платформе, голубая будка у низа юго-западной лестницы (10018, 10023, панорама p1 ya000/ya045),
+    # белёная будка с дощатой крышей дальше (10007, 10022, 10024)
+    shelter(b, col, -9.0, 9.0)
+    yf = PLATFORMS[0][0] + 0.35                              # будки прижаты к ограде — вдоль путей остаётся проход 2 м
+    booth(b, col, -23.0, yf + 1.1, 2.8, 2.2, 2.5)
+    booth(b, col, -36.0, yf + 1.1, 3.0, 2.2, 2.3, kind="white")
+    # голубой павильон на платформе у вокзала, у низа лестницы (спутник 2021: белая крыша X 21…30; фото 10027)
+    booth(b, col, 26.0, (PLATFORMS[1][0] + PLATFORMS[1][1]) / 2 + 0.2, 6.0, 2.6, 2.6)
     b.box((-5.0, -19.5, 0), (-3.0, -17.5, 2.3), fx(M["yellow"], SIDES), scale=(1, 1))
     b.box((-5.2, -19.7, 2.3), (-2.8, -17.3, 2.45), fx(M["snow"], OPEN), scale=(3, 3))
     col.box((-5.0, -19.5, 0), (-3.0, -17.5, 2.3), fx(M["plinth"], ALL))
-    for x, y, legs in ((-28.0, -39.5, True), (-60.0, -0.9, False), (38.0, 46.0, False), (-70.0, 50.5, False), (24.0, -0.9, False)):
+    for x, y, legs in ((-28.0, -40.0, True), (-60.0, -0.9, False), (38.0, 46.0, False), (-70.0, 50.5, False), (24.0, -0.9, False)):
         z0 = 1.0 if legs else 0.0
         if legs:
             for dx in (-0.35, 0.35):
@@ -994,10 +1050,13 @@ def props(coll):
         for k in range(3):
             b.box((x - 3, -27.5 - 0.6, k * 0.22), (x + 3, -27.5 + 0.6, k * 0.22 + 0.2), fx(M["plinth"], OPEN), scale=(3.6, 0.9))
         col.box((x - 3, -28.1, 0), (x + 3, -26.9, 0.66), fx(M["plinth"], ALL))
-    for x in (22.0, 30.0, 42.0):
-        b.box((x - 2.5, -24.0, 0), (x + 2.5, -20.5, 2.4), fx(M["corr"], SIDES), scale=(4, 3))
-        b.box((x - 2.7, -24.2, 2.4), (x + 2.7, -20.3, 2.55), fx(M["snow"], OPEN), scale=(3, 3))
-        col.box((x - 2.5, -24.0, 0), (x + 2.5, -20.5, 2.55), fx(M["plinth"], ALL))
+    for x in (8.0, 43.0, 49.0):                              # сараи за служебной дорогой (спутник 2021)
+        b.box((x - 2.5, -31.5, 0), (x + 2.5, -28.0, 2.4), fx(M["corr"], SIDES), scale=(4, 3))
+        b.box((x - 2.7, -31.7, 2.4), (x + 2.7, -27.8, 2.55), fx(M["snow"], OPEN), scale=(3, 3))
+        col.box((x - 2.5, -31.5, 0), (x + 2.5, -28.0, 2.55), fx(M["plinth"], ALL))
+    # служебная дорога вдоль городской платформы и проезд вдоль моста к улице (спутник 2021)
+    strip(b, [(-XMAX, -19.8), (XMAX, -19.8)], 3.4, M["road"])
+    strip(b, [(-10.0, -21.5), (-10.0, STREET[1])], 3.2, M["road"])
     return build(b, "EbProps", coll), build(col, "EbPropsCol-colonly", coll)
 
 
@@ -1226,7 +1285,7 @@ def field(coll):
         crossed(veg, x, y, 0, s, s * 0.8, M["grass"], rnd.uniform(0, 3))
     for i in range(250):                                   # полоса у вокзала и вдоль путей
         x, y = rnd.uniform(-110, 110), rnd.uniform(18, 50)
-        if 38 < x < 66 and 15 < y < 38:
+        if 34 < x < 66 and 15 < y < 38:
             continue
         s = rnd.uniform(0.7, 1.3)
         crossed(veg, x, y, 0, s, s * 0.7, M["grass"], rnd.uniform(0, 3))
@@ -1234,6 +1293,13 @@ def field(coll):
                  (-48.0, 38.0), (-62.0, 44.0), (90.0, 22.0)):
         h = rnd.uniform(7, 12)
         crossed(veg, x, y, 0, h, h, M["tree"], rnd.uniform(0, 3))
+    for i in range(44):                                    # полоса больших деревьев за платформой у вокзала
+        x = rnd.uniform(-105.0, 110.0)
+        if 28.0 < x < 66.0:
+            continue
+        y = rnd.uniform(24.5, 32.0) if -27.0 < x < 27.0 else rnd.uniform(19.0, 30.0)   # у моста — за лестницей
+        h = rnd.uniform(9, 15)
+        crossed(veg, x, y, 0, h * 1.1, h, M["tree"], rnd.uniform(0, 3))
     # край играбельного поля — снежный вал с кустами
     for i in range(60):
         x = -110 + i * 3.7

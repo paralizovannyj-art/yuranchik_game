@@ -291,7 +291,7 @@ TEXTURES = {
     "eb_lattice": "metal", "eb_station": "wall", "eb_sign_station": "sign",
     "eb_blue_paint": "metal", "eb_green_paint": "metal", "eb_concrete_pole": "wall", "eb_sheet": "metal",
     "eb_field": "snow", "eb_road": "floor", "eb_ice": "snow", "eb_grass": "decal", "eb_tree": "decal",
-    "eb_poplar": "decal", "eb_house": "facade", "eb_corrugated": "metal",
+    "eb_poplar": "decal", "eb_house": "facade", "eb_corrugated": "metal", "eb_girder": "wall", "eb_pier": "wall",
 }
 
 # у этих текстур есть «пара»-свечение: его надо размыть так же, чтобы окна совпали
