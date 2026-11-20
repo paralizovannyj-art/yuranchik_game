@@ -9,6 +9,8 @@
 ## - Q / крестовина влево — убрать молоток в сумку или достать. Без молотка ЛКМ — удар кулаком (слабее).
 ## - G / RB — бросить бутылку или кирпич. E / A — подобрать, открыть, вырваться из захвата.
 ## - F / Y — фонарик.
+## - Пробел / X — прыжок (немного выносливости). Ctrl — присесть, пока держишь; C / R3 — присесть/встать.
+##   Вприсядку медленно и тихо: шаги не слышат враги. Под низким потолком не встанет.
 class_name Player
 extends CharacterBody3D
 
@@ -27,8 +29,13 @@ enum State { NORMAL, AIM, ATTACK, HURT, GRABBED, THROW, BUSY, DEAD }
 @export var run_ramp := 2.2            ## 1/с — как быстро шаг переходит в бег
 @export var deceleration := 7.0        ## м/с² — торможение в ударе, броске, анимациях
 @export var gravity := 18.0
-@export var jump_velocity := 5.2       ## м/с вверх — ~0.75 м прыжок, ~0.6 с в воздухе
-@export var crouch_speed := 1.1        ## шаг вприсядку (C / Ctrl)
+@export var jump_height := 0.5         ## м — высота прыжка
+@export var jump_cost := 10.0          ## выносливость за прыжок
+@export var air_control := 0.15        ## доля отклика шага в воздухе: направление прыжка почти не меняется
+@export var crouch_speed := 0.8        ## м/с вприсядку
+@export var crouch_height := 1.15      ## м — высота капсулы вприсядку (стоя — из player.tscn)
+@export var crouch_eye_drop := 0.6     ## м — насколько ниже глаза вприсядку
+@export var crouch_response := 6.0     ## 1/с — как быстро садится и встаёт
 
 @export_group("Камера")
 @export var mouse_sensitivity := 0.0022
@@ -112,18 +119,27 @@ var _throw_id := ""
 var _thrown := false
 var _last_step := 0
 var _sprinting := false
-var crouching := false                 ## сидит на корточках (держит C / Ctrl)
 var _run := 0.0                        ## 0 — шаг, 1 — полный бег
 var armed := true                      ## молоток в руке (false — убран в сумку)
 var _hammer: Node3D
 var _swap_at := -1.0                   ## когда в BUSY убрать/достать молоток (по _timer); < 0 — не трогаем
 var _punch := false                    ## текущий удар — кулаком
 var _punch_alt := false                ## следующий удар кулаком — второй рукой (Punch2)
+var crouching := false                 ## сидит (капсула низкая)
+var _crouch_toggle := false            ## присед по C / R3 (Ctrl — пока держишь)
+var _crouch := 0.0                     ## 0 — стоит, 1 — сидит (плавно, для позы и камеры)
+var _jump_buffer := 0.0
+var _coyote := 0.0                     ## ещё можно прыгнуть, только что сойдя с края
+var _jumped := false                   ## в воздухе после прыжка (а не просто упал со ступеньки)
+var _land := 0.0                       ## «присел» от приземления, 0..1
+var _shape: CapsuleShape3D
+var _stand_height := 1.8
 
 @onready var model: Node3D = $Model
 @onready var cam_pivot: Node3D = $CamPivot
 @onready var camera: Camera3D = $CamPivot/Camera
 @onready var flashlight: SpotLight3D = $CamPivot/Camera/Flashlight
+@onready var collision: CollisionShape3D = $Collision
 
 ## Слой отрисовки тела героя. Фонарик в голове не отбрасывает от него тень (shadow_caster_mask
 ## в player.tscn), иначе тень от собственных плеч и рук падала бы прямо перед глазами.
@@ -141,6 +157,9 @@ func _ready() -> void:
 	_prev_yaw = rotation.y
 	_cam_pos = global_position + Vector3.UP * eye_height
 	cam_pivot.global_position = _cam_pos
+	_shape = collision.shape.duplicate() as CapsuleShape3D   # своя копия: высоту меняем при приседе
+	collision.shape = _shape
+	_stand_height = _shape.height
 	for v: Node in model.find_children("*", "VisualInstance3D", true, false):
 		(v as VisualInstance3D).layers = BODY_LAYER
 	_make_first_person_body()
@@ -222,6 +241,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		_attack_buffer = 0.2
 	if event.is_action_pressed("throw"):
 		_throw_buffer = 0.2
+	if event.is_action_pressed("jump"):
+		_jump_buffer = 0.15
+	if event.is_action_pressed("crouch_toggle"):
+		_crouch_toggle = not _crouch_toggle
 	if event.is_action_pressed("flashlight"):
 		flashlight.visible = not flashlight.visible
 		Game.sfx("click", null, -6.0)
@@ -237,6 +260,9 @@ func _physics_process(delta: float) -> void:
 	_throw_buffer = maxf(_throw_buffer - delta, 0.0)
 	_invuln = maxf(_invuln - delta, 0.0)
 	_grab_immune = maxf(_grab_immune - delta, 0.0)
+	_jump_buffer = maxf(_jump_buffer - delta, 0.0)
+	_coyote = 0.12 if is_on_floor() else maxf(_coyote - delta, 0.0)
+	_land = move_toward(_land, 0.0, delta * 3.0)
 
 	var look := Input.get_vector("look_left", "look_right", "look_up", "look_down")
 	_yaw_target -= look.x * stick_sensitivity * delta
@@ -246,11 +272,11 @@ func _physics_process(delta: float) -> void:
 	cam_pitch = lerpf(cam_pitch, _pitch_target, ls)
 
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back") if control else Vector2.ZERO
-	var free := state == State.NORMAL or state == State.AIM
-	crouching = control and not phone_up and free and is_on_floor() and Input.is_action_pressed("crouch")
-	var jump := control and not phone_up and state == State.NORMAL and not crouching and is_on_floor() \
-			and Input.is_action_just_pressed("jump")
-	_sprinting = control and not phone_up and not crouching and Input.is_action_pressed("run") and input.y < -0.3 and state == State.NORMAL and not exhausted
+	var want_run := control and not phone_up and Input.is_action_pressed("run") and input.y < -0.3
+	if want_run:
+		_crouch_toggle = false                  # побежал — встаёт
+	_update_crouch(delta)
+	_sprinting = want_run and state == State.NORMAL and not exhausted and not crouching
 	_run = move_toward(_run, 1.0 if _sprinting else 0.0, delta * (run_ramp if _sprinting else run_ramp * 2.0))
 	var readied := control and armed and not phone_up and Input.is_action_pressed("ready_weapon")   # замах — только с молотком
 	var hv := Vector3(velocity.x, 0.0, velocity.z)
@@ -270,7 +296,7 @@ func _physics_process(delta: float) -> void:
 				_throw_buffer = 0.0
 				_start_throw()
 			if not phone_up:
-				hv = _move(hv, input, crouch_speed if crouching else walk_speed, delta)
+				hv = _move(hv, input, walk_speed, delta)
 		State.AIM:
 			hv = _move(hv, input, aim_walk_speed, delta)
 			if not readied:
@@ -337,13 +363,16 @@ func _physics_process(delta: float) -> void:
 		rotation.y = cam_yaw
 	velocity.x = hv.x
 	velocity.z = hv.z
-	if not is_on_floor():
+	var was_floor := is_on_floor()
+	if not was_floor:
 		velocity.y -= gravity * delta
 	else:
 		velocity.y = -0.5
-	if jump:
-		velocity.y = jump_velocity
+	_try_jump()
+	var fall := -velocity.y
 	move_and_slide()
+	if is_on_floor() and not was_floor:
+		_landed(fall)
 	# если упёрлись в стену — скорость тоже гаснет
 	move_speed = minf(move_speed, Vector3(velocity.x, 0, velocity.z).length() + 0.9)
 
@@ -360,6 +389,9 @@ func _physics_process(delta: float) -> void:
 	_sprint_blend = _run
 	var local := global_basis.inverse() * planar
 	var move_angle := atan2(-local.x, -local.z) if planar.length() > 0.2 else 0.0
+	# поза: присед, подогнутые в прыжке ноги, «просел» при приземлении
+	var tuck := 0.3 if _jumped and not is_on_floor() else 0.0
+	model.set("crouch", maxf(_crouch, maxf(tuck, _land * 0.45)))
 	model.update_anim(delta, signed, _sprint_blend, _anim_state(), _yaw_rate, accel, move_angle,
 			crouching, not is_on_floor(), velocity.y)
 	_footsteps()
@@ -374,11 +406,65 @@ func _move(hv: Vector3, input: Vector2, base: float, delta: float) -> Vector3:
 	var fwd := -input.y
 	var local := Vector3(input.x * strafe_factor, 0.0, -fwd * (1.0 if fwd >= 0.0 else back_factor))
 	var speed := lerpf(base, sprint_speed, _run) if state == State.NORMAL else base
+	if crouching:
+		speed = minf(speed, crouch_speed)
 	var target := Basis(Vector3.UP, cam_yaw) * local * speed
 	var k := move_response if target.length() > 0.01 else stop_response
+	if not is_on_floor():
+		k *= air_control
 	hv = hv.lerp(target, 1.0 - exp(-k * delta))
 	move_speed = hv.length()
 	return hv
+
+
+# ----------------------------------------------------------------------------- прыжок и присед
+func _try_jump() -> void:
+	if _jump_buffer <= 0.0 or _coyote <= 0.0:
+		return
+	if not control or phone_up or not (state == State.NORMAL or state == State.AIM):
+		return
+	_jump_buffer = 0.0
+	if crouching:                    # из приседа прыжок сначала поднимает на ноги
+		_crouch_toggle = false
+		return
+	if exhausted:
+		return
+	_coyote = 0.0
+	_jumped = true
+	velocity.y = sqrt(2.0 * gravity * jump_height)
+	_spend(jump_cost)
+	Game.sfx_rand(step_sound, step_variants, null, -8.0)
+	Game.emit_noise(global_position, 3.0)
+
+
+func _landed(fall: float) -> void:
+	if _jumped or fall > 3.0:
+		_land = clampf(fall / 7.0, 0.25, 1.0)
+		Game.sfx_rand(step_sound, step_variants, null, -6.0)
+		Game.emit_noise(global_position, 5.0)
+		shake(clampf((fall - 4.0) * 0.1, 0.0, 0.5))
+	_jumped = false
+
+
+func _update_crouch(delta: float) -> void:
+	var want := control and (Input.is_action_pressed("crouch") or _crouch_toggle) \
+		and state != State.DEAD and state != State.GRABBED
+	if want and not crouching and is_on_floor():
+		_set_crouch(true)
+	elif not want and crouching and _can_stand():
+		_set_crouch(false)
+	_crouch = move_toward(_crouch, 1.0 if crouching else 0.0, crouch_response * delta)
+
+
+func _set_crouch(on: bool) -> void:
+	crouching = on
+	_shape.height = crouch_height if on else _stand_height
+	collision.position.y = _shape.height * 0.5
+
+
+## Есть ли над головой место, чтобы встать.
+func _can_stand() -> bool:
+	return not test_move(global_transform, Vector3.UP * (_stand_height - crouch_height))
 
 
 # ----------------------------------------------------------------------------- выносливость
@@ -674,7 +760,10 @@ func _footsteps() -> void:
 	if not is_on_floor() or move_speed < 0.5:
 		return
 	Game.stats["steps"] = Game.stats.get("steps", 0) + 1
-	Game.sfx_rand(step_sound, step_variants, null, -7.0 if _sprinting else (-16.0 if crouching else -11.0))
+	if crouching:                    # вприсядку — еле слышно, враги не замечают
+		Game.sfx_rand(step_sound, step_variants, null, -20.0)
+		return
+	Game.sfx_rand(step_sound, step_variants, null, -11.0 if not _sprinting else -7.0)
 	if _sprinting:
 		Game.emit_noise(global_position, 9.0)
 	elif move_speed > 1.3:
@@ -704,10 +793,12 @@ func _update_camera(delta: float) -> void:
 	if _skel and _head_bone >= 0:
 		var head_y := (_skel.global_transform * _skel.get_bone_global_pose(_head_bone).origin).y - global_position.y
 		eye = minf(eye_height, head_y + 0.17)   # голова наклонилась (бег, удар) — глаза ниже
+	eye = minf(eye, eye_height - crouch_eye_drop * _crouch - 0.12 * _land)
 	var goal := global_position + Vector3.UP * (0.35 if dead else eye)
 	_cam_pos.x = goal.x
 	_cam_pos.z = goal.z
-	_cam_pos.y = lerpf(_cam_pos.y, goal.y, 1.0 - exp(-(3.0 if dead else eye_follow) * delta))
+	var follow := 3.0 if dead else (eye_follow if is_on_floor() else 45.0)   # в прыжке камера не отстаёт
+	_cam_pos.y = lerpf(_cam_pos.y, goal.y, 1.0 - exp(-follow * delta))
 	var side := velocity.dot(global_basis.x)
 	_cam_roll = lerpf(_cam_roll, 0.6 if dead else -side * strafe_roll, 1.0 - exp(-(2.0 if dead else 8.0) * delta))
 	# камера держится впереди головы: на бегу анимация наклоняет корпус — камера уходит вместе с головой

@@ -46,7 +46,7 @@ const BODY := ["Pelvis", "Spine", "UpperArmL", "ForearmL", "HandL", "UpperArmR",
 @export var crouch_response := 8.0
 ## Прыжок: позы JumpRise (толчок) → JumpApex (колени подтянуты) → JumpFall (ноги к земле) смешиваются
 ## по вертикальной скорости: +jump_speed — только что оттолкнулся, 0 — верхняя точка, −jump_speed — касание.
-@export var jump_speed := 5.2        ## м/с — vy, при которой поза полностью «толчок» / «падение» (= jump_velocity героя)
+@export var jump_speed := 4.2        ## м/с — vy, при которой поза полностью «толчок» / «падение» (≈ скорость отрыва при jump_height 0.5 м)
 @export var air_in := 7.0            ## 1/с — как быстро ноги уходят из шага в позу прыжка (меньше — дольше «отрываются»)
 @export var air_out_stand := 18.0    ## 1/с — выход из позы при касании с места (клип JumpLand начинается с той же позы)
 @export var air_out_run := 9.0       ## 1/с — то же на бегу: ноги из позы «падение» переходят в шаг бега
@@ -76,6 +76,8 @@ const BODY := ["Pelvis", "Spine", "UpperArmL", "ForearmL", "HandL", "UpperArmR",
 @export var hips_response := 8.0
 
 var step_phase := 0.0                ## читает камера для покачивания (одна «волна» на шаг)
+var crouch := 0.0                    ## присед 0..1 — ставит player.gd (присед, прыжок, приземление);
+                                     ## процедурная поза YurchikLean — только без библиотеки «gmod»: с ней присед и прыжок — клипами
 
 const LOOPS := ["Idle", "Walk", "WalkBack", "Run", "AimIdle"]
 const UPPER := ["Spine", "Head", "UpperArmL", "ForearmL", "HandL", "UpperArmR", "ForearmR", "HandR"]
@@ -344,9 +346,9 @@ func attack_length(clip := "Attack") -> float:
 
 ## speed — со знаком (назад < 0); sprint 0..1; state: 0 обычный, 1 замах (ПКМ), 2 удар;
 ## move_angle — куда идёт герой относительно взгляда, рад (0 — вперёд, > 0 — влево);
-## crouch — сидит на корточках; air — в воздухе (прыжок, падение); vy — вертикальная скорость, м/с.
+## crouching — сидит на корточках; air — в воздухе (прыжок, падение); vy — вертикальная скорость, м/с.
 func update_anim(delta: float, speed: float, _sprint: float, state: int, yaw_rate: float, accel: float,
-		move_angle := 0.0, crouch := false, air := false, vy := 0.0) -> void:
+		move_angle := 0.0, crouching := false, air := false, vy := 0.0) -> void:
 	if _tree == null or _dead:
 		return
 	_time += delta
@@ -368,7 +370,7 @@ func update_anim(delta: float, speed: float, _sprint: float, state: int, yaw_rat
 	_tree.set("parameters/move/blend_amount", _move)
 	_tree.set("parameters/aim/blend_amount", _aim)
 	if _has_gmod:
-		_update_crouch_air(delta, speed, crouch, air, vy)
+		_update_crouch_air(delta, speed, crouching, air, vy)
 
 	# фаза шагов для покачивания камеры: π на шаг (|sin| — одна волна на шаг)
 	var cycles := lerpf(walk_rate / _walk_len, jog_rate / _jog_len, _run) * _move
@@ -392,15 +394,17 @@ func update_anim(delta: float, speed: float, _sprint: float, state: int, yaw_rat
 	_hips = lerp_angle(_hips, twist * _move, 1.0 - exp(-hips_response * delta))
 	if _lean_mod:
 		var br := sin(_time * 1.6) * breath * _aim  # в стойке — заметное дыхание (клип стойки статичный)
-		_lean_mod.spine = Vector3(_lean.x + br, 0.0, _lean.y)
+		var proc_crouch := 0.0 if _has_gmod else crouch
+		_lean_mod.spine = Vector3(_lean.x + br + proc_crouch * 0.25, 0.0, _lean.y)
 		_lean_mod.hips_yaw = _hips
+		_lean_mod.crouch = proc_crouch
 
 	_tree.advance(delta)
 
 
-func _update_crouch_air(delta: float, speed: float, crouch: bool, air: bool, vy: float) -> void:
+func _update_crouch_air(delta: float, speed: float, crouching: bool, air: bool, vy: float) -> void:
 	var spd := absf(speed)
-	_crouch = lerpf(_crouch, 1.0 if crouch and not air else 0.0, 1.0 - exp(-crouch_response * delta))
+	_crouch = lerpf(_crouch, 1.0 if crouching and not air else 0.0, 1.0 - exp(-crouch_response * delta))
 	_crouch_move = lerpf(_crouch_move, smoothstep(0.1, 0.4, spd), 1.0 - exp(-blend_response * delta))
 	_tree.set("parameters/c_walk_ts/scale", clampf(spd / gmod_crouch_speed, 0.5, 1.6))
 	_tree.set("parameters/c_back_ts/scale", clampf(spd / gmod_crouch_back_speed, 0.5, 1.6))
