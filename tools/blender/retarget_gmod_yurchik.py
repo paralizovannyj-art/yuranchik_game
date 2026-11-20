@@ -79,11 +79,6 @@ CLIPS = [
     ("CrouchWalkRight", "base_m/crouch_walkE.smd", 30, {"loop", "inplace", "ground"}),
     ("Jump", "GMod/jump_c.smd", 30, {"inplace"}),
     ("JumpLand", "GMod/jump_land.smd", 60, {"inplace", "ground"}, (0, 40)),
-    # позы прыжка для смешивания по вертикальной скорости (yurchik_anim.gd): jump_c целиком — аддитивный
-    # слой GMod (кадры 7–10 — ноги назад, с 24-го — поза на колене), поэтому берём только отдельные кадры
-    ("JumpRise", "GMod/jump_c.smd", 30, {"inplace"}, (2, 3)),     # толчок: нога выпрямлена, руки назад
-    ("JumpApex", "GMod/jump_c.smd", 30, {"inplace"}, (13, 14)),   # верхняя точка: колени подтянуты вперёд
-    ("JumpFall", "GMod/jump_land.smd", 60, {"inplace"}, (0, 1)),  # перед касанием: ноги под телом (= начало JumpLand)
     # ---- стойки
     ("IdleAngry", "base_m/Idle_Angry.smd", 25, {"loop", "ground"}),
     ("IdleScared", "base_m/Idle_scared.smd", 25, {"loop", "ground"}),
@@ -346,6 +341,100 @@ def bake_clip(dst, order, name, frames, flags, q0, src_rest, hip_scale, ground_z
             "lift": round(lift, 3)}
 
 
+# ----------------------------------------------------------------------------- позы прыжка
+# В GMod прыжок — аддитивный слой (jump_c): руки в нём остаются в reference-позе (почти T-поза,
+# их задаёт слой прицеливания), голень заброшена назад. Поэтому позы для смешивания по вертикальной
+# скорости (yurchik_anim.gd) строятся здесь, на нашем скелете.
+# Углы в градусах. hip — бедро от вертикали (> 0 — вперёд), knee — сгиб колена, foot — носок вниз;
+# sh — плечо от вертикали (> 0 — вперёд), el — сгиб локтя, out — разводка (держит кисть снаружи куртки);
+# lean — наклон корпуса вперёд. L/R — левая/правая сторона (Юрчик смотрит в -Y, +X — его левый бок).
+JUMP_POSES = {
+    # толчок: правая (толчковая) нога прямая, уходит назад-вниз, носок оттянут; левое колено вперёд-вверх;
+    # руки в противофазе ногам: правая вперёд, левая назад
+    "JumpRise": {"lean": 6.0, "pelvis": 2.0,
+                 "L": {"hip": 42, "knee": 62, "foot": 20, "sh": -20, "el": 25},
+                 "R": {"hip": -18, "knee": 6, "foot": 38, "sh": 24, "el": 40}},
+    # верхняя точка: ноги под телом, колени мягко согнуты, левая чуть впереди; руки согнуты у корпуса
+    "JumpApex": {"lean": 3.0, "pelvis": 2.0,
+                 "L": {"hip": 40, "knee": 56, "foot": 22, "sh": 8, "el": 40},
+                 "R": {"hip": 20, "knee": 46, "foot": 22, "sh": 12, "el": 42}},
+    # перед касанием: ноги вытянуты к земле и чуть вперёд, колени мягкие, носки к себе; руки в стороны — баланс
+    "JumpFall": {"lean": 0.0, "pelvis": 0.0,
+                 "L": {"hip": 14, "knee": 14, "foot": 4, "sh": 6, "el": 22},
+                 "R": {"hip": 6, "knee": 10, "foot": 4, "sh": 8, "el": 24}},
+}
+ARM_OUT = 0.34      # как у бега в retarget_ual_yurchik.py: кисти не проходят сквозь куртку
+BAG_OUT = 0.28      # правая рука висит поверх сумки на правом боку
+
+
+def make_jump_pose(dst, order, name, spec):
+    X, Z = Vector((1, 0, 0)), Vector((0, 0, 1))
+    bones = dst.data.bones
+    rest_q = {n: bones[n].matrix_local.to_quaternion() for n in order}
+    rest_dir = {n: (bones[n].tail_local - bones[n].head_local).normalized() for n in order}
+
+    def R(axis, deg):
+        return Quaternion(axis, math.radians(deg))
+
+    def aim(n, d):
+        return rest_dir[n].rotation_difference(d.normalized()) @ rest_q[n]
+
+    def sag(side, ang, out):  # направление в плоскости шага: ang от «вниз», > 0 — вперёд
+        a = math.radians(ang)
+        return Vector((side * out, -math.sin(a), -math.cos(a)))
+
+    rot = {"Pelvis": R(X, spec["pelvis"]) @ rest_q["Pelvis"],
+           "Spine": R(X, spec["lean"]) @ rest_q["Spine"],
+           "Head": R(X, -spec["lean"] * 0.5) @ rest_q["Head"]}   # взгляд остаётся у горизонта
+    for s, sfx in ((1, "L"), (-1, "R")):
+        k = spec[sfx]
+        rot["Thigh" + sfx] = aim("Thigh" + sfx, sag(s, k["hip"], 0.04))
+        rot["Shin" + sfx] = aim("Shin" + sfx, sag(s, k["hip"] - k["knee"], 0.03))
+        sd = rot["Shin" + sfx] @ rest_q["Shin" + sfx].inverted()
+        rot["Foot" + sfx] = sd @ R(X, -k["foot"]) @ rest_q["Foot" + sfx]
+        out = ARM_OUT + (BAG_OUT if s < 0 else 0.0)
+        rot["UpperArm" + sfx] = aim("UpperArm" + sfx, sag(s, k["sh"], out))
+        rot["Forearm" + sfx] = aim("Forearm" + sfx, sag(s, k["sh"] + k["el"], out * 0.3))
+        fd = rot["Forearm" + sfx] @ rest_q["Forearm" + sfx].inverted()
+        rot["Hand" + sfx] = fd @ rest_q["Hand" + sfx]
+
+    dad = dst.animation_data
+    ac = bpy.data.actions.new("Gm_" + name)
+    dad.action = ac
+    for i in range(2):   # два одинаковых кадра — как у остальных поз-клипов
+        mats = {}
+        for n in order:
+            b = bones[n]
+            if b.parent is None:
+                loc = b.head_local.copy()
+            else:
+                rel = b.parent.matrix_local.inverted() @ b.matrix_local
+                loc = (mats[b.parent.name] @ rel).translation
+            mats[n] = Matrix.Translation(loc) @ rot[n].to_matrix().to_4x4()
+        for n in order:
+            b = bones[n]
+            pb = dst.pose.bones[n]
+            if b.parent is None:
+                basis = b.matrix_local.inverted() @ mats[n]
+            else:
+                rel = b.parent.matrix_local.inverted() @ b.matrix_local
+                basis = rel.inverted() @ mats[b.parent.name].inverted() @ mats[n]
+            loc, q, _ = basis.decompose()
+            pb.rotation_quaternion = q
+            pb.keyframe_insert("rotation_quaternion", frame=i, group=n)
+            if b.parent is None:
+                pb.location = loc
+                pb.keyframe_insert("location", frame=i, group=n)
+    tr = dad.nla_tracks.new()
+    tr.name = name
+    tr.mute = True
+    st = tr.strips.new(ac.name, 0, ac)
+    st.name = name
+    dad.action = None
+    return {"frames": 2, "len_s": round(1 / FPS, 3), "loop": False, "root_speed": 0.0,
+            "foot_speed": 0.0, "slide_cm": 0.0, "lift": 0.0, "src": "поза строится в скрипте (JUMP_POSES)"}
+
+
 def main():
     sc = bpy.context.scene
     sc.render.fps = FPS
@@ -396,6 +485,8 @@ def main():
             continue
         stats[name] = bake_clip(dst, order, name, frames, flags, q0, src_rest, hip_scale, ground_z)
         stats[name]["src"] = rel
+    for name, spec in JUMP_POSES.items():
+        stats[name] = make_jump_pose(dst, order, name, spec)
     return stats, missing
 
 

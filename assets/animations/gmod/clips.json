@@ -387,17 +387,17 @@
   "loop": false,
   "root_speed": 0.0,
   "slide_cm": 0.0,
-  "src": "GMod/jump_c.smd"
+  "src": "поза строится в скрипте (JUMP_POSES)"
  },
  "JumpFall": {
-  "foot_speed": 0.265,
+  "foot_speed": 0.0,
   "frames": 2,
   "len_s": 0.033,
   "lift": 0.0,
   "loop": false,
   "root_speed": 0.0,
   "slide_cm": 0.0,
-  "src": "GMod/jump_land.smd"
+  "src": "поза строится в скрипте (JUMP_POSES)"
  },
  "JumpLand": {
   "foot_speed": 0.033,
@@ -410,14 +410,14 @@
   "src": "GMod/jump_land.smd"
  },
  "JumpRise": {
-  "foot_speed": 1.334,
+  "foot_speed": 0.0,
   "frames": 2,
   "len_s": 0.033,
   "lift": 0.0,
   "loop": false,
   "root_speed": 0.0,
   "slide_cm": 0.0,
-  "src": "GMod/jump_c.smd"
+  "src": "поза строится в скрипте (JUMP_POSES)"
  },
  "Laugh": {
   "foot_speed": 0.015,
