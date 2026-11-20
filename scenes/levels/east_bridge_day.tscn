@@ -5,10 +5,11 @@
 [ext_resource type="Shader" uid="uid://507jlrfn4qwu" path="res://shaders/ps2_post.gdshader" id="post"]
 [ext_resource type="PackedScene" uid="uid://l6yy2wslyolu" path="res://scenes/characters/player.tscn" id="player"]
 [ext_resource type="Script" uid="uid://c01wbk2jc6k0b" path="res://scripts/world/light_budget.gd" id="light_budget"]
+[ext_resource type="Shader" path="res://shaders/snow_streak.gdshader" id="streak"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
-sky_top_color = Color(0.63, 0.65, 0.63, 1)
-sky_horizon_color = Color(0.78, 0.76, 0.71, 1)
+sky_top_color = Color(0.74, 0.75, 0.74, 1)
+sky_horizon_color = Color(0.8, 0.8, 0.77, 1)
 sky_curve = 0.2
 ground_bottom_color = Color(0.5, 0.51, 0.53, 1)
 ground_horizon_color = Color(0.78, 0.76, 0.71, 1)
@@ -32,26 +33,53 @@ glow_enabled = true
 glow_intensity = 0.5
 glow_bloom = 0.04
 fog_enabled = true
-fog_light_color = Color(0.72, 0.72, 0.67, 1)
-fog_density = 0.003
-fog_aerial_perspective = 0.4
-fog_sky_affect = 0.55
+fog_light_color = Color(0.78, 0.78, 0.75, 1)
+fog_density = 0.045
+fog_sky_affect = 1.0
+
+[sub_resource type="Gradient" id="g_fade"]
+offsets = PackedFloat32Array(0, 0.12, 0.85, 1)
+colors = PackedColorArray(1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture1D" id="tex_fade"]
+gradient = SubResource("g_fade")
+
+[sub_resource type="Gradient" id="g_puff"]
+offsets = PackedFloat32Array(0, 0.45, 1)
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0.45, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="tex_puff"]
+gradient = SubResource("g_puff")
+width = 64
+height = 64
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
 
 [sub_resource type="ParticleProcessMaterial" id="pm_snow"]
 emission_shape = 3
-emission_box_extents = Vector3(40, 1, 40)
-direction = Vector3(0, -1, 0)
-spread = 25.0
-initial_velocity_min = 0.8
-initial_velocity_max = 1.6
-gravity = Vector3(1.2, -0.7, 0.3)
+emission_box_extents = Vector3(26, 9, 26)
+direction = Vector3(0.25, -0.12, 1)
+spread = 12.0
+initial_velocity_min = 7.0
+initial_velocity_max = 12.0
+gravity = Vector3(0, -1.2, 0)
+scale_min = 0.6
+scale_max = 1.5
+color_ramp = SubResource("tex_fade")
 turbulence_enabled = true
-turbulence_noise_strength = 0.6
-turbulence_noise_scale = 5.0
+turbulence_noise_strength = 3.0
+turbulence_noise_scale = 4.0
+turbulence_noise_speed = Vector3(0.5, 0, 1.5)
+turbulence_influence_min = 0.03
+turbulence_influence_max = 0.1
 
 [sub_resource type="StandardMaterial3D" id="mat_flake"]
+transparency = 1
 shading_mode = 0
-albedo_color = Color(0.96, 0.97, 1, 1)
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.96, 0.97, 1, 0.9)
+albedo_texture = SubResource("tex_puff")
 billboard_mode = 3
 particles_anim_h_frames = 1
 particles_anim_v_frames = 1
@@ -60,6 +88,68 @@ particles_anim_loop = false
 [sub_resource type="QuadMesh" id="mesh_flake"]
 material = SubResource("mat_flake")
 size = Vector2(0.06, 0.06)
+
+[sub_resource type="ParticleProcessMaterial" id="pm_blizzard"]
+particle_flag_align_y = true
+emission_shape = 3
+emission_box_extents = Vector3(9, 5, 15)
+direction = Vector3(0.25, -0.12, 1)
+spread = 6.0
+initial_velocity_min = 14.0
+initial_velocity_max = 22.0
+gravity = Vector3(0, -1.5, 0)
+scale_min = 0.6
+scale_max = 1.4
+color_ramp = SubResource("tex_fade")
+turbulence_enabled = true
+turbulence_noise_strength = 3.0
+turbulence_noise_scale = 3.0
+turbulence_noise_speed = Vector3(0.6, 0, 2)
+turbulence_influence_min = 0.02
+turbulence_influence_max = 0.07
+
+[sub_resource type="ShaderMaterial" id="mat_streak"]
+render_priority = 1
+shader = ExtResource("streak")
+shader_parameter/color = Color(0.97, 0.98, 1, 0.9)
+shader_parameter/near_fade = 0.5
+
+[sub_resource type="QuadMesh" id="mesh_streak"]
+material = SubResource("mat_streak")
+size = Vector2(0.035, 0.32)
+
+[sub_resource type="ParticleProcessMaterial" id="pm_gusts"]
+emission_shape = 3
+emission_box_extents = Vector3(22, 3, 20)
+angle_min = -180.0
+angle_max = 180.0
+direction = Vector3(0.25, -0.05, 1)
+spread = 8.0
+initial_velocity_min = 9.0
+initial_velocity_max = 15.0
+angular_velocity_min = -12.0
+angular_velocity_max = 12.0
+gravity = Vector3(0, 0, 0)
+scale_min = 0.7
+scale_max = 1.6
+color_ramp = SubResource("tex_fade")
+
+[sub_resource type="StandardMaterial3D" id="mat_puff"]
+transparency = 1
+shading_mode = 0
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.86, 0.87, 0.86, 0.2)
+albedo_texture = SubResource("tex_puff")
+billboard_mode = 3
+particles_anim_h_frames = 1
+particles_anim_v_frames = 1
+particles_anim_loop = false
+proximity_fade_enabled = true
+proximity_fade_distance = 3.0
+
+[sub_resource type="QuadMesh" id="mesh_puff"]
+material = SubResource("mat_puff")
+size = Vector2(9, 6)
 
 [sub_resource type="ShaderMaterial" id="mat_post"]
 shader = ExtResource("post")
@@ -78,6 +168,7 @@ shader_parameter/vignette = 0.35
 
 [node name="EastBridgeDay" type="Node3D"]
 script = ExtResource("lvl")
+ambience_db = -3.0
 bake_navigation = false
 flashlight_energy = 3.0
 
@@ -87,19 +178,38 @@ environment = SubResource("env")
 [node name="Overcast" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.94, -0.21, 0.27, 0, 0.79, 0.61, -0.34, -0.57, 0.75, 0, 60, 0)
 light_color = Color(0.9, 0.92, 0.97, 1)
-light_energy = 0.45
+light_energy = 0.3
 shadow_enabled = true
-shadow_blur = 3.0
-directional_shadow_max_distance = 90.0
+shadow_opacity = 0.45
+shadow_blur = 4.0
+directional_shadow_max_distance = 60.0
 
 [node name="Snowfall" type="GPUParticles3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 23, 50)
-amount = 4500
-lifetime = 14.0
-preprocess = 14.0
-visibility_aabb = AABB(-45, -30, -45, 90, 35, 90)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 92)
+amount = 14000
+lifetime = 4.5
+preprocess = 4.5
+visibility_aabb = AABB(-40, -25, -40, 80, 50, 80)
 process_material = SubResource("pm_snow")
 draw_pass_1 = SubResource("mesh_flake")
+
+[node name="Blizzard" type="GPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 80)
+amount = 14000
+lifetime = 2.2
+preprocess = 2.2
+visibility_aabb = AABB(-30, -20, -30, 60, 40, 60)
+process_material = SubResource("pm_blizzard")
+draw_pass_1 = SubResource("mesh_streak")
+
+[node name="Gusts" type="GPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 70)
+amount = 90
+lifetime = 4.0
+preprocess = 4.0
+visibility_aabb = AABB(-40, -20, -40, 80, 40, 80)
+process_material = SubResource("pm_gusts")
+draw_pass_1 = SubResource("mesh_puff")
 
 [node name="PS2Post" type="CanvasLayer" parent="."]
 layer = 10
@@ -120,8 +230,8 @@ visible = false
 
 [node name="Backdrop" parent="Location"]
 lit_windows = 0.0
-haze_color = Color(0.72, 0.72, 0.67, 1)
-haze_density = 0.003
+haze_color = Color(0.78, 0.78, 0.75, 1)
+haze_density = 0.04
 wall_color = Color(0.3, 0.31, 0.33, 1)
 aerial = 0.0
 
