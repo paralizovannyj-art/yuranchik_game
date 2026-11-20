@@ -249,6 +249,8 @@ PRESETS = {
     "floor":   dict(soften=1.3, mottle=0.24, stains=0.5, clarity=0.5),
     "metal":   dict(soften=1.3, sat=0.85, mottle=0.22, stains=0.3, drips=0.35, clarity=0.55),
     "wood":    dict(soften=1.25, sat=0.95, mottle=0.18, stains=0.25, clarity=0.5),
+    # заснеженные полы, снятые с 3D-сцен (east_bridge_textures.py): рельеф уже настоящий — без разводов, мягче
+    "snowfloor": dict(soften=1.2, sat=0.9, tint=(0.99, 0.99, 1.0), contrast=1.04, clarity=0.3, mottle=0.12, mottle_cells=3),
     "snow":    dict(soften=1.6, sat=0.75, tint=(0.98, 0.99, 1.0), contrast=1.0, clarity=0.3, crush=False, mottle=0.10),
     "sign":    dict(soften=1.15, sat=0.92, mottle=0.14, stains=0.2, clarity=0.3),
     "fabric":  dict(soften=1.2, sat=0.92, mottle=0.18, clarity=0.4),
@@ -285,12 +287,12 @@ TEXTURES = {
     "yur3_atlas": "char", "sergey": "char", "enemy_a": "char", "enemy_b": "char", "enemy_c": "char", "monkey": "fur",
     "items": "item",
     # «Восточный ж/д мост» (YUR-7, east_bridge_textures.py); eb_mesh и плафоны фонарей — без обработки
-    "eb_ballast": "floor", "eb_trackbed": "floor", "eb_deck": "floor", "eb_platform": "floor",
+    "eb_ballast": "snowfloor", "eb_trackbed": "snowfloor", "eb_deck": "snowfloor", "eb_platform": "snowfloor",
     "eb_platform_edge": "wall", "eb_white": "metal", "eb_booth": "metal", "eb_cabinet": "metal",
     "eb_tank": "metal", "eb_gondola": "metal", "eb_container": "metal", "eb_coach": "sign",
     "eb_lattice": "metal", "eb_station": "wall", "eb_sign_station": "sign",
     "eb_blue_paint": "metal", "eb_green_paint": "metal", "eb_concrete_pole": "wall", "eb_sheet": "metal",
-    "eb_field": "snow", "eb_road": "floor", "eb_ice": "snow", "eb_grass": "decal", "eb_tree": "decal",
+    "eb_field": "snowfloor", "eb_road": "snowfloor", "eb_ice": "snow", "eb_grass": "decal", "eb_tree": "decal",
     "eb_poplar": "decal", "eb_house": "facade", "eb_corrugated": "metal", "eb_girder": "wall", "eb_pier": "wall",
 }
 
