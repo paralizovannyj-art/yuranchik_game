@@ -63,8 +63,22 @@ turbulence_enabled = true
 turbulence_noise_strength = 0.4
 turbulence_noise_scale = 6.0
 
+[sub_resource type="Gradient" id="grad_flake"]
+offsets = PackedFloat32Array(0, 0.45, 1)
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0.75, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="tex_flake"]
+gradient = SubResource("grad_flake")
+width = 32
+height = 32
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(0.5, 0)
+
 [sub_resource type="StandardMaterial3D" id="mat_flake"]
+transparency = 1
 albedo_color = Color(0.95, 0.97, 1, 1)
+albedo_texture = SubResource("tex_flake")
 billboard_mode = 3
 particles_anim_h_frames = 1
 particles_anim_v_frames = 1
@@ -72,7 +86,7 @@ particles_anim_loop = false
 
 [sub_resource type="QuadMesh" id="mesh_flake"]
 material = SubResource("mat_flake")
-size = Vector2(0.05, 0.05)
+size = Vector2(0.06, 0.06)
 
 [sub_resource type="ShaderMaterial" id="mat_post"]
 shader = ExtResource("post")
