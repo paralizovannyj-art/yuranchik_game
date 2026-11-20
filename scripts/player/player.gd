@@ -184,6 +184,20 @@ func _make_first_person_body() -> void:
 		mi.add_sibling(view)
 
 
+## Вид со стороны (полигон, клавиша V): показать тело целиком, с головой и тенью, вместо копии
+## для первого лица. false — вернуть как было.
+func set_body_visible(on: bool) -> void:
+	for m: Node in model.find_children("*", "MeshInstance3D", true, false):
+		var mi := m as MeshInstance3D
+		if mi.skin == null:
+			continue
+		if mi.name.ends_with("FirstPerson"):
+			mi.visible = not on
+		else:
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if on \
+					else GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+
+
 func is_dead() -> bool:
 	return state == State.DEAD
 
