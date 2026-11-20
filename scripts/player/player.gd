@@ -361,7 +361,7 @@ func _physics_process(delta: float) -> void:
 	var local := global_basis.inverse() * planar
 	var move_angle := atan2(-local.x, -local.z) if planar.length() > 0.2 else 0.0
 	model.update_anim(delta, signed, _sprint_blend, _anim_state(), _yaw_rate, accel, move_angle,
-			crouching, not is_on_floor())
+			crouching, not is_on_floor(), velocity.y)
 	_footsteps()
 	_update_camera(delta)
 

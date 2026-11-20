@@ -66,9 +66,17 @@ Godot переимпортирует GLB сам. Если редактор от�
 - **Присед** (держать C или Ctrl): `gmod/CrouchIdle`, `gmod/CrouchWalk`, `gmod/CrouchWalkBack`.
   Шаг замедляется до `crouch_speed`, бег отключается, шаги тише. Камера опускается вслед
   за костью головы. Капсула коллизии не уменьшается.
-- **Прыжок** (Space): `gmod/Jump` проигрывается только на ноги, место в клипе выбирается
-  по времени в воздухе. Таз не берётся, иначе клип наклоняет вперёд корпус вместе с камерой.
-  Приземление — `gmod/JumpLand` на таз и ноги. Работает в обоих наборах.
+- **Прыжок** (Space): ноги, а с весом `air_body` и корпус с руками, смешивают три позы
+  по вертикальной скорости героя:
+  - `gmod/JumpRise` — толчок: нога выпрямлена, руки назад;
+  - `gmod/JumpApex` — верхняя точка: колени подтянуты;
+  - `gmod/JumpFall` — ноги идут к земле.
+
+  Это отдельные кадры `jump_c` и `jump_land`. Сам `jump_c` в GMod — аддитивный слой,
+  целиком он даёт ноги назад и позу на колене. Вход в позу плавный (`air_in`).
+  При касании с места играет `gmod/JumpLand`: он начинается с той же позы `JumpFall`,
+  поэтому скачка нет. На бегу цикл бега продолжается с кадра, где стопа ставится на землю.
+  Работает в обоих наборах.
 - Разовые клипы: `model.play_action("gmod/Wave")` для всего тела,
   `model.play_action("gmod/GrenadeThrow", true)` только для верха.
   Жесты с предметами (`GrenadeThrow`, `ItemDrop`, `ItemPlace`, `ItemGive`, `Shove`)
@@ -77,11 +85,11 @@ Godot переимпортирует GLB сам. Если редактор от�
 Скорости клипов (`gmod_*_speed` в `yurchik_anim.gd`) взяты из `foot_speed` в `clips.json`.
 После пересборки их нужно сверить.
 
-## Что перенесено (69 клипов)
+## Что перенесено (72 клипа)
 
 | Группа | Клипы |
 |---|---|
-| Базовые | Idle, Walk, WalkBack, WalkLeft, WalkRight, Run, RunBack, RunLeft, RunRight, CrouchIdle, CrouchWalk(Back/Left/Right), Jump, JumpLand, StandToCrouch, CrouchToStand |
+| Базовые | Idle, Walk, WalkBack, WalkLeft, WalkRight, Run, RunBack, RunLeft, RunRight, CrouchIdle, CrouchWalk(Back/Left/Right), Jump, JumpLand, JumpRise, JumpApex, JumpFall, StandToCrouch, CrouchToStand |
 | Стойки | IdleAngry, IdleScared, IdleSubtle, FistsIdle, Cower, RunPanicked, Swim, SwimIdle, Sit, SitZen |
 | Удары, броски | FistsAttack, PunchA, PunchB, FistBlock, MeleeHit1–3, Melee2Attack, Shove, GrenadeThrow, ItemDrop, ItemPlace, ItemGive |
 | Получил удар | FlinchHead, FlinchHead2, FlinchStomach, FlinchStomach2, FlinchBack, FlinchShoulderL/R, Flinch1, Flinch2 |

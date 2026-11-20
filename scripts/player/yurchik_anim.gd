@@ -20,6 +20,7 @@ const GMOD_LOOPS := ["Idle", "Walk", "WalkBack", "WalkLeft", "WalkRight", "Run",
 		"IdleSubtle", "FistsIdle", "RunPanicked", "Swim", "SwimIdle", "Sit", "SitZen"]
 const LEGS := ["ThighL", "ShinL", "FootL", "ThighR", "ShinR", "FootR"]
 const LOWER := ["Pelvis", "ThighL", "ShinL", "FootL", "ThighR", "ShinR", "FootR"]
+const BODY := ["Pelvis", "Spine", "UpperArmL", "ForearmL", "HandL", "UpperArmR", "ForearmR", "HandR"]
 
 @export var locomotion := Locomotion.GMOD:  ## набор стойки/ходьбы/бега; F7 в игре переключает
 	set(v):
@@ -43,11 +44,15 @@ const LOWER := ["Pelvis", "ThighL", "ShinL", "FootL", "ThighR", "ShinR", "FootR"
 @export var gmod_crouch_speed := 1.375
 @export var gmod_crouch_back_speed := 1.41
 @export var crouch_response := 8.0
-@export var jump_anim_rate := 1.2    ## секунда в воздухе → секунд клипа Jump (поджатые ноги)
-@export var jump_hold := 0.55        ## дальше этого места клипа Jump не идёт — поза держится до приземления
+## Прыжок: позы JumpRise (толчок) → JumpApex (колени подтянуты) → JumpFall (ноги к земле) смешиваются
+## по вертикальной скорости: +jump_speed — только что оттолкнулся, 0 — верхняя точка, −jump_speed — касание.
+@export var jump_speed := 5.2        ## м/с — vy, при которой поза полностью «толчок» / «падение» (= jump_velocity героя)
+@export var air_in := 7.0            ## 1/с — как быстро ноги уходят из шага в позу прыжка (меньше — дольше «отрываются»)
+@export var air_out_stand := 18.0    ## 1/с — выход из позы при касании с места (клип JumpLand начинается с той же позы)
+@export var air_out_run := 9.0       ## 1/с — то же на бегу: ноги из позы «падение» переходят в шаг бега
+@export var air_body := 0.6          ## насколько таз, корпус и руки следуют позам прыжка (ноги — полностью)
 @export var land_rate := 1.0
 @export var land_max_speed := 1.0    ## м/с — быстрее клип приземления (с места) не играем: ноги сразу продолжают шаг/бег
-@export var jump_run_start := 0.25   ## с — с разбега клип Jump начинается отсюда (ноги уже поджимаются), а не с позы стоя
 ## фаза цикла (с), где опорная стопа ставится на землю: в неё перематываются шаг и бег при приземлении
 @export var gmod_walk_land_phase := 0.17
 @export var gmod_run_land_phase := 0.13
@@ -96,7 +101,8 @@ var _has_gmod := false
 var _crouch := 0.0
 var _crouch_move := 0.0
 var _air_time := 0.0
-var _jump_start := 0.0
+var _air := 0.0
+var _air_vy := 0.0
 
 
 func _ready() -> void:
@@ -213,29 +219,38 @@ func _build_tree() -> AnimationNodeBlendTree:
 		bt.connect_node("crouch", 0, base)
 		bt.connect_node("crouch", 1, "c_move")
 
-		# прыжок: ноги из клипа Jump, место в клипе — по времени в воздухе; руки продолжают шаг.
-		# Таз не берём: клип наклоняет его вперёд, а с ним корпус и камеру от первого лица
-		bt.add_node("jump_clip", _clip("gmod/Jump"))
-		bt.add_node("jump_seek", AnimationNodeTimeSeek.new())
-		bt.connect_node("jump_seek", 0, "jump_clip")
-		bt.add_node("jump_ts", AnimationNodeTimeScale.new())
-		bt.connect_node("jump_ts", 0, "jump_seek")
+		# прыжок: поза по вертикальной скорости (толчок → верхняя точка → ноги к земле).
+		# Ноги — полностью (air), таз, корпус и руки — с весом air_body (air_body_blend):
+		# тело движется, но камера от первого лица не ныряет за наклоном таза
+		for n: String in ["air_pose", "air_pose_body"]:
+			var bs := AnimationNodeBlendSpace1D.new()
+			bs.min_space = -1.0
+			bs.max_space = 1.0
+			bs.add_blend_point(_clip("gmod/JumpFall"), -1.0)
+			bs.add_blend_point(_clip("gmod/JumpApex"), 0.0)
+			bs.add_blend_point(_clip("gmod/JumpRise"), 1.0)
+			bt.add_node(n, bs)
 		var air := AnimationNodeBlend2.new()
 		_filter(air, LEGS)
 		bt.add_node("air", air)
 		bt.connect_node("air", 0, "crouch")
-		bt.connect_node("air", 1, "jump_ts")
+		bt.connect_node("air", 1, "air_pose")
+		var air_body := AnimationNodeBlend2.new()
+		_filter(air_body, BODY)
+		bt.add_node("air_body", air_body)
+		bt.connect_node("air_body", 0, "air")
+		bt.connect_node("air_body", 1, "air_pose_body")
 
-		# приземление — ноги пружинят
+		# приземление с места — ноги пружинят (JumpLand начинается с позы JumpFall)
 		var land := AnimationNodeOneShot.new()
-		land.fadein_time = 0.05
+		land.fadein_time = 0.03
 		land.fadeout_time = 0.2
 		_filter(land, LOWER)
 		bt.add_node("land", land)
 		bt.add_node("land_clip", _clip("gmod/JumpLand"))
 		bt.add_node("land_ts", AnimationNodeTimeScale.new())
 		bt.connect_node("land_ts", 0, "land_clip")
-		bt.connect_node("land", 0, "air")
+		bt.connect_node("land", 0, "air_body")
 		bt.connect_node("land", 1, "land_ts")
 		base = "land"
 
@@ -329,9 +344,9 @@ func attack_length(clip := "Attack") -> float:
 
 ## speed — со знаком (назад < 0); sprint 0..1; state: 0 обычный, 1 замах (ПКМ), 2 удар;
 ## move_angle — куда идёт герой относительно взгляда, рад (0 — вперёд, > 0 — влево);
-## crouch — сидит на корточках; air — в воздухе (прыжок, падение).
+## crouch — сидит на корточках; air — в воздухе (прыжок, падение); vy — вертикальная скорость, м/с.
 func update_anim(delta: float, speed: float, _sprint: float, state: int, yaw_rate: float, accel: float,
-		move_angle := 0.0, crouch := false, air := false) -> void:
+		move_angle := 0.0, crouch := false, air := false, vy := 0.0) -> void:
 	if _tree == null or _dead:
 		return
 	_time += delta
@@ -353,7 +368,7 @@ func update_anim(delta: float, speed: float, _sprint: float, state: int, yaw_rat
 	_tree.set("parameters/move/blend_amount", _move)
 	_tree.set("parameters/aim/blend_amount", _aim)
 	if _has_gmod:
-		_update_crouch_air(delta, speed, crouch, air)
+		_update_crouch_air(delta, speed, crouch, air, vy)
 
 	# фаза шагов для покачивания камеры: π на шаг (|sin| — одна волна на шаг)
 	var cycles := lerpf(walk_rate / _walk_len, jog_rate / _jog_len, _run) * _move
@@ -383,7 +398,7 @@ func update_anim(delta: float, speed: float, _sprint: float, state: int, yaw_rat
 	_tree.advance(delta)
 
 
-func _update_crouch_air(delta: float, speed: float, crouch: bool, air: bool) -> void:
+func _update_crouch_air(delta: float, speed: float, crouch: bool, air: bool, vy: float) -> void:
 	var spd := absf(speed)
 	_crouch = lerpf(_crouch, 1.0 if crouch and not air else 0.0, 1.0 - exp(-crouch_response * delta))
 	_crouch_move = lerpf(_crouch_move, smoothstep(0.1, 0.4, spd), 1.0 - exp(-blend_response * delta))
@@ -393,12 +408,10 @@ func _update_crouch_air(delta: float, speed: float, crouch: bool, air: bool) -> 
 	_tree.set("parameters/c_move/blend_amount", _crouch_move)
 	_tree.set("parameters/crouch/blend_amount", _crouch)
 
-	# на бегу (moving → 1) переходы быстрее и без клипа приземления: иначе ноги на полсекунды
-	# замирают в стойке, а герой едет дальше
+	# на бегу (moving → 1) без клипа приземления: иначе ноги на полсекунды замирают в стойке,
+	# а герой едет дальше — цикл бега продолжается с касания опорной стопы
 	var moving := smoothstep(move_from, land_max_speed * 1.5, spd)
 	if air:
-		if _air_time == 0.0:   # отрыв: с разбега клип Jump — сразу с поджатых ног
-			_jump_start = jump_run_start * moving
 		_air_time += delta
 	elif _air_time > 0.0:
 		if _air_time > 0.25:     # короткий отрыв (ступенька) не считаем прыжком
@@ -406,15 +419,19 @@ func _update_crouch_air(delta: float, speed: float, crouch: bool, air: bool) -> 
 				_tree.set("parameters/land_ts/scale", land_rate)
 				_tree.set("parameters/land/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE)
 			else:
-				# цикл шага и бега — в фазу, где опорная стопа как раз ставится на землю
 				var gm := locomotion == Locomotion.GMOD
 				_tree.set("parameters/walk_seek/seek_request", gmod_walk_land_phase if gm else 0.0)
 				_tree.set("parameters/jog_seek/seek_request", gmod_run_land_phase if gm else 0.0)
 		_air_time = 0.0
-	# ноги поджимаются, если в воздухе дольше мгновения (сход со ступеньки — не прыжок)
-	var target := 1.0 if air and _air_time > 0.08 else 0.0
-	var cur: float = _tree.get("parameters/air/blend_amount")
-	var rate := (lerpf(10.0, 16.0, moving) if target > cur else lerpf(6.0, 14.0, moving))
-	_tree.set("parameters/air/blend_amount", move_toward(cur, target, delta * rate))
-	_tree.set("parameters/jump_ts/scale", 0.0)
-	_tree.set("parameters/jump_seek/seek_request", minf(_jump_start + _air_time * jump_anim_rate, jump_hold))
+	# поза прыжка — только если в воздухе дольше мгновения (сход со ступеньки — не прыжок);
+	# вход и выход плавные (smoothstep), без рывка в начале и в конце
+	var target := 1.0 if air and _air_time > 0.06 else 0.0
+	var rate := air_in if target > _air else lerpf(air_out_stand, air_out_run, moving)
+	_air = move_toward(_air, target, delta * rate)
+	var w := smoothstep(0.0, 1.0, _air)
+	_tree.set("parameters/air/blend_amount", w)
+	_tree.set("parameters/air_body/blend_amount", w * air_body)
+	# вертикальная скорость → поза: +1 толчок, 0 верхняя точка, −1 ноги к земле
+	_air_vy = lerpf(_air_vy, clampf(vy / jump_speed, -1.0, 1.0) if air else -1.0, 1.0 - exp(-14.0 * delta))
+	_tree.set("parameters/air_pose/blend_position", _air_vy)
+	_tree.set("parameters/air_pose_body/blend_position", _air_vy)

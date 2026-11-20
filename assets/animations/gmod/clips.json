@@ -379,6 +379,26 @@
   "slide_cm": 0.0,
   "src": "GMod/jump_c.smd"
  },
+ "JumpApex": {
+  "foot_speed": 0.0,
+  "frames": 2,
+  "len_s": 0.033,
+  "lift": 0.0,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/jump_c.smd"
+ },
+ "JumpFall": {
+  "foot_speed": 0.265,
+  "frames": 2,
+  "len_s": 0.033,
+  "lift": 0.0,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/jump_land.smd"
+ },
  "JumpLand": {
   "foot_speed": 0.033,
   "frames": 21,
@@ -388,6 +408,16 @@
   "root_speed": 0.0,
   "slide_cm": 0.0,
   "src": "GMod/jump_land.smd"
+ },
+ "JumpRise": {
+  "foot_speed": 1.334,
+  "frames": 2,
+  "len_s": 0.033,
+  "lift": 0.0,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/jump_c.smd"
  },
  "Laugh": {
   "foot_speed": 0.015,

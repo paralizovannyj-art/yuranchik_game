@@ -79,6 +79,11 @@ CLIPS = [
     ("CrouchWalkRight", "base_m/crouch_walkE.smd", 30, {"loop", "inplace", "ground"}),
     ("Jump", "GMod/jump_c.smd", 30, {"inplace"}),
     ("JumpLand", "GMod/jump_land.smd", 60, {"inplace", "ground"}, (0, 40)),
+    # позы прыжка для смешивания по вертикальной скорости (yurchik_anim.gd): jump_c целиком — аддитивный
+    # слой GMod (кадры 7–10 — ноги назад, с 24-го — поза на колене), поэтому берём только отдельные кадры
+    ("JumpRise", "GMod/jump_c.smd", 30, {"inplace"}, (2, 3)),     # толчок: нога выпрямлена, руки назад
+    ("JumpApex", "GMod/jump_c.smd", 30, {"inplace"}, (13, 14)),   # верхняя точка: колени подтянуты вперёд
+    ("JumpFall", "GMod/jump_land.smd", 60, {"inplace"}, (0, 1)),  # перед касанием: ноги под телом (= начало JumpLand)
     # ---- стойки
     ("IdleAngry", "base_m/Idle_Angry.smd", 25, {"loop", "ground"}),
     ("IdleScared", "base_m/Idle_scared.smd", 25, {"loop", "ground"}),
