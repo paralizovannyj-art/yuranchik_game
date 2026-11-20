@@ -203,6 +203,20 @@ func _make_first_person_body() -> void:
 		mi.add_sibling(view)
 
 
+## Вид со стороны (полигон, клавиша V): показать тело целиком, с головой и тенью, вместо копии
+## для первого лица. false — вернуть как было.
+func set_body_visible(on: bool) -> void:
+	for m: Node in model.find_children("*", "MeshInstance3D", true, false):
+		var mi := m as MeshInstance3D
+		if mi.skin == null:
+			continue
+		if mi.name.ends_with("FirstPerson"):
+			mi.visible = not on
+		else:
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if on \
+					else GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+
+
 func is_dead() -> bool:
 	return state == State.DEAD
 
@@ -378,7 +392,8 @@ func _physics_process(delta: float) -> void:
 	# поза: присед, подогнутые в прыжке ноги, «просел» при приземлении
 	var tuck := 0.3 if _jumped and not is_on_floor() else 0.0
 	model.set("crouch", maxf(_crouch, maxf(tuck, _land * 0.45)))
-	model.update_anim(delta, signed, _sprint_blend, _anim_state(), _yaw_rate, accel, move_angle)
+	model.update_anim(delta, signed, _sprint_blend, _anim_state(), _yaw_rate, accel, move_angle,
+			crouching, not is_on_floor(), velocity.y)
 	_footsteps()
 	_update_camera(delta)
 

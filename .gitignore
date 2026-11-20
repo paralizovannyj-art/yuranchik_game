@@ -18,3 +18,6 @@ __pycache__/
 # Личные настройки: у каждого свои пути и разрешения, в git не нужны
 .claude/settings.local.json
 .mcp.json
+
+# Исходники анимаций GMod для tools/blender/retarget_gmod_yurchik.py (клонируются отдельно)
+/tools/blender/gmod-animations/

@@ -1,0 +1,722 @@
+{
+ "Agree": {
+  "foot_speed": 0.004,
+  "frames": 84,
+  "len_s": 2.767,
+  "lift": -0.001,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/gesture_agree.smd"
+ },
+ "Beckon": {
+  "foot_speed": 0.003,
+  "frames": 111,
+  "len_s": 3.667,
+  "lift": -0.001,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/gesture_comeon.smd"
+ },
+ "Bow": {
+  "foot_speed": 0.014,
+  "frames": 95,
+  "len_s": 3.133,
+  "lift": -0.001,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/gesture_bow.smd"
+ },
+ "Cheer": {
+  "foot_speed": 0.042,
+  "frames": 85,
+  "len_s": 2.8,
+  "lift": 0.014,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "base_m/Cheer1.smd"
+ },
+ "Cower": {
+  "foot_speed": 0.002,
+  "frames": 31,
+  "len_s": 1.0,
+  "lift": 0.01,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "base_m/Cower.smd"
+ },
+ "CrouchIdle": {
+  "foot_speed": 0.0,
+  "frames": 181,
+  "len_s": 6.0,
+  "lift": 0.035,
+  "loop": true,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "base_m/crouch_idle.smd"
+ },
+ "CrouchToStand": {
+  "foot_speed": 0.065,
+  "frames": 22,
+  "len_s": 0.7,
+  "lift": 0.02,
+  "loop": false,
+  "root_speed": 0.001,
+  "slide_cm": 0.0,
+  "src": "transitions/Crouch_to_stand.smd"
+ },
+ "CrouchWalk": {
+  "foot_speed": 1.375,
+  "frames": 31,
+  "len_s": 1.0,
+  "lift": 0.008,
+  "loop": true,
+  "root_speed": 1.431,
+  "slide_cm": 1.1,
+  "src": "base_m/crouch_walkN.smd"
+ },
+ "CrouchWalkBack": {
+  "foot_speed": 1.41,
+  "frames": 31,
+  "len_s": 1.0,
+  "lift": 0.004,
+  "loop": true,
+  "root_speed": 1.431,
+  "slide_cm": 2.9,
+  "src": "base_m/crouch_walkS.smd"
+ },
+ "CrouchWalkLeft": {
+  "foot_speed": 1.39,
+  "frames": 31,
+  "len_s": 1.0,
+  "lift": 0.011,
+  "loop": true,
+  "root_speed": 1.431,
+  "slide_cm": 4.6,
+  "src": "base_m/crouch_walkW.smd"
+ },
+ "CrouchWalkRight": {
+  "foot_speed": 1.397,
+  "frames": 31,
+  "len_s": 1.0,
+  "lift": 0.017,
+  "loop": true,
+  "root_speed": 1.431,
+  "slide_cm": 4.1,
+  "src": "base_m/crouch_walkE.smd"
+ },
+ "Dance": {
+  "foot_speed": 0.058,
+  "frames": 273,
+  "len_s": 9.067,
+  "lift": 0.01,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/taunt_dance.smd"
+ },
+ "Death1": {
+  "foot_speed": 0.044,
+  "frames": 49,
+  "len_s": 1.6,
+  "lift": 0.0,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/death_01.smd"
+ },
+ "Death2": {
+  "foot_speed": 0.0,
+  "frames": 31,
+  "len_s": 1.0,
+  "lift": 0.0,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/death_02.smd"
+ },
+ "Death3": {
+  "foot_speed": 0.0,
+  "frames": 26,
+  "len_s": 0.833,
+  "lift": 0.0,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/death_03.smd"
+ },
+ "Death4": {
+  "foot_speed": 0.0,
+  "frames": 89,
+  "len_s": 2.933,
+  "lift": 0.0,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/death_04.smd"
+ },
+ "Disagree": {
+  "foot_speed": 0.005,
+  "frames": 81,
+  "len_s": 2.667,
+  "lift": 0.0,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/gesture_disagree.smd"
+ },
+ "FistBlock": {
+  "foot_speed": 0.0,
+  "frames": 2,
+  "len_s": 0.033,
+  "lift": 0.004,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/FightPose_block.smd"
+ },
+ "FistsAttack": {
+  "foot_speed": 0.017,
+  "frames": 61,
+  "len_s": 2.0,
+  "lift": -0.008,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/fists_attack_01.smd"
+ },
+ "FistsIdle": {
+  "foot_speed": 0.019,
+  "frames": 128,
+  "len_s": 4.233,
+  "lift": -0.009,
+  "loop": true,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/fists_idle.smd"
+ },
+ "Flinch1": {
+  "foot_speed": 0.142,
+  "frames": 9,
+  "len_s": 0.267,
+  "lift": 0.0,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "flinching/flinch_01.smd"
+ },
+ "Flinch2": {
+  "foot_speed": 0.026,
+  "frames": 11,
+  "len_s": 0.333,
+  "lift": -0.0,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "flinching/flinch_02.smd"
+ },
+ "FlinchBack": {
+  "foot_speed": 0.111,
+  "frames": 16,
+  "len_s": 0.5,
+  "lift": 0.001,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "flinching/back_01.smd"
+ },
+ "FlinchHead": {
+  "foot_speed": 0.016,
+  "frames": 16,
+  "len_s": 0.5,
+  "lift": -0.0,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "flinching/head_01.smd"
+ },
+ "FlinchHead2": {
+  "foot_speed": 0.012,
+  "frames": 16,
+  "len_s": 0.5,
+  "lift": -0.0,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "flinching/head_02.smd"
+ },
+ "FlinchShoulderL": {
+  "foot_speed": 0.01,
+  "frames": 19,
+  "len_s": 0.6,
+  "lift": -0.0,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "flinching/shoulder_left.smd"
+ },
+ "FlinchShoulderR": {
+  "foot_speed": 0.019,
+  "frames": 19,
+  "len_s": 0.6,
+  "lift": 0.0,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "flinching/shoulder_right.smd"
+ },
+ "FlinchStomach": {
+  "foot_speed": 0.082,
+  "frames": 19,
+  "len_s": 0.6,
+  "lift": 0.001,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "flinching/stomach_01.smd"
+ },
+ "FlinchStomach2": {
+  "foot_speed": 0.059,
+  "frames": 19,
+  "len_s": 0.6,
+  "lift": 0.001,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "flinching/stomach_02.smd"
+ },
+ "GrenadeThrow": {
+  "foot_speed": 0.615,
+  "frames": 53,
+  "len_s": 1.733,
+  "lift": 0.154,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/grenThrow.smd"
+ },
+ "Idle": {
+  "foot_speed": 0.001,
+  "frames": 280,
+  "len_s": 9.3,
+  "lift": 0.001,
+  "loop": true,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "base_m/Idle02.smd"
+ },
+ "IdleAngry": {
+  "foot_speed": 0.0,
+  "frames": 73,
+  "len_s": 2.4,
+  "lift": 0.006,
+  "loop": true,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "base_m/Idle_Angry.smd"
+ },
+ "IdleScared": {
+  "foot_speed": 0.002,
+  "frames": 97,
+  "len_s": 3.2,
+  "lift": 0.007,
+  "loop": true,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "base_m/Idle_scared.smd"
+ },
+ "IdleSubtle": {
+  "foot_speed": 0.0,
+  "frames": 151,
+  "len_s": 5.0,
+  "lift": 0.0,
+  "loop": true,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "base_m/Idle_subtle.smd"
+ },
+ "ItemDrop": {
+  "foot_speed": 0.177,
+  "frames": 46,
+  "len_s": 1.5,
+  "lift": 0.148,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/grenDrop.smd"
+ },
+ "ItemGive": {
+  "foot_speed": 0.154,
+  "frames": 53,
+  "len_s": 1.733,
+  "lift": 0.133,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/Heal.smd"
+ },
+ "ItemPlace": {
+  "foot_speed": 0.26,
+  "frames": 48,
+  "len_s": 1.567,
+  "lift": 0.159,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/grenPlace.smd"
+ },
+ "Jump": {
+  "foot_speed": 1.334,
+  "frames": 56,
+  "len_s": 1.833,
+  "lift": 0.0,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/jump_c.smd"
+ },
+ "JumpApex": {
+  "foot_speed": 0.0,
+  "frames": 2,
+  "len_s": 0.033,
+  "lift": 0.0,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "поза строится в скрипте (JUMP_POSES)"
+ },
+ "JumpFall": {
+  "foot_speed": 0.0,
+  "frames": 2,
+  "len_s": 0.033,
+  "lift": 0.0,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "поза строится в скрипте (JUMP_POSES)"
+ },
+ "JumpLand": {
+  "foot_speed": 0.033,
+  "frames": 21,
+  "len_s": 0.667,
+  "lift": -0.001,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/jump_land.smd"
+ },
+ "JumpRise": {
+  "foot_speed": 0.0,
+  "frames": 2,
+  "len_s": 0.033,
+  "lift": 0.0,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "поза строится в скрипте (JUMP_POSES)"
+ },
+ "Laugh": {
+  "foot_speed": 0.015,
+  "frames": 198,
+  "len_s": 6.567,
+  "lift": 0.006,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/taunt_laugh.smd"
+ },
+ "Melee2Attack": {
+  "foot_speed": 0.462,
+  "frames": 22,
+  "len_s": 0.7,
+  "lift": 0.016,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/melee2_attack_01.smd"
+ },
+ "MeleeHit1": {
+  "foot_speed": 0.009,
+  "frames": 16,
+  "len_s": 0.5,
+  "lift": -0.001,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/meleeweapon_hit1.smd"
+ },
+ "MeleeHit2": {
+  "foot_speed": 0.018,
+  "frames": 15,
+  "len_s": 0.467,
+  "lift": -0.001,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/meleeweapon_hit2.smd"
+ },
+ "MeleeHit3": {
+  "foot_speed": 0.011,
+  "frames": 16,
+  "len_s": 0.5,
+  "lift": -0.002,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/meleeweapon_hit3.smd"
+ },
+ "Muscle": {
+  "foot_speed": 0.024,
+  "frames": 387,
+  "len_s": 12.867,
+  "lift": -0.042,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/taunt_muscle.smd"
+ },
+ "Persistence": {
+  "foot_speed": 0.016,
+  "frames": 101,
+  "len_s": 3.333,
+  "lift": -0.001,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/taunt_persistence.smd"
+ },
+ "PunchA": {
+  "foot_speed": 0.005,
+  "frames": 26,
+  "len_s": 0.833,
+  "lift": 0.003,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/FightPose_PunchA.smd"
+ },
+ "PunchB": {
+  "foot_speed": 0.008,
+  "frames": 26,
+  "len_s": 0.833,
+  "lift": 0.002,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/FightPose_PunchB.smd"
+ },
+ "Robot": {
+  "foot_speed": 0.019,
+  "frames": 344,
+  "len_s": 11.433,
+  "lift": -0.008,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/taunt_robot.smd"
+ },
+ "Run": {
+  "foot_speed": 4.675,
+  "frames": 19,
+  "len_s": 0.6,
+  "lift": -0.028,
+  "loop": true,
+  "root_speed": 5.004,
+  "slide_cm": 1.1,
+  "src": "base_m/runN.smd"
+ },
+ "RunBack": {
+  "foot_speed": 3.932,
+  "frames": 19,
+  "len_s": 0.6,
+  "lift": 0.002,
+  "loop": true,
+  "root_speed": 4.051,
+  "slide_cm": 6.1,
+  "src": "base_m/runS.smd"
+ },
+ "RunLeft": {
+  "foot_speed": 3.48,
+  "frames": 19,
+  "len_s": 0.6,
+  "lift": -0.003,
+  "loop": true,
+  "root_speed": 3.575,
+  "slide_cm": 9.5,
+  "src": "base_m/runW.smd"
+ },
+ "RunPanicked": {
+  "foot_speed": 5.331,
+  "frames": 21,
+  "len_s": 0.667,
+  "lift": -0.045,
+  "loop": true,
+  "root_speed": 5.321,
+  "slide_cm": 4.2,
+  "src": "base_m/Run_panicked.smd"
+ },
+ "RunRight": {
+  "foot_speed": 3.405,
+  "frames": 19,
+  "len_s": 0.6,
+  "lift": -0.01,
+  "loop": true,
+  "root_speed": 3.575,
+  "slide_cm": 6.0,
+  "src": "base_m/runE.smd"
+ },
+ "Salute": {
+  "foot_speed": 0.008,
+  "frames": 101,
+  "len_s": 3.333,
+  "lift": -0.001,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/gesture_salute.smd"
+ },
+ "Shove": {
+  "foot_speed": 1.071,
+  "frames": 29,
+  "len_s": 0.933,
+  "lift": 0.163,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/MeleeAttack01.smd"
+ },
+ "SignalForward": {
+  "foot_speed": 0.008,
+  "frames": 39,
+  "len_s": 1.267,
+  "lift": 0.034,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/signal_forward.smd"
+ },
+ "SignalGroup": {
+  "foot_speed": 0.005,
+  "frames": 46,
+  "len_s": 1.5,
+  "lift": 0.035,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/signal_group.smd"
+ },
+ "SignalHalt": {
+  "foot_speed": 0.009,
+  "frames": 59,
+  "len_s": 1.933,
+  "lift": 0.034,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/signal_halt.smd"
+ },
+ "Sit": {
+  "foot_speed": 0.0,
+  "frames": 2,
+  "len_s": 0.033,
+  "lift": 0.0,
+  "loop": true,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/sit_generic.smd"
+ },
+ "SitZen": {
+  "foot_speed": 0.0,
+  "frames": 6,
+  "len_s": 0.167,
+  "lift": 0.0,
+  "loop": true,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/sit_zen.smd"
+ },
+ "StandToCrouch": {
+  "foot_speed": 0.078,
+  "frames": 22,
+  "len_s": 0.7,
+  "lift": 0.02,
+  "loop": false,
+  "root_speed": 0.002,
+  "slide_cm": 0.0,
+  "src": "transitions/Stand_to_crouch.smd"
+ },
+ "Swim": {
+  "foot_speed": 0.0,
+  "frames": 37,
+  "len_s": 1.2,
+  "lift": 0.0,
+  "loop": true,
+  "root_speed": 3.976,
+  "slide_cm": 0.0,
+  "src": "GMod/swim_n.smd"
+ },
+ "SwimIdle": {
+  "foot_speed": 0.0,
+  "frames": 91,
+  "len_s": 3.0,
+  "lift": 0.0,
+  "loop": true,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/swim_c.smd"
+ },
+ "Walk": {
+  "foot_speed": 1.834,
+  "frames": 31,
+  "len_s": 1.0,
+  "lift": 0.004,
+  "loop": true,
+  "root_speed": 1.908,
+  "slide_cm": 0.5,
+  "src": "base_m/WalkN.smd"
+ },
+ "WalkBack": {
+  "foot_speed": 1.483,
+  "frames": 29,
+  "len_s": 0.933,
+  "lift": -0.001,
+  "loop": true,
+  "root_speed": 1.532,
+  "slide_cm": 3.0,
+  "src": "base_m/WalkS.smd"
+ },
+ "WalkLeft": {
+  "foot_speed": 1.201,
+  "frames": 27,
+  "len_s": 0.867,
+  "lift": 0.003,
+  "loop": true,
+  "root_speed": 1.237,
+  "slide_cm": 3.1,
+  "src": "base_m/WalkW.smd"
+ },
+ "WalkRight": {
+  "foot_speed": 1.203,
+  "frames": 27,
+  "len_s": 0.867,
+  "lift": 0.006,
+  "loop": true,
+  "root_speed": 1.238,
+  "slide_cm": 3.3,
+  "src": "base_m/WalkE.smd"
+ },
+ "Wave": {
+  "foot_speed": 0.003,
+  "frames": 104,
+  "len_s": 3.433,
+  "lift": -0.001,
+  "loop": false,
+  "root_speed": 0.0,
+  "slide_cm": 0.0,
+  "src": "GMod/gesture_wave.smd"
+ }
+}

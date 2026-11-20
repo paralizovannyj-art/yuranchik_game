@@ -19,7 +19,20 @@ const HELP := [
 	"5 — вылечиться        6 — все предметы в сумку",
 	"7 — бессмертие        0 — перезапуск полигона",
 	"E у витрины — следующая анимация     ` — отладка",
+	"V — вид со стороны (сзади / сбоку / спереди)   F7 — анимации GMod / свои",
 ]
+
+## Виды со стороны по клавише V: смещение камеры в осях героя (+X — его правый бок, +Z — за спиной).
+## Камера поворачивается вместе с мышью и смотрит на грудь героя.
+const VIEWS := [
+	["", Vector3.ZERO],
+	["сзади", Vector3(0.6, 1.7, 2.6)],
+	["сбоку", Vector3(2.6, 1.3, 0.0)],
+	["спереди", Vector3(0.3, 1.4, -2.8)],
+]
+
+var _view := 0
+var _view_cam: Camera3D
 
 
 func _start() -> void:
@@ -30,7 +43,7 @@ func _start() -> void:
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(root)
-	_help = HUD.mk_label(root, "", 10, HUD.C_TEXT, Rect2(10, 8, 420, 110))
+	_help = HUD.mk_label(root, "", 10, HUD.C_TEXT, Rect2(10, 8, 460, 130))
 	_refresh_help()
 	Game.set_objective("Полигон: тестируй что хочешь")
 
@@ -70,10 +83,44 @@ func _unhandled_input(event: InputEvent) -> void:
 			Game.goto_level.call_deferred(scene_file_path)
 		KEY_H:
 			_help.visible = not _help.visible
+		KEY_V:
+			_cycle_view()
 		_:
 			return
 	_refresh_help()
 	get_viewport().set_input_as_handled()
+
+
+func _cycle_view() -> void:
+	var p := get_tree().get_first_node_in_group("player") as Player
+	if p == null:
+		return
+	_view = (_view + 1) % VIEWS.size()
+	if _view_cam == null:
+		_view_cam = Camera3D.new()
+		_view_cam.name = "ViewCam"
+		_view_cam.fov = 60.0
+		add_child(_view_cam)
+	var outside := _view != 0
+	p.set_body_visible(outside)
+	if outside:
+		_view_cam.make_current()
+		Game.say("Вид: %s" % VIEWS[_view][0])
+	else:
+		p.camera.make_current()
+		Game.say("Вид: от первого лица")
+
+
+func _process(_delta: float) -> void:
+	if _view == 0 or _view_cam == null:
+		return
+	var p := get_tree().get_first_node_in_group("player") as Player
+	if p == null:
+		return
+	var yaw := Basis(Vector3.UP, p.cam_yaw)
+	var target := p.global_position + Vector3.UP * 1.0
+	_view_cam.global_position = p.global_position + yaw * (VIEWS[_view][1] as Vector3)
+	_view_cam.look_at(target)
 
 
 ## Враг появляется у одной из точек арены по очереди. Позиция ставится до добавления в сцену,
