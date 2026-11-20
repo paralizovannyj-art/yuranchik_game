@@ -289,6 +289,9 @@ TEXTURES = {
     "eb_platform_edge": "wall", "eb_white": "metal", "eb_booth": "metal", "eb_cabinet": "metal",
     "eb_tank": "metal", "eb_gondola": "metal", "eb_container": "metal", "eb_coach": "sign",
     "eb_lattice": "metal", "eb_station": "wall", "eb_sign_station": "sign",
+    "eb_blue_paint": "metal", "eb_green_paint": "metal", "eb_concrete_pole": "wall", "eb_sheet": "metal",
+    "eb_field": "snow", "eb_road": "floor", "eb_ice": "snow", "eb_grass": "decal", "eb_tree": "decal",
+    "eb_poplar": "decal", "eb_house": "facade", "eb_corrugated": "metal", "eb_girder": "wall", "eb_pier": "wall",
 }
 
 # у этих текстур есть «пара»-свечение: его надо размыть так же, чтобы окна совпали
@@ -298,6 +301,7 @@ EMISSION_OF = {
     "ind_window_emission": "ind_window", "kiosk_emission": "kiosk", "shopfront_emission": "shopfront",
     "underpass_sign_emission": "underpass_sign", "pod_window_emission": "pod_window", "tv_emission": "tv",
     "details_emission": "details", "eb_coach_emission": "eb_coach",
+    "eb_house_emission": "eb_house",
 }
 
 

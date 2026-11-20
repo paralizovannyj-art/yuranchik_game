@@ -5,27 +5,12 @@
   "base": [
    -1.62,
    7.52,
-   50.0
+   -90.0
   ],
   "head": [
-   -0.57,
-   12.2,
-   50.0
-  ],
-  "energy": null
- },
- {
-  "kind": "bridge",
-  "color": "green",
-  "base": [
-   1.62,
-   7.52,
-   35.0
-  ],
-  "head": [
-   0.57,
-   12.2,
-   35.0
+   -0.22,
+   11.24,
+   -90.0
   ],
   "energy": null
  },
@@ -35,27 +20,12 @@
   "base": [
    -1.62,
    7.52,
-   16.0
+   -78.0
   ],
   "head": [
-   -0.57,
-   12.2,
-   16.0
-  ],
-  "energy": null
- },
- {
-  "kind": "bridge",
-  "color": "green",
-  "base": [
-   1.62,
-   7.52,
-   3.0
-  ],
-  "head": [
-   0.57,
-   12.2,
-   3.0
+   -0.22,
+   11.24,
+   -78.0
   ],
   "energy": null
  },
@@ -65,27 +35,12 @@
   "base": [
    -1.62,
    7.52,
-   -10.0
+   -66.0
   ],
   "head": [
-   -0.57,
-   12.2,
-   -10.0
-  ],
-  "energy": null
- },
- {
-  "kind": "bridge",
-  "color": "green",
-  "base": [
-   1.62,
-   7.52,
-   -22.0
-  ],
-  "head": [
-   0.57,
-   12.2,
-   -22.0
+   -0.22,
+   11.24,
+   -66.0
   ],
   "energy": null
  },
@@ -95,12 +50,207 @@
   "base": [
    -1.62,
    7.52,
-   -32.0
+   -54.0
   ],
   "head": [
-   -0.57,
-   12.2,
-   -32.0
+   -0.22,
+   11.24,
+   -54.0
+  ],
+  "energy": null
+ },
+ {
+  "kind": "bridge",
+  "color": "green",
+  "base": [
+   -1.62,
+   7.52,
+   -42.0
+  ],
+  "head": [
+   -0.22,
+   11.24,
+   -42.0
+  ],
+  "energy": null
+ },
+ {
+  "kind": "bridge",
+  "color": "green",
+  "base": [
+   -1.62,
+   7.52,
+   -30.0
+  ],
+  "head": [
+   -0.22,
+   11.24,
+   -30.0
+  ],
+  "energy": null
+ },
+ {
+  "kind": "bridge",
+  "color": "green",
+  "base": [
+   -1.62,
+   7.52,
+   -18.0
+  ],
+  "head": [
+   -0.22,
+   11.24,
+   -18.0
+  ],
+  "energy": null
+ },
+ {
+  "kind": "bridge",
+  "color": "green",
+  "base": [
+   -1.62,
+   7.52,
+   -6.0
+  ],
+  "head": [
+   -0.22,
+   11.24,
+   -6.0
+  ],
+  "energy": null
+ },
+ {
+  "kind": "bridge",
+  "color": "green",
+  "base": [
+   -1.62,
+   7.52,
+   6.0
+  ],
+  "head": [
+   -0.22,
+   11.24,
+   6.0
+  ],
+  "energy": null
+ },
+ {
+  "kind": "bridge",
+  "color": "green",
+  "base": [
+   -1.62,
+   7.52,
+   18.0
+  ],
+  "head": [
+   -0.22,
+   11.24,
+   18.0
+  ],
+  "energy": null
+ },
+ {
+  "kind": "bridge",
+  "color": "green",
+  "base": [
+   -1.62,
+   7.52,
+   30.0
+  ],
+  "head": [
+   -0.22,
+   11.24,
+   30.0
+  ],
+  "energy": null
+ },
+ {
+  "kind": "bridge",
+  "color": "green",
+  "base": [
+   -1.62,
+   7.52,
+   42.0
+  ],
+  "head": [
+   -0.22,
+   11.24,
+   42.0
+  ],
+  "energy": null
+ },
+ {
+  "kind": "bridge",
+  "color": "green",
+  "base": [
+   -1.62,
+   7.52,
+   54.0
+  ],
+  "head": [
+   -0.22,
+   11.24,
+   54.0
+  ],
+  "energy": null
+ },
+ {
+  "kind": "bridge",
+  "color": "orange",
+  "base": [
+   -1.62,
+   7.52,
+   66.0
+  ],
+  "head": [
+   -0.22,
+   11.24,
+   66.0
+  ],
+  "energy": null
+ },
+ {
+  "kind": "bridge",
+  "color": "green",
+  "base": [
+   -7.45,
+   6.274,
+   -92.28
+  ],
+  "head": [
+   -7.45,
+   9.994,
+   -93.68
+  ],
+  "energy": null
+ },
+ {
+  "kind": "bridge",
+  "color": "green",
+  "base": [
+   -27.05,
+   3.922,
+   -92.28
+  ],
+  "head": [
+   -27.05,
+   7.642,
+   -93.68
+  ],
+  "energy": null
+ },
+ {
+  "kind": "bridge",
+  "color": "green",
+  "base": [
+   -46.95,
+   1.402,
+   -92.28
+  ],
+  "head": [
+   -46.95,
+   5.122,
+   -93.68
   ],
   "energy": null
  },
@@ -108,44 +258,44 @@
   "kind": "mast",
   "color": "orange",
   "base": [
-   -30.0,
+   -8.0,
    0,
-   41.5
+   -49.0
   ],
   "head": [
-   -30.0,
-   18.0,
-   41.5
+   -8.0,
+   19.4,
+   -50.5
   ],
-  "energy": 90.0
+  "energy": null
  },
  {
   "kind": "mast",
+  "color": "white",
+  "base": [
+   60.0,
+   0,
+   -92.5
+  ],
+  "head": [
+   60.0,
+   19.4,
+   -91.0
+  ],
+  "energy": null
+ },
+ {
+  "kind": "platform",
   "color": "orange",
   "base": [
-   46.0,
-   0,
-   -10.0
+   -100.0,
+   1.1,
+   16.0
   ],
   "head": [
-   46.0,
-   18.0,
-   -10.0
-  ],
-  "energy": 90.0
- },
- {
-  "kind": "platform",
-  "color": "green",
-  "base": [
-   -60.0,
-   1.0,
-   26.0
-  ],
-  "head": [
-   -60.0,
-   7.1,
-   24.88
+   -100.0,
+   12.6,
+   16.0
   ],
   "energy": null
  },
@@ -153,14 +303,29 @@
   "kind": "platform",
   "color": "green",
   "base": [
-   -42.0,
-   1.0,
-   26.0
+   -96.0,
+   1.1,
+   -16.1
   ],
   "head": [
-   -42.0,
-   7.1,
-   24.88
+   -96.0,
+   12.6,
+   -16.1
+  ],
+  "energy": null
+ },
+ {
+  "kind": "platform",
+  "color": "orange",
+  "base": [
+   -74.0,
+   1.1,
+   16.0
+  ],
+  "head": [
+   -74.0,
+   12.6,
+   16.0
   ],
   "energy": null
  },
@@ -168,14 +333,29 @@
   "kind": "platform",
   "color": "green",
   "base": [
-   -24.0,
-   1.0,
-   26.0
+   -70.0,
+   1.1,
+   -16.1
   ],
   "head": [
-   -24.0,
-   7.1,
-   24.88
+   -70.0,
+   12.6,
+   -16.1
+  ],
+  "energy": null
+ },
+ {
+  "kind": "platform",
+  "color": "orange",
+  "base": [
+   -48.0,
+   1.1,
+   16.0
+  ],
+  "head": [
+   -48.0,
+   12.6,
+   16.0
   ],
   "energy": null
  },
@@ -183,14 +363,29 @@
   "kind": "platform",
   "color": "green",
   "base": [
-   24.0,
-   1.0,
-   26.0
+   -44.0,
+   1.1,
+   -16.1
   ],
   "head": [
-   24.0,
-   7.1,
-   24.88
+   -44.0,
+   12.6,
+   -16.1
+  ],
+  "energy": null
+ },
+ {
+  "kind": "platform",
+  "color": "orange",
+  "base": [
+   -22.0,
+   1.1,
+   16.0
+  ],
+  "head": [
+   -22.0,
+   12.6,
+   16.0
   ],
   "energy": null
  },
@@ -198,14 +393,89 @@
   "kind": "platform",
   "color": "green",
   "base": [
-   42.0,
-   1.0,
-   26.0
+   -18.0,
+   1.1,
+   -16.1
   ],
   "head": [
-   42.0,
-   7.1,
-   24.88
+   -18.0,
+   12.6,
+   -16.1
+  ],
+  "energy": null
+ },
+ {
+  "kind": "platform",
+  "color": "orange",
+  "base": [
+   4.0,
+   1.1,
+   16.0
+  ],
+  "head": [
+   4.0,
+   12.6,
+   16.0
+  ],
+  "energy": null
+ },
+ {
+  "kind": "platform",
+  "color": "green",
+  "base": [
+   8.0,
+   1.1,
+   -16.1
+  ],
+  "head": [
+   8.0,
+   12.6,
+   -16.1
+  ],
+  "energy": null
+ },
+ {
+  "kind": "platform",
+  "color": "orange",
+  "base": [
+   30.0,
+   1.1,
+   16.0
+  ],
+  "head": [
+   30.0,
+   12.6,
+   16.0
+  ],
+  "energy": null
+ },
+ {
+  "kind": "platform",
+  "color": "green",
+  "base": [
+   34.0,
+   1.1,
+   -16.1
+  ],
+  "head": [
+   34.0,
+   12.6,
+   -16.1
+  ],
+  "energy": null
+ },
+ {
+  "kind": "platform",
+  "color": "orange",
+  "base": [
+   56.0,
+   1.1,
+   16.0
+  ],
+  "head": [
+   56.0,
+   12.6,
+   16.0
   ],
   "energy": null
  },
@@ -214,58 +484,13 @@
   "color": "green",
   "base": [
    60.0,
-   1.0,
-   26.0
+   1.1,
+   -16.1
   ],
   "head": [
    60.0,
-   7.1,
-   24.88
-  ],
-  "energy": null
- },
- {
-  "kind": "platform",
-  "color": "green",
-  "base": [
-   -58.0,
-   1.0,
-   -3.0
-  ],
-  "head": [
-   -58.0,
-   7.1,
-   -4.12
-  ],
-  "energy": null
- },
- {
-  "kind": "platform",
-  "color": "green",
-  "base": [
-   -40.0,
-   1.0,
-   -3.0
-  ],
-  "head": [
-   -40.0,
-   7.1,
-   -4.12
-  ],
-  "energy": null
- },
- {
-  "kind": "platform",
-  "color": "green",
-  "base": [
-   -22.0,
-   1.0,
-   -3.0
-  ],
-  "head": [
-   -22.0,
-   7.1,
-   -4.12
+   12.6,
+   -16.1
   ],
   "energy": null
  },
@@ -273,14 +498,29 @@
   "kind": "platform",
   "color": "orange",
   "base": [
-   20.0,
-   1.0,
-   -3.0
+   82.0,
+   1.1,
+   16.0
   ],
   "head": [
-   20.0,
-   7.1,
-   -4.12
+   82.0,
+   12.6,
+   16.0
+  ],
+  "energy": null
+ },
+ {
+  "kind": "platform",
+  "color": "green",
+  "base": [
+   86.0,
+   1.1,
+   -16.1
+  ],
+  "head": [
+   86.0,
+   12.6,
+   -16.1
   ],
   "energy": null
  },
@@ -288,29 +528,29 @@
   "kind": "platform",
   "color": "orange",
   "base": [
-   40.0,
-   1.0,
-   -3.0
+   106.0,
+   1.1,
+   16.0
   ],
   "head": [
-   40.0,
-   7.1,
-   -4.12
+   106.0,
+   12.6,
+   16.0
   ],
   "energy": null
  },
  {
   "kind": "platform",
-  "color": "orange",
+  "color": "green",
   "base": [
-   58.0,
-   1.0,
-   -3.0
+   110.0,
+   1.1,
+   -16.1
   ],
   "head": [
-   58.0,
-   7.1,
-   -4.12
+   110.0,
+   12.6,
+   -16.1
   ],
   "energy": null
  },
@@ -318,44 +558,89 @@
   "kind": "station",
   "color": "orange",
   "base": [
-   -17.0,
+   40.0,
    0,
-   -43.5
+   -30.0
   ],
   "head": [
-   -17.0,
-   3.1,
-   -43.5
-  ],
-  "energy": 6.0
- },
- {
-  "kind": "ground",
-  "color": "orange",
-  "base": [
-   4.0,
-   0,
-   74.0
-  ],
-  "head": [
-   2.5,
-   7.4,
-   74.0
+   40.0,
+   2.9,
+   -30.0
   ],
   "energy": null
  },
  {
-  "kind": "ground",
-  "color": "green",
+  "kind": "street",
+  "color": "orange",
   "base": [
-   -4.0,
+   -24.0,
    0,
-   -50.0
+   89.2
   ],
   "head": [
-   -2.5,
-   7.4,
-   -50.0
+   -24.0,
+   7.45,
+   90.8
+  ],
+  "energy": null
+ },
+ {
+  "kind": "street",
+  "color": "orange",
+  "base": [
+   20.0,
+   0,
+   89.2
+  ],
+  "head": [
+   20.0,
+   7.45,
+   90.8
+  ],
+  "energy": null
+ },
+ {
+  "kind": "street",
+  "color": "orange",
+  "base": [
+   64.0,
+   0,
+   89.2
+  ],
+  "head": [
+   64.0,
+   7.45,
+   90.8
+  ],
+  "energy": null
+ },
+ {
+  "kind": "village",
+  "color": "orange",
+  "base": [
+   -114.0,
+   0,
+   -236.0
+  ],
+  "head": [
+   -112.4,
+   8.05,
+   -236.0
+  ],
+  "energy": null
+ },
+ {
+  "kind": "village",
+  "color": "orange",
+  "base": [
+   -114.0,
+   0,
+   -340.0
+  ],
+  "head": [
+   -112.4,
+   8.05,
+   -340.0
   ],
   "energy": null
  }

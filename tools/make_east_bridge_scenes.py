@@ -1,7 +1,7 @@
 # Собирает сцену локации «Восточный ж/д мост» (YUR-7) из моделей Blender:
 #   scenes/east_bridge/eb_location.tscn — модели (assets/models/east_bridge/*.gltf), фон и фонари;
 #   фонари ставятся по assets/models/east_bridge/lights.json, который пишет tools/blender/build_east_bridge.py.
-# Ночная игровая сцена (scenes/levels/east_bridge.tscn) и дневная для катсцены (scenes/levels/east_bridge_day.tscn)
+# Ночная игровая сцена (scenes/levels/east_bridge.tscn) и дневная игровая (scenes/levels/east_bridge_day.tscn)
 # подключают её целиком — свет, туман и небо у них свои.
 # Ещё создаёт .import-файлы моделей (импорт через scripts/tools/ps2_import.gd), если их нет.
 #
@@ -13,19 +13,23 @@ import os
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 MODELS = "assets/models/east_bridge"
 PARTS = [("Ground", "eb_ground"), ("Bridge", "eb_bridge"), ("Catenary", "eb_catenary"),
-         ("Trains", "eb_trains"), ("Props", "eb_props")]
+         ("Trains", "eb_trains"), ("Props", "eb_props"), ("City", "eb_city"), ("Field", "eb_field")]
 
 GREEN = (0.45, 1.0, 0.42)          # ртутные лампы станции — как на ночных фото
+PALE_GREEN = (0.62, 0.95, 0.70)    # лампы моста: зеленовато-белые
 ORANGE = (1.0, 0.52, 0.18)         # натрий
+WHITE = (0.85, 0.9, 1.0)           # холодная прожекторная мачта в парке
+COLORS = {"green": GREEN, "orange": ORANGE, "white": WHITE}
 # по виду фонаря: (имя, яркость конуса, дальность, угол) — None = как в scenes/props/street_light.tscn
 KINDS = {
-    "bridge": ("BridgeLamp", 30.0, None, None),
-    "platform": ("PlatformLamp", 36.0, None, None),
-    "ground": ("YardLamp", 36.0, None, None),
+    "bridge": ("BridgeLamp", 12.0, None, None),
+    "platform": ("PlatformLamp", 60.0, 26.0, 70.0),
     "station": ("StationLamp", 6.0, 7.0, 70.0),
-    "mast": ("Floodlight", 260.0, 34.0, 75.0),
+    "mast": ("Floodlight", 260.0, 40.0, 75.0),
+    "street": ("StreetLamp", 36.0, None, None),
+    "village": ("VillageLamp", 24.0, None, None),
 }
-FLICKER = {("bridge", 3), ("platform", 4), ("platform", 9)}   # старые лампы мигают
+FLICKER = {("BridgeLamp", 4), ("PlatformLamp", 3), ("PlatformLamp", 8)}   # старые лампы мигают
 
 IMPORT = """[remap]
 
@@ -101,10 +105,10 @@ def main():
         off = (h[0] - b[0], h[1] - b[1], h[2] - b[2])
         out += ['[node name="%s" parent="Lights" instance=ExtResource("sl")]' % n,
                 'transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, %g, %g, %g)' % tuple(b),
-                'color = %s' % col(GREEN if L["color"] == "green" else ORANGE),
+                'color = %s' % col(PALE_GREEN if (L["kind"], L["color"]) == ("bridge", "green") else COLORS[L["color"]]),
                 'energy = %g' % energy,
                 'head_offset = Vector3(%g, %g, %g)' % off]
-        if (L["kind"], count[name]) in FLICKER:
+        if (name, count[name]) in FLICKER:
             out.append('flicker = true')
         out.append('')
         if rng:

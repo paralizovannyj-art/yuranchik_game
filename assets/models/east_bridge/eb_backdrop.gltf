@@ -82,149 +82,149 @@
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":600,
+			"count":280,
 			"max":[
-				308,
+				342,
 				48,
-				159
+				439
 			],
 			"min":[
-				-308,
+				-287,
 				0,
-				-146
+				150.5
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":600,
+			"count":280,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":600,
+			"count":280,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
 			"componentType":5126,
-			"count":600,
+			"count":280,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":4,
 			"componentType":5123,
-			"count":900,
+			"count":420,
 			"type":"SCALAR"
 		},
 		{
 			"bufferView":5,
 			"componentType":5126,
-			"count":136,
+			"count":248,
 			"max":[
-				342.0184020996094,
-				14.699999809265137,
-				40.87856674194336
+				255.6868438720703,
+				17.799999237060547,
+				255.51707458496094
 			],
 			"min":[
-				-342.0184020996094,
-				5.300000190734863,
-				-170.53335571289062
+				-545.3922729492188,
+				1.1210315227508545,
+				-679.9349975585938
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":6,
 			"componentType":5126,
-			"count":136,
+			"count":248,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":7,
 			"componentType":5126,
-			"count":136,
+			"count":248,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":8,
 			"componentType":5126,
-			"count":136,
+			"count":248,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":9,
 			"componentType":5123,
-			"count":204,
+			"count":372,
 			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":7200,
+			"byteLength":3360,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":7200,
-			"byteOffset":7200,
+			"byteLength":3360,
+			"byteOffset":3360,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":4800,
-			"byteOffset":14400,
+			"byteLength":2240,
+			"byteOffset":6720,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":4800,
-			"byteOffset":19200,
+			"byteLength":2240,
+			"byteOffset":8960,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":1800,
-			"byteOffset":24000,
+			"byteLength":840,
+			"byteOffset":11200,
 			"target":34963
 		},
 		{
 			"buffer":0,
-			"byteLength":1632,
-			"byteOffset":25800,
+			"byteLength":2976,
+			"byteOffset":12040,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":1632,
-			"byteOffset":27432,
+			"byteLength":2976,
+			"byteOffset":15016,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":1088,
-			"byteOffset":29064,
+			"byteLength":1984,
+			"byteOffset":17992,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":1088,
-			"byteOffset":30152,
+			"byteLength":1984,
+			"byteOffset":19976,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":408,
-			"byteOffset":31240,
+			"byteLength":744,
+			"byteOffset":21960,
 			"target":34963
 		}
 	],
 	"buffers":[
 		{
-			"byteLength":31648,
+			"byteLength":22704,
 			"uri":"eb_backdrop.bin"
 		}
 	]
