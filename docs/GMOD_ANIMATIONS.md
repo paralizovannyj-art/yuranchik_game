@@ -61,8 +61,8 @@ Godot переимпортирует GLB сам. Если редактор от�
 
 - Локомоция переключается параметром `locomotion` в инспекторе модели игрока
   (`scenes/characters/player.tscn` → Model) или клавишей **F7** прямо в игре:
-  - `PROCEDURAL` (по умолчанию) — прежние процедурные стойка, ходьба и бег;
-  - `GMOD` — `gmod/Idle`, `gmod/Walk`, `gmod/WalkBack`, `gmod/Run`.
+  - `GMOD` (по умолчанию) — `gmod/Idle`, `gmod/Walk`, `gmod/WalkBack`, `gmod/Run`;
+  - `PROCEDURAL` — прежние процедурные стойка, ходьба и бег.
 - **Присед** (держать C или Ctrl): `gmod/CrouchIdle`, `gmod/CrouchWalk`, `gmod/CrouchWalkBack`.
   Шаг замедляется до `crouch_speed`, бег отключается, шаги тише. Камера опускается вслед
   за костью головы. Капсула коллизии не уменьшается.

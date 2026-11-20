@@ -21,7 +21,7 @@ const GMOD_LOOPS := ["Idle", "Walk", "WalkBack", "WalkLeft", "WalkRight", "Run",
 const LEGS := ["ThighL", "ShinL", "FootL", "ThighR", "ShinR", "FootR"]
 const LOWER := ["Pelvis", "ThighL", "ShinL", "FootL", "ThighR", "ShinR", "FootR"]
 
-@export var locomotion := Locomotion.PROCEDURAL:  ## набор стойки/ходьбы/бега; F7 в игре переключает
+@export var locomotion := Locomotion.GMOD:  ## набор стойки/ходьбы/бега; F7 в игре переключает
 	set(v):
 		locomotion = v
 		if _tree:
