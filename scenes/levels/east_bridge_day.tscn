@@ -3,6 +3,8 @@
 [ext_resource type="Script" path="res://scripts/levels/east_bridge_day.gd" id="lvl"]
 [ext_resource type="PackedScene" path="res://scenes/east_bridge/eb_location.tscn" id="loc"]
 [ext_resource type="Shader" uid="uid://507jlrfn4qwu" path="res://shaders/ps2_post.gdshader" id="post"]
+[ext_resource type="PackedScene" uid="uid://l6yy2wslyolu" path="res://scenes/characters/player.tscn" id="player"]
+[ext_resource type="Script" uid="uid://c01wbk2jc6k0b" path="res://scripts/world/light_budget.gd" id="light_budget"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
 sky_top_color = Color(0.63, 0.65, 0.63, 1)
@@ -76,7 +78,8 @@ shader_parameter/vignette = 0.35
 
 [node name="EastBridgeDay" type="Node3D"]
 script = ExtResource("lvl")
-shot_time = 32.0
+bake_navigation = false
+flashlight_energy = 3.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("env")
@@ -122,12 +125,8 @@ haze_density = 0.003
 wall_color = Color(0.3, 0.31, 0.33, 1)
 aerial = 0.0
 
-[node name="Camera" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.996, -0.087, 0, 0.087, 0.996, 0, 9.1, 62)
-fov = 60.0
+[node name="Player" parent="." instance=ExtResource("player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 92)
 
-[node name="ShotFrom" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.996, -0.087, 0, 0.087, 0.996, 0, 9.1, 62)
-
-[node name="ShotTo" type="Marker3D" parent="."]
-transform = Transform3D(0.985, 0, 0.174, 0.015, 0.996, -0.086, -0.173, 0.087, 0.981, 0.3, 9.1, -70)
+[node name="LightBudget" type="Node" parent="."]
+script = ExtResource("light_budget")

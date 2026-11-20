@@ -120,31 +120,24 @@ func _night() -> void:
 
 func _day() -> void:
 	await _wait(40)
+	var p := level.get_node("Player") as CharacterBody3D
 	await _shot("d01_start")
-	# своя камера: основную двигает анимация проезда
-	var cam := Camera3D.new()
-	cam.fov = 60.0
-	level.add_child(cam)
-	cam.make_current()
-	cam.global_transform = (level.get_node("ShotTo") as Marker3D).global_transform
-	await _wait(5)
-	await _shot("d02_end")
-	cam.global_position = Vector3(-40, 20, -170)
-	cam.look_at(Vector3(0, 5, 0))
-	await _wait(5)
-	await _shot("d03_from_field")
-	cam.global_position = Vector3(12, 1.7, 95)
-	cam.look_at(Vector3(0, 7, 40))
-	await _wait(5)
-	await _shot("d04_from_street")
-	cam.global_position = Vector3(-50, 2, -200)
-	cam.look_at(Vector3(-110, 3, -300))
-	await _wait(5)
-	await _shot("d05_village")
-	cam.global_position = Vector3(-20, 2.8, 14.35)
-	cam.look_at(Vector3(10, 6, 5))
-	await _wait(5)
-	await _shot("d06_platform")
+	await _walk(p, "city_stairs_up", Vector3(0, 0.2, 92), 0, 1500)
+	await _shot("d02_after_city_stairs")
+	_place(p, Vector3(0, 7.6, 40), 0)
+	await _wait(10)
+	await _shot("d03_deck_to_field")
+	_place(p, Vector3(0, 7.6, 0), 90)
+	await _wait(10)
+	await _shot("d04_deck_sw")
+	_place(p, Vector3(-30, 1.2, 14.35), -70)
+	await _wait(10)
+	await _shot("d05_city_platform")
+	await _walk(p, "leg_down", Vector3(-0.3, 7.6, -94), 90, 2600)
+	await _shot("d06_after_leg")
+	_place(p, Vector3(-60, 0.3, -125), 0)
+	await _wait(10)
+	await _shot("d07_field_village")
 	quit()
 
 

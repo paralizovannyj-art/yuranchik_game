@@ -1,7 +1,7 @@
 # Собирает сцену локации «Восточный ж/д мост» (YUR-7) из моделей Blender:
 #   scenes/east_bridge/eb_location.tscn — модели (assets/models/east_bridge/*.gltf), фон и фонари;
 #   фонари ставятся по assets/models/east_bridge/lights.json, который пишет tools/blender/build_east_bridge.py.
-# Ночная игровая сцена (scenes/levels/east_bridge.tscn) и дневная для катсцены (scenes/levels/east_bridge_day.tscn)
+# Ночная игровая сцена (scenes/levels/east_bridge.tscn) и дневная игровая (scenes/levels/east_bridge_day.tscn)
 # подключают её целиком — свет, туман и небо у них свои.
 # Ещё создаёт .import-файлы моделей (импорт через scripts/tools/ps2_import.gd), если их нет.
 #
