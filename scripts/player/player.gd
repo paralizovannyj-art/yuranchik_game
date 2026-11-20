@@ -27,6 +27,8 @@ enum State { NORMAL, AIM, ATTACK, HURT, GRABBED, THROW, BUSY, DEAD }
 @export var run_ramp := 2.2            ## 1/с — как быстро шаг переходит в бег
 @export var deceleration := 7.0        ## м/с² — торможение в ударе, броске, анимациях
 @export var gravity := 18.0
+@export var jump_velocity := 5.2       ## м/с вверх — ~0.75 м прыжок, ~0.6 с в воздухе
+@export var crouch_speed := 1.1        ## шаг вприсядку (C / Ctrl)
 
 @export_group("Камера")
 @export var mouse_sensitivity := 0.0022
@@ -110,6 +112,7 @@ var _throw_id := ""
 var _thrown := false
 var _last_step := 0
 var _sprinting := false
+var crouching := false                 ## сидит на корточках (держит C / Ctrl)
 var _run := 0.0                        ## 0 — шаг, 1 — полный бег
 var armed := true                      ## молоток в руке (false — убран в сумку)
 var _hammer: Node3D
@@ -229,7 +232,11 @@ func _physics_process(delta: float) -> void:
 	cam_pitch = lerpf(cam_pitch, _pitch_target, ls)
 
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back") if control else Vector2.ZERO
-	_sprinting = control and not phone_up and Input.is_action_pressed("run") and input.y < -0.3 and state == State.NORMAL and not exhausted
+	var free := state == State.NORMAL or state == State.AIM
+	crouching = control and not phone_up and free and is_on_floor() and Input.is_action_pressed("crouch")
+	var jump := control and not phone_up and state == State.NORMAL and not crouching and is_on_floor() \
+			and Input.is_action_just_pressed("jump")
+	_sprinting = control and not phone_up and not crouching and Input.is_action_pressed("run") and input.y < -0.3 and state == State.NORMAL and not exhausted
 	_run = move_toward(_run, 1.0 if _sprinting else 0.0, delta * (run_ramp if _sprinting else run_ramp * 2.0))
 	var readied := control and armed and not phone_up and Input.is_action_pressed("ready_weapon")   # замах — только с молотком
 	var hv := Vector3(velocity.x, 0.0, velocity.z)
@@ -249,7 +256,7 @@ func _physics_process(delta: float) -> void:
 				_throw_buffer = 0.0
 				_start_throw()
 			if not phone_up:
-				hv = _move(hv, input, walk_speed, delta)
+				hv = _move(hv, input, crouch_speed if crouching else walk_speed, delta)
 		State.AIM:
 			hv = _move(hv, input, aim_walk_speed, delta)
 			if not readied:
@@ -320,6 +327,8 @@ func _physics_process(delta: float) -> void:
 		velocity.y -= gravity * delta
 	else:
 		velocity.y = -0.5
+	if jump:
+		velocity.y = jump_velocity
 	move_and_slide()
 	# если упёрлись в стену — скорость тоже гаснет
 	move_speed = minf(move_speed, Vector3(velocity.x, 0, velocity.z).length() + 0.9)
@@ -337,7 +346,8 @@ func _physics_process(delta: float) -> void:
 	_sprint_blend = _run
 	var local := global_basis.inverse() * planar
 	var move_angle := atan2(-local.x, -local.z) if planar.length() > 0.2 else 0.0
-	model.update_anim(delta, signed, _sprint_blend, _anim_state(), _yaw_rate, accel, move_angle)
+	model.update_anim(delta, signed, _sprint_blend, _anim_state(), _yaw_rate, accel, move_angle,
+			crouching, not is_on_floor())
 	_footsteps()
 	_update_camera(delta)
 
@@ -650,7 +660,7 @@ func _footsteps() -> void:
 	if not is_on_floor() or move_speed < 0.5:
 		return
 	Game.stats["steps"] = Game.stats.get("steps", 0) + 1
-	Game.sfx_rand(step_sound, step_variants, null, -11.0 if not _sprinting else -7.0)
+	Game.sfx_rand(step_sound, step_variants, null, -7.0 if _sprinting else (-16.0 if crouching else -11.0))
 	if _sprinting:
 		Game.emit_noise(global_position, 9.0)
 	elif move_speed > 1.3:

@@ -1,0 +1,12 @@
+Анимации игрока Garry's Mod, перенесённые на скелет Юрчика (yurchik_gmod.glb).
+
+Источник: https://github.com/robotboy655/gmod-animations
+  (копия https://code.google.com/p/gmod-animations)
+Авторы: Maxime Lebled, Facepunch Studios LTD / Valve Software.
+
+Лицензия контента — CC BY-ND 3.0, часть анимаций взята из Half-Life 2 / Source SDK
+(Source SDK EULA). Используются только в локальной сборке для своих, не для публикации и продажи.
+
+Собирает tools/blender/retarget_gmod_yurchik.py, описание — docs/GMOD_ANIMATIONS.md.
+clips.json — отчёт сборки: исходный файл, длина, скорость опорной стопы (foot_speed),
+проскальзывание (slide_cm) и подъём клипа к земле (lift) для каждого клипа.
