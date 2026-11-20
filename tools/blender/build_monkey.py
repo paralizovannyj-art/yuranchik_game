@@ -439,7 +439,16 @@ def paint(tag, refs, P, N, LUV):
     n = len(P); alpha = np.ones(n, np.float32)
     u, v = LUV[:, 0], LUV[:, 1]
     if tag == "head":
-        c = project(refs, P, N, side=1.0)
+        # вид сбоку — только для задней половины головы: спереди он отпечатывал на щеках
+        # второй профиль (бровь, нос, рот); лицо и щёки берём с вида спереди
+        sw = np.clip((P[:, 1] + 0.025) / 0.035, 0, 1)
+        c = project(refs, P, N, side=sw)
+        # бока передней половины: вид спереди там растягивается полосами — кладём ровный мех
+        # цвета боков головы (ворс и свет добавит fur_finish)
+        graze = np.clip((np.abs(N[:, 0]) - 0.35) / 0.35, 0, 1) * (1 - sw)
+        ref_side = (sw > 0.99) & (np.abs(N[:, 0]) > 0.6)
+        base = c[ref_side].mean(axis=0) if ref_side.any() else col((0.31, 0.27, 0.23))
+        c = mix(c, np.broadcast_to(base, c.shape), graze)
         fm = face_mask(P, N)
         fur = fur_finish(c, P, N)
         skin = c * col((1.06, 1.0, 0.97)) * (0.92 + 0.12 * vnoise(P[:, 0] * 700, P[:, 2] * 700, 3))[:, None]
