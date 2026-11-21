@@ -157,7 +157,6 @@ const BODY_LAYER := 1 << 19
 const HIDDEN_BONES := ["Head"]
 const DRAW_TIME := 0.35
 const ATTACK_CLIP := "Melee2Attack"      ## удар молотком (клип библиотеки GMod)
-const GRAB_CLIP := "Shove"               ## вырывается из захвата
 
 
 func _ready() -> void:
@@ -631,7 +630,7 @@ func _start_throw() -> void:
 	state = State.THROW
 	_timer = 0.8
 	_thrown = false
-	model.play_action("GrenadeThrow", true, 1.6)
+	model.play_action("Throw", true, 1.6)
 
 
 func _release_throw() -> void:
@@ -694,7 +693,7 @@ func grab_start(enemy: Enemy) -> bool:
 	state = State.GRABBED
 	_grabber = enemy
 	escape = 0.0
-	model.play_action(GRAB_CLIP)
+	model.play_action("Push")
 	Game.sfx("struggle", global_position + Vector3.UP, -2.0)
 	return true
 

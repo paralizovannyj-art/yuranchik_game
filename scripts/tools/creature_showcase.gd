@@ -12,7 +12,7 @@ extends Node3D
 @export var hold := 1.2                   ## пауза после разовой анимации (Death, Punch…), сек
 @export var loop_time := 3.5              ## сколько показывать зацикленную (Idle, Walk…), сек
 @export var pedestal := true
-## клипы отдельной библиотекой (у Юрчика анимации GMod лежат не в модели) — витрина сама создаст AnimationPlayer
+## дополнительные клипы отдельной библиотекой (у Юрчика анимации GMod лежат не в модели)
 @export var animation_library: AnimationLibrary
 
 var _anim: AnimationPlayer
@@ -43,12 +43,14 @@ func _ready() -> void:
 		var m := model.instantiate()
 		body.add_child(m)
 		_dress(m)
-		if animation_library:
-			var ap := AnimationPlayer.new()
-			m.add_child(ap)
-			ap.root_node = NodePath("..")
-			ap.add_animation_library("", animation_library)
 		var players := m.find_children("*", "AnimationPlayer", true, false)
+		if animation_library:
+			if players.is_empty():
+				var ap := AnimationPlayer.new()
+				m.add_child(ap)
+				ap.root_node = NodePath("..")
+				players.append(ap)
+			(players[0] as AnimationPlayer).add_animation_library("gmod", animation_library)
 		if players.size() > 0:
 			_anim = players[0]
 			for n: StringName in _anim.get_animation_list():

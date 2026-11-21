@@ -1,6 +1,7 @@
 ## Анимации Юрчика — анимации игрока Garry's Mod (assets/animations/gmod/yurchik_gmod.glb,
-## собирает tools/blender/retarget_gmod_yurchik.py). В самой модели yurchik.gltf клипов нет:
-## AnimationPlayer создаётся здесь, библиотека подключается без имени — клипы зовутся просто «Idle», «PunchA».
+## собирает tools/blender/retarget_gmod_yurchik.py). В самой модели yurchik.gltf — только три старых клипа
+## (Interact, Throw, Push, из Quaternius UAL). Здесь клипы модели и GMod собираются в одну библиотеку без имени —
+## они зовутся просто «Idle», «PunchA», «Throw».
 ## Любой клип библиотеки можно сыграть разово: play_action("Wave"), play_action("GrenadeThrow", true).
 ## Смешивание — AnimationTree, собирается здесь в коде:
 ##   стойка ↔ ходьба (вперёд/назад) ↔ бег → присед → прыжок → верх тела: стойка «готов к удару» (ПКМ) → удар (OneShot).
@@ -116,11 +117,26 @@ func _ready() -> void:
 	for c in get_children():
 		if c.has_node("Yurchik/Skeleton3D"):
 			root = c
-	_anim = AnimationPlayer.new()
-	_anim.name = "AnimationPlayer"
-	root.add_child(_anim)
-	_anim.root_node = NodePath("..")
-	_anim.add_animation_library("", lib)
+	# общая библиотека: клипы GMod + свои клипы модели (Interact, Throw, Push)
+	var all := AnimationLibrary.new()
+	for n: StringName in lib.get_animation_list():
+		all.add_animation(n, lib.get_animation(n))
+	var own := root.find_children("*", "AnimationPlayer", false, false)
+	if own.is_empty():
+		_anim = AnimationPlayer.new()
+		_anim.name = "AnimationPlayer"
+		root.add_child(_anim)
+		_anim.root_node = NodePath("..")
+	else:
+		_anim = own[0]
+		_anim.stop()
+		for ln: StringName in _anim.get_animation_library_list():
+			var ml := _anim.get_animation_library(ln)
+			for n: StringName in ml.get_animation_list():
+				if n != &"RESET" and not all.has_animation(n):
+					all.add_animation(n, ml.get_animation(n))
+			_anim.remove_animation_library(ln)
+	_anim.add_animation_library("", all)
 	_walk_len = _anim.get_animation("Walk").length
 	_jog_len = _anim.get_animation("Run").length
 
@@ -297,7 +313,7 @@ func _build_tree() -> AnimationNodeBlendTree:
 	return bt
 
 
-## Разовое действие: имя клипа библиотеки (FlinchStomach, FlinchHead, GrenadeThrow, ItemPlace, Wave, Laugh…);
+## Разовое действие: имя клипа (свои — Interact, Throw, Push; GMod — FlinchStomach, FlinchHead, Wave, Laugh…);
 ## upper — только верх тела (жесты с предметами в GMod играются только на верх).
 func play_action(clip: String, upper := false, rate := 1.0) -> void:
 	if _tree == null or _dead or not _anim.has_animation(clip):
