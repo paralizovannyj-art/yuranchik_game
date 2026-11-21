@@ -329,7 +329,7 @@ def blind_door(b, axis, c, n, a, bb, leaves, white, knobs=(), handles=()):
 
     tr = (M["trim"], RT("white"))
     for (s0, s1, fm) in leaves:
-        box(s0, s1, Z, Z + DH - 0.004, c - n * 0.08, c - n * 0.04, {key: fm, '+' + sk: tr, '-' + sk: tr, '-Z': tr})
+        box(s0, s1, Z + 0.012, Z + DH - 0.004, c - n * 0.08, c - n * 0.04, {key: fm, '+' + sk: tr, '-' + sk: tr, '-Z': tr})
     w = 0.07
     cas = {key: tr, '+Z': tr, '-Z': tr, '+' + sk: tr, '-' + sk: tr}
     box(a - w, a, Z, Z + DH + w, c, c + n * 0.012, cas)

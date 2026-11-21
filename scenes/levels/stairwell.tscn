@@ -177,7 +177,7 @@ environment = SubResource("env")
 [node name="Apartment" type="Node3D" parent="."]
 
 [node name="Shell" parent="Apartment" instance=ExtResource("ap_apartment_shell")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.21, 8.4, 0.05)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.212, 8.37, 0.052)
 
 [node name="Trim" parent="Apartment" instance=ExtResource("ap_apartment_trim")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.25, 8.4, -0.01)
