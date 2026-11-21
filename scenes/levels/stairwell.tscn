@@ -263,11 +263,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.325, 9.28, -2.91)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.333, 9.872, -2.1)
 
 [node name="Hyuga" parent="YurchikRoom" unique_id=1349220817 instance=ExtResource("hyuga")]
-transform = Transform3D(-0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, -0.70710677, -8.0, 8.85, -2.15)
+transform = Transform3D(0.5, 0, -0.8660254, 0, 1, 0, 0.8660254, 0, 0.5, -8.0, 8.85, -2.15)
 script = ExtResource("hyuga_sleep")
 
 [node name="HyugaShadow" type="Decal" parent="YurchikRoom" unique_id=1349220818]
-transform = Transform3D(-0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, -0.70710677, -8.0, 8.9, -2.15)
+transform = Transform3D(0.5, 0, -0.8660254, 0, 1, 0, 0.8660254, 0, 0.5, -8.0, 8.9, -2.15)
 size = Vector3(0.5, 0.2, 0.44)
 texture_albedo = SubResource("tex_hyuga_shadow")
 modulate = Color(0.35, 0.3, 0.28, 1)
