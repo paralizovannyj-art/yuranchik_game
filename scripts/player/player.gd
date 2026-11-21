@@ -58,6 +58,9 @@ enum State { NORMAL, AIM, ATTACK, HURT, GRABBED, THROW, BUSY, DEAD }
 @export var head_forward := 0.14       ## м — камера чуть впереди кости головы, чтобы плечи и спина оставались сзади
 @export var look_down_forward := 0.3   ## м — глядя вниз, камера выносится вперёд, чтобы видеть ноги, а не грудь
 @export var focus_size := 0.45         ## м — насколько можно промахнуться взглядом мимо предмета, чтобы он подсветился
+@export var cam_clip_margin := 0.03    ## м — запас сферы камеры сверх углов ближней плоскости (не видно сквозь стену)
+@export var cam_clip_return := 10.0    ## 1/с — как быстро камера возвращается на место, отойдя от стены
+@export var cam_body_push_max := 0.45  ## м — насколько тело может отступить вслед за прижатой к стене камерой
 
 @export_group("Выносливость")
 @export var max_stamina := 100.0
@@ -143,6 +146,12 @@ var _jump_v0 := 0.0                    ## скорость отрыва теку
 var _recover := 0.0                    ## с — отходит от жёсткого приземления
 var _shape: CapsuleShape3D
 var _stand_height := 1.8
+var _cam_clip := 1.0                   ## доля пути от опорной точки в капсуле до желаемой позиции камеры
+var _cam_query: PhysicsShapeQueryParameters3D
+var _cam_sphere: SphereShape3D
+var cam_anchor := Vector3.ZERO         ## опорная точка камеры внутри капсулы (для проверок)
+var _model_base := Vector3.ZERO        ## исходное положение модели (без отступа от стены)
+var cam_clip_enabled := true          ## отладка: false — камера как раньше, без упора в стены (снимки «до»)
 
 @onready var model: Node3D = $Model
 @onready var cam_pivot: Node3D = $CamPivot
@@ -153,6 +162,9 @@ var _stand_height := 1.8
 ## Слой отрисовки тела героя. Фонарик в голове не отбрасывает от него тень (shadow_caster_mask
 ## в player.tscn), иначе тень от собственных плеч и рук падала бы прямо перед глазами.
 const BODY_LAYER := 1 << 19
+## Во что упирается камера: мир (статика, двери, ящики). Враги (4), брошенные предметы (32),
+## триггеры Area3D и само тело — нет: иначе камера дёргалась бы при броске и в захвате.
+const CAM_CLIP_MASK := 1
 ## Кости, которые камера не должна видеть: иначе голова изнутри закрывает обзор.
 const HIDDEN_BONES := ["Head"]
 const DRAW_TIME := 0.35
@@ -170,6 +182,15 @@ func _ready() -> void:
 	_shape = collision.shape.duplicate() as CapsuleShape3D   # своя копия: высоту меняем при приседе
 	collision.shape = _shape
 	_stand_height = _shape.height
+	_model_base = model.position
+	_cam_sphere = SphereShape3D.new()
+	_cam_query = PhysicsShapeQueryParameters3D.new()
+	_cam_query.shape = _cam_sphere
+	_cam_query.collision_mask = CAM_CLIP_MASK
+	_cam_query.collide_with_areas = false
+	_refresh_cam_exclude()
+	get_tree().node_added.connect(_on_tree_node_changed)
+	get_tree().node_removed.connect(_on_tree_node_changed)
 	for v: Node in model.find_children("*", "VisualInstance3D", true, false):
 		(v as VisualInstance3D).layers = BODY_LAYER
 	_make_first_person_body()
@@ -860,16 +881,70 @@ func _update_camera(delta: float) -> void:
 	var ahead := 0.0
 	if _skel and _head_bone >= 0:
 		var head := _skel.global_transform * _skel.get_bone_global_pose(_head_bone).origin
-		ahead = (head - global_position).dot(Basis(Vector3.UP, cam_yaw) * Vector3.FORWARD)
+		# от начала модели, а не капсулы: модель сдвигается, когда камеру прижало к стене (см. ниже)
+		ahead = (head - model.global_position).dot(Basis(Vector3.UP, cam_yaw) * Vector3.FORWARD)
 	_head_lead = lerpf(_head_lead, ahead, 1.0 - exp(-12.0 * delta))
 	var down := clampf(-cam_pitch / 1.2, 0.0, 1.0)
 	var lean := Vector3(0.0, 0.0, -(_head_lead + maxf(head_forward, look_down_forward * down * down)))
-	cam_pivot.global_position = _cam_pos + Basis(Vector3.UP, cam_yaw) * (bob + lean)
 	cam_pivot.rotation = Vector3(cam_pitch, cam_yaw, _cam_roll)
 	camera.fov = lerpf(normal_fov + sprint_fov_add * _sprint_blend, aim_fov, t)
 
-	# тряска от ударов
+	# тряска от ударов — сдвиг в плоскости экрана, как h/v_offset, но входит в проверяемую позицию
 	_shake = move_toward(_shake, 0.0, delta * 2.6)
 	var s := _shake * _shake * 0.06
-	camera.h_offset = randf_range(-s, s)
-	camera.v_offset = randf_range(-s, s)
+	var shake_off := cam_pivot.global_basis * Vector3(randf_range(-s, s), randf_range(-s, s), 0.0)
+	camera.h_offset = 0.0
+	camera.v_offset = 0.0
+	var desired := _cam_pos + Basis(Vector3.UP, cam_yaw) * (bob + lean) + shake_off
+	var actual := _clip_camera(desired, delta)
+	cam_pivot.global_position = actual
+	# Камеру прижало к стене — тело отступает вместе с ней (по горизонтали): иначе наклонённый
+	# корпус (присед, бег) оказывается впереди камеры и она смотрит изнутри плеч и рук.
+	# Так тело стоит относительно камеры как без стены и само в стену не залезает.
+	var push := actual - desired
+	push.y = 0.0
+	push = push.limit_length(cam_body_push_max)
+	model.position = _model_base + global_basis.inverse() * push
+
+
+## Камера не проходит сквозь стены. Капсула в стену не заходит, а камера вынесена из неё
+## (наклон головы, взгляд вниз, покачивание, тряска). Поэтому каждый кадр сфера размером с углы
+## ближней плоскости ведётся от опорной точки внутри капсулы до желаемой позиции; если задела мир —
+## камера встаёт там, где сфера ещё свободна. Упор — сразу (иначе на кадр видно сквозь стену),
+## возврат на место — плавно.
+func _clip_camera(desired: Vector3, delta: float) -> Vector3:
+	var size := get_viewport().get_visible_rect().size
+	var aspect := size.x / maxf(size.y, 1.0)
+	var half_h := camera.near * tan(deg_to_rad(camera.fov) * 0.5)   # fov по вертикали (keep_height)
+	var r := half_h * sqrt(1.0 + aspect * aspect) + cam_clip_margin
+	_cam_sphere.radius = r
+	# опорная точка: ось капсулы, на высоте камеры, но так, чтобы сфера целиком была внутри капсулы
+	var cap_r := _shape.radius
+	var lo := global_position.y + minf(r + 0.02, cap_r)
+	var hi := global_position.y + _shape.height - minf(r + 0.02, cap_r)
+	cam_anchor = Vector3(global_position.x, clampf(desired.y, lo, maxf(lo, hi)), global_position.z)
+	_cam_query.transform = Transform3D(Basis.IDENTITY, cam_anchor)
+	_cam_query.motion = desired - cam_anchor
+	var free := 1.0
+	if cam_clip_enabled and _cam_query.motion.length_squared() > 1e-8:
+		var res := get_world_3d().direct_space_state.cast_motion(_cam_query)
+		if res.size() > 0:
+			free = res[0]
+	if free < _cam_clip:
+		_cam_clip = free
+	else:
+		_cam_clip = minf(lerpf(_cam_clip, free, 1.0 - exp(-cam_clip_return * delta)), free)
+	return cam_anchor + _cam_query.motion * _cam_clip
+
+
+## Что исключить из проверки камеры: само тело и всё, что висит на герое (то, что он держит или несёт).
+func _refresh_cam_exclude() -> void:
+	var rids: Array[RID] = [get_rid()]
+	for b: Node in find_children("*", "CollisionObject3D", true, false):
+		rids.append((b as CollisionObject3D).get_rid())
+	_cam_query.exclude = rids
+
+
+func _on_tree_node_changed(n: Node) -> void:
+	if n is CollisionObject3D and is_ancestor_of(n):
+		_refresh_cam_exclude.call_deferred()
