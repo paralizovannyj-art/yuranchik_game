@@ -73,7 +73,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_6:
 			var got := 0
 			for id: String in Game.ITEMS:
-				if id != "hammer" and Game.add_item(id):
+				if not Game.ITEMS[id].has("fixed") and Game.add_item(id):
 					got += 1
 			Game.say("В сумку положено предметов: %d (что не влезло — пропущено)." % got)
 		KEY_7:
