@@ -25,7 +25,8 @@
 #   blender -b tools/blender/yurchik_v3.blend --python tools/blender/retarget_gmod_yurchik.py
 #   (другой путь к исходникам:  ... --python tools/blender/retarget_gmod_yurchik.py -- <путь>)
 # yurchik_v3.blend не сохраняется — скрипт только читает скелет и пишет GLB.
-import bpy, os, sys, json, math
+import bpy, bmesh, os, sys, json, math
+import numpy as np
 from mathutils import Matrix, Vector, Quaternion, Euler
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(bpy.data.filepath), "..", ".."))
@@ -142,10 +143,15 @@ CLIPS = [
 
 
 # Сумка висит на правом боку, а у игрока GMod руки опущены вплотную к телу — правая проходила бы сквозь сумку.
-# В этих клипах вся правая рука (плечо, предплечье, кисть) отводится наружу на BAG_OUT градусов вокруг оси корпуса
-# «вперёд-назад»: мах вперёд-назад сохраняется, рука просто идёт снаружи сумки. Как bag_out в retarget_ual_yurchik.py.
+# В этих клипах правая рука отводится наружу вокруг оси корпуса «вперёд-назад» ровно настолько, чтобы касаться
+# сумки, но не заходить в неё: в каждом кадре подбирается наименьший угол, при котором рука и молоток (точки сетки
+# Yurchik3Mesh / Hammer3) остаются снаружи сумки с зазором BAG_GAP. Когда рука на махе впереди или позади сумки,
+# угол — ноль. Углы сглаживаются по соседним кадрам, чтобы рука не дёргалась. Мах вперёд-назад сохраняется.
 # Удары, жесты, плавание и прочие клипы не трогаем — там рука должна идти точно как в источнике.
-BAG_OUT = {"UpperArmR": 15.0, "ForearmR": 18.0, "HandR": 18.0}   # градусы: рука идёт вплотную к сумке
+BAG_GAP = 0.003           # зазор между рукой и сумкой, м
+BAG_MAX_DEG = 30.0        # больше не отводим, даже если молоток всё ещё задевает
+BAG_FOREARM_K = 1.2       # предплечье и кисть отводятся чуть сильнее плеча — локоть почти не оттопыривается
+BAG_CHAIN = ("UpperArmR", "ForearmR", "HandR")
 BAG_CLIPS = {"Idle", "Walk", "WalkBack", "WalkLeft", "WalkRight", "Run", "RunBack", "RunLeft", "RunRight",
              "CrouchIdle", "CrouchWalk", "CrouchWalkBack", "CrouchWalkLeft", "CrouchWalkRight", "Jump", "JumpLand",
              "IdleAngry", "IdleScared", "IdleSubtle", "RunPanicked", "StandToCrouch", "CrouchToStand"}
@@ -230,6 +236,122 @@ def resample(frames, src_fps, span):
     return out
 
 
+# ----------------------------------------------------------------------------- рука мимо сумки
+BAG_PTS = None   # {"bag": [(веса костей, точка)], "arm": [...]} — заполняет bag_setup()
+
+
+def bag_setup():
+    """Точки сумки и правой руки с молотком в rest-позе, с весами костей — для подбора угла по кадрам.
+    Сумка — точки куртки (Spine/Pelvis) снаружи бока на высоте сумки; рука — точки цепочки BAG_CHAIN и молоток."""
+    global BAG_PTS
+    body = bpy.data.objects["Yurchik3Mesh"]
+    ham = bpy.data.objects.get("Hammer3")
+    bpy.context.view_layer.update()
+    gname = {g.index: g.name for g in body.vertex_groups}
+    bag, arm = [], []
+    for v in body.data.vertices:
+        w = {gname[g.group]: g.weight for g in v.groups if g.weight > 0.001}
+        tot = sum(w.values()) or 1.0
+        w = {k: x / tot for k, x in w.items()}
+        p = body.matrix_world @ v.co
+        if sum(w.get(n, 0.0) for n in BAG_CHAIN) > 0.5:
+            arm.append((w, p))
+        elif w.get("Spine", 0.0) + w.get("Pelvis", 0.0) > 0.5 and p.x < -0.224 and 0.78 < p.z < 1.02:
+            bag.append((w, p))
+    if ham is not None:
+        for v in ham.data.vertices:
+            arm.append(({"HandR": 1.0}, ham.matrix_world @ v.co))
+    BAG_PTS = {"bag": bag, "arm": arm}
+    return len(bag), len(arm)
+
+
+def _skin_np(pts, sk):
+    """Линейный скиннинг точек [(веса, точка)] матрицами sk {кость: pose @ rest⁻¹} → массив (N, 3)."""
+    out = np.zeros((len(pts), 3))
+    for i, (w, p) in enumerate(pts):
+        q = Vector((0.0, 0.0, 0.0))
+        for n, x in w.items():
+            if n in sk:
+                q += (sk[n] @ p) * x
+        out[i] = q
+    return out
+
+
+def _hull_planes(P):
+    """Выпуклая оболочка точек: нормали наружу (K, 3) и смещения (K,)."""
+    bm = bmesh.new()
+    for p in P:
+        bm.verts.new(Vector(p))
+    bmesh.ops.convex_hull(bm, input=bm.verts[:])
+    bm.normal_update()
+    c = Vector(P.mean(0))
+    ns, ds = [], []
+    for f in bm.faces:
+        n = f.normal.copy()
+        if n.length < 0.5:
+            continue
+        p0 = f.verts[0].co
+        if n.dot(c - p0) > 0:
+            n = -n
+        ns.append(n[:]); ds.append(n.dot(p0))
+    bm.free()
+    return np.array(ns), np.array(ds)
+
+
+def bag_fit(poses, rest, loop):
+    """Для каждого кадра — наименьший угол отвода правой руки наружу, при котором рука и молоток снаружи сумки
+    с зазором BAG_GAP; углы сглаживаются по соседним кадрам и применяются к матрицам poses (на месте)."""
+    rinv = {n: m.inverted() for n, m in rest.items()}
+    spine_back = rest["Spine"].to_3x3().inverted() @ Vector((0, 1, 0))   # «назад» в осях кости Spine
+
+    def spread(mats, deg):
+        """Матрицы цепочки руки после отвода на deg (предплечье и кисть — на deg·BAG_FOREARM_K)."""
+        back = (mats["Spine"].to_3x3() @ spine_back).normalized()
+
+        def about(p, a):
+            return Matrix.Translation(p) @ Matrix.Rotation(math.radians(a), 4, back) @ Matrix.Translation(-p)
+        A = about(mats["UpperArmR"].translation, deg)
+        out = {"UpperArmR": A @ mats["UpperArmR"]}
+        B = about(A @ mats["ForearmR"].translation, deg * (BAG_FOREARM_K - 1.0)) @ A
+        out["ForearmR"] = B @ mats["ForearmR"]
+        out["HandR"] = B @ mats["HandR"]
+        return out
+
+    need = []
+    for mats in poses:
+        sk = {n: mats[n] @ rinv[n] for n in mats}
+        N, D = _hull_planes(_skin_np(BAG_PTS["bag"], sk))
+
+        def clearance(deg):
+            sk2 = dict(sk)
+            for n, m in spread(mats, deg).items():
+                sk2[n] = m @ rinv[n]
+            P = _skin_np(BAG_PTS["arm"], sk2)
+            return float((P @ N.T - D).max(1).min())   # < 0 — точка внутри сумки
+
+        if clearance(0.0) >= BAG_GAP:
+            need.append(0.0)
+        elif clearance(BAG_MAX_DEG) < BAG_GAP:
+            need.append(BAG_MAX_DEG)
+        else:
+            lo, hi = 0.0, BAG_MAX_DEG
+            for _ in range(10):
+                mid = (lo + hi) / 2
+                lo, hi = (mid, hi) if clearance(mid) < BAG_GAP else (lo, mid)
+            need.append(hi)
+    # сглаживание: максимум по ±2 кадрам, затем среднее по ±2 — нигде не меньше нужного угла
+    n = len(need)
+
+    def at(a, i):
+        return a[i % n] if loop else a[min(max(i, 0), n - 1)]
+    peak = [max(at(need, i + k) for k in range(-2, 3)) for i in range(n)]
+    ang = [sum(at(peak, i + k) for k in range(-2, 3)) / 5 for i in range(n)]
+    for mats, a in zip(poses, ang):
+        if a > 0:
+            mats.update(spread(mats, a))
+    return need, ang
+
+
 # ----------------------------------------------------------------------------- перенос
 def bake_clip(dst, order, name, frames, flags, q0, src_rest, hip_scale, ground_z):
     bones = dst.data.bones
@@ -243,7 +365,6 @@ def bake_clip(dst, order, name, frames, flags, q0, src_rest, hip_scale, ground_z
         drift = Vector((d.x, d.y, 0.0))
     root_speed = drift.length / ((n_fr - 1) / FPS) if n_fr > 1 else 0.0
 
-    spine_back = rest["Spine"].to_3x3().inverted() @ Vector((0, 1, 0))   # «назад» в осях кости Spine
     poses = []
     for i, fr in enumerate(frames):
         mats = {}
@@ -252,9 +373,6 @@ def bake_clip(dst, order, name, frames, flags, q0, src_rest, hip_scale, ground_z
             sw = fr[s]
             delta = sw.to_quaternion() @ src_rest[s].to_quaternion().inverted()
             rot = delta @ q0[n] @ rest[n].to_quaternion()
-            if n in BAG_OUT and name in BAG_CLIPS:   # правая рука — наружу, мимо сумки (вокруг оси корпуса «назад»)
-                back = (mats["Spine"].to_3x3() @ spine_back).normalized()
-                rot = Quaternion(back, math.radians(BAG_OUT[n])) @ rot
             b = bones[n]
             if b.parent is None:
                 off = (sw.translation - src_rest[s].translation) * INCH * hip_scale
@@ -269,6 +387,8 @@ def bake_clip(dst, order, name, frames, flags, q0, src_rest, hip_scale, ground_z
                 loc = (mats[b.parent.name] @ rel).translation
             mats[n] = Matrix.Translation(loc) @ rot.to_matrix().to_4x4()
         poses.append(mats)
+    if name in BAG_CLIPS and BAG_PTS:
+        bag_fit(poses, rest, "loop" in flags)
 
     def foot_point(m, f):  # самая низкая точка стопы — лодыжка или носок
         toe = m.translation + m.to_3x3() @ Vector((0, bones[f].length, 0))
@@ -409,6 +529,7 @@ def main():
     order = [b.name for b in dst.data.bones if b.name in MAP]  # родители раньше детей
     bones = dst.data.bones
     src_rest = load_smd(find_file("GMod/reference.smd"))[0]
+    bag_setup()                                               # точки сумки и руки — после сброса позы в rest
 
     def bdir(m):  # направление нашей кости (ось Y) в мире
         return (m.to_3x3() @ Vector((0, 1, 0))).normalized()
