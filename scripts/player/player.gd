@@ -854,14 +854,16 @@ func _update_camera(delta: float) -> void:
 	_cam_pos.y = lerpf(_cam_pos.y, goal.y, 1.0 - exp(-follow * delta))
 	var side := velocity.dot(global_basis.x)
 	_cam_roll = lerpf(_cam_roll, 0.6 if dead else -side * strafe_roll, 1.0 - exp(-(2.0 if dead else 8.0) * delta))
-	# камера держится впереди головы: на бегу анимация наклоняет корпус — камера уходит вместе с головой
-	var lead := head_forward
+	# камера держится впереди головы: на бегу и шагом анимация наклоняет корпус — камера уходит вместе с головой.
+	# Вынос при взгляде вниз тоже считается от головы, а не от ног: иначе на бегу голова уже впереди,
+	# вынос «съедается» и камера оказывается прямо над срезом шеи — виден воротник изнутри.
+	var ahead := 0.0
 	if _skel and _head_bone >= 0:
 		var head := _skel.global_transform * _skel.get_bone_global_pose(_head_bone).origin
-		lead += (head - global_position).dot(Basis(Vector3.UP, cam_yaw) * Vector3.FORWARD)
-	_head_lead = lerpf(_head_lead, lead, 1.0 - exp(-12.0 * delta))
+		ahead = (head - global_position).dot(Basis(Vector3.UP, cam_yaw) * Vector3.FORWARD)
+	_head_lead = lerpf(_head_lead, ahead, 1.0 - exp(-12.0 * delta))
 	var down := clampf(-cam_pitch / 1.2, 0.0, 1.0)
-	var lean := Vector3(0.0, 0.0, -maxf(_head_lead, look_down_forward * down * down))
+	var lean := Vector3(0.0, 0.0, -(_head_lead + maxf(head_forward, look_down_forward * down * down)))
 	cam_pivot.global_position = _cam_pos + Basis(Vector3.UP, cam_yaw) * (bob + lean)
 	cam_pivot.rotation = Vector3(cam_pitch, cam_yaw, _cam_roll)
 	camera.fov = lerpf(normal_fov + sprint_fov_add * _sprint_blend, aim_fov, t)
