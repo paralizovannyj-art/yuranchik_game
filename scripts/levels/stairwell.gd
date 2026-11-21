@@ -89,8 +89,8 @@ func _on_apartment(body: Node3D) -> void:
 func _start_in_room() -> void:
 	_ended = true
 	_set_warm()
-	var at := Vector3(-7.9, 8.45, -1.45)
-	var yaw := -0.45                              # лицом к столу с компом
+	var at := Vector3(-6.8, 8.45, 3.88)           # комната повёрнута на 90° (конец коридора, build_apartment.py)
+	var yaw := -0.45 + PI / 2                     # лицом к столу с компом
 	player.global_position = at
 	player.velocity = Vector3.ZERO
 	player.cam_yaw = yaw
