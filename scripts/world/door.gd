@@ -55,7 +55,7 @@ func _ready() -> void:
 
 func _on_interacted(player: Player) -> void:
 	if player:
-		player.busy(0.35, "Interact")
+		player.busy(0.35, "ItemPlace")
 	if is_open:
 		set_open(false)
 	else:

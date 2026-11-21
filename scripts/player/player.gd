@@ -156,6 +156,8 @@ const BODY_LAYER := 1 << 19
 ## Кости, которые камера не должна видеть: иначе голова изнутри закрывает обзор.
 const HIDDEN_BONES := ["Head"]
 const DRAW_TIME := 0.35
+const ATTACK_CLIP := "Melee2Attack"      ## удар молотком (клип библиотеки GMod)
+const GRAB_CLIP := "Shove"               ## вырывается из захвата
 
 
 func _ready() -> void:
@@ -401,9 +403,6 @@ func _physics_process(delta: float) -> void:
 	_sprint_blend = _run
 	var local := global_basis.inverse() * planar
 	var move_angle := atan2(-local.x, -local.z) if planar.length() > 0.2 else 0.0
-	# поза: присед, подогнутые в прыжке ноги, «просел» при приземлении
-	var tuck := 0.3 if _jumped and not is_on_floor() else 0.0
-	model.set("crouch", maxf(_crouch, maxf(tuck, _land * 0.45)))
 	model.set("jump_windup", _windup / _windup_len if _windup >= 0.0 else -1.0)
 	model.set("jump_v0", _jump_v0 if _jumped and not is_on_floor() else 0.0)
 	model.set("land_eta", _ground_eta())
@@ -550,9 +549,9 @@ func _start_attack() -> void:
 	_spend(punch_cost if _punch else (heavy_attack_cost if _attack_heavy else attack_cost))
 	state = State.ATTACK
 	_hit_done = false
-	var clip := "Attack"
+	var clip := ATTACK_CLIP
 	if _punch:                             # кулаком — по очереди: джеб, кросс, джеб…
-		clip = "Punch2" if _punch_alt else "Punch"
+		clip = "PunchB" if _punch_alt else "PunchA"
 		_punch_alt = not _punch_alt
 	model.attack_rate = 1.3 if _punch else (1.0 if _attack_heavy else 1.2)
 	if model.has_method("attack_length"):
@@ -632,7 +631,7 @@ func _start_throw() -> void:
 	state = State.THROW
 	_timer = 0.8
 	_thrown = false
-	model.play_action("Throw", true, 1.6)
+	model.play_action("GrenadeThrow", true, 1.6)
 
 
 func _release_throw() -> void:
@@ -672,7 +671,7 @@ func take_damage(amount: float, from: Vector3, heavy := false) -> void:
 	var away := global_position - from
 	away.y = 0.0
 	_knock = away.normalized() * (4.5 if heavy else 1.8)
-	model.play_action("HitHead" if heavy else "HitChest")
+	model.play_action("FlinchHead" if heavy else "FlinchStomach")
 
 
 ## Урон «по чуть-чуть», пока офник держит (без оглушения и неуязвимости).
@@ -695,7 +694,7 @@ func grab_start(enemy: Enemy) -> bool:
 	state = State.GRABBED
 	_grabber = enemy
 	escape = 0.0
-	model.play_action("Push")
+	model.play_action(GRAB_CLIP)
 	Game.sfx("struggle", global_position + Vector3.UP, -2.0)
 	return true
 

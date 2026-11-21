@@ -1,7 +1,9 @@
 # Анимации Garry's Mod на Юрчике
 
-Анимации игрока Garry's Mod (SMD, скелет ValveBiped) перенесены на скелет Юрчика v3
-и подключены к модели как AnimationLibrary `gmod`. Источник и авторы указаны в
+Анимации игрока Garry's Mod (SMD, скелет ValveBiped) перенесены на скелет Юрчика v3.
+Это единственные анимации Юрчика: в самой модели `assets/models/yurchik.gltf` клипов нет
+(прежние процедурные и Quaternius UAL удалены). `yurchik_anim.gd` создаёт AnimationPlayer
+и подключает библиотеку без имени, поэтому клипы зовутся просто `Idle`, `PunchA`, `Death3`. Источник и авторы указаны в
 `assets/animations/gmod/CREDITS.txt`. Анимации только для локальной сборки, не для публикации.
 
 ## Конвейер
@@ -10,7 +12,7 @@
 gmod-animations/*.smd  →  tools/blender/retarget_gmod_yurchik.py (Blender, без GUI)
                        →  assets/animations/gmod/yurchik_gmod.glb + clips.json
                        →  Godot: импорт как AnimationLibrary (yurchik_gmod.glb.import)
-                       →  scripts/player/yurchik_anim.gd: add_animation_library("gmod", …)
+                       →  scripts/player/yurchik_anim.gd: add_animation_library("", …)
 ```
 
 Повторить сборку (из корня проекта, Blender 5.2+):
@@ -59,16 +61,25 @@ Godot переимпортирует GLB сам. Если редактор от�
 
 ## В игре
 
-- Локомоция переключается параметром `locomotion` в инспекторе модели игрока
-  (`scenes/characters/player.tscn` → Model) или клавишей **F7** прямо в игре:
-  - `GMOD` (по умолчанию) — `gmod/Idle`, `gmod/Walk`, `gmod/WalkBack`, `gmod/Run`;
-  - `PROCEDURAL` — прежние процедурные стойка, ходьба и бег.
+- Стойка, ходьба и бег: `Idle`, `Walk`, `WalkBack`, `Run`.
+- Действия (`scripts/player/player.gd`, `yurchik_anim.gd`):
+
+  | Что | Клип |
+  |---|---|
+  | Удар молотком | `Melee2Attack` (`ATTACK_CLIP` в `player.gd`) |
+  | Удар кулаком (по очереди) | `PunchA`, `PunchB` |
+  | Стойка «готов к удару» (ПКМ), только верх | `FistsIdle` (`aim_pose`) |
+  | Получил удар / сильный удар | `FlinchStomach` / `FlinchHead` |
+  | Вырывается из захвата | `Shove` (`GRAB_CLIP` в `player.gd`) |
+  | Бросок, только верх | `GrenadeThrow` |
+  | Взаимодействие (двери, ключ, щиток), только верх | `ItemPlace` |
+  | Смерть | `Death3` (`death_clip`). У `Death1` и `Death4` ноги в конце висят в воздухе: в GMod дальше включается рэгдолл |
+
 - Механика приседа и прыжка (кнопки, капсула, выносливость, шум) — в `player.gd`.
-  Анимации берут оттуда состояния «сидит» и «в воздухе». Процедурная поза приседа
-  `YurchikLean` включается, только если библиотеки `gmod` нет.
-- **Присед** (держать Ctrl, C — переключатель): `gmod/CrouchIdle`, `gmod/CrouchWalk`,
-  `gmod/CrouchWalkBack`.
-- **Прыжок** (Space) — клип `gmod/Jump`. Он собран так же, как прыжок в самом GMod
+  Анимации берут оттуда состояния «сидит» и «в воздухе».
+- **Присед** (держать Ctrl, C — переключатель): `CrouchIdle`, `CrouchWalk`,
+  `CrouchWalkBack`.
+- **Прыжок** (Space) — клип `Jump`. Он собран так же, как прыжок в самом GMod
   (макрос `$MakeJump` в `macro_gestures.qci`): ноги и таз — из `jump_c`, верх тела — поза
   стойки (`base_m/Idle02`, кадр 0) по весам `UpperBodyBlend`, а сверху 60 % движения корпуса
   и рук из `jump_c` (слой `gmod_jump_delta`). Так руки не остаются в T-позе: в самом `jump_c`
@@ -78,23 +89,23 @@ Godot переимпортирует GLB сам. Если редактор от�
   Клип не играет сам по себе: кадр выбирается по фазе прыжка (`yurchik_anim.gd`):
   - замах на земле (`jump_windup_stand` 0.17 с с места, `jump_windup_run` 0.07 с на бегу,
     в `player.gd`): кадры 0 → `jump_takeoff_frame` — руки уходят назад, корпус наклоняется.
-    Ноги в это время приседают по началу `gmod/JumpLand`: в `jump_c` стопы не стоят на полу;
+    Ноги в это время приседают по началу `JumpLand`: в `jump_c` стопы не стоят на полу;
   - в воздухе по вертикальной скорости: отрыв → `jump_takeoff_frame`, верхняя точка →
     `jump_apex_frame` (группировка), обратно на уровне отрыва → `jump_fall_frame`,
     долгое падение → `jump_hold_frame`. Сход с края без прыжка — сразу поза падения;
   - за `reach_eta` секунды до касания (луч вниз из `player.gd`) ноги тянутся к земле
-    (кадр 0 клипа), и `gmod/JumpLand` начинается с той же позы.
+    (кадр 0 клипа), и `JumpLand` начинается с той же позы.
 
-  При касании с места играет `gmod/JumpLand`. На бегу цикл бега продолжается с кадра,
+  При касании с места играет `JumpLand`. На бегу цикл бега продолжается с кадра,
   где стопа ставится на землю. Жёсткое приземление гасит `land_brake` скорости, и
   `land_recover` секунды шаг тяжелее, а прыгнуть снова нельзя. При выносливости ниже
-  половины прыжок ниже (до `tired_jump` высоты). Работает в обоих наборах.
-- Разовые клипы: `model.play_action("gmod/Wave")` для всего тела,
-  `model.play_action("gmod/GrenadeThrow", true)` только для верха.
+  половины прыжок ниже (до `tired_jump` высоты).
+- Разовые клипы: `model.play_action("Wave")` для всего тела,
+  `model.play_action("GrenadeThrow", true)` только для верха.
   Жесты с предметами (`GrenadeThrow`, `ItemDrop`, `ItemPlace`, `ItemGive`, `Shove`)
   в GMod играются только на верх тела, ноги у них случайные. Их нужно вызывать с `upper = true`.
 
-Скорости клипов (`gmod_*_speed` в `yurchik_anim.gd`) взяты из `foot_speed` в `clips.json`.
+Скорости клипов (`*_speed` в группе «Клипы» `yurchik_anim.gd`) взяты из `foot_speed` в `clips.json`.
 После пересборки их нужно сверить.
 
 ## Что перенесено (69 клипов)

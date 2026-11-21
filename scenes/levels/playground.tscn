@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://scenes/characters/enemy.tscn" id="enemy"]
 [ext_resource type="PackedScene" path="res://scenes/characters/sergey.tscn" id="sergey"]
 [ext_resource type="PackedScene" path="res://assets/models/yurchik.gltf" id="m_yur"]
+[ext_resource type="AnimationLibrary" path="res://assets/animations/gmod/yurchik_gmod.glb" id="lib_yur"]
 [ext_resource type="PackedScene" path="res://assets/models/enemy.gltf" id="m_enemy"]
 [ext_resource type="PackedScene" path="res://assets/models/sergey.gltf" id="m_sergey"]
 [ext_resource type="PackedScene" path="res://assets/models/monkey.gltf" id="m_monkey"]
@@ -101,6 +102,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 0, 0)
 script = ExtResource("show")
 model = ExtResource("m_yur")
 title = "Юрчик"
+animation_library = ExtResource("lib_yur")
 
 [node name="OfnikA" type="Node3D" parent="Showcase"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0, 0)
