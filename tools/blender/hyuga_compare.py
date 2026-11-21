@@ -144,7 +144,7 @@ def main():
         sc.frame_set(0)
         bpy.context.view_layer.update()
         cd.ortho_scale = 0.50
-        d = Vector((1.0, 1.0, 1.1)).normalized()           # со стороны морды и лап, сверху-сбоку, как на листе
+        d = Vector((1.0, 0.3, 0.75)).normalized()          # сбоку со стороны лап и морды, сверху, как на листе
         cam.location = Vector((0, 0, 0.09)) + d * 2.0
         cam.rotation_euler = (-d).to_track_quat('-Z', 'Y').to_euler()
         sl = render(sc, cam, cd, tmp, (800, 560))
