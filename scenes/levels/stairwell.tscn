@@ -1,6 +1,9 @@
 [gd_scene format=3 uid="uid://rrqth1gst2c6"]
 
 [ext_resource type="Material" path="res://assets/environments/ps2_post_night.tres" id="post_night"]
+[ext_resource type="PackedScene" path="res://assets/models/apartment/apartment_shell.gltf" id="ap_apartment_shell"]
+[ext_resource type="PackedScene" path="res://assets/models/apartment/apartment_trim.gltf" id="ap_apartment_trim"]
+[ext_resource type="PackedScene" path="res://assets/models/apartment/runner.gltf" id="ap_runner"]
 [ext_resource type="PackedScene" uid="uid://b2v10hwbmdio1" path="res://assets/models/gaming_chair.gltf" id="14_x75pi"]
 [ext_resource type="Script" uid="uid://dxqi43eh4md3p" path="res://scripts/world/door.gd" id="door"]
 [ext_resource type="Script" uid="uid://bsrgiiid28yqq" path="res://scripts/world/flicker_light.gd" id="flicker"]
@@ -148,6 +151,17 @@ nav_cell = 0.125
 environment = SubResource("env")
 
 [node name="Stairwell" parent="." unique_id=1373150828 instance=ExtResource("model")]
+
+[node name="Apartment" type="Node3D" parent="."]
+
+[node name="Shell" parent="Apartment" instance=ExtResource("ap_apartment_shell")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.21, 8.4, 0.05)
+
+[node name="Trim" parent="Apartment" instance=ExtResource("ap_apartment_trim")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.25, 8.4, -0.01)
+
+[node name="Runner" parent="Apartment" instance=ExtResource("ap_runner")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.0, 8.406, -1.26)
 
 [node name="YurchikRoom" type="Node3D" parent="." unique_id=1792968832]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -5.35, 0, -4.02)
