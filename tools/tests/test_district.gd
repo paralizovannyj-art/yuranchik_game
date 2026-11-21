@@ -1,6 +1,6 @@
 extends SceneTree
-## Проверка района «Паскот» (docs/CITY_PLAN.md): 8 точек телепорта (стоит ли Юрчик на земле, FPS, скриншот)
-## и 18 маршрутов пешком — лестницы, пандусы, арки, переход, трубы, гаражи, недострой.
+## Проверка двора Юрчика (district.tscn — от района остался только двор): старт (стоит ли Юрчик на земле, FPS, скриншот)
+## и прогулки к четырём краям двора — невидимые стены YardBounds должны держать Юрчика внутри.
 ## Запуск из папки проекта (нужно окно, не --headless):
 ##   Godot.exe --path . --resolution 854x480 --script tools/tests/test_district.gd -- <папка для скриншотов и лога>
 ## Без папки пишет в user://district_test/. Код выхода 0 — всё прошло, 1 — есть сбои.
@@ -77,38 +77,31 @@ func _run() -> void:
 	lvl = current_scene
 	player = get_first_node_in_group("player")
 	await _wait(2.5)
-	var names := ["home", "prospect", "school", "south", "boiler", "garages", "wasteland", "west"]
-	for i in 8:
-		var m := lvl.get_node("Teleports/Tp%d" % (i + 1)) as Node3D
-		lvl.teleport(m.global_transform)
-		await _wait(2.0)
-		var p := player.global_position
-		_log("TP%d %-10s y=%.2f (метка %.2f) на земле=%s fps=%d" % [i + 1, names[i], p.y, m.global_position.y,
-			player.is_on_floor(), Engine.get_frames_per_second()])
-		if not player.is_on_floor():
-			fails += 1
-		await _shot("tp%d_%s" % [i + 1, names[i]])
+	var m := lvl.get_node("Teleports/Tp1") as Node3D
+	lvl.teleport(m.global_transform)
+	await _wait(2.0)
+	var p := player.global_position
+	_log("TP1 home y=%.2f (метка %.2f) на земле=%s fps=%d" % [p.y, m.global_position.y,
+		player.is_on_floor(), Engine.get_frames_per_second()])
+	if not player.is_on_floor():
+		fails += 1
+	await _shot("tp1_home")
 
-	await _walk("wide stairs down", Vector3(-35, 3, -19), PI, 12.0, func(p): return absf(p.y) < 0.3 and p.z > -10)
-	await _walk("wide stairs up", Vector3(-35, 0, -7), 0.0, 15.0, func(p): return absf(p.y - 3) < 0.3)
-	await _walk("prospect stairs up", Vector3(14, 3, -70), 0.0, 15.0, func(p): return absf(p.y - 6) < 0.3)
-	await _walk("prospect road ramp", Vector3(23, 3, -66), 0.0, 21.0, func(p): return absf(p.y - 6) < 0.3)
-	await _walk("south road ramp", Vector3(23, 3, -19), PI, 19.5, func(p): return absf(p.y) < 0.3 and p.z > -5)
-	await _walk("tunnel through", Vector3(-55, 3, -68), 0.0, 60.0, func(p): return absf(p.y - 6) < 0.3 and p.z < -107)
-	await _walk("home west arch", Vector3(-25, 3, -48), PI / 2, 21.0, func(p): return p.x < -43)
-	await _walk("south yard arch", Vector3(-18, 0, -8), PI, 16.5, func(p): return p.z > 7)
-	await _walk("pipe crossing", Vector3(15, 0, 32), PI, 15.0, func(p): return p.z > 44)
-	await _walk("onto garage roof", Vector3(-30, 0, 45), PI, 4.5, func(p): return p.z > 47 and absf(p.y) < 0.3)
-	await _walk("garage stairs", Vector3(-60.5, 0, 45), PI, 12.0, func(p): return absf(p.y + 2.5) < 0.3)
-	await _walk("garage road ramps", Vector3(23, 0, 40), PI, 67.5, func(p): return absf(p.y + 7.5) < 0.3)
-	await _walk("nedostroy floor 1", Vector3(-71.5, 0, 42.5), 0.0, 6.9, func(p): return p.y > 2.5)
-	await _walk("pit ramp out", Vector3(-81, -5, 22), PI, 23.2, func(p): return absf(p.y) < 0.3 and p.z > 44)
-	await _walk("school tribune", Vector3(78, 3, -34.5), -PI / 2, 6.0, func(p): return p.x > 83 and p.y > 4)
-	await _walk("cross prospect", Vector3(15, 6, -81.5), 0.0, 21.0, func(p): return p.z < -97 and absf(p.y - 6) < 0.3)
-	await _walk("west yard wall alley", Vector3(-82, 3, -66), 0.0, 13.5, func(p): return p.z < -78.5)
-	await _walk("west stairs down", Vector3(-57, 3, -20), PI, 12.0, func(p): return absf(p.y) < 0.3)
+	# к краям двора: дошёл до невидимой стены и остался внутри (стены: x -46 / 27, z -81 / -14)
+	await _walk("south edge", Vector3(-35, 3, -19), PI, 8.0, func(q): return q.z > -16.0)
+	await _inside("south edge", PI)
+	await _walk("west edge", Vector3(-25, 3, -48), PI / 2, 14.0, func(q): return q.x < -44.0)
+	await _inside("west edge", PI / 2)
+	await _walk("north edge", Vector3(14, 3, -70), 0.0, 8.0, func(q): return q.z < -79.0)
+	await _inside("north edge", 0.0)
+	await _walk("east edge", Vector3(0, 3, -79), -PI / 2, 25.0, func(q): return q.x > 25.0)
+	await _inside("east edge", -PI / 2)
+	# дорога к гаражу Юрчика: из двора через арку западного дома, вдоль него на юг, между южным домом и «ракушками» на восток
+	await _walk("garage: west arch", Vector3(-25, 3, -48), PI / 2, 14.0, func(q): return q.x < -43.5)
+	await _walk("garage: lane south", Vector3(-44, 3, -48), PI, 14.0, func(q): return q.z > -26.0)
+	await _walk("garage: to door", Vector3(-44, 3, -26), -PI / 2, 25.0, func(q): return q.x > -2.5)
 
-	# карта сверху
+	# двор сверху
 	var env: Environment = lvl.get_node("WorldEnvironment").environment
 	env.fog_enabled = false
 	env.volumetric_fog_enabled = false
@@ -117,24 +110,35 @@ func _run() -> void:
 	lvl.get_node("PS2Post").visible = false
 	var cam := Camera3D.new()
 	cam.projection = Camera3D.PROJECTION_ORTHOGONAL
-	cam.size = 225
+	cam.size = 90
 	cam.far = 500
 	lvl.add_child(cam)
-	cam.global_transform = Transform3D(Basis(Vector3.RIGHT, -PI / 2), Vector3(0, 200, -5))
+	cam.global_transform = Transform3D(Basis(Vector3.RIGHT, -PI / 2), Vector3(-13, 200, -47.5))
 	cam.current = true
 	await _wait(0.5)
 	await _shot("topdown")
-	# общий вид с высоты
-	cam.projection = Camera3D.PROJECTION_PERSPECTIVE
-	cam.fov = 60
-	cam.global_transform = Transform3D.IDENTITY.looking_at(Vector3(0, 0, 0) - Vector3(-140, 90, 200), Vector3.UP)
-	cam.global_position = Vector3(-95, 70, 140)
-	cam.look_at(Vector3(5, 0, -30))
-	await _wait(0.5)
-	await _shot("overview")
 
 	_log("ИТОГ: сбоев %d" % fails)
 	var f := FileAccess.open(out_dir + "test_log.txt", FileAccess.WRITE)
-	f.store_string("\n".join(log_lines))
+	f.store_string("
+".join(log_lines))
 	f.close()
 	quit(1 if fails > 0 else 0)
+
+
+## Ещё 3 с упираться в край двора в сторону yaw — и Юрчик всё ещё внутри (не прошёл сквозь невидимую стену).
+func _inside(name: String, yaw: float) -> void:
+	Input.action_press("move_forward")
+	var start := Time.get_ticks_msec()
+	while Time.get_ticks_msec() - start < 3000:
+		await physics_frame
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		player.set("_yaw_target", yaw)
+		player.cam_yaw = yaw
+	Input.action_release("move_forward")
+	await _wait(0.3)
+	var q := player.global_position
+	var ok := q.x > -46.0 and q.x < 27.0 and q.z > -81.0 and q.z < -14.0
+	_log("%s %-22s внутри двора (%.1f, %.1f)" % ["OK  " if ok else "FAIL", name, q.x, q.z])
+	if not ok:
+		fails += 1

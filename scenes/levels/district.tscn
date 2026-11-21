@@ -3,20 +3,12 @@
 [ext_resource type="Environment" path="res://assets/environments/night_exterior.tres" id="env_night"]
 [ext_resource type="Material" path="res://assets/environments/ps2_post_night.tres" id="post_night"]
 [ext_resource type="PackedScene" path="res://scenes/district/trees.tscn" id="17_jyjjd"]
-[ext_resource type="PackedScene" path="res://scenes/district/backdrop.tscn" id="backdrop"]
 [ext_resource type="Script" uid="uid://c01wbk2jc6k0b" path="res://scripts/world/light_budget.gd" id="budget"]
 [ext_resource type="PackedScene" path="res://scenes/district/details.tscn" id="details"]
 [ext_resource type="Script" uid="uid://du67ilqycurbt" path="res://scripts/levels/district.gd" id="lvl"]
 [ext_resource type="PackedScene" uid="uid://l6yy2wslyolu" path="res://scenes/characters/player.tscn" id="player"]
 [ext_resource type="PackedScene" path="res://scenes/district/terrain.tscn" id="terrain"]
-[ext_resource type="PackedScene" path="res://scenes/district/z1_prospect.tscn" id="z1_prospect"]
 [ext_resource type="PackedScene" path="res://scenes/district/z2_home_yard.tscn" id="z2_home_yard"]
-[ext_resource type="PackedScene" path="res://scenes/district/z3_school.tscn" id="z3_school"]
-[ext_resource type="PackedScene" path="res://scenes/district/z4_south_yards.tscn" id="z4_south_yards"]
-[ext_resource type="PackedScene" path="res://scenes/district/z5_boiler.tscn" id="z5_boiler"]
-[ext_resource type="PackedScene" path="res://scenes/district/z6_garages.tscn" id="z6_garages"]
-[ext_resource type="PackedScene" path="res://scenes/district/z7_wasteland.tscn" id="z7_wasteland"]
-[ext_resource type="PackedScene" path="res://scenes/district/z8_west_yard.tscn" id="z8_west_yard"]
 [ext_resource type="Script" path="res://scripts/world/interactable.gd" id="inter"]
 [ext_resource type="Script" path="res://scripts/world/pickup.gd" id="pick"]
 [ext_resource type="Script" path="res://scripts/world/flicker_light.gd" id="flicker"]
@@ -68,6 +60,12 @@ roughness = 0.5
 material = SubResource("mat_counter")
 size = Vector3(1.5, 0.05, 0.34)
 
+[sub_resource type="BoxShape3D" id="wall_ns"]
+size = Vector3(75, 12, 1)
+
+[sub_resource type="BoxShape3D" id="wall_we"]
+size = Vector3(1, 12, 68)
+
 [node name="District" type="Node3D" unique_id=1582748643]
 script = ExtResource("lvl")
 tools_on_direct_start = false
@@ -106,21 +104,7 @@ mouse_filter = 2
 
 [node name="Terrain" parent="." unique_id=1224325348 instance=ExtResource("terrain")]
 
-[node name="Prospect" parent="." unique_id=1402337240 instance=ExtResource("z1_prospect")]
-
 [node name="HomeYard" parent="." unique_id=1783076002 instance=ExtResource("z2_home_yard")]
-
-[node name="School" parent="." unique_id=1334063112 instance=ExtResource("z3_school")]
-
-[node name="SouthYards" parent="." unique_id=281660134 instance=ExtResource("z4_south_yards")]
-
-[node name="Boiler" parent="." unique_id=1827119876 instance=ExtResource("z5_boiler")]
-
-[node name="Garages" parent="." unique_id=1994287654 instance=ExtResource("z6_garages")]
-
-[node name="Wasteland" parent="." unique_id=1895130709 instance=ExtResource("z7_wasteland")]
-
-[node name="WestYard" parent="." unique_id=1662334418 instance=ExtResource("z8_west_yard")]
 
 [node name="Player" parent="." unique_id=1907463503 instance=ExtResource("player")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -5, 3, -55)
@@ -130,31 +114,8 @@ transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -5, 3, -55)
 [node name="Tp1" type="Marker3D" parent="Teleports" unique_id=135878401]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -5, 3.1, -55)
 
-[node name="Tp2" type="Marker3D" parent="Teleports" unique_id=689568115]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 6.1, -82)
-
-[node name="Tp3" type="Marker3D" parent="Teleports" unique_id=570718296]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 57, 3.1, -35)
-
-[node name="Tp4" type="Marker3D" parent="Teleports" unique_id=1169835916]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -10, 0.1, 22)
-
-[node name="Tp5" type="Marker3D" parent="Teleports" unique_id=1440718324]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 64, 0.1, 21)
-
-[node name="Tp6" type="Marker3D" parent="Teleports" unique_id=1847110777]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, -2.4, 55.5)
-
-[node name="Tp7" type="Marker3D" parent="Teleports" unique_id=2089217599]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -70, 0.1, 1.5)
-
-[node name="Tp8" type="Marker3D" parent="Teleports" unique_id=1397115084]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -81, 3.1, -48)
-
 [node name="LightBudget" type="Node" parent="." unique_id=542889376]
 script = ExtResource("budget")
-
-[node name="Backdrop" parent="." unique_id=1992559101 instance=ExtResource("backdrop")]
 
 [node name="Details" parent="." unique_id=2007712828 instance=ExtResource("details")]
 
@@ -279,3 +240,21 @@ item_id = "bandage"
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 3.03, -25.5)
 script = ExtResource("pick")
 item_id = "bandage"
+
+[node name="YardBounds" type="StaticBody3D" parent="." unique_id=1730412001]
+
+[node name="North" type="CollisionShape3D" parent="YardBounds" unique_id=1730412002]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.5, 8, -81)
+shape = SubResource("wall_ns")
+
+[node name="South" type="CollisionShape3D" parent="YardBounds" unique_id=1730412003]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.5, 8, -14)
+shape = SubResource("wall_ns")
+
+[node name="West" type="CollisionShape3D" parent="YardBounds" unique_id=1730412004]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -46, 8, -47.5)
+shape = SubResource("wall_we")
+
+[node name="East" type="CollisionShape3D" parent="YardBounds" unique_id=1730412005]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27, 8, -47.5)
+shape = SubResource("wall_we")
