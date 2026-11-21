@@ -1,5 +1,5 @@
 // Дальние дома за краем локации (сейчас — фон Восточного моста). Окна рисует шейдер — текстур нет.
-// Модель: assets/models/east_bridge/eb_backdrop.gltf (tools/blender/build_east_bridge.py); раньше — district/backdrop.gltf.
+// Модель: assets/models/east_bridge/eb_backdrop.gltf (tools/blender/build_east_bridge.py).
 //   UV  — метры по фасаду и по высоте;
 //   UV2 — x: номер дома + оттенок стены (дробная часть), y: доля горящих окон;
 //         y = -1 — глухая стена, крыша, ствол дерева; y = -2 — полосы дымовой трубы.
