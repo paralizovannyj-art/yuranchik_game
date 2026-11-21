@@ -141,6 +141,16 @@ CLIPS = [
 ]
 
 
+# Сумка висит на правом боку, а у игрока GMod руки опущены вплотную к телу — правая проходила бы сквозь сумку.
+# В этих клипах вся правая рука (плечо, предплечье, кисть) отводится наружу на BAG_OUT градусов вокруг оси корпуса
+# «вперёд-назад»: мах вперёд-назад сохраняется, рука просто идёт снаружи сумки. Как bag_out в retarget_ual_yurchik.py.
+# Удары, жесты, плавание и прочие клипы не трогаем — там рука должна идти точно как в источнике.
+BAG_OUT = {"UpperArmR": 16.0, "ForearmR": 26.0, "HandR": 26.0}   # градусы; предплечье — сильнее, кисть дальше от сумки
+BAG_CLIPS = {"Idle", "Walk", "WalkBack", "WalkLeft", "WalkRight", "Run", "RunBack", "RunLeft", "RunRight",
+             "CrouchIdle", "CrouchWalk", "CrouchWalkBack", "CrouchWalkLeft", "CrouchWalkRight", "Jump", "JumpLand",
+             "IdleAngry", "IdleScared", "IdleSubtle", "RunPanicked", "StandToCrouch", "CrouchToStand"}
+
+
 # ----------------------------------------------------------------------------- SMD
 def find_file(rel):
     """Путь к SMD без учёта регистра (в репозитории имена записаны по-разному)."""
@@ -233,6 +243,7 @@ def bake_clip(dst, order, name, frames, flags, q0, src_rest, hip_scale, ground_z
         drift = Vector((d.x, d.y, 0.0))
     root_speed = drift.length / ((n_fr - 1) / FPS) if n_fr > 1 else 0.0
 
+    spine_back = rest["Spine"].to_3x3().inverted() @ Vector((0, 1, 0))   # «назад» в осях кости Spine
     poses = []
     for i, fr in enumerate(frames):
         mats = {}
@@ -241,6 +252,9 @@ def bake_clip(dst, order, name, frames, flags, q0, src_rest, hip_scale, ground_z
             sw = fr[s]
             delta = sw.to_quaternion() @ src_rest[s].to_quaternion().inverted()
             rot = delta @ q0[n] @ rest[n].to_quaternion()
+            if n in BAG_OUT and name in BAG_CLIPS:   # правая рука — наружу, мимо сумки (вокруг оси корпуса «назад»)
+                back = (mats["Spine"].to_3x3() @ spine_back).normalized()
+                rot = Quaternion(back, math.radians(BAG_OUT[n])) @ rot
             b = bones[n]
             if b.parent is None:
                 off = (sw.translation - src_rest[s].translation) * INCH * hip_scale
