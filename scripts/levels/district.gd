@@ -69,7 +69,7 @@ func _on_item(_id: String) -> void:
 
 func _open_garage(p: Player) -> void:
 	Game.flags["garage_open"] = true
-	p.busy(1.3, "ItemPlace")
+	p.busy(1.3, "Interact")
 	Game.sfx("unlock", garage_lock.global_position)
 	_objective()
 	await after(0.7)
@@ -86,7 +86,7 @@ func _open_garage(p: Player) -> void:
 
 func _enter_home(p: Player) -> void:
 	p.control = false
-	p.busy(1.4, "ItemPlace")
+	p.busy(1.4, "Interact")
 	Game.sfx("unlock", home_door.global_position)
 	await after(0.6)
 	Game.sfx("door_open", home_door.global_position)

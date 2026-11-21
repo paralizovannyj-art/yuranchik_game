@@ -13,10 +13,15 @@
 # Стойка, ходьба, ходьба назад и бег (Idle, Walk, WalkBack, Run) не переносятся, а строятся
 # процедурно — make_cycle() и таблица LOCOMOTION ниже. Остальные клипы (удары, броски, смерть) — из UAL.
 #
-# Юрчику эти клипы больше не нужны: он анимируется только клипами Garry's Mod
-# (retarget_gmod_yurchik.py, docs/GMOD_ANIMATIONS.md), а в yurchik.gltf анимаций нет.
-# Файл остаётся библиотекой переноса для врагов: build_enemies.py читает его функции до строки «stats = main()».
-# Запуск на самом Юрчике отключён — он вернул бы в модель старые клипы.
+# Юрчик анимируется клипами Garry's Mod (retarget_gmod_yurchik.py, docs/GMOD_ANIMATIONS.md).
+# Отсюда в yurchik.gltf идут только три клипа — YURCHIK_KEEP (Interact, Throw, Push); остальные
+# переносятся и сразу удаляются. Ещё файл — библиотека переноса для врагов: build_enemies.py
+# читает его функции до строки «stats = main()».
+#
+# Запуск (из корня проекта, Blender 5.2+):
+#   blender -b tools/blender/yurchik_v3.blend --python tools/blender/retarget_ual_yurchik.py
+# Скрипт перезаписывает клипы в yurchik_v3.blend и экспортирует assets/models/yurchik.gltf
+# (модель + три клипа). Если пересобрать модель build_yurchik_v3.py — запустить этот скрипт снова.
 import bpy, os, sys, json, math
 from mathutils import Matrix, Vector, Quaternion
 
@@ -26,7 +31,7 @@ SRCS = {
     "UAL2": os.path.join(ROOT, "tools", "blender", "ual", "UAL2_Standard.glb"),
 }
 OUT = os.path.join(ROOT, "assets", "models", "yurchik.gltf")
-RUN_ON_YURCHIK = False   ## True — вернуть старые клипы в yurchik.gltf (не нужно: см. шапку)
+YURCHIK_KEEP = ["Interact", "Throw", "Push"]   ## какие клипы остаются в yurchik.gltf (остальное у Юрчика — из GMod)
 FPS = 30
 
 # наша кость → кость-источник
@@ -431,6 +436,17 @@ def main():
     return stats
 
 
+def keep_only(names):
+    """Убирает из сцены перенесённые клипы Юрчика, кроме names."""
+    dad = bpy.data.objects["Yurchik3"].animation_data
+    for tr in list(dad.nla_tracks):
+        if tr.name not in names:
+            dad.nla_tracks.remove(tr)
+    for ac in list(bpy.data.actions):
+        if ac.name.startswith("Yur_") and ac.name[4:] not in names:
+            bpy.data.actions.remove(ac)
+
+
 def export():
     sc = bpy.context.scene
     arm = bpy.data.objects["Yurchik3"]
@@ -455,7 +471,9 @@ def export():
             o.name = n
 
 
-stats = main() if RUN_ON_YURCHIK else sys.exit("retarget_ual_yurchik.py: Юрчик анимируется клипами GMod — запустите retarget_gmod_yurchik.py")
+stats = main()
+keep_only(YURCHIK_KEEP)
+stats = {k: v for k, v in stats.items() if k in YURCHIK_KEEP}
 bpy.ops.wm.save_mainfile()
 export()
 print("RETARGET" + json.dumps(stats))
