@@ -24,7 +24,8 @@
 #      Листовые кости: Chest/Belly (масштаб раздувает бока при дыхании), LidL/LidR (закрытые веки — в покое
 #      утоплены в голову, во сне выдвигаются на глаза).
 #   5. Анимации — процедурные ключи: Idle (4 с), Walk (рысь на месте, 0.8 с), Sniff (нюхает землю, 3 с),
-#      LookAround (4 с), Sleep (спит клубком на боку и дышит, 4.5 с, как «Resting pose» листа). Все зациклены.
+#      LookAround (4 с), Sleep (спит клубком на боку и дышит, 4.5 с, как «Resting pose» листа; поза ставится
+#      по точкам контакта с пледом — см. «Сон» ниже). Все зациклены.
 #      Добавочные (только отклонение от покоя, для наложения поверх Sleep): SleepTwitchEar, SleepTwitchPaw, SleepSigh.
 #      В игре: scripts/world/hyuga_sleep.gd (диван в scenes/levels/stairwell.tscn).
 #
@@ -1101,11 +1102,13 @@ SCL_BONES = ("Chest", "Belly")            # масштаб (дыхание) — 
 
 
 def set_pose(arm, pose):
+    """pose: кость → [(ось, градусы)] (оси скелета в покое) или готовый Quaternion в локальном пространстве кости."""
     pose = dict(pose)
     loc = pose.pop("_loc", {}); scl = pose.pop("_scl", {})
     for pb in arm.pose.bones:
         pb.rotation_mode = 'QUATERNION'
-        pb.rotation_quaternion = qw(arm, pb.name, pose.get(pb.name, []))
+        v = pose.get(pb.name, [])
+        pb.rotation_quaternion = v if isinstance(v, Quaternion) else qw(arm, pb.name, v)
     for n in LOC_BONES:
         rq = arm.data.bones[n].matrix_local.to_quaternion()
         arm.pose.bones[n].location = rq.inverted() @ Vector(loc.get(n, (0, 0, 0)))
@@ -1113,52 +1116,217 @@ def set_pose(arm, pose):
         arm.pose.bones[n].scale = scl.get(n, (1, 1, 1))
 
 
-# ---------- Сон (референс docs/references/hyuga/hyuga_sleep_ref.webp): клубком на боку ----------
-# Поза задана для «лежит на левом боку» и зеркалится (SLEEP_DOWN = "R" — на правом, как на фото): тело
-# повалено на бок, позвоночник согнут дугой (нос тянется к задним лапам), лапы и морда — внутрь клубка,
-# спина — снаружи. Hips задаёт и наклон, и сдвиг: SLEEP_LOC
-# подбирается автоматически (fit_sleep) — середина клубка над началом координат, нижняя точка чуть
-# утоплена в плед (SLEEP_SINK).
+# ---------- Сон (лист v2, «Resting pose»; фото на диване — hyuga_sleep_sofa_v2.webp) ----------
+# Клубок на боку: грудь завалена на бок на 45°, таз — на 65°, хребет изогнут дугой к стороне лап (морда тянется к
+# задним лапам). Голова почти прямо (уши стоят), повёрнута к зрителю и лежит подбородком на пледе и на нижней
+# передней кисти; верхняя передняя лапа лежит на нижней. Задние сложены: нижняя — под крупом, верхняя — стопой
+# вперёд вдоль живота. Всё, что внизу, касается пледа (замер — tools/blender/hyuga_bed_check.py). SLEEP_DOWN = "R" —
+# лежит на правом боку (голова слева, спина от зрителя, как на фото); "L" — то же зеркально.
+# Как строится (sleep_base):
+#  1. хребет, шея и голова — по НАПРАВЛЕНИЯМ в пространстве скелета (вид сверху: «вперёд» — −Y, сторона лап при
+#     SLEEP_DOWN = "R" — +X): куда смотрит кость, насколько опущена и насколько спина завалена к нижнему боку;
+#  2. уровень пледа — низ туловища на деформированном меше; наклон шеи подбирается делением пополам так, чтобы
+#     низ головы (подбородок, брыли) лёг на этот уровень (SLEEP_CHIN);
+#  3. лапы ставятся в точки на пледе двухзвенным IK: у передних — запястье, у задних — скакательный сустав;
+#     кисти, плюсны и стопы лежат подошвой на пледе.
+#     Если толстый локоть или колено уходят под плед, сустав-середина поднимается, и IK решается заново.
+# Сдвиг таза (SLEEP_LOC) подбирает fit_sleep: середина клубка над началом координат, нижняя точка на SLEEP_SINK
+# в пледе. Проверка на диване из игры прямо в Blender — tools/blender/hyuga_bed_check.py.
 SLEEP_L = 4.5
 SLEEP_SINK = 0.006
 SLEEP_LOC = (0.0, 0.0, 0.0)
-
-
-SLEEP_ROLL = 70                                       # насколько повалена на левый бок
-SLEEP_CURL = {"Spine1": -50, "Spine2": -50, "Neck": -30, "Head": -25, "Tail": -40}   # изгиб клубка по кости
-
-
-def sleep_base():
-    """Клубок (лист v2, «Resting pose»): тело на боку, спина дугой, морда подогнута к задним лапам и лежит
-    подбородком на передних. Каждая кость гнётся вокруг ВЕРТИКАЛИ мира (ось, которая после завала на бок смотрит
-    вверх) — дуга ложится в плоскость пледа. Шея и голова доворачиваются обратно «на попа»: голова почти прямо,
-    уши стоят. Лапы вытянуты «вниз» по телу, то есть внутрь клубка, и чуть подогнуты.
-    Подобрано по рендерам с четырёх сторон и сверху."""
-    c, s = math.cos(math.radians(SLEEP_ROLL)), math.sin(math.radians(SLEEP_ROLL))
-
-    def bend(th):
-        return [("z", c * th), ("x", -s * th)]
-    p = {
-        "Hips": [("y", SLEEP_ROLL)],
-        "Spine1": bend(SLEEP_CURL["Spine1"]), "Spine2": bend(SLEEP_CURL["Spine2"]),
-        "Neck": [("y", -30)] + bend(SLEEP_CURL["Neck"]) + [("x", 10)],
-        "Head": [("y", -60)] + bend(SLEEP_CURL["Head"]) + [("x", 22)],               # голова почти прямо, нос вниз
-        "Tail": bend(SLEEP_CURL["Tail"]),                                            # хвостик прижат
-        "EarL": [("y", -35), ("x", -10)], "EarR": [("y", 8), ("x", -10)],            # уши стоят (нижнее — довёрнуто)
-    }
-    for S_, add in (("L", 5), ("R", -10)):           # нижние лапы на пледе, верхние лежат на них
-        p["Shoulder" + S_] = [("x", 15), ("y", add)]
-        p["Forearm" + S_] = [("x", 35)]              # передние — под подбородком
-        p["Paw" + S_] = [("x", 15)]
-        p["Thigh" + S_] = [("x", -45), ("y", add)]   # задние поджаты к животу
-        p["Shin" + S_] = [("x", 85)]
-        p["Hock" + S_] = [("x", -65)]
-        p["Foot" + S_] = [("x", 20)]
-    return mirror_pose(p) if SLEEP_DOWN == "R" else p
-
-
-SLEEP_DOWN = "R"        # на каком боку лежит: как на референсе — на правом (голова слева, спина от зрителя)
+SLEEP_DOWN = "R"
 SLEEP_UP = "L" if SLEEP_DOWN == "R" else "R"
+SLEEP_Q = {}            # локальные повороты костей в позе сна (считает fit_sleep)
+SLEEP_AXX = {}          # ось X скелета в локальном пространстве каждой кости — для дыхания поверх позы
+SLEEP_INFO = {}         # замеры подбора (для отчёта сборки)
+
+# хребет: (поворот к стороне лап, наклон вниз, завал спины к нижнему боку), градусы; None — подбирается:
+# у таза — чтобы круп лёг на плед вровень с грудью, у шеи — чтобы на плед лёг подбородок
+SLEEP_AXIS = {"Hips": (-45, None, 65), "Spine1": (-15, 0, 55), "Spine2": (20, 0, 45), "Neck": (70, None, 25)}
+SLEEP_HEAD = (110, 20, 15)      # морда: поворот к стороне лап, нос вниз, завал макушки к нижнему боку
+SLEEP_CHIN = 0.0                # низ головы над уровнем пледа, м
+SLEEP_TAIL = (0.5, 0.75, -0.4)  # хвостик прижат к стороне лап (x — к стороне лап, y — назад, z — вверх)
+SLEEP_EARS = -12                # уши во сне расслаблены — откинуты назад, °
+# Лапы: (нижняя, верхняя). Точки задаются от корня лапы (плечевой / тазобедренный сустав), опущенного на плед:
+# (вперёд, к стороне лап, высота над пледом), метры, по направлению груди (передние) или таза (задние).
+# mid — локоть / колено (куда сгибается сустав), end — запястье / скакательный сустав. turn — поворот кисти / стопы
+# от того же направления к стороне лап, °.
+SLEEP_FRONT = ({"mid": (-0.02, 0.03, 0.045), "end": (0.06, 0.06, 0.030), "turn": 40},     # нижняя: кисть под подбородком
+               {"mid": (0.00, 0.05, 0.070), "end": (0.08, 0.04, 0.060), "turn": 50})      # верхняя: лежит на нижней
+SLEEP_REAR = ({"mid": (0.08, 0.04, 0.045), "end": (-0.05, 0.02, 0.024), "turn": 30},       # нижняя: сложена под крупом
+              {"mid": (0.11, 0.06, 0.060), "end": (-0.025, 0.07, 0.030), "turn": 10})     # верхняя: стопой вдоль живота
+HEEL_H = 0.022                  # высота пятки над пледом, когда стопа лежит подошвой
+
+
+def sleep_base(arm, body):
+    """Локальные повороты костей (Quaternion) в позе сна — см. комментарий выше. Ставит скелет в позу (без сдвига)."""
+    s = -1.0 if SLEEP_DOWN == "L" else 1.0
+    D, U = SLEEP_DOWN, SLEEP_UP
+    bones = arm.data.bones
+    I3 = Matrix.Identity(3)
+    Z = Vector((0, 0, 1))
+    R = {}                                            # поворот каждой кости от покоя (пространство скелета)
+
+    def V(x, y, z):                                   # вектор в пространстве скелета (с зеркалом)
+        return Vector((x * s, y, z)).normalized()
+
+    def fwd(yaw, pitch=0.0):                          # «вперёд», повёрнутое к стороне лап на yaw°, вниз на pitch°
+        a, p = math.radians(yaw), math.radians(pitch)
+        return V(math.sin(a) * math.cos(p), -math.cos(a) * math.cos(p), -math.sin(p))
+
+    def side(yaw):                                    # горизонталь к стороне лап для направления yaw
+        a = math.radians(yaw)
+        return V(math.cos(a), math.sin(a), 0.0)
+
+    def dors(yaw, roll):                              # «спина вверх», заваленная к нижнему боку на roll°
+        a, r = math.radians(yaw), math.radians(roll)
+        return V(-math.cos(a) * math.sin(r), -math.sin(a) * math.sin(r), math.cos(r))
+
+    def frame(a, b):
+        a = a.normalized(); b = (b - a * a.dot(b)).normalized()
+        return Matrix((a, b, a.cross(b))).transposed()
+
+    def orient(n, a0, b0, a, b):                      # поворот, переводящий пару (a0, b0) покоя в (a, b)
+        R[n] = frame(a, b) @ frame(a0, b0).inverted()
+
+    def rdir(n):
+        return (bones[n].tail_local - bones[n].head_local).normalized()
+
+    def aim(n, d):                                    # кость смотрит в d; без скручивания относительно родителя
+        P = R[bones[n].parent.name]
+        R[n] = (P @ rdir(n)).rotation_difference(d.normalized()).to_matrix() @ P
+
+    def sole(n, d):                                   # кисть/стопа: носок в d (по горизонтали), подошва вниз
+        orient(n, Vector((0, -1, 0)), Vector((0, 0, -1)), d, Vector((0, 0, -1)))
+
+    def pos(n):                                       # голова кости в позе (до сдвига таза)
+        b = bones[n]
+        if not b.parent:
+            return b.head_local.copy()
+        return pos(b.parent.name) + R[b.parent.name] @ (b.head_local - b.parent.head_local)
+
+    def length(n1, n2):
+        return (bones[n2].head_local - bones[n1].head_local).length
+
+    def ik(n1, n2, n3, target, mid):
+        """Двухзвенный IK: n1 и n2 так, чтобы голова n3 пришла в target, средний сустав — как можно ближе к mid."""
+        A = pos(n1); l1, l2 = length(n1, n2), length(n2, n3)
+        pole = mid - A
+        d = target - A; want = d.length
+        L = min(max(want, abs(l1 - l2) + 1e-4), l1 + l2 - 1e-4); nd = d.normalized()
+        pp = (pole - nd * pole.dot(nd)).normalized()
+        a = (l1 * l1 - l2 * l2 + L * L) / (2 * L); h = math.sqrt(max(l1 * l1 - a * a, 0.0))
+        M = A + nd * a + pp * h
+        aim(n1, M - A); aim(n2, A + nd * L - M)
+        return round((want - L) * 1000)               # недотянулся, мм
+
+    def quats():
+        Q, RR = {}, dict(R)
+        for b in bones:                               # родители раньше детей (порядок BONES)
+            Rn = RR.setdefault(b.name, RR[b.parent.name] if b.parent else I3)
+            Rp = RR[b.parent.name] if b.parent else I3
+            B = b.matrix_local.to_3x3()
+            Q[b.name] = (B.inverted() @ Rp.inverted() @ Rn @ B).to_quaternion()
+        for S_ in "LR":
+            Q["Ear" + S_] = Q["Ear" + S_] @ qw(arm, "Ear" + S_, [("x", SLEEP_EARS)])
+        return Q
+
+    gname = {g.index: g.name for g in body.vertex_groups}
+    dom = [gname[max(v.groups, key=lambda g: g.weight).group] if len(v.groups) else "" for v in body.data.vertices]
+    rest_z = [v.co.z for v in body.data.vertices]
+
+    def zmin(names, above=-1.0):                      # низ меша у вершин, где главная кость из names (и в покое выше above)
+        Q = quats()
+        for pb in arm.pose.bones:
+            pb.rotation_mode = 'QUATERNION'; pb.rotation_quaternion = Q[pb.name]
+            pb.location = (0, 0, 0); pb.scale = (1, 1, 1)
+        bpy.context.view_layer.update()
+        ev = body.evaluated_get(bpy.context.evaluated_depsgraph_get())
+        me = ev.to_mesh()
+        co = np.empty(len(me.vertices) * 3, np.float32); me.vertices.foreach_get("co", co)
+        ev.to_mesh_clear()
+        z = co.reshape(-1, 3)[:, 2]
+        return float(min(z[i] for i, n in enumerate(dom) if n in names and rest_z[i] > above))
+
+    def bisect(f, lo, hi, n=14):                      # f(lo) > 0 ≥ f(hi), f убывает
+        for _ in range(n):
+            mid = (lo + hi) / 2
+            if f(mid) > 0:
+                lo = mid
+            else:
+                hi = mid
+        return hi
+
+    # 1. хребет и голова
+    pitch_of = {"Hips": 0.0, "Neck": 0.0}
+
+    def axial():
+        for n, (yaw, pitch, roll) in SLEEP_AXIS.items():
+            orient(n, rdir(n), Z, fwd(yaw, pitch_of[n] if pitch is None else pitch), dors(yaw, roll))
+        yaw, pitch, roll = SLEEP_HEAD
+        orient("Head", Vector((0, -1, 0)), Z, fwd(yaw, pitch), dors(yaw, roll))
+        aim("Tail", V(*SLEEP_TAIL))
+
+    # 2. наклон таза (круп вровень с грудью), уровень пледа, наклон шеи (подбородок на плед).
+    #    Круп лежит на боку бедра, поэтому к нему считается и верх нижнего бедра (в покое выше 15 см).
+    rear = ("Hips", "Tail", "Thigh" + D)
+
+    def rear_minus_front(p):
+        pitch_of["Hips"] = p; axial()
+        return zmin(rear, 0.15) - zmin(("Spine2", "Chest"))
+    pitch_of["Hips"] = bisect(rear_minus_front, 40.0, -40.0)
+    axial()
+    zg = min(zmin(rear, 0.15), zmin(("Hips", "Spine1", "Spine2", "Chest", "Belly", "Tail")))
+
+    def head_above(p):
+        pitch_of["Neck"] = p; axial()
+        return zmin(("Head",)) - (zg + SLEEP_CHIN)
+    pitch_of["Neck"] = bisect(head_above, -20.0, 80.0)
+    axial()
+    SLEEP_INFO.clear()
+    SLEEP_INFO["pitch"] = {k: round(v, 1) for k, v in pitch_of.items()}
+
+    # 3. лапы. Сустав-середина (локоть, колено) толстый: если меш лапы уходит под плед, середина поднимается на
+    #    недостающее и IK решается заново (до 6 раз).
+    def spot(root, yaw, f, sd, h):                     # точка от корня лапы, опущенного на плед
+        A = pos(root)
+        return Vector((A.x, A.y, zg)) + fwd(yaw) * f + side(yaw) * sd + Z * h
+
+    def place(S_, k, front, lift):
+        if front:
+            f, cy = SLEEP_FRONT[k], SLEEP_AXIS["Spine2"][0]
+            mid = spot("Shoulder" + S_, cy, *f["mid"]) + Z * lift
+            m = ik("Shoulder" + S_, "Forearm" + S_, "Paw" + S_, spot("Shoulder" + S_, cy, *f["end"]), mid)
+            sole("Paw" + S_, fwd(cy + f["turn"]))
+            return m
+        r, hy = SLEEP_REAR[k], SLEEP_AXIS["Hips"][0]
+        mid = spot("Thigh" + S_, hy, *r["mid"]) + Z * lift
+        m = ik("Thigh" + S_, "Shin" + S_, "Hock" + S_, spot("Thigh" + S_, hy, *r["end"]), mid)
+        H = pos("Hock" + S_)
+        lh = length("Hock" + S_, "Foot" + S_); dz = (zg + HEEL_H) - H.z
+        heel = H + fwd(hy + r["turn"]) * math.sqrt(max(lh * lh - dz * dz, 0.0)) + Z * dz
+        aim("Hock" + S_, heel - H)
+        sole("Foot" + S_, fwd(hy + r["turn"]))
+        return m
+
+    miss, lifts = {}, {}
+    for S_, k in ((D, 0), (U, 1)):
+        for front, names in ((True, ("Shoulder", "Forearm")), (False, ("Thigh", "Shin", "Hock"))):
+            key = ("front" if front else "rear") + S_
+            lift = 0.0
+            for _ in range(6):
+                miss[key] = place(S_, k, front, lift)
+                below = zg - zmin(tuple(n + S_ for n in names))
+                if below < 0.002:
+                    break
+                lift += below + 0.002
+            lifts[key] = round(lift * 1000)
+    SLEEP_INFO["mid_lift_mm"] = lifts
+    SLEEP_INFO["ik_miss_mm"] = miss
+    Q = quats()
+    zmin(("Hips",))                                   # оставить скелет в позе
+    return Q
 
 
 def mirror_pose(p):
@@ -1182,13 +1350,11 @@ def breath_curve(t, L=SLEEP_L):
 
 
 def pose_sleep(t, L):
-    p = sleep_base()
+    p = dict(SLEEP_Q)
     b = breath_curve(t, L)
     b2 = breath_curve(t - 0.18, L)                                  # живот чуть отстаёт от груди
-    p["Spine1"] = p["Spine1"] + [("x", -0.7 * b2)]
-    p["Spine2"] = p["Spine2"] + [("x", -0.6 * b)]
-    p["Neck"] = p["Neck"] + [("x", 0.5 * b)]
-    p["Head"] = p["Head"] + [("x", -0.35 * b)]
+    for n, deg in (("Spine1", -0.7 * b2), ("Spine2", -0.6 * b), ("Neck", 0.5 * b), ("Head", -0.35 * b)):
+        p[n] = p[n] @ Quaternion(SLEEP_AXX[n], math.radians(deg))    # изгиб в собственной плоскости кости
     p["_scl"] = {"Chest": (1 + 0.024 * b, 1 + 0.006 * b, 1 + 0.022 * b),
                  "Belly": (1 + 0.020 * b2, 1 + 0.004 * b2, 1 + 0.018 * b2)}
     p["_loc"] = {"Hips": SLEEP_LOC, "LidL": lid_open_vec("L"), "LidR": lid_open_vec("R")}
@@ -1228,8 +1394,11 @@ def pose_sigh(t, L):
 
 def fit_sleep(arm, body):
     """Подбирает сдвиг таза для позы сна: середина клубка над началом координат, низ — на SLEEP_SINK в пледе."""
-    global SLEEP_LOC
-    p = sleep_base()
+    global SLEEP_LOC, SLEEP_Q, SLEEP_AXX
+    reset_pose(arm)
+    SLEEP_Q = sleep_base(arm, body)
+    SLEEP_AXX = {b.name: b.matrix_local.to_quaternion().inverted() @ Vector((1, 0, 0)) for b in arm.data.bones}
+    p = dict(SLEEP_Q)
     p["_loc"] = {"LidL": lid_open_vec("L"), "LidR": lid_open_vec("R")}
     set_pose(arm, p)
     bpy.context.view_layer.update()
@@ -1240,7 +1409,7 @@ def fit_sleep(arm, body):
     ev.to_mesh_clear()
     mn, mx = co.min(axis=0), co.max(axis=0)
     SLEEP_LOC = (-(mn[0] + mx[0]) / 2, -(mn[1] + mx[1]) / 2, -mn[2] - SLEEP_SINK)
-    return {"loc": [round(float(v), 4) for v in SLEEP_LOC], "size": [round(float(v), 3) for v in (mx - mn)]}
+    return dict(SLEEP_INFO, loc=[round(float(v), 4) for v in SLEEP_LOC], size=[round(float(v), 3) for v in (mx - mn)])
 
 
 def key_pose(arm, pose, f):
