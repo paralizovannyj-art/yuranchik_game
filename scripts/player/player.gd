@@ -60,6 +60,7 @@ enum State { NORMAL, AIM, ATTACK, HURT, GRABBED, THROW, BUSY, DEAD }
 @export var focus_size := 0.45         ## м — насколько можно промахнуться взглядом мимо предмета, чтобы он подсветился
 @export var cam_clip_margin := 0.03    ## м — запас сферы камеры сверх углов ближней плоскости (не видно сквозь стену)
 @export var cam_clip_return := 10.0    ## 1/с — как быстро камера возвращается на место, отойдя от стены
+@export var cam_body_push_max := 0.45  ## м — насколько тело может отступить вслед за прижатой к стене камерой
 
 @export_group("Выносливость")
 @export var max_stamina := 100.0
@@ -149,7 +150,8 @@ var _cam_clip := 1.0                   ## доля пути от опорной 
 var _cam_query: PhysicsShapeQueryParameters3D
 var _cam_sphere: SphereShape3D
 var cam_anchor := Vector3.ZERO         ## опорная точка камеры внутри капсулы (для проверок)
-var cam_clip_enabled := true           ## отладка: false — камера как раньше, без упора в стены (снимки «до»)
+var _model_base := Vector3.ZERO        ## исходное положение модели (без отступа от стены)
+var cam_clip_enabled := true          ## отладка: false — камера как раньше, без упора в стены (снимки «до»)
 
 @onready var model: Node3D = $Model
 @onready var cam_pivot: Node3D = $CamPivot
@@ -180,6 +182,7 @@ func _ready() -> void:
 	_shape = collision.shape.duplicate() as CapsuleShape3D   # своя копия: высоту меняем при приседе
 	collision.shape = _shape
 	_stand_height = _shape.height
+	_model_base = model.position
 	_cam_sphere = SphereShape3D.new()
 	_cam_query = PhysicsShapeQueryParameters3D.new()
 	_cam_query.shape = _cam_sphere
@@ -878,7 +881,8 @@ func _update_camera(delta: float) -> void:
 	var ahead := 0.0
 	if _skel and _head_bone >= 0:
 		var head := _skel.global_transform * _skel.get_bone_global_pose(_head_bone).origin
-		ahead = (head - global_position).dot(Basis(Vector3.UP, cam_yaw) * Vector3.FORWARD)
+		# от начала модели, а не капсулы: модель сдвигается, когда камеру прижало к стене (см. ниже)
+		ahead = (head - model.global_position).dot(Basis(Vector3.UP, cam_yaw) * Vector3.FORWARD)
 	_head_lead = lerpf(_head_lead, ahead, 1.0 - exp(-12.0 * delta))
 	var down := clampf(-cam_pitch / 1.2, 0.0, 1.0)
 	var lean := Vector3(0.0, 0.0, -(_head_lead + maxf(head_forward, look_down_forward * down * down)))
@@ -892,7 +896,15 @@ func _update_camera(delta: float) -> void:
 	camera.h_offset = 0.0
 	camera.v_offset = 0.0
 	var desired := _cam_pos + Basis(Vector3.UP, cam_yaw) * (bob + lean) + shake_off
-	cam_pivot.global_position = _clip_camera(desired, delta)
+	var actual := _clip_camera(desired, delta)
+	cam_pivot.global_position = actual
+	# Камеру прижало к стене — тело отступает вместе с ней (по горизонтали): иначе наклонённый
+	# корпус (присед, бег) оказывается впереди камеры и она смотрит изнутри плеч и рук.
+	# Так тело стоит относительно камеры как без стены и само в стену не залезает.
+	var push := actual - desired
+	push.y = 0.0
+	push = push.limit_length(cam_body_push_max)
+	model.position = _model_base + global_basis.inverse() * push
 
 
 ## Камера не проходит сквозь стены. Капсула в стену не заходит, а камера вынесена из неё
