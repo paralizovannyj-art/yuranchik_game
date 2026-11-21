@@ -140,7 +140,7 @@ func open() -> void:
 		player.flashlight.light_cull_mask &= ~Player.BODY_LAYER   # в упор пересвечивает руку
 	Game.sfx("ui_open", null, -12.0, 0.1)
 	_blur(true)
-	_animate(OPEN_POS, OPEN_ROT, 0.45)
+	_animate(OPEN_POS, OPEN_ROT, 0.3)
 
 
 func close() -> void:

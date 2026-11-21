@@ -8,7 +8,7 @@ extends Node3D
 @export var ambience_db := -12.0
 @export var step_sound := "step_snow"   ## звук шагов Юрчика на этом уровне
 @export var step_variants := 4
-@export var flashlight_energy := 9.0   ## яркость фонарика: в тесных помещениях нужна меньше
+@export var flashlight_energy := 8.0   ## яркость фонарика (главный свет в темноте): в тесных помещениях нужна меньше
 @export var tools_on_direct_start := true   ## запуск уровня из редактора (F6) — сразу с молотком и фонариком
 @export_group("Навигация врагов")
 @export var bake_navigation := true     ## строить ли сетку при запуске (для большого района без врагов — выключено)

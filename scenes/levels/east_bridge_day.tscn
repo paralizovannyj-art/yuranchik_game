@@ -8,11 +8,11 @@
 [ext_resource type="Shader" path="res://shaders/snow_streak.gdshader" id="streak"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
-sky_top_color = Color(0.74, 0.75, 0.74, 1)
-sky_horizon_color = Color(0.8, 0.8, 0.77, 1)
+sky_top_color = Color(0.36, 0.38, 0.4, 1)
+sky_horizon_color = Color(0.46, 0.47, 0.47, 1)
 sky_curve = 0.2
-ground_bottom_color = Color(0.5, 0.51, 0.53, 1)
-ground_horizon_color = Color(0.78, 0.76, 0.71, 1)
+ground_bottom_color = Color(0.26, 0.27, 0.29, 1)
+ground_horizon_color = Color(0.44, 0.44, 0.43, 1)
 sun_angle_max = 0.0
 sun_curve = 0.01
 
@@ -24,18 +24,22 @@ radiance_size = 0
 background_mode = 2
 sky = SubResource("sky_res")
 ambient_light_source = 3
-ambient_light_color = Color(0.8, 0.82, 0.86, 1)
-ambient_light_sky_contribution = 0.85
-ambient_light_energy = 0.9
+ambient_light_color = Color(0.5, 0.53, 0.58, 1)
+ambient_light_sky_contribution = 0.6
+ambient_light_energy = 0.6
 tonemap_mode = 2
-tonemap_exposure = 1.0
+tonemap_exposure = 0.85
+tonemap_white = 3.0
 glow_enabled = true
-glow_intensity = 0.5
-glow_bloom = 0.04
+glow_intensity = 0.25
+glow_bloom = 0.0
 fog_enabled = true
-fog_light_color = Color(0.78, 0.78, 0.75, 1)
+fog_light_color = Color(0.42, 0.44, 0.46, 1)
 fog_density = 0.045
 fog_sky_affect = 1.0
+adjustment_enabled = true
+adjustment_contrast = 1.1
+adjustment_saturation = 0.7
 
 [sub_resource type="Gradient" id="g_fade"]
 offsets = PackedFloat32Array(0, 0.12, 0.85, 1)
@@ -78,7 +82,7 @@ turbulence_influence_max = 0.1
 transparency = 1
 shading_mode = 0
 vertex_color_use_as_albedo = true
-albedo_color = Color(0.96, 0.97, 1, 0.9)
+albedo_color = Color(0.8, 0.82, 0.86, 0.85)
 albedo_texture = SubResource("tex_puff")
 billboard_mode = 3
 particles_anim_h_frames = 1
@@ -111,7 +115,7 @@ turbulence_influence_max = 0.07
 [sub_resource type="ShaderMaterial" id="mat_streak"]
 render_priority = 1
 shader = ExtResource("streak")
-shader_parameter/color = Color(0.97, 0.98, 1, 0.9)
+shader_parameter/color = Color(0.82, 0.84, 0.88, 0.85)
 shader_parameter/near_fade = 0.5
 
 [sub_resource type="QuadMesh" id="mesh_streak"]
@@ -138,7 +142,7 @@ color_ramp = SubResource("tex_fade")
 transparency = 1
 shading_mode = 0
 vertex_color_use_as_albedo = true
-albedo_color = Color(0.86, 0.87, 0.86, 0.2)
+albedo_color = Color(0.62, 0.64, 0.66, 0.2)
 albedo_texture = SubResource("tex_puff")
 billboard_mode = 3
 particles_anim_h_frames = 1
@@ -156,10 +160,10 @@ shader = ExtResource("post")
 shader_parameter/blur_px = 0.55
 shader_parameter/color_levels = 32.0
 shader_parameter/dither_strength = 1.0
-shader_parameter/black_crush = 0.03
-shader_parameter/s_curve = 0.35
-shader_parameter/saturation = 0.7
-shader_parameter/exposure = 1.0
+shader_parameter/black_crush = 0.05
+shader_parameter/s_curve = 0.45
+shader_parameter/saturation = 0.6
+shader_parameter/exposure = 0.92
 shader_parameter/shadow_tint = Color(0.06, 0.07, 0.09, 1)
 shader_parameter/highlight_tint = Color(0.97, 0.98, 1, 1)
 shader_parameter/halo = 0.1
@@ -178,7 +182,7 @@ environment = SubResource("env")
 [node name="Overcast" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.94, -0.21, 0.27, 0, 0.79, 0.61, -0.34, -0.57, 0.75, 0, 60, 0)
 light_color = Color(0.9, 0.92, 0.97, 1)
-light_energy = 0.3
+light_energy = 0.18
 shadow_enabled = true
 shadow_opacity = 0.45
 shadow_blur = 4.0
@@ -230,7 +234,7 @@ visible = false
 
 [node name="Backdrop" parent="Location"]
 lit_windows = 0.0
-haze_color = Color(0.78, 0.78, 0.75, 1)
+haze_color = Color(0.44, 0.45, 0.46, 1)
 haze_density = 0.04
 wall_color = Color(0.3, 0.31, 0.33, 1)
 aerial = 0.0

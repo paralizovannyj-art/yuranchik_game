@@ -67,30 +67,30 @@ show_mesh = false
 [node name="KioskLight" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -38, 8, -81.8)
 light_color = Color(1, 0.75, 0.5, 1)
-light_energy = 1.2
-omni_range = 6
-omni_attenuation = 1.2
+light_energy = 0.7
+omni_range = 5
+omni_attenuation = 1.8
 
 [node name="KioskLight2" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32, 8, -81.8)
 light_color = Color(1, 0.75, 0.5, 1)
-light_energy = 1.2
-omni_range = 6
-omni_attenuation = 1.2
+light_energy = 0.7
+omni_range = 5
+omni_attenuation = 1.8
 
 [node name="KioskLight3" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32, 8, -81.8)
 light_color = Color(1, 0.75, 0.5, 1)
-light_energy = 1.2
-omni_range = 6
-omni_attenuation = 1.2
+light_energy = 0.7
+omni_range = 5
+omni_attenuation = 1.8
 
 [node name="KioskLight4" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 38, 8, -81.8)
 light_color = Color(1, 0.75, 0.5, 1)
-light_energy = 1.2
-omni_range = 6
-omni_attenuation = 1.2
+light_energy = 0.7
+omni_range = 5
+omni_attenuation = 1.8
 
 [node name="TramPole_mdl" parent="." instance=ExtResource("m2")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -90, 6, -91)

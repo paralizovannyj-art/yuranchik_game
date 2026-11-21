@@ -1,20 +1,21 @@
 [gd_scene format=3]
 
+[ext_resource type="Environment" path="res://assets/environments/night_exterior.tres" id="env_night"]
+[ext_resource type="Material" path="res://assets/environments/ps2_post_night.tres" id="post_night"]
 [ext_resource type="Script" path="res://scripts/levels/east_bridge.gd" id="lvl"]
 [ext_resource type="PackedScene" path="res://scenes/east_bridge/eb_location.tscn" id="loc"]
 [ext_resource type="PackedScene" uid="uid://l6yy2wslyolu" path="res://scenes/characters/player.tscn" id="player"]
 [ext_resource type="Script" uid="uid://c01wbk2jc6k0b" path="res://scripts/world/light_budget.gd" id="budget"]
-[ext_resource type="Shader" uid="uid://507jlrfn4qwu" path="res://shaders/ps2_post.gdshader" id="post"]
 [ext_resource type="Shader" uid="uid://cl2y4php6t33u" path="res://shaders/city_night_sky.gdshader" id="sky"]
 
 [sub_resource type="ShaderMaterial" id="sky_mat"]
 shader = ExtResource("sky")
-shader_parameter/zenith_color = Color(0.025, 0.025, 0.035, 1)
-shader_parameter/mid_color = Color(0.08, 0.065, 0.065, 1)
-shader_parameter/horizon_color = Color(0.3, 0.22, 0.17, 1)
-shader_parameter/ground_color = Color(0.05, 0.04, 0.035, 1)
+shader_parameter/zenith_color = Color(0.012, 0.012, 0.018, 1)
+shader_parameter/mid_color = Color(0.045, 0.038, 0.038, 1)
+shader_parameter/horizon_color = Color(0.2, 0.15, 0.11, 1)
+shader_parameter/ground_color = Color(0.03, 0.025, 0.022, 1)
 shader_parameter/glow_height = 0.25
-shader_parameter/glow_energy = 1.0
+shader_parameter/glow_energy = 0.85
 shader_parameter/glow_dir = Vector2(0, 1)
 shader_parameter/glow_back = 0.25
 shader_parameter/cloud_amount = 0.7
@@ -23,33 +24,6 @@ shader_parameter/cloud_speed = 0.004
 [sub_resource type="Sky" id="sky_res"]
 sky_material = SubResource("sky_mat")
 radiance_size = 0
-
-[sub_resource type="Environment" id="env"]
-background_mode = 2
-background_color = Color(0.03, 0.025, 0.03, 1)
-sky = SubResource("sky_res")
-ambient_light_source = 2
-ambient_light_color = Color(0.3, 0.27, 0.27, 1)
-ambient_light_energy = 0.25
-tonemap_mode = 2
-tonemap_exposure = 1.15
-glow_enabled = false
-glow_intensity = 0.8
-glow_strength = 1.2
-glow_bloom = 0.08
-glow_hdr_threshold = 1.0
-fog_enabled = true
-fog_light_color = Color(0.11, 0.09, 0.09, 1)
-fog_density = 0.006
-fog_aerial_perspective = 0.75
-fog_sky_affect = 0.2
-volumetric_fog_enabled = false
-volumetric_fog_density = 0.02
-volumetric_fog_albedo = Color(0.85, 0.85, 0.9, 1)
-volumetric_fog_anisotropy = 0.55
-volumetric_fog_length = 60.0
-volumetric_fog_ambient_inject = 0.12
-volumetric_fog_sky_affect = 0.0
 
 [sub_resource type="ParticleProcessMaterial" id="pm_snow"]
 emission_shape = 3
@@ -88,32 +62,18 @@ particles_anim_loop = false
 material = SubResource("mat_flake")
 size = Vector2(0.06, 0.06)
 
-[sub_resource type="ShaderMaterial" id="mat_post"]
-shader = ExtResource("post")
-shader_parameter/blur_px = 0.55
-shader_parameter/color_levels = 32.0
-shader_parameter/dither_strength = 1.0
-shader_parameter/black_crush = 0.06
-shader_parameter/s_curve = 0.55
-shader_parameter/saturation = 0.85
-shader_parameter/exposure = 1.1
-shader_parameter/shadow_tint = Color(0.03, 0.05, 0.06, 1)
-shader_parameter/highlight_tint = Color(1, 0.94, 0.86, 1)
-shader_parameter/halo = 0.0
-shader_parameter/grain = 0.045
-shader_parameter/vignette = 0.55
-
 [node name="EastBridge" type="Node3D"]
 script = ExtResource("lvl")
 bake_navigation = false
+sky_override = SubResource("sky_res")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource("env")
+environment = ExtResource("env_night")
 
 [node name="Moon" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.894, -0.293, 0.338, 0, 0.756, 0.655, -0.447, -0.586, 0.676, 0, 60, 0)
 light_color = Color(0.62, 0.62, 0.7, 1)
-light_energy = 0.08
+light_energy = 0.12
 shadow_enabled = true
 directional_shadow_max_distance = 80.0
 
@@ -130,7 +90,7 @@ draw_pass_1 = SubResource("mesh_flake")
 layer = 10
 
 [node name="Filter" type="ColorRect" parent="PS2Post"]
-material = SubResource("mat_post")
+material = ExtResource("post_night")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0

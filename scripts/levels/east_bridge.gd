@@ -6,10 +6,19 @@
 ## Дневная игровая версия — scenes/levels/east_bridge_day.tscn.
 extends Level
 
+## Своё небо поверх общего окружения assets/environments/night_exterior.tres: зарево только со стороны города.
+## Остальной свет (ambient, туман, тонмап) общий для всех ночных улиц — правится в .tres.
+@export var sky_override: Sky
+
 @onready var snowfall: GPUParticles3D = $Snowfall
 
 
 func _start() -> void:
+	if sky_override:
+		var we := $WorldEnvironment as WorldEnvironment
+		var env := we.environment.duplicate() as Environment
+		env.sky = sky_override
+		we.environment = env
 	Game.music("mus_drone", -18.0)
 	Game.set_objective("Перейти пути по мосту и спуститься к полю")
 	await after(2.0)

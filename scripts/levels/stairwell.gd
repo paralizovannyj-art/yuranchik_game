@@ -21,7 +21,7 @@ var _ended := false
 var _screen: StandardMaterial3D           ## материал экрана монитора: яркость свечения = «включён»
 var _light_on := false                    ## люстра в комнате
 var _light_busy := false                  ## идёт щелчок/моргание — второй раз не нажать
-var _room_energy := 2.2                   ## яркость люстры из инспектора (AptRoom)
+var _room_energy := 1.3                   ## яркость люстры из инспектора (AptRoom)
 var _bulb_glow := 1.0                     ## свечение плафонов при включённом свете
 var _bulbs: StandardMaterial3D            ## материал плафонов люстры (копия, чтобы гасить только их)
 var _switch_key: Node3D                   ## клавиша выключателя (качается)
@@ -122,7 +122,7 @@ func _use_pc(p: Player) -> void:
 	var tw := create_tween().set_parallel()
 	if _screen:
 		tw.tween_property(_screen, "emission_energy_multiplier", 0.9, 1.2)
-	tw.tween_property(monitor_light, "light_energy", 0.7, 1.2)
+	tw.tween_property(monitor_light, "light_energy", 0.5, 1.2)
 	Game.set_objective("Дома")
 	await after(1.5)
 	Game.say("Загудел. Старичок ещё живой.")

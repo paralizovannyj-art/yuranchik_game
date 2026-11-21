@@ -1,13 +1,13 @@
 [gd_scene format=3 uid="uid://d03vw664c2ifa"]
 
+[ext_resource type="Environment" path="res://assets/environments/night_exterior.tres" id="env_night"]
+[ext_resource type="Material" path="res://assets/environments/ps2_post_night.tres" id="post_night"]
 [ext_resource type="PackedScene" path="res://scenes/district/trees.tscn" id="17_jyjjd"]
 [ext_resource type="PackedScene" path="res://scenes/district/backdrop.tscn" id="backdrop"]
 [ext_resource type="Script" uid="uid://c01wbk2jc6k0b" path="res://scripts/world/light_budget.gd" id="budget"]
 [ext_resource type="PackedScene" path="res://scenes/district/details.tscn" id="details"]
 [ext_resource type="Script" uid="uid://du67ilqycurbt" path="res://scripts/levels/district.gd" id="lvl"]
 [ext_resource type="PackedScene" uid="uid://l6yy2wslyolu" path="res://scenes/characters/player.tscn" id="player"]
-[ext_resource type="Shader" uid="uid://507jlrfn4qwu" path="res://shaders/ps2_post.gdshader" id="post"]
-[ext_resource type="Shader" uid="uid://cl2y4php6t33u" path="res://shaders/city_night_sky.gdshader" id="sky"]
 [ext_resource type="PackedScene" path="res://scenes/district/terrain.tscn" id="terrain"]
 [ext_resource type="PackedScene" path="res://scenes/district/z1_prospect.tscn" id="z1_prospect"]
 [ext_resource type="PackedScene" path="res://scenes/district/z2_home_yard.tscn" id="z2_home_yard"]
@@ -21,48 +21,6 @@
 [ext_resource type="Script" path="res://scripts/world/pickup.gd" id="pick"]
 [ext_resource type="Script" path="res://scripts/world/flicker_light.gd" id="flicker"]
 [ext_resource type="PackedScene" path="res://assets/models/garage_yur.gltf" id="gyur"]
-
-[sub_resource type="ShaderMaterial" id="sky_mat"]
-shader = ExtResource("sky")
-shader_parameter/zenith_color = Color(0.012, 0.016, 0.03, 1)
-shader_parameter/mid_color = Color(0.07, 0.065, 0.07, 1)
-shader_parameter/horizon_color = Color(0.42, 0.25, 0.14, 1)
-shader_parameter/ground_color = Color(0.05, 0.04, 0.035, 1)
-shader_parameter/glow_height = 0.28
-shader_parameter/glow_energy = 1.3
-shader_parameter/cloud_amount = 0.6
-shader_parameter/cloud_speed = 0.004
-
-[sub_resource type="Sky" id="sky_res"]
-sky_material = SubResource("sky_mat")
-radiance_size = 0
-
-[sub_resource type="Environment" id="env"]
-background_mode = 2
-background_color = Color(0.015, 0.02, 0.035, 1)
-sky = SubResource("sky_res")
-ambient_light_source = 2
-ambient_light_color = Color(0.3, 0.42, 0.6, 1)
-ambient_light_energy = 0.3
-tonemap_mode = 2
-tonemap_exposure = 1.15
-glow_enabled = true
-glow_intensity = 1.3
-glow_strength = 1.2
-glow_bloom = 0.08
-glow_hdr_threshold = 0.75
-fog_enabled = true
-fog_light_color = Color(0.13, 0.1, 0.085, 1)
-fog_density = 0.012
-fog_aerial_perspective = 0.75
-fog_sky_affect = 0.2
-volumetric_fog_enabled = true
-volumetric_fog_density = 0.018
-volumetric_fog_albedo = Color(0.85, 0.85, 0.9, 1)
-volumetric_fog_anisotropy = 0.55
-volumetric_fog_length = 60.0
-volumetric_fog_ambient_inject = 0.12
-volumetric_fog_sky_affect = 0.0
 
 [sub_resource type="ParticleProcessMaterial" id="pm_snow"]
 emission_shape = 3
@@ -101,21 +59,6 @@ particles_anim_loop = false
 material = SubResource("mat_flake")
 size = Vector2(0.06, 0.06)
 
-[sub_resource type="ShaderMaterial" id="mat_post"]
-shader = ExtResource("post")
-shader_parameter/blur_px = 0.55
-shader_parameter/color_levels = 32.0
-shader_parameter/dither_strength = 1.0
-shader_parameter/black_crush = 0.06
-shader_parameter/s_curve = 0.55
-shader_parameter/saturation = 0.78
-shader_parameter/exposure = 1.1
-shader_parameter/shadow_tint = Color(0.03, 0.05, 0.09, 1)
-shader_parameter/highlight_tint = Color(1, 0.94, 0.86, 1)
-shader_parameter/halo = 0.25
-shader_parameter/grain = 0.045
-shader_parameter/vignette = 0.55
-
 [sub_resource type="StandardMaterial3D" id="mat_counter"]
 albedo_color = Color(0.13, 0.13, 0.14, 1)
 metallic = 0.6
@@ -131,12 +74,12 @@ tools_on_direct_start = false
 bake_navigation = false
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=577930107]
-environment = SubResource("env")
+environment = ExtResource("env_night")
 
 [node name="Moon" type="DirectionalLight3D" parent="." unique_id=98314682]
 transform = Transform3D(0.894, -0.293, 0.338, 0, 0.756, 0.655, -0.447, -0.586, 0.676, 0, 60, 0)
 light_color = Color(0.5, 0.65, 0.95, 1)
-light_energy = 0.22
+light_energy = 0.1
 shadow_enabled = true
 directional_shadow_max_distance = 80.0
 
@@ -153,7 +96,7 @@ draw_pass_1 = SubResource("mesh_flake")
 layer = 10
 
 [node name="Filter" type="ColorRect" parent="PS2Post" unique_id=1076606568]
-material = SubResource("mat_post")
+material = ExtResource("post_night")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -247,16 +190,17 @@ transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0.2, 3, -20.95)
 [node name="GarageLight" type="OmniLight3D" parent="Quest/GarageYur"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 1.95, -0.4)
 light_color = Color(1, 0.8, 0.55, 1)
-light_energy = 1.6
+light_energy = 1.7
 shadow_enabled = true
-omni_range = 7.0
-omni_attenuation = 1.3
+omni_range = 6.5
+omni_attenuation = 1.4
 
 [node name="Bulb" type="OmniLight3D" parent="Quest/GarageYur"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 2.75, 3.5)
 light_color = Color(1, 0.78, 0.5, 1)
-light_energy = 1.4
-omni_range = 6.0
+light_energy = 0.6
+omni_range = 4.5
+omni_attenuation = 1.8
 script = ExtResource("flicker")
 flicker_chance = 0.5
 

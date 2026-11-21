@@ -61,7 +61,7 @@ func _add_halo(l: Light3D) -> void:
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	m.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
 	m.albedo_texture = load("res://assets/materials/lamp_halo.tres").albedo_texture
-	m.albedo_color = Color(l.light_color.r, l.light_color.g, l.light_color.b, 0.95)
+	m.albedo_color = Color(l.light_color.r, l.light_color.g, l.light_color.b, 0.6)
 	m.disable_receive_shadows = true
 	var q := QuadMesh.new()
 	q.size = Vector2.ONE * float(l.get_meta("halo_size", 3.0))

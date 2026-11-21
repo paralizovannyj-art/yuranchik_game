@@ -1,5 +1,7 @@
 [gd_scene format=3]
 
+[ext_resource type="Environment" path="res://assets/environments/night_exterior.tres" id="env_night"]
+[ext_resource type="Material" path="res://assets/environments/ps2_post_night.tres" id="post_night"]
 [ext_resource type="Script" path="res://scripts/levels/playground.gd" id="lvl"]
 [ext_resource type="Script" path="res://scripts/tools/blockout_box.gd" id="box"]
 [ext_resource type="Script" path="res://scripts/tools/creature_showcase.gd" id="show"]
@@ -16,34 +18,6 @@
 [ext_resource type="Texture2D" path="res://assets/textures/enemy_a.png" id="tex_a"]
 [ext_resource type="Texture2D" path="res://assets/textures/enemy_b.png" id="tex_b"]
 [ext_resource type="Texture2D" path="res://assets/textures/enemy_c.png" id="tex_c"]
-[ext_resource type="Shader" path="res://shaders/ps2_post.gdshader" id="post"]
-
-[sub_resource type="Environment" id="env"]
-background_mode = 1
-background_color = Color(0.05, 0.06, 0.09, 1)
-ambient_light_source = 2
-ambient_light_color = Color(0.45, 0.52, 0.65, 1)
-ambient_light_energy = 0.55
-tonemap_mode = 2
-tonemap_exposure = 1.1
-glow_enabled = true
-glow_intensity = 0.8
-glow_hdr_threshold = 0.8
-fog_enabled = true
-fog_light_color = Color(0.1, 0.11, 0.14, 1)
-fog_density = 0.008
-
-[sub_resource type="ShaderMaterial" id="mat_post"]
-shader = ExtResource("post")
-shader_parameter/blur_px = 0.55
-shader_parameter/color_levels = 32.0
-shader_parameter/dither_strength = 1.0
-shader_parameter/black_crush = 0.06
-shader_parameter/s_curve = 0.55
-shader_parameter/saturation = 0.78
-shader_parameter/exposure = 1.1
-shader_parameter/shadow_tint = Color(0.03, 0.05, 0.09, 1)
-shader_parameter/highlight_tint = Color(1, 0.94, 0.86, 1)
 
 [node name="Playground" type="Node3D"]
 script = ExtResource("lvl")
@@ -52,12 +26,12 @@ sergey_scene = ExtResource("sergey")
 nav_bounds = AABB(-45, -1, -45, 90, 8, 90)
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource("env")
+environment = ExtResource("env_night")
 
 [node name="Moon" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.894, -0.293, 0.338, 0, 0.756, 0.655, -0.447, -0.586, 0.676, 0, 30, 0)
 light_color = Color(0.6, 0.7, 0.95, 1)
-light_energy = 0.45
+light_energy = 0.1
 shadow_enabled = true
 
 [node name="Ground" type="Node3D" parent="."]
@@ -147,16 +121,16 @@ title = "Хьюга"
 [node name="LightL" type="OmniLight3D" parent="Showcase"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 4, 2.5)
 light_color = Color(1, 0.86, 0.68, 1)
-light_energy = 2.0
+light_energy = 2.6
 shadow_enabled = true
-omni_range = 9.0
+omni_range = 10.0
 
 [node name="LightR" type="OmniLight3D" parent="Showcase"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 4, 2.5)
 light_color = Color(1, 0.86, 0.68, 1)
-light_energy = 2.0
+light_energy = 2.6
 shadow_enabled = true
-omni_range = 9.0
+omni_range = 10.0
 
 [node name="Sign" type="Label3D" parent="Showcase"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.6, -1)
@@ -222,7 +196,7 @@ item_id = "bottle"
 [node name="Light" type="OmniLight3D" parent="Items"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 3, 8.5)
 light_color = Color(1, 0.86, 0.68, 1)
-light_energy = 1.5
+light_energy = 1.0
 omni_range = 6.0
 
 [node name="Arena" type="Node3D" parent="."]
@@ -237,7 +211,7 @@ outline_size = 12
 [node name="Light" type="OmniLight3D" parent="Arena"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7, -22)
 light_color = Color(0.85, 0.9, 1, 1)
-light_energy = 2.5
+light_energy = 1.8
 shadow_enabled = true
 omni_range = 22.0
 
@@ -294,7 +268,7 @@ outline_size = 12
 [node name="Light" type="OmniLight3D" parent="Course"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 7, -1)
 light_color = Color(0.85, 0.9, 1, 1)
-light_energy = 2.5
+light_energy = 1.8
 shadow_enabled = true
 omni_range = 20.0
 
@@ -430,7 +404,7 @@ item_id = "bottle"
 layer = 10
 
 [node name="Filter" type="ColorRect" parent="PS2Post"]
-material = SubResource("mat_post")
+material = ExtResource("post_night")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
