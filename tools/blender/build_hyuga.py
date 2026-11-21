@@ -16,8 +16,12 @@
 #      и затенение (AO: лучи из каждой вершины по полусфере) — отсюда объём.
 #   Сравнение с фото под теми же ракурсами — tools/blender/hyuga_compare.py.
 #   4. Скелет — свой: таз, 2 позвонка, шея, голова, уши, хвост; передние лапы по 3 кости, задние по 4. Поза покоя — стоит.
+#      Листовые кости: Chest/Belly (масштаб раздувает бока при дыхании), LidL/LidR (закрытые веки — в покое
+#      утоплены в голову, во сне выдвигаются на глаза).
 #   5. Анимации — процедурные ключи: Idle (4 с), Walk (рысь на месте, 0.8 с), Sniff (нюхает землю, 3 с),
-#      LookAround (4 с). Все зациклены.
+#      LookAround (4 с), Sleep (спит клубком на боку и дышит, 4.5 с, референс hyuga_sleep_ref.webp). Все зациклены.
+#      Добавочные (только отклонение от покоя, для наложения поверх Sleep): SleepTwitchEar, SleepTwitchPaw, SleepSigh.
+#      В игре: scripts/world/hyuga_sleep.gd (диван в scenes/levels/stairwell.tscn).
 #
 # Масштаб: французский бульдог в холке ≈ 0.30 м, макушка ≈ 0.45 м, кончики ушей ≈ 0.52 м
 # (Юрчик — 1.783 м: собака ему чуть ниже колена).
@@ -68,6 +72,7 @@ LEFT_BONES = [
     ("Hock", (0.074, 0.158, 0.068), (0.071, 0.160, 0.022), "Shin"),
     ("Foot", (0.071, 0.160, 0.022), (0.071, 0.126, 0.010), "Hock"),
     ("Ear", (0.052, -0.198, 0.414), (0.090, -0.196, 0.505), "Head"),
+    ("Lid", (0.048, -0.262, 0.374), (0.048, -0.290, 0.374), "Head"),    # веко: в покое спрятано в голове
 ]
 BONES = [
     ("Hips", (0, 0.140, 0.238), (0, 0.040, 0.238), None),
@@ -76,6 +81,9 @@ BONES = [
     ("Neck", (0, -0.112, 0.258), (0, -0.178, 0.338), "Spine2"),
     ("Head", (0, -0.178, 0.338), (0, -0.205, 0.450), "Neck"),
     ("Tail", (0, 0.210, 0.250), (0, 0.229, 0.224), "Hips"),
+    # дыхание: листовые кости в середине груди и живота — их масштаб раздувает бока и брюхо (хребет не трогают)
+    ("Chest", (0, -0.075, 0.212), (0, -0.125, 0.212), "Spine2"),
+    ("Belly", (0, 0.045, 0.214), (0, -0.005, 0.214), "Spine1"),
 ]
 LEG_DX = {"Shoulder": 0.008, "Forearm": 0.008, "Paw": 0.008, "Thigh": 0.006, "Shin": 0.006, "Hock": 0.006,
           "Foot": 0.006}                                      # лапы чуть шире груди (широкая постановка)
@@ -132,7 +140,7 @@ def inv_leg(P, k):
 
 
 def bone_final(n, h, t):
-    if n == "Head" or n.startswith("Ear"):
+    if n == "Head" or n.startswith("Ear") or n.startswith("Lid"):
         return xf_head(h), xf_head(t)
     if n == "Neck":
         return xf_body(h), xf_head(t)
@@ -333,6 +341,58 @@ def build_ear(mb, sx):
         loft(mb, rows, "ear%s_%s" % (S_, layer), tag, closed=False, mat=1, direction=d)
 
 
+LID_R = (0.0195, 0.0175)     # полуоси века (поперёк, вверх): закрывает глаз вместе с тёмным ободком
+LID_IN = 0.016               # насколько веко утоплено в голову в покое (по нормали глаза, чертёжные метры)
+
+
+def head_th(z, x):
+    """Угол сечения головы на высоте z, при котором точка лица имеет абсциссу x (лицевая сторона)."""
+    lo, hi = 0.0, math.radians(85) * (1 if x >= 0 else -1)
+    for _ in range(40):
+        mid = (lo + hi) / 2
+        if (head_pt(z, mid)[0] < x) == (x >= 0):
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi) / 2
+
+
+def eye_frame(ex, ez):
+    """Центр глаза на поверхности головы и наружная нормаль (чертёжные координаты)."""
+    th = head_th(ez, ex)
+    c = Vector(head_pt(ez, th))
+    du = Vector(head_pt(ez, th + 0.02)) - Vector(head_pt(ez, th - 0.02))
+    dv = Vector(head_pt(ez + 0.002, th)) - Vector(head_pt(ez - 0.002, th))
+    n = du.cross(dv).normalized()
+    if n.y > 0:
+        n = -n
+    return c, n
+
+
+def build_lid(mb, sx):
+    """Закрытое веко: выпуклая пластинка поверх глаза (повторяет поверхность головы, в середине чуть выпуклее).
+    Строится на месте — так запекаются цвет и AO, потом (lids_hide) утапливается в голову; в позе сна
+    кость LidL/LidR выдвигает его обратно."""
+    S_ = "L" if sx > 0 else "R"
+    ex, ez = EYES[0 if sx < 0 else 1]
+    c, n = eye_frame(ex, ez)
+    w = {"Lid" + S_: 1.0}
+    rows = []
+    NU, NV = 7, 7
+    for j in range(NV):
+        v = (j / (NV - 1)) * 2 - 1
+        z = ez + v * LID_R[1] * 1.08
+        row = []
+        for i in range(NU):
+            u = (i / (NU - 1)) * 2 - 1
+            x = ex + u * LID_R[0] * 1.08 * sx
+            p = Vector(head_pt(z, head_th(z, x)))
+            dome = max(0.0, 1 - u * u - v * v)
+            row.append(p + n * (0.0014 + 0.0022 * dome))
+        rows.append(mb.ring(row, w))
+    loft(mb, rows, "lid" + S_, "lid", closed=False, mat=1, direction=n)
+
+
 def flat_sole(mb, a, z0=0.003):
     """Подошва лапы — плоская (вершины ниже z0 прижимаются к полу)."""
     for i in range(a, len(mb.co)):
@@ -386,7 +446,7 @@ def build_all():
         a = len(mb.co); fn(); parts.append((a, len(mb.co), xf))
     part(lambda: build_torso(mb), xf_body)
     part(lambda: (build_neck(mb), build_collar(mb)), None)
-    part(lambda: (build_head(mb), build_ear(mb, 1), build_ear(mb, -1)), xf_head)
+    part(lambda: (build_head(mb), build_ear(mb, 1), build_ear(mb, -1), build_lid(mb, 1), build_lid(mb, -1)), xf_head)
     part(lambda: (build_front_leg(mb, 1), build_front_leg(mb, -1)), xf_legf)
     part(lambda: (build_rear_leg(mb, 1), build_rear_leg(mb, -1)), xf_legr)
     part(lambda: build_tail(mb), xf_body)
@@ -403,7 +463,7 @@ def build_all():
 def vertex_ao(mb, me, fsel, used, rays=48, maxd=0.10):
     from mathutils.bvhtree import BVHTree
     verts = [tuple(c) for c in mb.co]
-    polys = [mb.faces[f] for f in fsel if not str(mb.ftag[f]).startswith("ear")]
+    polys = [mb.faces[f] for f in fsel if not str(mb.ftag[f]).startswith(("ear", "lid"))]
     g = len(verts)
     verts += [(-2, -2, 0), (2, -2, 0), (2, 2, 0), (-2, 2, 0)]
     polys.append((g, g + 1, g + 2, g + 3))
@@ -601,6 +661,24 @@ def paint_ear(tag, P, N, u, v):
     return c, alpha
 
 
+def paint_lid(P, N):
+    """Закрытый глаз: тёмное тигровое веко, по нижней трети — дуга-щёлка (складка век) с ресницами,
+    над ней веко чуть светлее (выпуклость глазного яблока). Края — альфой по эллипсу."""
+    x, z = P[:, 0], P[:, 2]
+    ex = np.where(x >= 0, EYES[1][0], EYES[0][0]); ez = EYES[0][1]
+    dx, dz = (x - ex) / LID_R[0], (z - ez) / LID_R[1]
+    e = dx ** 2 + dz ** 2
+    alpha = (e < 1.0).astype(np.float32)
+    c = mix(brindle(P), col((0.30, 0.28, 0.27)), np.clip(0.35 - 0.35 * e, 0, 0.35))      # выпуклость светлее
+    slit = -0.22 - 0.16 * (1 - np.clip(dx, -1, 1) ** 2)                                      # дуга чуть книзу
+    line = np.clip(1 - np.abs(dz - slit) / 0.10, 0, 1) * np.clip((0.92 - np.abs(dx)) / 0.15, 0, 1)
+    c = mix(c, col((0.015, 0.012, 0.012)), line)
+    lash = np.clip(1 - np.abs(dz - slit + 0.13) / 0.06, 0, 1) * np.clip((0.75 - np.abs(dx)) / 0.2, 0, 1)
+    c = mix(c, col((0.06, 0.05, 0.05)), 0.5 * lash)
+    c = mix(c, col((0.04, 0.035, 0.035)), np.clip((e - 0.70) / 0.30, 0, 1) * 0.6)          # край сливается с ободком
+    return c, alpha
+
+
 def paint_paw(P, N, u, v):
     c = white_coat(P) * col((0.98, 0.96, 0.94))
     toes = (v > 0.45) & (np.abs(u - 0.5) < 0.30)
@@ -627,7 +705,7 @@ def paint_collar(P, N, u, v):
 def paint(tag, refs, P, N, LUV):
     n = len(P); alpha = np.ones(n, np.float32)
     # обратно в чертёжные координаты (в них размечены пятна и морда)
-    if tag in ("head", "ear_in", "ear_out"):
+    if tag in ("head", "ear_in", "ear_out", "lid"):
         P = inv_head(P)
     elif tag == "leg_f":
         P = inv_leg(P, "f")
@@ -651,6 +729,9 @@ def paint(tag, refs, P, N, LUV):
         c = finish(coat(P, N, right), P, N)
     elif tag == "paw":
         c = finish(paint_paw(P, N, u, v), P, N, dirt_k=0.8)
+    elif tag == "lid":
+        c, alpha = paint_lid(P, N)
+        c = finish(c, P, N)
     elif tag in ("ear_in", "ear_out"):
         c, alpha = paint_ear(tag, P, N, u, v)
         c = c * np.atleast_1d(ao)[:, None] if _AO is not None else c
@@ -727,6 +808,42 @@ def save_atlas(rgba):
     return img
 
 
+def breath_weights(mb):
+    """Бока и брюхо туловища частично переходят с позвонков на Chest/Belly (их дети, в покое совпадают с ними —
+    остальные анимации не меняются). Хребет остаётся на позвонках: при вдохе раздуваются только бока."""
+    ys = [r[0] * SY for r in T_ST]; zs = [r[1] for r in T_ST]
+    body = {i for f, t in enumerate(mb.ftag) if t == "body" for i in mb.faces[f]}
+    for vid in body:
+        p = mb.co[vid]
+        zc = float(np.interp(p.y, ys, zs))
+        ang = math.atan2(abs(p.x), p.z - zc)                  # 0 — хребет, π — брюхо
+        f = 0.9 * smooth((ang - 0.45) / 1.2)
+        w = mb.w[vid]
+        for src, dst in (("Spine2", "Chest"), ("Spine1", "Belly")):
+            if src in w and f > 0:
+                w[dst] = w.get(dst, 0.0) + w[src] * f
+                w[src] *= 1 - f
+
+
+def lids_hide(mb, me, used):
+    """Веки (уже раскрашенные на месте) утапливаются в голову: в покое и в дневных анимациях их не видно."""
+    remap = {v: k for k, v in enumerate(used)}
+    for S_ in "LR":
+        ex, ez = EYES[1 if S_ == "L" else 0]
+        n = eye_frame(ex, ez)[1] * HEAD_S
+        for vid, w in enumerate(mb.w):
+            if w.get("Lid" + S_, 0) > 0.5 and vid in remap:
+                mb.co[vid] = mb.co[vid] - n * LID_IN
+                me.vertices[remap[vid]].co = mb.co[vid]
+    me.update()
+
+
+def lid_open_vec(S_):
+    """Сдвиг кости века (в пространстве скелета) — выдвигает веко на глаз."""
+    ex, ez = EYES[1 if S_ == "L" else 0]
+    return tuple(eye_frame(ex, ez)[1] * HEAD_S * LID_IN)
+
+
 def rig(ob, used, mb, sc):
     arm_data = bpy.data.armatures.new("HyugaRig")
     arm = bpy.data.objects.new("Hyuga", arm_data)
@@ -741,6 +858,7 @@ def rig(ob, used, mb, sc):
             b.use_connect = False
     bpy.ops.object.mode_set(mode='OBJECT')
     groups = {n: ob.vertex_groups.new(name=n) for n, *_ in BONES}
+    breath_weights(mb)
     for k, vid in enumerate(used):
         w = {b: x for b, x in mb.w[vid].items() if x > 1e-4}
         tot = sum(w.values())
@@ -836,22 +954,165 @@ def pose_walk(t, L):
     return p
 
 
-def key_pose(arm, pose, f):
-    loc = pose.pop("_loc", {})
+LOC_BONES = ("Hips", "LidL", "LidR")      # сдвиг ключуется у этих костей (в пространстве скелета)
+SCL_BONES = ("Chest", "Belly")            # масштаб (дыхание) — у этих; во всех анимациях, по умолчанию покой
+
+
+def set_pose(arm, pose):
+    pose = dict(pose)
+    loc = pose.pop("_loc", {}); scl = pose.pop("_scl", {})
     for pb in arm.pose.bones:
         pb.rotation_mode = 'QUATERNION'
         pb.rotation_quaternion = qw(arm, pb.name, pose.get(pb.name, []))
+    for n in LOC_BONES:
+        rq = arm.data.bones[n].matrix_local.to_quaternion()
+        arm.pose.bones[n].location = rq.inverted() @ Vector(loc.get(n, (0, 0, 0)))
+    for n in SCL_BONES:
+        arm.pose.bones[n].scale = scl.get(n, (1, 1, 1))
+
+
+# ---------- Сон (референс docs/references/hyuga/hyuga_sleep_ref.webp): клубком на боку ----------
+# Поза задана для «лежит на левом боку» и зеркалится (SLEEP_DOWN = "R" — на правом, как на фото): тело
+# повалено на бок, позвоночник согнут дугой (нос тянется к задним лапам), лапы и морда — внутрь клубка,
+# спина — снаружи. Hips задаёт и наклон, и сдвиг: SLEEP_LOC
+# подбирается автоматически (fit_sleep) — середина клубка над началом координат, нижняя точка чуть
+# утоплена в плед (SLEEP_SINK).
+SLEEP_L = 4.5
+SLEEP_SINK = 0.006
+SLEEP_LOC = (0.0, 0.0, 0.0)
+
+
+SLEEP_ROLL = 80                                       # насколько повалена на левый бок
+SLEEP_CURL = {"Spine1": -70, "Spine2": -70, "Neck": -30, "Head": -55, "Tail": -40}   # изгиб клубка по кости
+
+
+def sleep_base():
+    """Клубок: каждая кость гнётся вокруг ВЕРТИКАЛИ мира (ось, которая после завала на бок смотрит вверх),
+    поэтому дуга ложится в плоскость пледа: бок — сгиб в сторону, спина — сгиб вниз в нужной пропорции.
+    Подобрано по рендерам (sleep_ref/sleep_top) против референса."""
+    c, s = math.cos(math.radians(SLEEP_ROLL)), math.sin(math.radians(SLEEP_ROLL))
+
+    def bend(th):
+        return [("z", c * th), ("x", -s * th)]
+    p = {
+        "Hips": [("y", SLEEP_ROLL)],
+        "Spine1": bend(SLEEP_CURL["Spine1"]), "Spine2": bend(SLEEP_CURL["Spine2"]),
+        "Neck": [("y", -20)] + bend(SLEEP_CURL["Neck"]) + [("z", 20)],               # шея опускает голову на плед
+        "Head": [("y", -25)] + bend(SLEEP_CURL["Head"]) + [("x", 25)],               # морда подогнута к задним лапам
+        "Tail": bend(SLEEP_CURL["Tail"]),                                            # хвостик прижат
+        "EarL": [("x", -90), ("z", -45)], "EarR": [("x", -60), ("z", -60)],          # уши мягко назад, не торчат
+    }
+    for S_, add in (("L", 10), ("R", -35)):          # нижние лапы на пледе, верхние свешены на них
+        p["Shoulder" + S_] = [("x", 55), ("y", add)]
+        p["Forearm" + S_] = [("x", 120)]             # передние подогнуты под грудь
+        p["Paw" + S_] = [("x", -20)]
+        p["Thigh" + S_] = [("x", -100), ("y", add)]  # задние поджаты к животу
+        p["Shin" + S_] = [("x", 110)]
+        p["Hock" + S_] = [("x", -80)]
+        p["Foot" + S_] = [("x", 30)]
+    return mirror_pose(p) if SLEEP_DOWN == "R" else p
+
+
+SLEEP_DOWN = "R"        # на каком боку лежит: как на референсе — на правом (голова слева, спина от зрителя)
+SLEEP_UP = "L" if SLEEP_DOWN == "R" else "R"
+
+
+def mirror_pose(p):
+    """Зеркало позы слева направо: L↔R, повороты вокруг Y и Z меняют знак, сдвиги — по X."""
+    sw = lambda n: n[:-1] + {"L": "R", "R": "L"}[n[-1]] if n[-1:] in ("L", "R") and n not in ("Hips",) else n
+    out = {}
+    for n, v in p.items():
+        if n.startswith("_"):
+            out[n] = {sw(k): ((-x[0], x[1], x[2]) if n == "_loc" else x) for k, x in v.items()}
+        else:
+            out[sw(n)] = [(a, -d if a in ("y", "z") else d) for a, d in v]
+    return out
+
+
+def breath_curve(t, L=SLEEP_L):
+    """Дыхание спящей собаки: короткий вдох (1.4 с), длинный выдох (2.3 с), пауза до конца цикла. 0…1."""
+    t = t % L
+    if t < 1.4:
+        return smooth(t / 1.4)
+    return 1.0 - smooth((t - 1.4) / 2.3)
+
+
+def pose_sleep(t, L):
+    p = sleep_base()
+    b = breath_curve(t, L)
+    b2 = breath_curve(t - 0.18, L)                                  # живот чуть отстаёт от груди
+    p["Spine1"] = p["Spine1"] + [("x", -0.7 * b2)]
+    p["Spine2"] = p["Spine2"] + [("x", -0.6 * b)]
+    p["Neck"] = p["Neck"] + [("x", 0.5 * b)]
+    p["Head"] = p["Head"] + [("x", -0.35 * b)]
+    p["_scl"] = {"Chest": (1 + 0.024 * b, 1 + 0.006 * b, 1 + 0.022 * b),
+                 "Belly": (1 + 0.020 * b2, 1 + 0.004 * b2, 1 + 0.018 * b2)}
+    p["_loc"] = {"Hips": SLEEP_LOC, "LidL": lid_open_vec("L"), "LidR": lid_open_vec("R")}
+    return p
+
+
+# Дрёма — короткие ДОБАВОЧНЫЕ анимации: только отклонение от покоя, без позы сна. В игре они
+# накладываются поверх Sleep (AnimationNodeOneShot в режиме ADD, scripts/world/hyuga_sleep.gd), со
+# случайной паузой — повтор не читается. Все начинаются и заканчиваются в нуле.
+def pose_twitch_ear(t, L):
+    """Верхнее ухо дважды вздрагивает, нижнее — чуть-чуть следом."""
+    k = math.exp(-((t - 0.35) / 0.07) ** 2) + 0.6 * math.exp(-((t - 0.78) / 0.06) ** 2)
+    k2 = 0.35 * math.exp(-((t - 0.95) / 0.08) ** 2)
+    p = {"EarR": [("x", 16 * k), ("y", -6 * k)], "EarL": [("x", 10 * k2)]}      # записано для «верхнее — R»
+    return mirror_pose(p) if SLEEP_UP == "L" else p
+
+
+def pose_twitch_paw(t, L):
+    """Верхняя передняя лапа «бежит во сне»: три мелких толчка, гаснущих к концу."""
+    env = smooth(t / 0.3) * (1 - smooth((t - L + 0.6) / 0.6))
+    s = math.sin(2 * math.pi * t * 2.2) * env
+    p = {"ForearmR": [("x", -7 * s)], "PawR": [("x", 9 * s)], "ShoulderR": [("x", -3 * s)]}
+    return mirror_pose(p) if SLEEP_UP == "L" else p
+
+
+def pose_sigh(t, L):
+    """Вздох: глубокий вдох (1.1 с), задержка, короткий выдох-«пых» и медленный довыдох."""
+    s = smooth(t / 1.1) if t < 1.3 else (1 - 0.7 * smooth((t - 1.3) / 0.5)) if t < 1.8 \
+        else 0.3 * (1 - smooth((t - 1.8) / (L - 1.8)))
+    return {
+        "Spine1": [("x", -1.5 * s)], "Spine2": [("x", -1.2 * s)],
+        "Neck": [("x", -2.2 * s)], "Head": [("x", 1.2 * s)],
+        "_scl": {"Chest": (1 + 0.026 * s, 1 + 0.006 * s, 1 + 0.024 * s),
+                 "Belly": (1 + 0.022 * s, 1 + 0.004 * s, 1 + 0.020 * s)},
+    }
+
+
+def fit_sleep(arm, body):
+    """Подбирает сдвиг таза для позы сна: середина клубка над началом координат, низ — на SLEEP_SINK в пледе."""
+    global SLEEP_LOC
+    p = sleep_base()
+    p["_loc"] = {"LidL": lid_open_vec("L"), "LidR": lid_open_vec("R")}
+    set_pose(arm, p)
+    bpy.context.view_layer.update()
+    dg = bpy.context.evaluated_depsgraph_get()
+    ev = body.evaluated_get(dg)
+    me = ev.to_mesh()
+    co = np.empty(len(me.vertices) * 3, np.float32); me.vertices.foreach_get("co", co); co = co.reshape(-1, 3)
+    ev.to_mesh_clear()
+    mn, mx = co.min(axis=0), co.max(axis=0)
+    SLEEP_LOC = (-(mn[0] + mx[0]) / 2, -(mn[1] + mx[1]) / 2, -mn[2] - SLEEP_SINK)
+    return {"loc": [round(float(v), 4) for v in SLEEP_LOC], "size": [round(float(v), 3) for v in (mx - mn)]}
+
+
+def key_pose(arm, pose, f):
+    set_pose(arm, pose)
+    for pb in arm.pose.bones:
         pb.keyframe_insert("rotation_quaternion", frame=f, group=pb.name)
-    hb = arm.pose.bones["Hips"]
-    rq = arm.data.bones["Hips"].matrix_local.to_quaternion()
-    hb.location = rq.inverted() @ Vector(loc.get("Hips", (0, 0, 0)))
-    hb.keyframe_insert("location", frame=f, group="Hips")
+    for n in LOC_BONES:
+        arm.pose.bones[n].keyframe_insert("location", frame=f, group=n)
+    for n in SCL_BONES:
+        arm.pose.bones[n].keyframe_insert("scale", frame=f, group=n)
 
 
 def make_anim(arm, name, L, fn, step=2):
     ac = M["new_action"](arm, name)
     N = int(round(L * FPS))
-    for f in range(0, N + 1, step):
+    for f in sorted(set(range(0, N, step)) | {N}):          # последний кадр всегда = первому (шов цикла)
         key_pose(arm, fn(f / FPS if f < N else 0.0, L), f)
     M["push_nla"](arm, ac, name)
     return {"frames": N + 1, "len_s": L}
@@ -860,7 +1121,7 @@ def make_anim(arm, name, L, fn, step=2):
 def reset_pose(arm):
     for pb in arm.pose.bones:
         pb.rotation_mode = 'QUATERNION'
-        pb.rotation_quaternion = Quaternion(); pb.location = (0, 0, 0)
+        pb.rotation_quaternion = Quaternion(); pb.location = (0, 0, 0); pb.scale = (1, 1, 1)
 
 
 def export_gltf(sc, arm, body):
@@ -879,7 +1140,13 @@ PREVIEW_VIEWS = [  # имя, направление на камеру — как
 ]
 
 
-def preview(sc, body, views=PREVIEW_VIEWS):
+SLEEP_VIEWS = [  # поза сна: как на референсе (сверху-сбоку ≈45°, со стороны лап), сверху, сзади по спине
+    ("sleep_ref", (-1.0, -1.2, 1.1)), ("sleep_face", (-0.5, 0.866, 1.0)), ("sleep_top", (0.0, 0.0, 1.0)),
+    ("sleep_side", (0.5, 0.866, 0.35)),
+]
+
+
+def preview(sc, body, views=PREVIEW_VIEWS, target=(0.0, 0.0, 0.25), prefix="hyuga_"):
     """Превью в нескольких ракурсах — для сравнения с фото."""
     if not PREVIEW:
         return
@@ -896,9 +1163,9 @@ def preview(sc, body, views=PREVIEW_VIEWS):
     cam = bpy.data.objects.new("HyugaPrevCam", cam_d); sc.collection.objects.link(cam); sc.camera = cam
     for tag, d in views:
         d = Vector(d).normalized()
-        cam.location = Vector((0.0, 0.0, 0.25)) + d * 3
-        cam.rotation_euler = (-d).to_track_quat('-Z', 'Y').to_euler()
-        sc.render.filepath = os.path.join(PREVIEW, "hyuga_%s.png" % tag)
+        cam.location = Vector(target) + d * 3
+        cam.rotation_euler = (-d).to_track_quat('-Z', 'Y' if abs(d.z) < 0.99 else 'X').to_euler()
+        sc.render.filepath = os.path.join(PREVIEW, "%s%s.png" % (prefix, tag))
         bpy.ops.render.render(write_still=True)
     bpy.data.objects.remove(cam, do_unlink=True); bpy.data.cameras.remove(cam_d)
     sc.render.engine = keep[0]; sc.camera = keep[1]
@@ -935,7 +1202,8 @@ def main():
     Y["ATLAS"] = ATLAS
     dens = {"head": 3.0, "body": 1.0, "neck": 1.2, "collar": 0.9, "tail": 0.9}
     for S_ in "LR":
-        dens.update({"ear%s_in" % S_: 1.6, "ear%s_out" % S_: 1.1, "f_paw" + S_: 1.4, "r_paw" + S_: 1.3})
+        dens.update({"ear%s_in" % S_: 1.6, "ear%s_out" % S_: 1.1, "f_paw" + S_: 1.4, "r_paw" + S_: 1.3,
+                     "lid" + S_: 4.0})
     Y["ISL_DENS"] = dens
     Y["paint"] = paint
     mb = build_all()
@@ -953,20 +1221,33 @@ def main():
     for m, a in zip(mats, (False, True)):
         Y["make_material"](m.name, img, a)
     info["atlas_fill"] = round(float((Tb >= 0).mean()), 3)
+    lids_hide(mb, body.data, used)
 
     arm = rig(body, used, mb, sc)
     select_only(sc, [arm], arm)
     bpy.ops.object.mode_set(mode='POSE')
+    info["sleep_fit"] = fit_sleep(arm, body)
     info["anims"] = {
         "Idle": make_anim(arm, "Idle", 4.0, pose_idle),
         "Walk": make_anim(arm, "Walk", 0.8, pose_walk, step=1),
         "Sniff": make_anim(arm, "Sniff", 3.0, pose_sniff),
         "LookAround": make_anim(arm, "LookAround", 4.0, pose_look),
+        "Sleep": make_anim(arm, "Sleep", SLEEP_L, pose_sleep),
+        "SleepTwitchEar": make_anim(arm, "SleepTwitchEar", 1.4, pose_twitch_ear, step=1),
+        "SleepTwitchPaw": make_anim(arm, "SleepTwitchPaw", 2.0, pose_twitch_paw, step=1),
+        "SleepSigh": make_anim(arm, "SleepSigh", 3.6, pose_sigh),
     }
     reset_pose(arm)
     bpy.ops.object.mode_set(mode='OBJECT')
     export_gltf(sc, arm, body)
     preview(sc, body)
+    if PREVIEW:
+        select_only(sc, [arm], arm)
+        bpy.ops.object.mode_set(mode='POSE')
+        set_pose(arm, pose_sleep(0.0, SLEEP_L))
+        bpy.ops.object.mode_set(mode='OBJECT')
+        preview(sc, body, SLEEP_VIEWS, target=(0.0, 0.0, 0.10))
+        reset_pose(arm)
     scene_extras(sc)
     ad = arm.animation_data
     ad.action = bpy.data.actions.get("Idle")

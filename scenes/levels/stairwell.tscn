@@ -46,6 +46,8 @@
 [ext_resource type="PackedScene" uid="uid://croox3oqoauym" path="res://assets/models/yurchik_room/speaker_right.gltf" id="yr_speaker_right"]
 [ext_resource type="PackedScene" uid="uid://bnesos10o64a6" path="res://assets/models/yurchik_room/tablecloth.gltf" id="yr_tablecloth"]
 [ext_resource type="PackedScene" uid="uid://dt5hl2fwaucnw" path="res://assets/models/yurchik_room/wall_writing.gltf" id="yr_wall_writing"]
+[ext_resource type="PackedScene" uid="uid://bxiqfdp41657s" path="res://assets/models/hyuga.gltf" id="hyuga"]
+[ext_resource type="Script" uid="uid://d0u12p31p4ak6" path="res://scripts/world/hyuga_sleep.gd" id="hyuga_sleep"]
 
 [sub_resource type="Environment" id="env"]
 background_mode = 1
@@ -115,6 +117,18 @@ size = Vector3(0.04, 2.035, 0.85)
 
 [sub_resource type="BoxShape3D" id="apt_box"]
 size = Vector3(1.5, 2.2, 1.9)
+
+[sub_resource type="Gradient" id="grad_hyuga_shadow"]
+offsets = PackedFloat32Array(0, 0.55, 1)
+colors = PackedColorArray(0, 0, 0, 0.8, 0, 0, 0, 0.45, 0, 0, 0, 0)
+
+[sub_resource type="GradientTexture2D" id="tex_hyuga_shadow"]
+gradient = SubResource("grad_hyuga_shadow")
+width = 64
+height = 64
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(0.5, 0)
 
 [sub_resource type="ShaderMaterial" id="mat_post"]
 shader = ExtResource("post")
@@ -247,6 +261,17 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.325, 9.28, -2.91)
 
 [node name="LightSwitch" parent="YurchikRoom" unique_id=781452663 instance=ExtResource("yr_light_switch")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.333, 9.872, -2.1)
+
+[node name="Hyuga" parent="YurchikRoom" unique_id=1349220817 instance=ExtResource("hyuga")]
+transform = Transform3D(-0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, -0.70710677, -8.0, 8.85, -2.15)
+script = ExtResource("hyuga_sleep")
+
+[node name="HyugaShadow" type="Decal" parent="YurchikRoom" unique_id=1349220818]
+transform = Transform3D(-0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, -0.70710677, -8.0, 8.9, -2.15)
+size = Vector3(0.5, 0.2, 0.44)
+texture_albedo = SubResource("tex_hyuga_shadow")
+modulate = Color(0.35, 0.3, 0.28, 1)
+cull_mask = 1047551
 
 [node name="RoomWindow" parent="." unique_id=1427705113 instance=ExtResource("rwindow")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5, 9.3, -1.76)
