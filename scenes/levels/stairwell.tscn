@@ -3,6 +3,8 @@
 [ext_resource type="PackedScene" uid="uid://b2v10hwbmdio1" path="res://assets/models/gaming_chair.gltf" id="14_x75pi"]
 [ext_resource type="Script" uid="uid://dxqi43eh4md3p" path="res://scripts/world/door.gd" id="door"]
 [ext_resource type="Script" uid="uid://bsrgiiid28yqq" path="res://scripts/world/flicker_light.gd" id="flicker"]
+[ext_resource type="PackedScene" uid="uid://bxiqfdp41657s" path="res://assets/models/hyuga.gltf" id="hyuga"]
+[ext_resource type="Script" uid="uid://d0u12p31p4ak6" path="res://scripts/world/hyuga_sleep.gd" id="hyuga_sleep"]
 [ext_resource type="Script" uid="uid://cle5irdo5k1bj" path="res://scripts/world/interactable.gd" id="inter"]
 [ext_resource type="Script" uid="uid://bs6tfuxihjm01" path="res://scripts/levels/stairwell.gd" id="lvl"]
 [ext_resource type="PackedScene" uid="uid://c2auofh1kjct5" path="res://assets/models/stairwell.gltf" id="model"]
@@ -46,8 +48,6 @@
 [ext_resource type="PackedScene" uid="uid://croox3oqoauym" path="res://assets/models/yurchik_room/speaker_right.gltf" id="yr_speaker_right"]
 [ext_resource type="PackedScene" uid="uid://bnesos10o64a6" path="res://assets/models/yurchik_room/tablecloth.gltf" id="yr_tablecloth"]
 [ext_resource type="PackedScene" uid="uid://dt5hl2fwaucnw" path="res://assets/models/yurchik_room/wall_writing.gltf" id="yr_wall_writing"]
-[ext_resource type="PackedScene" uid="uid://bxiqfdp41657s" path="res://assets/models/hyuga.gltf" id="hyuga"]
-[ext_resource type="Script" uid="uid://d0u12p31p4ak6" path="res://scripts/world/hyuga_sleep.gd" id="hyuga_sleep"]
 
 [sub_resource type="Environment" id="env"]
 background_mode = 1
@@ -70,6 +70,16 @@ volumetric_fog_albedo = Color(0.8, 0.82, 0.85, 1)
 volumetric_fog_anisotropy = 0.4
 volumetric_fog_length = 30.0
 volumetric_fog_ambient_inject = 0.05
+
+[sub_resource type="Gradient" id="grad_hyuga_shadow"]
+offsets = PackedFloat32Array(0, 0.55, 1)
+colors = PackedColorArray(0, 0, 0, 0.8, 0, 0, 0, 0.45, 0, 0, 0, 0)
+
+[sub_resource type="GradientTexture2D" id="tex_hyuga_shadow"]
+gradient = SubResource("grad_hyuga_shadow")
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(0.5, 0)
 
 [sub_resource type="ParticleProcessMaterial" id="pm_snow_out"]
 emission_shape = 3
@@ -117,18 +127,6 @@ size = Vector3(0.04, 2.035, 0.85)
 
 [sub_resource type="BoxShape3D" id="apt_box"]
 size = Vector3(1.5, 2.2, 1.9)
-
-[sub_resource type="Gradient" id="grad_hyuga_shadow"]
-offsets = PackedFloat32Array(0, 0.55, 1)
-colors = PackedColorArray(0, 0, 0, 0.8, 0, 0, 0, 0.45, 0, 0, 0, 0)
-
-[sub_resource type="GradientTexture2D" id="tex_hyuga_shadow"]
-gradient = SubResource("grad_hyuga_shadow")
-width = 64
-height = 64
-fill = 1
-fill_from = Vector2(0.5, 0.5)
-fill_to = Vector2(0.5, 0)
 
 [sub_resource type="ShaderMaterial" id="mat_post"]
 shader = ExtResource("post")
@@ -263,11 +261,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.325, 9.28, -2.91)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.333, 9.872, -2.1)
 
 [node name="Hyuga" parent="YurchikRoom" unique_id=1349220817 instance=ExtResource("hyuga")]
-transform = Transform3D(0.5, 0, -0.8660254, 0, 1, 0, 0.8660254, 0, 0.5, -8.0, 8.85, -2.15)
+transform = Transform3D(0.5, 0, -0.8660254, 0, 1, 0, 0.8660254, 0, 0.5, -8, 8.85, -2.15)
 script = ExtResource("hyuga_sleep")
 
 [node name="HyugaShadow" type="Decal" parent="YurchikRoom" unique_id=1349220818]
-transform = Transform3D(0.5, 0, -0.8660254, 0, 1, 0, 0.8660254, 0, 0.5, -8.0, 8.9, -2.15)
+transform = Transform3D(0.5, 0, -0.8660254, 0, 1, 0, 0.8660254, 0, 0.5, -8, 8.9, -2.15)
 size = Vector3(0.5, 0.2, 0.44)
 texture_albedo = SubResource("tex_hyuga_shadow")
 modulate = Color(0.35, 0.3, 0.28, 1)
@@ -359,7 +357,6 @@ shadow_normal_bias = 0.2
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.05, 8.45, -1.47)
 light_color = Color(1, 0.78, 0.55, 1)
 light_energy = 0.8
-shadow_enabled = true
 shadow_bias = 0.02
 shadow_normal_bias = 0.2
 omni_range = 1.6
