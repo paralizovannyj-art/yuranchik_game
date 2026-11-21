@@ -371,29 +371,7 @@ def stairwell(M):
         st.cyl((0.06, FL_Y1, h + 0.92), (-0.06, FL_Y1, h + 0.92), 0.025, 0.025, M["green_metal"], segs=4)
         st.cyl((-0.06, FL_Y0, z0 + FH + 0.92), (0.06, FL_Y0, z0 + FH + 0.92), 0.025, 0.025, M["green_metal"], segs=4)
 
-    # --- квартира Юрчика: прихожая. Сама комната — отдельная модель (tools/blender/build_yurchik_room.py) ---
-    wp, pq = M["wallpaper"], M["parquet"]
-    AH = 2.7                                                      # как у комнаты
-    cx0, cx1, cy0, cy1 = -6.2, -HALL_W - 0.2, 0.2, 2.3            # коридор
-    WP = (1.0, 1.0)
-    b.box((cx0, cy0, Z3 - 0.1), (cx1, cy1, Z3), {'+Z': pq}, scale=(1.5, 1.5))
-    b.box((cx0, cy0, Z3 + AH), (cx1, cy1, Z3 + AH + 0.1), {'-Z': ceil}, scale=(1, 1))
-    b.box((cx0, cy0 - 0.2, Z3), (cx1, cy0, Z3 + AH), {'+Y': wp}, scale=WP)
-    b.box((cx0, cy1, Z3), (cx1, cy1 + 0.2, Z3 + AH), {'-Y': wp}, scale=WP)
-    # стена у входа (со стороны квартиры)
-    b.box((cx1, cy0, Z3), (cx1 + 0.01, DOOR_Y0, Z3 + AH), {'-X': wp}, scale=WP)
-    b.box((cx1, DOOR_Y1, Z3), (cx1 + 0.01, cy1, Z3 + AH), {'-X': wp}, scale=WP)
-    b.box((cx1, DOOR_Y0, Z3 + DOOR_H), (cx1 + 0.01, DOOR_Y1, Z3 + AH), {'-X': wp}, scale=WP)
-    # стена между коридором и комнатой с проёмом y 1.05..1.9 (сторону комнаты рисует модель комнаты)
-    for (ya, yb, za, zb) in ((-0.6, 1.05, Z3, Z3 + AH), (1.9, 3.9, Z3, Z3 + AH), (1.05, 1.9, Z3 + 2.05, Z3 + AH)):
-        b.box((cx0 - 0.12, ya, za), (cx0, yb, zb), {'+X': wp, '+Y': wp, '-Y': wp, '-Z': wp}, scale=WP)
-    wood, fab = M["wood"], M["fabric"]
-    allf = lambda m: {k_: m for k_ in ('+X', '-X', '+Y', '-Y', '+Z')}
-    # прихожая: вешалка с курткой, полка для обуви
-    b.box((-5.6, cy0, Z3 + 1.65), (-4.2, cy0 + 0.06, Z3 + 1.75), allf(wood), scale=(1, 1))
-    b.box((-5.3, cy0 + 0.02, Z3 + 0.75), (-4.8, cy0 + 0.20, Z3 + 1.68), allf(fab), scale=(0.5, 0.5))
-    b.box((-5.6, cy0, Z3), (-4.4, cy0 + 0.32, Z3 + 0.38), allf(wood), scale=(1, 1))
-    b.box((cx0 + 1.4, 1.2, Z3 + AH - 0.22), (cx0 + 1.52, 1.32, Z3 + AH - 0.1), {kk: (M["glass"], (0, 0, 1, 1)) for kk in ('+X', '-X', '+Y', '-Y', '-Z')})
+    # --- квартира Юрчика (прихожая, коридор, комната) — отдельные модели: build_apartment.py и build_yurchik_room.py ---
 
     main = b.build("Stairwell", coll)
     steps = st.build("Stairs_nocol", coll)

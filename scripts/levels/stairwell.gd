@@ -32,6 +32,9 @@ func _start() -> void:
 	Game.music("mus_drone", -14.0)
 	Game.set_objective("Подняться к себе — квартира 47, четвёртый этаж")
 	_door = $Stairwell.find_child("AptDoor", true, false) as Node3D
+	var inside := get_node_or_null("Apartment/EntryDoorIn") as Node3D   # сторона двери из квартиры — ездит вместе со створкой
+	if _door and inside:
+		inside.reparent(_door, true)
 	apt_use.interacted.connect(_open_apartment)
 	apt_trigger.body_entered.connect(_on_apartment)
 	pc_use.interacted.connect(_use_pc)
@@ -89,8 +92,8 @@ func _on_apartment(body: Node3D) -> void:
 func _start_in_room() -> void:
 	_ended = true
 	_set_warm()
-	var at := Vector3(-7.9, 8.45, -1.45)
-	var yaw := -0.45                              # лицом к столу с компом
+	var at := Vector3(-6.8, 8.45, 3.88)           # комната повёрнута на 90° (конец коридора, build_apartment.py)
+	var yaw := -0.45 + PI / 2                     # лицом к столу с компом
 	player.global_position = at
 	player.velocity = Vector3.ZERO
 	player.cam_yaw = yaw
