@@ -4,11 +4,11 @@
 ## Цвет, яркость и мигание меняются в инспекторе.
 extends Node3D
 
-@export var color := Color(1, 0.52, 0.18):           ## натриевый оранжевый; белый — ртутная лампа
+@export var color := Color(0.95, 0.58, 0.22):        ## грязный натриевый; белый — ртутная лампа
 	set(v):
 		color = v
 		_apply()
-@export var energy := 36.0                           ## яркость конуса
+@export var energy := 22.0                           ## яркость конуса: тусклое пятно под фонарём, вокруг — темнота
 @export var flicker := false:                        ## мигает (старая лампа)
 	set(v):
 		flicker = v
@@ -26,6 +26,7 @@ extends Node3D
 	set(v):
 		halo_size = v
 		_apply()
+@export_range(0.0, 1.0) var halo_alpha := 0.5      ## яркость ореола: выше — плафон превращается в светящийся шар
 
 const SPARKLE_SHADER := preload("res://shaders/lamp_sparkle.gdshader")
 
@@ -65,5 +66,5 @@ func _apply() -> void:
 		var m := halo.mesh.surface_get_material(0) if halo.mesh else null
 		if m:
 			m = m.duplicate()
-			m.albedo_color = Color(color.r, color.g, color.b, 0.9)
+			m.albedo_color = Color(color.r, color.g, color.b, halo_alpha)
 			halo.material_override = m

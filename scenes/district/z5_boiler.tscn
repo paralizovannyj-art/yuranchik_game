@@ -57,17 +57,17 @@
 [node name="ChimneyRed" type="OmniLight3D" parent="." groups=["landmark"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 92, 44.5, 30)
 light_color = Color(1, 0.1, 0.05, 1)
-light_energy = 6
-omni_range = 18
-omni_attenuation = 1.2
+light_energy = 3
+omni_range = 12
+omni_attenuation = 1.6
 metadata/halo_size = 3
 
 [node name="ChimneyRed2" type="OmniLight3D" parent="." groups=["landmark"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 92, 30, 30)
 light_color = Color(1, 0.1, 0.05, 1)
-light_energy = 4
-omni_range = 12
-omni_attenuation = 1.2
+light_energy = 2
+omni_range = 9
+omni_attenuation = 1.6
 metadata/halo_size = 2.2
 
 [node name="PipeStepN" type="Node3D" parent="."]

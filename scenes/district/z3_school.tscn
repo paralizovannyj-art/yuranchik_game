@@ -61,9 +61,9 @@ show_mesh = false
 [node name="FloodLight" type="OmniLight3D" parent="." groups=["landmark"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 75, 16.5, -49)
 light_color = Color(0.82, 0.9, 1, 1)
-light_energy = 4
-omni_range = 35
-omni_attenuation = 1.2
+light_energy = 2
+omni_range = 22
+omni_attenuation = 1.6
 metadata/halo_size = 5
 script = ExtResource("L1")
 flicker_chance = 0.35

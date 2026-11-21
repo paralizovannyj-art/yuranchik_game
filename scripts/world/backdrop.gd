@@ -9,7 +9,7 @@ extends Node3D
 	set(v):
 		lit_windows = v
 		_apply()
-@export var haze_color := Color(0.13, 0.1, 0.085):            ## во что дома тают вдали (цвет тумана сцены)
+@export var haze_color := Color(0.04, 0.035, 0.035):          ## во что дома тают вдали (цвет тумана сцены)
 	set(v):
 		haze_color = v
 		_apply()
@@ -17,7 +17,7 @@ extends Node3D
 	set(v):
 		haze_density = v
 		_apply()
-@export var lights_energy := 1.0:                             ## яркость дальних огней
+@export var lights_energy := 0.6:                             ## яркость дальних огней
 	set(v):
 		lights_energy = v
 		_apply()

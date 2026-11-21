@@ -91,15 +91,15 @@ far = 1200.0
 
 [node name="Flashlight" type="SpotLight3D" parent="CamPivot/Camera" unique_id=1677952294]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.18, -0.22, -0.05)
-light_color = Color(0.95, 0.96, 1, 1)
-light_energy = 9.0
-light_volumetric_fog_energy = 1.2
+light_color = Color(1, 0.93, 0.8, 1)
+light_energy = 8.0
+light_volumetric_fog_energy = 0.6
 shadow_enabled = true
 shadow_caster_mask = 4294443007
-spot_range = 20.0
-spot_attenuation = 0.8
-spot_angle = 22.0
-spot_angle_attenuation = 1.4
+spot_range = 18.0
+spot_attenuation = 0.9
+spot_angle = 20.0
+spot_angle_attenuation = 2.2
 
 [node name="BreathParticles" type="GPUParticles3D" parent="CamPivot/Camera" unique_id=2071320922]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.062128425, -0.17409149)
