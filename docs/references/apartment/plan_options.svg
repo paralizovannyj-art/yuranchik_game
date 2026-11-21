@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 760" width="1240" height="760" font-family="Segoe UI, Arial, sans-serif">
+<!-- План квартиры 47, вид сверху. Координаты Blender, м (x вправо, y вверх = вглубь дома; в Godot z = −y). Сгенерирован скриптом. -->
+<defs>
+ <pattern id="plam" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#ead0a6"/><path d="M0 4H8" stroke="#d2ab78"/></pattern>
+ <pattern id="plamv" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#ead0a6"/><path d="M4 0V8" stroke="#d2ab78"/></pattern>
+ <pattern id="pst" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#dde2df"/><path d="M0 6L6 0" stroke="#c3cac6"/></pattern>
+ <marker id="arr" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1f6feb"/></marker>
+ <style>
+  .wall{fill:#4a4036}.lam{fill:url(#plam)}.lamv{fill:url(#plamv)}.stair{fill:url(#pst)}
+  .carpet{fill:#2f4f3c;stroke:#c9b27a;stroke-width:2}.furn{fill:#efe4cf;stroke:#7a6a55;stroke-width:1.2}
+  .bags{fill:#6b5b4b}.dark{fill:#1d1d1d}.door{fill:#fff;stroke:#7a6a55;stroke-width:1.2}
+  .amber{fill:#e6a84b;stroke:#7a5a25;stroke-width:1.2}.brown{fill:#5a2e1e}
+  .pilaster{fill:#efe9da;stroke:#4a4036;stroke-width:2}.roomfl{fill:#f3efe6}.sofa{fill:#c9b8a0}
+  .rdoor{fill:#fff;stroke:#e6a84b;stroke-width:2}.win{fill:#a9d4f5;stroke:#2c6e9e}.sw{fill:#fff;stroke:#333}
+  .swing{fill:none;stroke:#b07a2a;stroke-dasharray:3 2}
+  .old{fill:none;stroke:#c0392b;stroke-width:1.6;stroke-dasharray:6 4}
+  .old_t{font-size:11px;fill:#c0392b}
+  .sm{font-size:11px;fill:#333}.cw{font-size:11px;fill:#efe3b8}.lbl{font-size:13px;font-weight:700;fill:#222}
+  .cam{font-size:13px;font-weight:700;fill:#1f6feb}
+  .title{font-size:17px;font-weight:700;fill:#111}.note{font-size:12.5px;fill:#333}
+ </style>
+</defs>
+<rect width="1240" height="760" fill="#fbfaf7"/>
+<text x="30" y="30" class="title">Вариант А — Г-образная, как на фото (рекомендую)</text>
+<text x="30" y="50" class="note">От входной двери — прихожая, в её конце поворот налево в узкий коридор, в конце коридора — дверь комнаты.</text>
+<text x="640" y="110" class="title">Вариант Б — «ступенька», всё по одной линии</text>
+<text x="640" y="130" class="note">Коридор продолжает прихожую прямо, комната сдвигается на 3.6 м дальше от входа.</text>
+<rect x="422.0" y="166.8" width="78.4" height="145.6" class="stair" style=""/>
+<text x="427.6" y="203.2" class="sm" text-anchor="start">площадка</text>
+<text x="427.6" y="214.4" class="sm" text-anchor="start">подъезда</text>
+<rect x="410.8" y="267.6" width="11.2" height="44.8" class="wall" style=""/>
+<rect x="410.8" y="166.8" width="11.2" height="50.4" class="wall" style=""/>
+<rect x="412.5" y="217.2" width="7.8" height="50.4" class="brown" style=""/>
+<text x="427.6" y="329.2" class="sm" text-anchor="start">входная дверь</text>
+<text x="427.6" y="340.4" class="sm" text-anchor="start">(остаётся на месте)</text>
+<rect x="181.2" y="189.2" width="229.6" height="98.0" class="lam" style=""/>
+<rect x="170.0" y="178.0" width="240.8" height="11.2" class="wall" style=""/>
+<rect x="237.2" y="287.2" width="173.6" height="11.2" class="wall" style=""/>
+<rect x="170.0" y="178.0" width="11.2" height="263.2" class="wall" style=""/>
+<rect x="237.2" y="287.2" width="11.2" height="154.0" class="wall" style=""/>
+<rect x="228.8" y="220.0" width="162.4" height="44.8" class="carpet" style=""/>
+<text x="310.0" y="246.9" class="cw" text-anchor="middle">зелёная дорожка</text>
+<rect x="234.4" y="189.2" width="84.0" height="33.6" class="furn" style=""/>
+<text x="276.4" y="208.8" class="sm" text-anchor="middle">шкаф-купе</text>
+<rect x="206.4" y="189.2" width="25.2" height="16.8" class="furn" style=""/>
+<circle cx="219.3" cy="197.6" r="4" style="fill:#f2c200;stroke:#7a5a00"/>
+<rect x="182.3" y="190.3" width="21.3" height="24.1" class="bags" style=""/>
+<line x1="235.5" y1="221.7" x2="228.8" y2="192.0" style="stroke:#a0784a;stroke-width:3"/>
+<text x="186.8" y="166.8" class="sm" text-anchor="start">пакеты · полочка с жёлтой лампой · картина и постер · швабра</text>
+<rect x="256.8" y="288.3" width="67.2" height="9.0" class="amber" style=""/>
+<path d="M256.8 287.2 A33.6 33.6 0 0 1 290.4 253.6" class="swing"/>
+<path d="M324.0 287.2 A33.6 33.6 0 0 0 290.4 253.6" class="swing"/>
+<circle cx="251.2" cy="274.3" r="8" style="fill:#8f7a55;stroke:#4a3a20"/>
+<circle cx="275.3" cy="277.7" r="7" style="fill:#444"/>
+<text x="296.0" y="312.4" class="sm" text-anchor="middle">двустворчатая дверь</text>
+<text x="296.0" y="323.6" class="sm" text-anchor="middle">с янтарным стеклом,</text>
+<text x="296.0" y="334.8" class="sm" text-anchor="middle">перед ней пылесос</text>
+<text x="296.0" y="346.0" class="sm" text-anchor="middle">и плетёная корзина</text>
+<circle cx="346.4" cy="284.4" r="3" style="fill:#333"/>
+<text x="346.4" y="277.7" class="sm" text-anchor="middle">крючки</text>
+<rect x="366.0" y="288.3" width="33.6" height="9.0" class="door" style=""/>
+<text x="382.8" y="312.4" class="sm" text-anchor="middle">узкая белая</text>
+<text x="382.8" y="323.6" class="sm" text-anchor="middle">(санузел)</text>
+<circle cx="406.3" cy="242.4" r="5" style="fill:#ffcc66;stroke:#8a6a20"/>
+<text x="396.8" y="206.0" class="sm" text-anchor="end">бра</text>
+<rect x="232.7" y="282.7" width="18.5" height="18.5" class="pilaster" style=""/>
+<line x1="181.2" y1="287.2" x2="237.2" y2="287.2" style="stroke:#4a4036;stroke-width:2;stroke-dasharray:5 3"/>
+<text x="254.0" y="404.8" class="sm" text-anchor="start">выступ — угол</text>
+<text x="254.0" y="416.0" class="sm" text-anchor="start">у начала коридора</text>
+<rect x="181.2" y="287.2" width="56.0" height="154.0" class="lamv" style=""/>
+<rect x="170.0" y="236.8" width="11.2" height="44.8" class="door" style=""/>
+<text x="164.4" y="256.4" class="sm" text-anchor="end">белая дверь</text>
+<text x="164.4" y="267.6" class="sm" text-anchor="end">(заперта)</text>
+<rect x="181.2" y="329.2" width="22.4" height="30.8" class="dark" style=""/>
+<text x="164.4" y="340.4" class="sm" text-anchor="end">тумбочка</text>
+<rect x="170.0" y="376.8" width="11.2" height="44.8" class="door" style=""/>
+<text x="164.4" y="396.4" class="sm" text-anchor="end">белая дверь</text>
+<text x="164.4" y="407.6" class="sm" text-anchor="end">(заперта)</text>
+<rect x="181.2" y="365.6" width="2.2" height="5.6" class="sw" style=""/>
+<text x="254.0" y="368.4" class="sm" text-anchor="start">коридор</text>
+<text x="254.0" y="379.6" class="sm" text-anchor="start">1.0 × 2.75 м</text>
+<rect x="63.6" y="441.2" width="187.6" height="252.0" class="wall" style=""/>
+<rect x="74.8" y="447.9" width="165.2" height="234.1" class="roomfl" style=""/>
+<rect x="186.8" y="439.0" width="47.6" height="11.2" class="rdoor" style=""/>
+<text x="254.0" y="432.8" class="sm" text-anchor="start">дверь комнаты (полотенце, «злая собака»)</text>
+<rect x="74.8" y="518.5" width="53.2" height="157.9" class="sofa" style=""/>
+<text x="101.7" y="598.0" class="sm" text-anchor="middle" transform="rotate(-90 101.7 598.0)">диван</text>
+<rect x="74.8" y="450.7" width="36.4" height="63.3" class="dark" style=""/>
+<text x="116.8" y="480.4" class="sm" text-anchor="start">стол, комп</text>
+<rect x="117.9" y="682.0" width="76.7" height="6.7" class="win" style=""/>
+<text x="156.0" y="704.4" class="sm" text-anchor="middle">окно (вид из окна поворачивается вместе с комнатой)</text>
+<text x="157.7" y="564.4" class="lbl" text-anchor="middle">комната Юрчика</text>
+<text x="157.7" y="578.4" class="sm" text-anchor="middle">всё внутри как сейчас,</text>
+<text x="157.7" y="589.6" class="sm" text-anchor="middle">только повёрнута на 90°</text>
+<rect x="2.0" y="94.0" width="234.1" height="165.2" class="old" style=""/>
+<text x="32.8" y="133.2" class="old_t" text-anchor="start">сейчас комната здесь</text>
+<circle cx="206.4" cy="239.6" r="6" style="fill:#1f6feb"/>
+<line x1="206.4" y1="239.6" x2="206.4" y2="278.8" style="stroke:#1f6feb;stroke-width:3;marker-end:url(#arr)"/>
+<text x="212.0" y="234.0" class="cam">1</text>
+<circle cx="212.0" cy="264.8" r="6" style="fill:#1f6feb"/>
+<line x1="212.0" y1="264.8" x2="254.0" y2="264.8" style="stroke:#1f6feb;stroke-width:3;marker-end:url(#arr)"/>
+<text x="214.8" y="277.7" class="cam">2</text>
+<text x="186.8" y="136.0" class="sm" text-anchor="start">прихожая 4.1 × 1.75 м</text>
+<rect x="1080.8" y="204.6" width="53.2" height="98.8" class="stair" style=""/>
+<text x="1084.6" y="229.3" class="sm" text-anchor="start">площадка</text>
+<text x="1084.6" y="236.9" class="sm" text-anchor="start">подъезда</text>
+<rect x="1073.2" y="273.0" width="7.6" height="30.4" class="wall" style=""/>
+<rect x="1073.2" y="204.6" width="7.6" height="34.2" class="wall" style=""/>
+<rect x="1074.3" y="238.8" width="5.3" height="34.2" class="brown" style=""/>
+<rect x="921.2" y="227.4" width="152.0" height="66.5" class="lam" style=""/>
+<rect x="816.7" y="219.8" width="256.5" height="7.6" class="wall" style=""/>
+<rect x="921.2" y="293.9" width="152.0" height="7.6" class="wall" style=""/>
+<rect x="913.6" y="265.4" width="7.6" height="36.1" class="wall" style=""/>
+<rect x="816.7" y="265.4" width="104.5" height="7.6" class="wall" style=""/>
+<rect x="951.6" y="252.1" width="106.4" height="28.5" class="carpet" style=""/>
+<rect x="955.4" y="227.4" width="53.2" height="22.8" class="furn" style=""/>
+<rect x="959.2" y="294.7" width="45.6" height="6.1" class="amber" style=""/>
+<rect x="911.7" y="258.6" width="12.5" height="12.5" class="pilaster" style=""/>
+<rect x="816.7" y="227.4" width="104.5" height="38.0" class="lam" style=""/>
+<rect x="894.6" y="219.8" width="26.6" height="7.6" class="door" style=""/>
+<rect x="871.8" y="227.4" width="19.0" height="15.2" class="dark" style=""/>
+<rect x="830.0" y="219.8" width="26.6" height="7.6" class="door" style=""/>
+<rect x="650.3" y="147.6" width="166.4" height="127.3" class="wall" style=""/>
+<rect x="657.9" y="155.2" width="154.3" height="112.1" class="roomfl" style=""/>
+<rect x="810.6" y="231.2" width="7.6" height="32.3" class="rdoor" style=""/>
+<rect x="653.3" y="184.5" width="4.6" height="52.1" class="win" style=""/>
+<text x="735.0" y="206.5" class="lbl" text-anchor="middle">комната Юрчика</text>
+<text x="735.0" y="217.9" class="sm" text-anchor="middle">как есть, на 3.6 м дальше</text>
+<rect x="795.8" y="155.2" width="158.8" height="112.1" class="old" style=""/>
+<text x="993.4" y="212.2" class="sm" text-anchor="start">шкаф</text>
+<text x="982.0" y="312.9" class="sm" text-anchor="middle">двустворчатая</text>
+<text x="868.0" y="210.3" class="sm" text-anchor="middle">2 двери, тумбочка</text>
+<text x="917.4" y="312.9" class="sm" text-anchor="middle">выступ</text>
+<circle cx="928.8" cy="242.6" r="6" style="fill:#1f6feb"/>
+<line x1="928.8" y1="242.6" x2="902.2" y2="242.6" style="stroke:#1f6feb;stroke-width:3;marker-end:url(#arr)"/>
+<text x="928.8" y="236.9" class="cam">1</text>
+<text x="640" y="395" class="title">Сравнение</text>
+<text x="640" y="422" class="note">А:  + совпадают оба фото: с поворота двустворчатая дверь видна «в лоб», рядом выступ и коридор;</text>
+<text x="640" y="440" class="note">        с другой стороны — прихожая со шкафом слева и дверью со стеклом справа.</text>
+<text x="640" y="458" class="note">      + квартира компактная, вся слева от подъезда, через его стены ничего не торчит.</text>
+<text x="640" y="476" class="note">      − комнату целиком (мебель, окно, вид из окна, свет, выключатель, комп) поворачиваю на 90°.</text>
+<text x="640" y="494" class="note">        Внутри комнаты ничего не меняется, просто окно «смотрит» в другую сторону света.</text>
+<text x="640" y="520" class="note">Б:  + проще: комнату только сдвинуть, повороты не нужны.</text>
+<text x="640" y="538" class="note">      − поворота из фото 1 нет: двустворчатая дверь с того места видна сбоку, а не «в лоб»;</text>
+<text x="640" y="556" class="note">        квартира становится длинной «трубой» ~10 м — по фото так не выглядит.</text>
+<text x="640" y="590" class="note">В обоих вариантах без изменений: входная дверь, ключ, «Дома.», выключатель, комп, финал.</text>
+<text x="640" y="608" class="note">Отладочный старт в комнате (клавиша Home) переставлю под новое место.</text>
+<text x="640" y="626" class="note">Закрытые двери (зал, санузел, две в коридоре) — только декор, ответ «Не сейчас.»</text>
+<text x="640" y="652" class="note">Потолок везде 2.7 м, как в комнате. Красный пунктир — где комната стоит сейчас.</text>
+<text x="640" y="670" class="note">Синие стрелки — откуда сняты фото: 1 — к комнате, 2 — к выходу.</text>
+</svg>
