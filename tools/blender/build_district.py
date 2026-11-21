@@ -1,4 +1,5 @@
-# Дома микрорайона «Паскот» (этап B, docs/CITY_PLAN.md): параметрическая сборка low-poly моделей
+# 2026-11-21: район урезан до двора Юрчика, генераторы блокаута (tools/make_district_blockout.py, tools/apply_district_*.py) и их .json удалены — без них скрипт не запустится. Готовые модели двора — в assets/models/district/.
+# Дома микрорайона «Паскот»: параметрическая сборка low-poly моделей
 # ровно по габаритам серых блоков. Список домов — tools/district_buildings.json
 # (его пишет tools/make_district_blockout.py --json-only). Результат — assets/models/district/<id>.gltf
 # и сцена «District» в Blender (дома разложены в ряд), сохраняется в tools/blender/district.blend.
