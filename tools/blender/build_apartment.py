@@ -60,8 +60,8 @@ DH = 2.05                                            # высота дверны
 # проёмы: (начало, конец, высота, сквозной?) — вдоль стены
 ENTRY = (0.8, 1.7)                                   # входная дверь (стена x = HX1), сквозной в подъезд
 ROOM_DOOR = (-7.25, -6.40)                           # дверь комнаты (стена y = CY0), сквозной в комнату
-DOUBLE_DOOR = (-5.90, -4.70)                         # двустворчатая со стеклом (стена y = HY0)
-WC_DOOR = (-4.00, -3.40)                             # узкая белая у входа (стена y = HY0)
+DOUBLE_DOOR = (-5.50, -4.40)                         # двустворчатая со стеклом (стена y = HY0)
+WC_DOOR = (-3.95, -3.40)                             # узкая белая у входа (стена y = HY0)
 WEST_DOORS = ((0.60, 1.40), (-1.90, -1.10))          # две белые двери справа по коридору (стена x = HX0)
 RUNNER = (-6.45, -3.55, 0.85, 1.67)                  # ковровая дорожка x0, x1, y0, y1
 
@@ -91,56 +91,79 @@ def _voronoi(w, h, n, rng, jitter=0.85, ny=None):
     return d1, d2, idx
 
 
-def tex_wall():
-    """Стены: бежево-жёлтая декоративная штукатурка «под камень» (как на обоих фото): крупные плиты 0.5–0.7 м,
-    чуть вытянутые по горизонтали, как кладка; между ними тонкие бледные швы-трещины с тенью снизу и светлой кромкой
-    сверху (рельеф «запечён», свет сверху-слева); плиты немного разного тона, мелкая рельефная шероховатость,
-    тёплые желтовато-зелёные разводы. Тайл 2 x 2 м, 256 px."""
-    rng = np.random.default_rng(4701)
-    w = h = 256
+def _blocks(w, h, rng, rows, cuts, warp):
+    """Тайлящаяся «каменная кладка» из рядов: высота ряда h/rows, в каждом ряду cuts стыков в случайных местах,
+    все швы чуть волнистые (warp, px). Возвращает расстояние до ближайшего шва (px) и номер плиты."""
     yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
-    wx = (noise(w, h, 5, 5, rng, oct=3) - 0.5) * 14
-    wy = (noise(w, h, 5, 5, rng, oct=3) - 0.5) * 10
-    d1, d2, idx = _voronoi(w, h, 3, rng, 0.8, ny=4)
-    sx = ((xx + wx) % w).astype(int); sy = ((yy + wy) % h).astype(int)
-    d1, d2, idx = d1[sy, sx], d2[sy, sx], idx[sy, sx]
-    edge = d2 - d1                                                   # 0 на шве
-    seam = np.exp(-(edge / 1.1) ** 2)
-    below = np.clip(np.roll(seam, -1, 0) - seam, 0, 1)               # тень у нижнего края шва
-    above = np.clip(np.roll(np.roll(seam, 2, 0), 1, 1) - seam, 0, 1) # светлая кромка сверху
-    tone = (0.93 + 0.12 * rng.random(16).astype(np.float32))[idx]
-    arr = np.ones((h, w, 3), np.float32) * C(0.87, 0.79, 0.58)
+    sx = (xx + (noise(w, h, 6, 6, rng, oct=3) - 0.5) * warp) % w
+    sy = (yy + (noise(w, h, 6, 6, rng, oct=3) - 0.5) * warp) % h
+    rh = h / rows
+    r = np.minimum((sy // rh).astype(int), rows - 1)
+    fy = sy - r * rh
+    K = cuts + 1
+    CU = np.full((rows, K), np.inf, np.float32)
+    for i in range(rows):
+        k = max(2, cuts + int(rng.integers(-1, 2)))
+        CU[i, :k] = np.sort(rng.random(k) * w)
+    d = np.full((h, w), 1e9, np.float32); cnt = np.zeros((h, w), int)
+    for k in range(K):
+        ck = CU[r, k]
+        dk = np.abs(sx - ck); dk = np.minimum(dk, w - dk)
+        d = np.where(np.isfinite(ck), np.minimum(d, dk), d)
+        cnt += (sx > ck) & np.isfinite(ck)
+    edge = np.minimum(np.minimum(fy, rh - fy), d)
+    return edge, r * 16 + cnt
+
+
+def _stone(w, h, rng, base, rows, cuts, warp, pebble, cracks=0.22, seams=0.45, diag=0):
+    """Декоративная штукатурка «под камень» (оба фото): плиты рядами, тонкие тёмные швы с тенью снизу и светлой
+    кромкой сверху, плиты чуть разного тона, по всему — мелкая «шагрень» (pebble — сила), волосяные трещины."""
+    edge, bid = _blocks(w, h, rng, rows, cuts, warp)
+    seam = np.exp(-(edge / 0.8) ** 2)
+    below = np.clip(np.roll(seam, -1, 0) - seam, 0, 1)
+    above = np.clip(np.roll(np.roll(seam, 2, 0), 1, 1) - seam, 0, 1)
+    tone = (0.94 + 0.10 * rng.random(16 * 64).astype(np.float32))[bid % (16 * 64)]
+    arr = np.ones((h, w, 3), np.float32) * C(*base)
     arr *= tone[..., None]
-    arr *= (0.95 + 0.05 * smoothstep(0.0, 16.0, edge))[..., None]   # плита чуть выпуклая
-    # мелкий рельеф «шпателя»: бугорки с тенью
-    bump = noise(w, h, 48, 48, rng, oct=2)
+    arr *= (0.96 + 0.04 * smoothstep(0.0, 10.0, edge))[..., None]
+    bump = noise(w, h, w // 3, h // 3, rng, oct=2)                                   # «шагрень»: бугорки с тенью
     relief = bump - np.roll(np.roll(bump, 1, 0), 1, 1)
-    arr *= (0.98 + 0.6 * relief)[..., None]
-    arr *= (0.93 + 0.10 * noise(w, h, 12, 12, rng, oct=3))[..., None]
-    arr *= (1 + 0.18 * above)[..., None]
-    arr *= (1 - 0.32 * seam - 0.15 * below)[..., None]
-    # тонкие волосяные трещины внутри плит (не везде)
-    n2 = noise(w, h, 6, 6, rng, oct=3)
-    hair = np.exp(-((n2 - 0.5) / 0.006) ** 2) * smoothstep(0.58, 0.72, noise(w, h, 3, 3, rng, oct=2))
-    arr *= (1 - 0.22 * hair)[..., None]
-    # разводы: местами светлее, местами желто-зелёные потемнения
-    arr *= mottle(h, w, rng, 2, 0.12)[..., None]
-    patina = smoothstep(0.55, 0.8, noise(w, h, 3, 3, rng, oct=3))
-    arr = arr * (1 - 0.12 * patina[..., None] * C(0.3, 0.15, 0.9))
-    save("ap_wall", finish(arr, 1.1, crisp=0.35))
+    arr *= (1.0 + pebble * relief)[..., None]
+    arr *= (0.94 + 0.08 * noise(w, h, 10, 10, rng, oct=3))[..., None]
+    arr *= (1 + 0.15 * above)[..., None]
+    arr *= (1 - seams * seam - 0.15 * below)[..., None]
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    for _ in range(diag):                                                           # косые трещины через плиты
+        x0, y0 = rng.random() * w, rng.random() * h
+        ang = rng.uniform(-0.9, 0.9) + (math.pi / 2 if rng.random() < 0.4 else 0.0)
+        L = rng.uniform(0.15, 0.35) * w
+        dx, dy = math.cos(ang), math.sin(ang)
+        t = np.clip((xx - x0) * dx + (yy - y0) * dy, 0, L)
+        dd = np.hypot(xx - x0 - t * dx, yy - y0 - t * dy) + (noise(w, h, 8, 8, rng, oct=2) - 0.5) * 3
+        arr *= (1 - 0.3 * np.exp(-(dd / 0.7) ** 2))[..., None]
+    n2 = noise(w, h, 5, 5, rng, oct=3)                                               # волосяные трещины по плитам
+    hair = np.exp(-((n2 - 0.5) / 0.005) ** 2) * smoothstep(0.55, 0.7, noise(w, h, 3, 3, rng, oct=2))
+    arr *= (1 - cracks * hair)[..., None]
+    return arr
+
+
+def tex_wall():
+    """Стены: бежево-кремовая штукатурка «под камень» — плиты рядами по ~0.4 м, длиной 0.4–0.9 м (фото 1 и 2),
+    желтоватые и зеленовато-серые разводы. Тайл 2 x 2 м, 256 px."""
+    rng = np.random.default_rng(4701)
+    arr = _stone(256, 256, rng, (0.87, 0.82, 0.66), rows=5, cuts=3, warp=24, pebble=0.5, seams=0.3, diag=6)
+    arr *= mottle(256, 256, rng, 2, 0.10)[..., None]
+    patina = smoothstep(0.55, 0.8, noise(256, 256, 3, 3, rng, oct=3))
+    arr = arr * (1 - 0.10 * patina[..., None] * C(0.3, 0.15, 0.9))
+    save("ap_wall", finish(arr, 1.0, crisp=0.35))
 
 
 def tex_coarse():
-    """Выступ стены: белая крупная фактурная штукатурка «шуба» (фото 2, справа на переднем плане). Тайл 1 м, 128 px."""
+    """Выступ стены (фото 1, по центру): та же «каменная» разделка, но светлее и с крупной «шагренью» —
+    кремово-белая, не серая. Тайл 1 м, 128 px."""
     rng = np.random.default_rng(4702)
-    w = h = 128
-    bumps = blur(noise(w, h, 24, 24, rng, oct=3)[..., None], 0.7)[..., 0]
-    hl = np.clip(bumps - np.roll(np.roll(bumps, 1, 0), 1, 1), -1, 1)      # свет сверху-слева
-    arr = np.ones((h, w, 3), np.float32) * C(0.84, 0.81, 0.73)
-    arr *= (0.86 + 0.28 * smoothstep(0.35, 0.7, bumps))[..., None]
-    arr *= (1 + 2.2 * hl)[..., None]
-    arr *= (0.94 + 0.08 * noise(w, h, 4, 4, rng, oct=2))[..., None]
-    save("ap_coarse", finish(arr, 1.05, crisp=0.5))
+    arr = _stone(128, 128, rng, (0.93, 0.90, 0.80), rows=3, cuts=2, warp=10, pebble=0.55, cracks=0.15, seams=0.3, diag=2)
+    save("ap_coarse", finish(arr, 1.0, crisp=0.45))
 
 
 def tex_ceiling():
@@ -165,11 +188,11 @@ def tex_ceiling():
 
 
 def tex_laminate():
-    """Ламинат «под дерево» (фото 1): тёплые медово-рыжие доски 1.2 x 0.2 м вразбежку, тёмные волокна, тёмные стыки,
+    """Ламинат «под дерево» (фото 1): светлые розовато-бежевые доски 1.2 x 0.15 м вразбежку, тёмные волокна, тёмные стыки,
     доски заметно разного тона, у стен грязнее. Тайл 2 x 2 м, 256 px."""
     rng = np.random.default_rng(4704)
     w = h = 256
-    rows = 10
+    rows = 13
     rh = h / rows
     yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
     row = (yy // rh).astype(int)
@@ -177,9 +200,9 @@ def tex_laminate():
     PL = 154.0                                                       # 1.2 м
     xs = (xx + shift[row]) % w
     plank = (xs // PL).astype(int) + row * 7
-    tone = (0.80 + 0.32 * rng.random(200)).astype(np.float32)
+    tone = (0.86 + 0.22 * rng.random(200)).astype(np.float32)
     grain = noise(w, h, 3, 60, rng, oct=4)
-    arr = np.ones((h, w, 3), np.float32) * C(0.80, 0.54, 0.34)
+    arr = np.ones((h, w, 3), np.float32) * C(0.84, 0.64, 0.48)
     arr *= tone[plank % 200][..., None]
     arr *= (0.80 + 0.30 * grain)[..., None]
     streak = np.abs(np.sin((yy + grain * 30 + plank * 3.1) * 1.3)) < 0.12        # тёмные «волокна»

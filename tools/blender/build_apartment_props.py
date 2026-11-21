@@ -91,23 +91,27 @@ def tex_door_white():
 
 
 def tex_door_glass():
-    """Створка двустворчатой двери в зал (оба фото): белая рамка, сверху янтарное рифлёное («пупырчатое») стекло,
-    за ним темно; снизу филёнка. 0.6 x 2.05 м, 64 x 256."""
+    """Створки двустворчатой двери в зал (фото 1, слева): кремово-белая краска, сверху рифлёное «пупырчатое»
+    стекло, снизу филёнка. Слева в текстуре — створка с медово-янтарным стеклом (за ним светло), справа — с
+    тёмно-коричневым (за ним темно). Каждая 0.6 x 2.05 м, 64 x 256; вся текстура 128 x 256."""
     rng = np.random.default_rng(4712)
     w, h = 64, 256
-    arr = _paint(w, h, rng, (0.85, 0.84, 0.79))
-    yy, xx = _grid(h, w); u, v = xx / w, yy / h
-    gl = (u > 0.17) & (u < 0.83) & (v > 0.06) & (v < 0.62)
-    pebble = noise(w, h, 32, 128, rng, oct=1)                                            # мелкие «пупырышки»
-    ribs = 0.5 + 0.5 * np.sin(yy * 2.2 + xx * 0.7)
-    amber = C(0.66, 0.38, 0.08) * (0.7 + 0.45 * pebble[..., None]) * (0.92 + 0.12 * ribs[..., None])
-    amber *= (0.8 + 0.35 * smoothstep(0.6, 0.0, v))[..., None]                          # сверху светлее (бра)
-    arr[gl] = amber[gl]
-    _bevel(arr, gl, d=1, dark=0.6, light=1.2)
-    lo = (u > 0.17) & (u < 0.83) & (v > 0.67) & (v < 0.92)
-    _bevel(arr, lo)
-    _dirt(arr, rng, 0.85, 0.52)
-    save("ap_door_glass", finish(arr, 1.0, crisp=0.25))
+    leaves = []
+    for glass, bright in ((C(0.86, 0.54, 0.14), 0.30), (C(0.30, 0.17, 0.09), 0.12)):
+        arr = _paint(w, h, rng, (0.87, 0.86, 0.80))
+        yy, xx = _grid(h, w); u, v = xx / w, yy / h
+        gl = (u > 0.16) & (u < 0.84) & (v > 0.07) & (v < 0.60)
+        peb = noise(w, h, 64, 256, rng, oct=1)                                           # мелкая «изморозь»
+        peb2 = noise(w, h, 20, 80, rng, oct=2)
+        g = glass * (0.86 + 0.22 * peb[..., None]) * (0.9 + 0.16 * peb2[..., None])
+        g *= (1 - bright + bright * 2 * smoothstep(0.62, 0.05, v))[..., None]            # сверху светлее
+        arr[gl] = g[gl]
+        _bevel(arr, gl, d=1, dark=0.7, light=1.15)
+        lo = (u > 0.16) & (u < 0.84) & (v > 0.66) & (v < 0.93)
+        _bevel(arr, lo)
+        _dirt(arr, rng, 0.85, 0.52)
+        leaves.append(arr)
+    save("ap_door_glass", finish(np.concatenate(leaves, 1), 1.0, crisp=0.2))
 
 
 def tex_entry_in():
@@ -254,7 +258,7 @@ def tex_props():
     a[:, w // 2] *= 0.75; a[2:4] *= 1.1; a[-3:] *= 0.8
     a, h, w = fill("umbrella", (0.05, 0.05, 0.06), 0.1)
     a[:, ::6] *= 2.0                                                                      # складки
-    a, h, w = fill("cloth", (0.52, 0.53, 0.50), 0.2, 6, 6)
+    a, h, w = fill("cloth", (0.38, 0.39, 0.38), 0.25, 6, 6)
     fill("red", (0.52, 0.12, 0.10), 0.12)
     fill("white", (0.88, 0.88, 0.86), 0.06)
     a, h, w = fill("jacket", (0.10, 0.11, 0.13), 0.25, 6, 4)
@@ -311,7 +315,7 @@ def flip(b, n0):
         b.poly(pts, b.uv[i][::-1], b.mats[b.mi[i]])
 
 
-def blind_door(b, axis, c, n, a, bb, leaves, white, knobs=(), handles=()):
+def blind_door(b, axis, c, n, a, bb, leaves, white, knobs=(), handles=(), cornice=False):
     """Закрытая дверь-декор в глухом проёме оболочки: створки утоплены на 4 см, вокруг на стене — белый наличник.
     axis 'x' — стена x = c (вдоль y), 'y' — стена y = c (вдоль x); n — куда смотрит лицо стены.
     leaves — [(начало, конец, (мат, rect))]; knobs — круглые ручки (s, z), handles — нажимные (s, z, ±1 — куда язык)."""
@@ -335,6 +339,8 @@ def blind_door(b, axis, c, n, a, bb, leaves, white, knobs=(), handles=()):
     box(a - w, a, Z, Z + DH + w, c, c + n * 0.012, cas)
     box(bb, bb + w, Z, Z + DH + w, c, c + n * 0.012, cas)
     box(a, bb, Z + DH, Z + DH + w, c, c + n * 0.012, cas)
+    if cornice:                                                              # карниз над наличником (дверь в зал)
+        box(a - w - 0.03, bb + w + 0.03, Z + DH + w, Z + DH + w + 0.04, c, c + n * 0.035, cas)
     for (s, z) in knobs:                                                     # круглая деревянная ручка
         cyl(b, pt(s, z, -0.04), pt(s, z, 0.0), 0.012, 0.012, PR("brass"), segs=5)
         cyl(b, pt(s, z, 0.0), pt(s, z, 0.035), 0.016, 0.028, PR("pine"), segs=6)
@@ -370,8 +376,8 @@ def props():
     mid = (a + bb) / 2
     dd = I("double_door", nocol=True)
     gl = M["door_glass"]
-    blind_door(dd, 'y', HY0, +1, a, bb, [(a + 0.004, mid - 0.002, (gl, (1, 0, 0, 1))), (mid + 0.002, bb - 0.004, (gl, (0, 0, 1, 1)))],
-               tr_white, handles=[(mid - 0.06, Z + 0.95, -1), (mid + 0.06, Z + 0.95, +1)])
+    blind_door(dd, 'y', HY0, +1, a, bb, [(a + 0.004, mid - 0.002, (gl, (0.5, 0, 0, 1))), (mid + 0.002, bb - 0.004, (gl, (1, 0, 0.5, 1)))],
+               tr_white, cornice=True)
     # --- узкая белая дверь у входа ---
     a, bb = WC_DOOR
     wc = I("door_wc", nocol=True)
@@ -503,35 +509,40 @@ def props():
     # --- крючки с зонтом и плетёной сумочкой (стена y = HY0, между дверями) ---
     hk = I("hooks_umbrella", nocol=True)
     hz = Z + 1.72
-    hk.box((-4.52, HY0, hz - 0.02), (-4.18, HY0 + 0.018, hz + 0.02), {k: PR("pine") for k in ('+Y', '+X', '-X', '+Z', '-Z')})
-    for hx_ in (-4.46, -4.35, -4.24):
+    hk.box((-4.31, HY0, hz - 0.02), (-4.06, HY0 + 0.018, hz + 0.02), {k: PR("pine") for k in ('+Y', '+X', '-X', '+Z', '-Z')})
+    for hx_ in (-4.27, -4.185, -4.10):
         cyl(hk, (hx_, HY0 + 0.018, hz), (hx_, HY0 + 0.07, hz + 0.03), 0.006, 0.006, PR("metal"), segs=4, caps=True)
-    ux, uy = -4.35, HY0 + 0.085
+    ux, uy = -4.185, HY0 + 0.085
     cyl(hk, (ux, HY0 + 0.07, hz + 0.02), (ux, uy, hz - 0.06), 0.008, 0.008, PR("black"), segs=4)       # ручка-крюк
     lathe(hk, ux, uy, [(0.012, Z + 0.95), (0.04, Z + 1.25), (0.05, Z + 1.55), (0.02, hz - 0.06)], PR("umbrella"), segs=6)
-    lathe(hk, -4.24, HY0 + 0.07, [(0.06, Z + 1.38), (0.085, Z + 1.46), (0.08, Z + 1.58)], PR("wicker"), segs=6)
-    cyl(hk, (-4.29, HY0 + 0.07, Z + 1.58), (-4.24, HY0 + 0.07, hz + 0.02), 0.005, 0.005, PR("wicker"), segs=3)
-    cyl(hk, (-4.19, HY0 + 0.07, Z + 1.58), (-4.24, HY0 + 0.07, hz + 0.02), 0.005, 0.005, PR("wicker"), segs=3)
+    lathe(hk, -4.10, HY0 + 0.07, [(0.06, Z + 1.38), (0.085, Z + 1.46), (0.08, Z + 1.58)], PR("wicker"), segs=6)
+    cyl(hk, (-4.15, HY0 + 0.07, Z + 1.58), (-4.10, HY0 + 0.07, hz + 0.02), 0.005, 0.005, PR("wicker"), segs=3)
+    cyl(hk, (-4.05, HY0 + 0.07, Z + 1.58), (-4.10, HY0 + 0.07, hz + 0.02), 0.005, 0.005, PR("wicker"), segs=3)
 
     # --- пылесос у двери в зал: корпус и шланг дугой ---
     vc = I("vacuum", nocol=True)
-    vx0, vy0 = -5.26, 0.72
-    cube(vc, (vx0 - 0.17, vy0 - 0.13, Z + 0.02), (vx0 + 0.17, vy0 + 0.13, Z + 0.20), PR("vac"))
-    cube(vc, (vx0 - 0.12, vy0 - 0.10, Z + 0.20), (vx0 + 0.10, vy0 + 0.10, Z + 0.25), PR("vac"))
-    for (wx, wy) in ((vx0 - 0.12, vy0 - 0.13), (vx0 + 0.12, vy0 - 0.13), (vx0 - 0.12, vy0 + 0.13), (vx0 + 0.12, vy0 + 0.13)):
-        cyl(vc, (wx, wy - 0.01, Z + 0.035), (wx, wy + 0.01, Z + 0.035), 0.035, 0.035, PR("black"), segs=6)
-    hose = [(vx0 - 0.17, vy0, Z + 0.14), (vx0 - 0.25, vy0 - 0.04, Z + 0.45), (vx0 - 0.30, vy0 - 0.08, Z + 0.80),
-            (vx0 - 0.38, vy0 - 0.10, Z + 0.95), (vx0 - 0.48, vy0 - 0.09, Z + 0.88), (vx0 - 0.53, vy0 - 0.05, Z + 0.60),
-            (vx0 - 0.56, vy0 + 0.02, Z + 0.30)]
-    for p0, p1 in zip(hose, hose[1:]):
-        cyl(vc, p0, p1, 0.02, 0.02, PR("hose"), segs=5)
+    vx0, vy0 = -5.30, 0.74
+    lathe(vc, vx0, vy0, [(0.13, Z + 0.02), (0.17, Z + 0.07), (0.17, Z + 0.15), (0.12, Z + 0.22), (0.04, Z + 0.25)],
+          PR("vac"), segs=8, cap=True)
+    for (wx, wy) in ((vx0 - 0.11, vy0 - 0.11), (vx0 + 0.11, vy0 - 0.11), (vx0, vy0 + 0.14)):
+        cyl(vc, (wx, wy - 0.012, Z + 0.03), (wx, wy + 0.012, Z + 0.03), 0.03, 0.03, PR("black"), segs=6)
+    P = [Vector(q) for q in ((vx0 + 0.10, vy0 - 0.06, Z + 0.20), (vx0 + 0.30, vy0 - 0.16, Z + 1.45),
+                             (vx0 - 0.30, vy0 - 0.10, Z + 1.30), (vx0 - 0.24, vy0 + 0.07, Z + 0.22))]
+    pts = [(1 - t) ** 3 * P[0] + 3 * (1 - t) ** 2 * t * P[1] + 3 * (1 - t) * t * t * P[2] + t ** 3 * P[3]
+           for t in [k / 14 for k in range(15)]]
+    for p0, p1 in zip(pts, pts[1:]):
+        cyl(vc, tuple(p0), tuple(p1), 0.017, 0.017, PR("hose"), segs=6)
+    cyl(vc, tuple(pts[-1]), tuple(pts[-1] + Vector((-0.05, 0.03, -0.04))), 0.02, 0.02, PR("vac"), segs=6, caps=True)
 
     # --- плетёная корзина у выступа, в ней серая тряпка ---
     bk = I("basket", nocol=True)
-    kx, ky = -5.74, 0.90
-    lathe(bk, kx, ky, [(0.18, Z), (0.23, Z + 0.06), (0.25, Z + 0.18), (0.26, Z + 0.22)], PR("wicker"), segs=9, inside=True)
-    lathe(bk, kx, ky, [(0.18, Z + 0.001), (0.0, Z + 0.002)], PR("wicker"), segs=9)
-    lathe(bk, kx, ky, [(0.23, Z + 0.10), (0.20, Z + 0.17), (0.10, Z + 0.21), (0.02, Z + 0.22)], PR("cloth"), segs=9)
+    kx, ky = -5.72, 0.90
+    n0 = len(bk.v)
+    lathe(bk, kx, ky, [(0.22, Z), (0.27, Z + 0.05), (0.29, Z + 0.15), (0.30, Z + 0.18)], PR("wicker"), segs=10, inside=True)
+    lathe(bk, kx, ky, [(0.30, Z + 0.18), (0.32, Z + 0.20), (0.30, Z + 0.215), (0.27, Z + 0.20)], PR("wicker"), segs=10)  # толстый край
+    lathe(bk, kx, ky, [(0.22, Z + 0.001), (0.0, Z + 0.002)], PR("wicker"), segs=10)
+    lathe(bk, kx, ky, [(0.27, Z + 0.08), (0.22, Z + 0.15), (0.12, Z + 0.17), (0.02, Z + 0.16)], PR("cloth"), segs=10)
+    bk.v[n0:] = [(x_, ky + (y_ - ky) * 0.72, z_) for (x_, y_, z_) in bk.v[n0:]]                 # овальная
 
     layout = export_items(I, coll)
     return {"items": len(layout), "layout": layout,

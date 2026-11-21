@@ -49,17 +49,6 @@
 				"metallicFactor":0,
 				"roughnessFactor":0.4000000059604645
 			}
-		},
-		{
-			"doubleSided":true,
-			"name":"ApProps",
-			"pbrMetallicRoughness":{
-				"baseColorTexture":{
-					"index":2
-				},
-				"metallicFactor":0,
-				"roughnessFactor":0.800000011920929
-			}
 		}
 	],
 	"meshes":[
@@ -83,15 +72,6 @@
 					},
 					"indices":7,
 					"material":1
-				},
-				{
-					"attributes":{
-						"POSITION":8,
-						"NORMAL":9,
-						"TEXCOORD_0":10
-					},
-					"indices":11,
-					"material":2
 				}
 			]
 		}
@@ -104,10 +84,6 @@
 		{
 			"sampler":0,
 			"source":1
-		},
-		{
-			"sampler":0,
-			"source":2
 		}
 	],
 	"images":[
@@ -120,46 +96,41 @@
 			"mimeType":"image/png",
 			"name":"ap_door_glass",
 			"uri":"../../textures/ap_door_glass.png"
-		},
-		{
-			"mimeType":"image/png",
-			"name":"ap_props",
-			"uri":"../../textures/ap_props.png"
 		}
 	],
 	"accessors":[
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":84,
+			"count":104,
 			"max":[
-				0.6700000762939453,
-				2.1200008392333984,
-				0.06099998950958252
+				0.6499996185302734,
+				2.160000801086426,
+				0.057999998331069946
 			],
 			"min":[
-				-0.6699995994567871,
+				-0.6500000953674316,
 				0,
-				-0.03100001811981201
+				-0.05700001120567322
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":84,
+			"count":104,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":84,
+			"count":104,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
 			"componentType":5123,
-			"count":126,
+			"count":156,
 			"type":"SCALAR"
 		},
 		{
@@ -167,14 +138,14 @@
 			"componentType":5126,
 			"count":8,
 			"max":[
-				0.5960001945495605,
+				0.5460000038146973,
 				2.0460004806518555,
-				0.020999997854232788
+				0.018000006675720215
 			],
 			"min":[
-				-0.5959997177124023,
+				-0.5460000038146973,
 				0.012000083923339844,
-				0.020999997854232788
+				0.018000006675720215
 			],
 			"type":"VEC3"
 		},
@@ -195,113 +166,55 @@
 			"componentType":5123,
 			"count":12,
 			"type":"SCALAR"
-		},
-		{
-			"bufferView":8,
-			"componentType":5126,
-			"count":80,
-			"max":[
-				0.1703634262084961,
-				1,
-				0.020999997854232788
-			],
-			"min":[
-				-0.1703629493713379,
-				0.880000114440918,
-				-0.06199178099632263
-			],
-			"type":"VEC3"
-		},
-		{
-			"bufferView":9,
-			"componentType":5126,
-			"count":80,
-			"type":"VEC3"
-		},
-		{
-			"bufferView":10,
-			"componentType":5126,
-			"count":80,
-			"type":"VEC2"
-		},
-		{
-			"bufferView":11,
-			"componentType":5123,
-			"count":120,
-			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":1008,
+			"byteLength":1248,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":1008,
-			"byteOffset":1008,
+			"byteLength":1248,
+			"byteOffset":1248,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":672,
-			"byteOffset":2016,
+			"byteLength":832,
+			"byteOffset":2496,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":252,
-			"byteOffset":2688,
+			"byteLength":312,
+			"byteOffset":3328,
 			"target":34963
 		},
 		{
 			"buffer":0,
 			"byteLength":96,
-			"byteOffset":2940,
+			"byteOffset":3640,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":96,
-			"byteOffset":3036,
+			"byteOffset":3736,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":64,
-			"byteOffset":3132,
+			"byteOffset":3832,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":24,
-			"byteOffset":3196,
-			"target":34963
-		},
-		{
-			"buffer":0,
-			"byteLength":960,
-			"byteOffset":3220,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":960,
-			"byteOffset":4180,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":640,
-			"byteOffset":5140,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":240,
-			"byteOffset":5780,
+			"byteOffset":3896,
 			"target":34963
 		}
 	],
@@ -313,7 +226,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":6020,
+			"byteLength":3920,
 			"uri":"double_door.bin"
 		}
 	]
