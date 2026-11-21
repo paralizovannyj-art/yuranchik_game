@@ -55,7 +55,7 @@ func _start() -> void:
 
 func _open_apartment(p: Player) -> void:
 	apt_use.enabled = false
-	p.busy(1.3, "Interact")
+	p.busy(1.3, "ItemPlace")
 	Game.sfx("unlock", apt_use.global_position)
 	await after(0.9)
 	Game.sfx("door_open", apt_use.global_position)
@@ -116,7 +116,7 @@ func _setup_screen() -> void:
 
 
 func _use_pc(p: Player) -> void:
-	p.busy(1.0, "Interact")
+	p.busy(1.0, "ItemPlace")
 	Game.sfx("click", pc_use.global_position)
 	await after(0.6)
 	var tw := create_tween().set_parallel()
@@ -181,7 +181,7 @@ func _toggle_light(p: Player) -> void:
 	_light_busy = true
 	_light_on = not _light_on
 	light_use.prompt = "Выключить свет" if _light_on else "Включить свет"
-	p.busy(0.35, "Interact")
+	p.busy(0.35, "ItemPlace")
 	await after(0.12)
 	Game.sfx("light_switch", light_use.global_position, -2.0, 0.05)
 	_set_key(_light_on, true)

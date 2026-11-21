@@ -2,7 +2,7 @@
 # Крупные планы Юрчика для проверки модели (YUR-9): шапка снизу и спереди, сумка сзади и сбоку, ботинки.
 # Запуск через Blender MCP в открытом yurchik_v3.blend:
 #   YUR_SHOTS_OUT = r"<папка>"; exec(open(r"<проект>\tools\blender\yur_closeups.py", encoding="utf-8").read())
-# Рендерит EEVEE в YUR_SHOTS_OUT/<имя>.png, модель — в позе покоя или в позе клипа (YUR_SHOTS_ACTION = "Yur_Idle").
+# Рендерит EEVEE в YUR_SHOTS_OUT/<имя>.png, модель — в позе покоя или в позе клипа (YUR_SHOTS_ACTION = "Gm_Idle", если клипы GMod загружены в сцену).
 # Камеру и сцену возвращает как было.
 import bpy, os
 from mathutils import Vector
@@ -42,7 +42,7 @@ def shoot():
     sc.render.engine = 'BLENDER_EEVEE'
     sc.render.resolution_x, sc.render.resolution_y = 640, 640
     keep_anim = None
-    if arm and ACTION:                                    # поза из клипа (например, Yur_Idle, кадр ACTION_FRAME)
+    if arm and ACTION:                                    # поза из клипа (например, Gm_Idle, кадр ACTION_FRAME)
         ad = arm.animation_data or arm.animation_data_create()
         keep_anim = (ad.action, ad.use_nla, sc.frame_current)
         ad.use_nla = False; ad.action = bpy.data.actions[ACTION]
