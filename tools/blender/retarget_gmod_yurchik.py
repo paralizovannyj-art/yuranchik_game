@@ -145,7 +145,7 @@ CLIPS = [
 # В этих клипах вся правая рука (плечо, предплечье, кисть) отводится наружу на BAG_OUT градусов вокруг оси корпуса
 # «вперёд-назад»: мах вперёд-назад сохраняется, рука просто идёт снаружи сумки. Как bag_out в retarget_ual_yurchik.py.
 # Удары, жесты, плавание и прочие клипы не трогаем — там рука должна идти точно как в источнике.
-BAG_OUT = {"UpperArmR": 16.0, "ForearmR": 26.0, "HandR": 26.0}   # градусы; предплечье — сильнее, кисть дальше от сумки
+BAG_OUT = {"UpperArmR": 15.0, "ForearmR": 18.0, "HandR": 18.0}   # градусы: рука идёт вплотную к сумке
 BAG_CLIPS = {"Idle", "Walk", "WalkBack", "WalkLeft", "WalkRight", "Run", "RunBack", "RunLeft", "RunRight",
              "CrouchIdle", "CrouchWalk", "CrouchWalkBack", "CrouchWalkLeft", "CrouchWalkRight", "Jump", "JumpLand",
              "IdleAngry", "IdleScared", "IdleSubtle", "RunPanicked", "StandToCrouch", "CrouchToStand"}
