@@ -300,7 +300,8 @@ def export(name, obs):
 def export_items(I, coll):
     """Каждый предмет — своя коллекция ap_<имя>, точка опоры у основания по центру, свой .gltf; layout.json — позиции в Godot."""
     os.makedirs(ITEM_DIR, exist_ok=True)
-    layout = {}
+    lp = os.path.join(ITEM_DIR, "layout.json")                  # общий для оболочки и мебели (build_apartment_props.py)
+    layout = json.load(open(lp, encoding="utf-8")) if os.path.exists(lp) else {}
     for item, parts in I.items.items():
         sub = bpy.data.collections.new("ap_" + item)
         coll.children.link(sub)
@@ -319,9 +320,9 @@ def export_items(I, coll):
         for ob in obs:
             ob.location = A
         layout[item] = [round(A.x, 3), round(A.z, 3), round(-A.y, 3)]      # Blender Z-up → Godot Y-up
-    with open(os.path.join(ITEM_DIR, "layout.json"), "w", encoding="utf-8", newline="\n") as f:
+    with open(lp, "w", encoding="utf-8", newline="\n") as f:
         json.dump(layout, f, ensure_ascii=False, indent=1)
-    return layout
+    return {k: layout[k] for k in I.items}
 
 
 def wall(b, M, axis, c, n, s0, s1, openings=(), tex="wall", z0=Z, z1=ZT, scale=(2.0, 2.0), reveals=True):

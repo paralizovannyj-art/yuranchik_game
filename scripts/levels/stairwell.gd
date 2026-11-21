@@ -32,6 +32,9 @@ func _start() -> void:
 	Game.music("mus_drone", -14.0)
 	Game.set_objective("Подняться к себе — квартира 47, четвёртый этаж")
 	_door = $Stairwell.find_child("AptDoor", true, false) as Node3D
+	var inside := get_node_or_null("Apartment/EntryDoorIn") as Node3D   # сторона двери из квартиры — ездит вместе со створкой
+	if _door and inside:
+		inside.reparent(_door, true)
 	apt_use.interacted.connect(_open_apartment)
 	apt_trigger.body_entered.connect(_on_apartment)
 	pc_use.interacted.connect(_use_pc)
