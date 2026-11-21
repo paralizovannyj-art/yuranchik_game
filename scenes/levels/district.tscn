@@ -127,6 +127,7 @@ size = Vector3(1.5, 0.05, 0.34)
 
 [node name="District" type="Node3D" unique_id=1582748643]
 script = ExtResource("lvl")
+tools_on_direct_start = false
 bake_navigation = false
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=577930107]
@@ -282,6 +283,16 @@ item_id = "medkit"
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.75, 0.87, -2.5)
 script = ExtResource("pick")
 item_id = "bottle"
+
+[node name="Hammer" type="Node3D" parent="Quest/GarageYur"]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 2.35, 0.876, -2.15)
+script = ExtResource("pick")
+item_id = "hammer"
+
+[node name="Flashlight" type="Node3D" parent="Quest/GarageYur"]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 1.45, 0.89, -2.2)
+script = ExtResource("pick")
+item_id = "flashlight"
 
 [node name="Items" type="Node3D" parent="Quest"]
 

@@ -4,7 +4,7 @@
 class_name Pickup
 extends Interactable
 
-@export_enum("bottle", "brick", "bandage", "shawarma", "medkit", "key_garage", "key_home") var item_id: String = "bottle"
+@export_enum("bottle", "brick", "bandage", "shawarma", "medkit", "key_garage", "key_home", "hammer", "flashlight") var item_id: String = "bottle"
 @export var glint := true
 
 var _glint: MeshInstance3D

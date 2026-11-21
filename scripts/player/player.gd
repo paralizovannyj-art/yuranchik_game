@@ -128,7 +128,7 @@ var _thrown := false
 var _last_step := 0
 var _sprinting := false
 var _run := 0.0                        ## 0 — шаг, 1 — полный бег
-var armed := true                      ## молоток в руке (false — убран в сумку)
+var armed := false                     ## молоток в руке (false — убран в сумку или ещё не найден)
 var _hammer: Node3D
 var _swap_at := -1.0                   ## когда в BUSY убрать/достать молоток (по _timer); < 0 — не трогаем
 var _punch := false                    ## текущий удар — кулаком
@@ -199,6 +199,8 @@ func _ready() -> void:
 		_skel = sk[0] as Skeleton3D
 		_head_bone = _skel.find_bone("Head")
 		_setup_hammer()
+	Game.item_picked.connect(_on_item_picked)
+	refresh_tools()
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
@@ -276,7 +278,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_jump_buffer = 0.15
 	if event.is_action_pressed("crouch_toggle"):
 		_crouch_toggle = not _crouch_toggle
-	if event.is_action_pressed("flashlight"):
+	if event.is_action_pressed("flashlight") and Game.has_item("flashlight"):
 		flashlight.visible = not flashlight.visible
 		Game.sfx("click", null, -6.0)
 	if event.is_action_pressed("interact"):
@@ -756,6 +758,28 @@ func _setup_hammer() -> void:
 		_hammer = nodes[0] as Node3D
 
 
+## Молоток и фонарик — по тому, что лежит в сумке: на старте сюжета их нет, их находят в гараже.
+## Зовётся при появлении героя (и уровнем — после того как он выдал вещи при запуске из редактора).
+func refresh_tools() -> void:
+	armed = Game.has_item("hammer")
+	if _hammer:
+		_hammer.visible = armed
+	flashlight.visible = Game.has_item("flashlight")
+
+
+func _on_item_picked(id: String) -> void:
+	match id:
+		"hammer":
+			_place_hammer(true)                    # подобрал — сразу в руке
+			if Game.hint("hammer_found"):
+				Game.say("Молоток. ЛКМ — удар, Q — убрать в сумку.")
+		"flashlight":
+			flashlight.visible = true
+			Game.sfx("click", null, -6.0)
+			if Game.hint("flashlight_found"):
+				Game.say("Фонарик. F — включить или выключить.")
+
+
 ## Телефон в правой руке (phone.gd): пока он поднят, молотка в этой руке не видно.
 func phone_hand(up: bool) -> void:
 	if _hammer:
@@ -771,7 +795,7 @@ func _place_hammer(in_hand: bool) -> void:
 
 ## Убрать или достать молоток: короткая пауза, на её середине он исчезает в сумке или появляется в руке.
 func _toggle_hammer() -> void:
-	if _hammer == null or state == State.DEAD:
+	if _hammer == null or state == State.DEAD or not Game.has_item("hammer"):
 		return
 	state = State.BUSY
 	_timer = DRAW_TIME
