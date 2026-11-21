@@ -1133,6 +1133,7 @@ def set_pose(arm, pose):
 # Сдвиг таза (SLEEP_LOC) подбирает fit_sleep: середина клубка над началом координат, нижняя точка на SLEEP_SINK
 # в пледе. Проверка на диване из игры прямо в Blender — tools/blender/hyuga_bed_check.py.
 SLEEP_L = 4.5
+SLEEP_BREATH = 2.4      # сила дыхания во сне (множитель изгиба хребта и раздувания боков)
 SLEEP_SINK = 0.006
 SLEEP_LOC = (0.0, 0.0, 0.0)
 SLEEP_DOWN = "R"
@@ -1351,8 +1352,8 @@ def breath_curve(t, L=SLEEP_L):
 
 def pose_sleep(t, L):
     p = dict(SLEEP_Q)
-    b = breath_curve(t, L)
-    b2 = breath_curve(t - 0.18, L)                                  # живот чуть отстаёт от груди
+    b = breath_curve(t, L) * SLEEP_BREATH
+    b2 = breath_curve(t - 0.18, L) * SLEEP_BREATH                   # живот чуть отстаёт от груди
     for n, deg in (("Spine1", -0.7 * b2), ("Spine2", -0.6 * b), ("Neck", 0.5 * b), ("Head", -0.35 * b)):
         p[n] = p[n] @ Quaternion(SLEEP_AXX[n], math.radians(deg))    # изгиб в собственной плоскости кости
     p["_scl"] = {"Chest": (1 + 0.024 * b, 1 + 0.006 * b, 1 + 0.022 * b),
