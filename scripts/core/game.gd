@@ -23,6 +23,8 @@ const CLOCK_START := 2 * 60 + 41                ## во сколько начи�
 const ITEMS := {
 	"hammer": {"name": "Молоток", "size": Vector2i(1, 3), "fixed": true,
 		"desc": "Обычный молоток. Другого оружия нет.\nЛКМ — удар. ПКМ + ЛКМ — сильный удар: целься в голову или по ногам."},
+	"flashlight": {"name": "Фонарик", "size": Vector2i(1, 2), "fixed": true, "light": true,
+		"desc": "Старый фонарик на батарейках. F — включить или выключить."},
 	"bottle": {"name": "Бутылка", "size": Vector2i(1, 2), "throw": true,
 		"desc": "Бросить (G): оглушает. Звон стекла отвлекает тех, кто тебя ещё не заметил."},
 	"brick": {"name": "Кирпич", "size": Vector2i(2, 1), "throw": true,
@@ -155,6 +157,8 @@ func use_entry(e: Dictionary) -> String:
 		return "Для броска выбрано: %s (G)." % d["name"]
 	if d.has("key"):
 		return "Ключ сработает сам — подойди к нужной двери."
+	if d.has("light"):
+		return "Фонарик включается клавишей F."
 	return "Это и так в руке."
 
 
@@ -338,8 +342,16 @@ func new_game(level := FIRST_LEVEL) -> void:
 	objective_read = true
 	messages.clear()
 	checkpoint = {}
-	add_item("hammer")
+	if level != FIRST_LEVEL:                     # сюжет начинается без вещей: молоток и фонарик лежат в гараже
+		give_tools()
 	goto_level(level)
+
+
+## Молоток и фонарик — для уровней, куда попадаешь не по сюжету (отладка, полигон, запуск из редактора).
+func give_tools() -> void:
+	for id: String in ["hammer", "flashlight"]:
+		if not has_item(id):
+			add_item(id)
 
 
 ## Отладка: новая игра сразу в комнате Юрчика (пункт меню и клавиша Home в игре — только при запуске из редактора).

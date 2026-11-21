@@ -9,6 +9,7 @@ extends Node3D
 @export var step_sound := "step_snow"   ## звук шагов Юрчика на этом уровне
 @export var step_variants := 4
 @export var flashlight_energy := 9.0   ## яркость фонарика: в тесных помещениях нужна меньше
+@export var tools_on_direct_start := true   ## запуск уровня из редактора (F6) — сразу с молотком и фонариком
 @export_group("Навигация врагов")
 @export var bake_navigation := true     ## строить ли сетку при запуске (для большого района без врагов — выключено)
 @export var nav_agent_radius := 0.5     ## насколько далеко враги обходят стены
@@ -28,9 +29,11 @@ func _ready() -> void:
 		player.step_sound = step_sound
 		player.step_variants = step_variants
 		player.flashlight.light_energy = flashlight_energy
+	if not Game.in_game and tools_on_direct_start:   # уровень запущен напрямую из редактора (F6), а не из меню
+		Game.give_tools()
+		if player:
+			player.refresh_tools()
 	Game.in_game = true
-	if not Game.has_item("hammer"):                 # уровень запущен напрямую из редактора (F6), а не из меню
-		Game.add_item("hammer")
 	Game.save_checkpoint(scene_file_path)
 	Game.health_changed.emit()
 	Game.ambience(ambience_sound, ambience_db)
