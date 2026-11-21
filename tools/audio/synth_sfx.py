@@ -297,4 +297,40 @@ x = mixat(x, band(drng.standard_normal(int(SR * 0.025)), 1500, 6000) * env(0.025
 x = mixat(x, band(drng.standard_normal(int(SR * 0.2)), 300, 1500) * env(0.2, 0.01, None, 6.0), 0.02, 0.15)  # дребезг стекла
 save("door_close", x, 0.6)
 
+# --- Хьюга (французский бульдог) храпит во сне (свой генератор, чтобы не сдвигать звуки выше) ---
+# Вдох (snore_in, ≈1.3 с, под вдох анимации Sleep 1.4 с): мягкое нёбо дребезжит — шум через «носовые» форманты,
+# прерываемый частыми хлопками 26–38 Гц (частота слегка плывёт), плюс глухой гул в груди.
+# Выдох (snore_out, ≈1.8 с): тихое сопение носом с лёгким присвистом, иногда «пфф» губами.
+srng = np.random.default_rng(6060)
+
+
+def flutter(t, f0, f1, jitter):
+    """Хлопки нёба: острые импульсы с плывущей частотой, 0…1."""
+    f = f0 + (f1 - f0) * t / t[-1]
+    f = f * (1 + jitter * band(srng.standard_normal(len(t)), 0, 6) * 3)
+    ph = np.cumsum(f) / SR
+    return np.clip(np.cos(2 * np.pi * ph), 0, 1) ** 6
+
+
+for i, (d, f0, f1, nose) in enumerate(((1.3, 30, 36, 0.5), (1.25, 26, 33, 0.7), (1.35, 32, 38, 0.4))):
+    t = t_(d)
+    src = srng.standard_normal(len(t))
+    fl = flutter(t, f0, f1, 0.04)
+    rasp = band(src, 120, 900, 0.5) * (0.25 + fl) + band(src, 900, 2600, 0.5) * fl * 0.35
+    nasal = band(src, 220, 320, 0.4) * nose + band(src, 950, 1150, 0.4) * nose * 0.5   # «носовые» форманты
+    chest = band(fl, 40, 160) * 0.8                                                   # гул в груди
+    e = np.clip(t / (d * 0.55), 0, 1) ** 1.6 * np.clip((d - t) / (d * 0.35), 0, 1) ** 1.2
+    save("snore_in_%d" % (i + 1), (rasp + nasal * (0.3 + fl * 0.5) + chest) * e, 0.6)
+for i, (d, whistle, puff) in enumerate(((1.8, 1800, 0.0), (1.7, 2300, 0.6))):
+    t = t_(d)
+    x = band(srng.standard_normal(len(t)), 250, 1800, 0.4) + band(srng.standard_normal(len(t)), 80, 300, 0.4) * 0.5
+    x += np.sin(2 * np.pi * whistle * t * (1 - 0.06 * t / d)) * 0.06                  # присвист в ноздре
+    e = np.clip(t / 0.25, 0, 1) * np.exp(-np.clip(t - 0.25, 0, None) * 1.8) * np.clip((d - t) / 0.3, 0, 1)
+    if puff:
+        pf = np.zeros(len(t))
+        pf[:int(SR * 0.12)] = band(srng.standard_normal(int(SR * 0.12)), 80, 700) * env(0.12, 0.003, None, 5.0)
+        x = x * e + pf * puff
+        e = 1.0
+    save("snore_out_%d" % (i + 1), x * e, 0.35)
+
 print("SFX", len(os.listdir(OUT)), "files in", OUT)

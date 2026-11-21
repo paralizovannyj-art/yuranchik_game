@@ -2,6 +2,8 @@
 ## Sleep играет по кругу (дыхание). Поверх него со случайной паузой проигрываются короткие добавочные
 ## анимации дрёмы — вздрагивание уха, вздох, шевеление лапы. Они хранят только отклонение от покоя, поэтому
 ## накладываются через AnimationNodeOneShot в режиме ADD и не сбивают дыхание. Коллизии у собаки нет.
+## В такт дыханию Sleep (цикл 4.5 с: вдох 1.4 с, потом выдох) собака храпит (snore_in_* на вдохе, тихое сопение
+## snore_out_* на выдохе).
 extends Node3D
 
 @export var min_pause := 6.0    ## минимальная пауза между «дрёмами», с
@@ -10,10 +12,17 @@ extends Node3D
 
 ## имя анимации → вес (вздрагивание уха — чаще всего, вздох — реже)
 const DOZE := {"SleepTwitchEar": 3.0, "SleepSigh": 2.0, "SleepTwitchPaw": 1.5}
+const BREATH_L := 4.5     ## длина цикла дыхания — как у анимации Sleep (SLEEP_L в build_hyuga.py)
+const INHALE := 1.4       ## вдох — как в breath_curve
+
+@export var snore_db := -6.0    ## громкость храпа
 
 var _tree: AnimationTree
 var _wait := 0.0
 var _last := ""
+var _breath := 0.0
+var _exhaled := false
+var _snore: AudioStreamPlayer3D
 
 
 func _ready() -> void:
@@ -50,11 +59,20 @@ func _ready() -> void:
 	for mi: MeshInstance3D in find_children("*", "MeshInstance3D", true, false):
 		mi.layers = 1 << (shadow_layer - 1)
 	_wait = randf_range(min_pause * 0.5, max_pause)
+	_snore = AudioStreamPlayer3D.new()
+	_snore.name = "Snore"
+	_snore.unit_size = 1.2
+	_snore.max_distance = 9.0
+	add_child(_snore)
+	_snore.position = Vector3(0, 0.15, 0)
+	_breath = 0.0
+	_inhale()
 
 
 func _process(delta: float) -> void:
 	if _tree == null:
 		return
+	_breathe(delta)
 	_wait -= delta
 	if _wait > 0.0:
 		return
@@ -77,3 +95,32 @@ func _pick() -> String:
 		if r <= 0.0:
 			return k
 	return DOZE.keys()[0]
+
+
+## Свой счётчик времени идёт вместе с AnimationTree (тот же delta, оба стартуют в _ready), поэтому звук
+## попадает во вдох и выдох анимации.
+func _breathe(delta: float) -> void:
+	_breath += delta
+	if _breath >= BREATH_L:
+		_breath = fmod(_breath, BREATH_L)
+		_inhale()
+	if not _exhaled and _breath >= INHALE:
+		_exhaled = true
+		_play("snore_out_%d" % randi_range(1, 2), snore_db - 9.0)
+
+
+func _inhale() -> void:
+	_exhaled = false
+	if randf() < 0.85:                                     # изредка вдох проходит тихо — храп не как метроном
+		_play("snore_in_%d" % randi_range(1, 3), snore_db + randf_range(-2.0, 1.0))
+
+
+func _play(sound: String, db: float) -> void:
+	var s := Game.stream(sound)
+	if s == null or _snore == null:
+		return
+	_snore.stream = s
+	_snore.volume_db = db
+	_snore.pitch_scale = randf_range(0.94, 1.05)
+	_snore.play()
+
