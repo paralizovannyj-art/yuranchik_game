@@ -186,10 +186,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.25, 8.4, -0.01)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.0, 8.406, -1.26)
 
 [node name="DoubleDoor" parent="Apartment" instance=ExtResource("ap_double_door")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.95, 8.4, -0.428)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.725, 8.4, -0.428)
 
 [node name="DoorWc" parent="Apartment" instance=ExtResource("ap_door_wc")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.675, 8.4, -0.431)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.575, 8.4, -0.431)
 
 [node name="DoorWhiteA" parent="Apartment" instance=ExtResource("ap_door_white_a")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.312, 8.4, -1.0)
@@ -240,10 +240,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.206, 9.8, -0.64)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.294, 9.8, 0.2)
 
 [node name="HooksUmbrella" parent="Apartment" instance=ExtResource("ap_hooks_umbrella")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.168, 9.35, -0.52)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.072, 9.35, -0.52)
 
 [node name="Vacuum" parent="Apartment" instance=ExtResource("ap_vacuum")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.366, 8.4, -0.74)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.066, 8.4, -0.74)
 
 [node name="Basket" parent="Apartment" instance=ExtResource("ap_basket")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.72, 8.4, -0.9)
