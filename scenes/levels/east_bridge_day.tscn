@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/levels/east_bridge_day.gd" id="lvl"]
 [ext_resource type="PackedScene" path="res://scenes/east_bridge/eb_location.tscn" id="loc"]
-[ext_resource type="Shader" uid="uid://507jlrfn4qwu" path="res://shaders/ps2_post.gdshader" id="post"]
+[ext_resource type="Material" path="res://assets/environments/ps2_post_night.tres" id="post_night"]
 [ext_resource type="PackedScene" uid="uid://l6yy2wslyolu" path="res://scenes/characters/player.tscn" id="player"]
 [ext_resource type="Script" uid="uid://c01wbk2jc6k0b" path="res://scripts/world/light_budget.gd" id="light_budget"]
 [ext_resource type="Shader" path="res://shaders/snow_streak.gdshader" id="streak"]
@@ -155,21 +155,6 @@ proximity_fade_distance = 3.0
 material = SubResource("mat_puff")
 size = Vector2(9, 6)
 
-[sub_resource type="ShaderMaterial" id="mat_post"]
-shader = ExtResource("post")
-shader_parameter/blur_px = 1.0
-shader_parameter/color_levels = 128.0
-shader_parameter/dither_strength = 0.0
-shader_parameter/black_crush = 0.05
-shader_parameter/s_curve = 0.45
-shader_parameter/saturation = 0.6
-shader_parameter/exposure = 0.92
-shader_parameter/shadow_tint = Color(0.06, 0.07, 0.09, 1)
-shader_parameter/highlight_tint = Color(0.97, 0.98, 1, 1)
-shader_parameter/halo = 0.1
-shader_parameter/grain = 0.04
-shader_parameter/vignette = 0.35
-
 [node name="EastBridgeDay" type="Node3D"]
 script = ExtResource("lvl")
 ambience_db = -3.0
@@ -219,7 +204,7 @@ draw_pass_1 = SubResource("mesh_puff")
 layer = 10
 
 [node name="Filter" type="ColorRect" parent="PS2Post"]
-material = SubResource("mat_post")
+material = ExtResource("post_night")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
