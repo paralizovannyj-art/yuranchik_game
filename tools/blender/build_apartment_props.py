@@ -291,6 +291,10 @@ def tex_props():
         x0, y0, x1, y1 = P[name]
         a = PT.flatten(PT.crop(img, *box), max(4, (box[2] - box[0]) / 3), strength=0.6)
         A[y0:y1, x0:x1] = np.clip(PT.resize(a, x1 - x0, y1 - y0) * k, 0, 1)
+    # торец комода (фото 2): рисунок грязи с фото, тон — грязно-белый ЛДСП без тёплого света лампы
+    x0, y0, x1, y1 = P["melamine"]
+    a = PT.flatten(PT.crop(h2, 432, 1350, 484, 1480), 12, strength=0.6)
+    A[y0:y1, x0:x1] = np.clip(PT.recolor(PT.resize(a, x1 - x0, y1 - y0), (0.84, 0.82, 0.76), contrast=1.3), 0, 1)
     save("ap_props", finish(A, 1.0, crisp=0.3))
 
 
@@ -443,21 +447,40 @@ def props():
     wrd.box((X0, YF - 0.03, ZH - 0.04), (X1, YF, ZH), {'-Y': dk, '-Z': dk})              # верхний рельс
     wrd.box((X0, YF - 0.03, Z), (X1, YF, Z + 0.03), {'-Y': dk, '+Z': dk})                # нижний
 
-    # --- открытая полочка (с коллизией): боковины, полки, задник ---
-    S0, S1, SF, ST = -6.20, -5.76, 1.86, Z + 0.95
+    # --- комод-этажерка (с коллизией), по фото 2: низкий (0.72 м) грязно-белый ЛДСП-короб, торцы сплошные,
+    #     в коридор открыты 5 узких отсеков; снизу цоколь, крышка толще стенок ---
+    S0, S1, SF, ST = -6.20, -5.76, HY1 - 0.38, Z + 0.72
     sh = I("shelf")
     mel = PR("melamine")
     t = 0.018
-    cube(sh, (S0, SF, Z), (S0 + t, HY1, ST), mel)
-    cube(sh, (S1 - t, SF, Z), (S1, HY1, ST), mel)
-    for zz in (Z + 0.03, Z + 0.33, Z + 0.63, ST - t):
-        cube(sh, (S0 + t, SF, zz), (S1 - t, HY1, zz + t), mel)
-    sh.box((S0 + t, HY1 - 0.01, Z), (S1 - t, HY1, ST), {'-Y': mel})
-    shd = I("shelf", nocol=True)                                             # обувь на полках
-    for (zz, kind, xs) in ((Z + 0.048, "shoes", (-6.17, -5.98)), (Z + 0.348, "sneakers", (-6.16, -5.97)),
-                           (Z + 0.648, "shoes", (-6.14, -5.95))):
-        for k, x0_ in enumerate(xs):
-            cube(shd, (x0_, SF + 0.02, zz), (x0_ + 0.16, SF + 0.30, zz + 0.09 - 0.02 * k), PR(kind))
+    cube(sh, (S0, SF, Z), (S0 + t, HY1, ST - 0.022), mel)                               # торцы
+    cube(sh, (S1 - t, SF, Z), (S1, HY1, ST - 0.022), mel)
+    cube(sh, (S0 - 0.004, SF - 0.006, ST - 0.022), (S1 + 0.004, HY1, ST), mel, skip=())   # крышка с напуском
+    cube(sh, (S0 + t, SF + 0.015, Z), (S1 - t, SF + 0.033, Z + 0.05), mel)              # цоколь
+    LV = (Z + 0.05, Z + 0.19, Z + 0.33, Z + 0.46, Z + 0.59)                             # низ каждого отсека
+    for zz in LV:
+        cube(sh, (S0 + t, SF, zz - t), (S1 - t, HY1, zz), mel)
+    sh.box((S0 + t, HY1 - 0.006, Z), (S1 - t, HY1, ST), {'-Y': PR("lacquer")})          # задник (оргалит, в тени)
+    shd = I("shelf", nocol=True)                                            # мелочь в отсеках, как на фото
+    wt, tl, bk, sn = PR("white"), PR("teal"), PR("black"), PR("sneakers")
+    z = LV[4]                                                                # верх: банка с зелёной крышкой, скотч
+    lathe(shd, S0 + 0.10, SF + 0.10, [(0.04, z), (0.04, z + 0.07)], wt, segs=8)
+    lathe(shd, S0 + 0.10, SF + 0.10, [(0.043, z + 0.07), (0.043, z + 0.09)], tl, segs=8, cap=True)
+    lathe(shd, S0 + 0.26, SF + 0.12, [(0.05, z), (0.05, z + 0.045)], wt, segs=8, cap=True)
+    z = LV[3]                                                                # флаконы
+    for k, (x_, r_, h_) in enumerate(((0.07, 0.03, 0.10), (0.15, 0.028, 0.11), (0.24, 0.032, 0.09), (0.33, 0.026, 0.10))):
+        lathe(shd, S0 + x_, SF + 0.07 + 0.03 * (k % 2), [(r_, z), (r_, z + h_ * 0.75), (r_ * 0.45, z + h_ * 0.9),
+                                                          (r_ * 0.45, z + h_)], wt if k != 2 else tl, segs=6, cap=True)
+    z = LV[2]                                                                # белые бутылки и банка крема
+    for k, x_ in enumerate((0.08, 0.17, 0.27)):
+        lathe(shd, S0 + x_, SF + 0.08, [(0.035, z), (0.035, z + 0.09), (0.015, z + 0.115)], wt, segs=6, cap=True)
+    lathe(shd, S0 + 0.36, SF + 0.09, [(0.035, z), (0.035, z + 0.03)], bk, segs=8, cap=True)
+    z = LV[1]                                                                # тряпьё, щётка для обуви
+    cube(shd, (S0 + 0.03, SF + 0.02, z), (S0 + 0.24, SF + 0.30, z + 0.06), bk)
+    cube(shd, (S0 + 0.26, SF + 0.05, z), (S0 + 0.40, SF + 0.10, z + 0.04), PR("pine"))
+    z = LV[0]                                                                # низ: белые кеды
+    cube(shd, (S0 + 0.03, SF + 0.03, z), (S0 + 0.20, SF + 0.33, z + 0.09), sn)
+    cube(shd, (S0 + 0.21, SF + 0.04, z), (S0 + 0.38, SF + 0.34, z + 0.08), sn)
 
     # --- жёлтая настольная лампа на полочке ---
     lp = I("desk_lamp", nocol=True)
