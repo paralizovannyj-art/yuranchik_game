@@ -1,12 +1,15 @@
 ## Бюджет света улиц (двор, Восточный мост). Ноутбук автора (GTX 1650) не вытянет тени у всех фонарей сразу:
 ## - тени включены только у max_shadows ближайших к Юрчику источников в радиусе shadow_distance;
-## - источники дальше visible_distance гаснут совсем — вдали остаются ореолы и горящие окна, выглядит так же;
+## - источники дальше visible_distance гаснут совсем. В режиме «Обычная» (Forward+) это 250 м: фонарь светит и издалека,
+##   освещённое им видно сквозь туман, как в жизни (правило автора, 2026-11-22). Тени дальних всё равно выключены, это дёшево.
+##   В режиме «Слабый ПК» (OpenGL) — прежние 55 м: там один меш освещают не больше 8 источников, дальние мерцали бы;
 ## - ориентиры (группа «landmark»; сейчас таких в сценах нет) не гаснут никогда и получают ореол.
 extends Node
 
 @export var max_shadows := 6
 @export var shadow_distance := 35.0
-@export var visible_distance := 55.0
+@export var visible_distance := 250.0
+@export var visible_distance_low := 55.0   ## режим «Слабый ПК» (OpenGL)
 @export var update_every := 0.25           ## сек между пересчётами
 
 var _lights: Array[Light3D] = []
@@ -17,6 +20,8 @@ var _player: Node3D
 
 func _ready() -> void:
 	_player = get_tree().get_first_node_in_group("player") as Node3D
+	if RenderingServer.get_current_rendering_method() == "gl_compatibility":
+		visible_distance = visible_distance_low
 	var root := get_parent()
 	for l in root.find_children("*", "Light3D", true, false):
 		if l is DirectionalLight3D or (_player and _player.is_ancestor_of(l)):
