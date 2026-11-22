@@ -461,7 +461,7 @@ def props():
     LV = (Z + 0.05, Z + 0.19)                                                           # две нижние полки
     for zz in LV:
         cube(sh, (S0 + t, SF, zz - t), (S1 - t, HY1, zz), mel)
-    sh.box((S0 + t, HY1 - 0.006, Z), (S1 - t, HY1, ST), {'-Y': PR("lacquer")})          # задник (оргалит, в тени)
+    sh.box((S0 + t, HY1 - 0.006, Z), (S1 - t, HY1, ST), {'-Y': mel})                     # задник — тот же ламинат
 
     # --- жёлтая настольная лампа на полочке ---
     lp = I("desk_lamp", nocol=True)
