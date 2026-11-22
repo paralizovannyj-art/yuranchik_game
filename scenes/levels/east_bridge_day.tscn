@@ -158,8 +158,8 @@ size = Vector2(9, 6)
 [sub_resource type="ShaderMaterial" id="mat_post"]
 shader = ExtResource("post")
 shader_parameter/blur_px = 0.55
-shader_parameter/color_levels = 32.0
-shader_parameter/dither_strength = 1.0
+shader_parameter/color_levels = 128.0
+shader_parameter/dither_strength = 0.0
 shader_parameter/black_crush = 0.05
 shader_parameter/s_curve = 0.45
 shader_parameter/saturation = 0.6

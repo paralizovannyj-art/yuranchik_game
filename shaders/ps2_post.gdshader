@@ -6,9 +6,9 @@ uniform sampler2D screen_tex : hint_screen_texture, filter_linear_mipmap;
 
 // «Мыльность» PS2 / ЭЛТ
 uniform float blur_px : hint_range(0.0, 2.0) = 0.4;
-// 16-битный цвет PS2 + дизеринг
-uniform float color_levels : hint_range(4.0, 256.0) = 48.0;
-uniform float dither_strength : hint_range(0.0, 2.0) = 0.6;
+// Квантование цвета + дизеринг. Дизеринг выключен (решение 2026-11-22, разбор Garbaj: на PS2 дизеринга нет)
+uniform float color_levels : hint_range(4.0, 256.0) = 128.0;
+uniform float dither_strength : hint_range(0.0, 2.0) = 0.0;
 // Тон
 uniform float black_crush : hint_range(0.0, 0.3) = 0.06;   // «съесть» тени
 uniform float s_curve : hint_range(0.0, 1.0) = 0.55;       // контраст S-кривой
