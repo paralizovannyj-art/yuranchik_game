@@ -32,10 +32,17 @@ extends Node3D
 		show_pool = v
 		_apply()
 @export_range(0.0, 1.0) var pool_alpha := 0.35      ## яркость пятна на земле
+@export var twin_spacing := 0.0:                    ## двойная мачта (платформы моста): расстояние между двумя плафонами по оси Z, м.
+	set(v):                                           ## Свет ставится под каждым плафоном, а не в центр — иначе он внутри столба,
+		twin_spacing = v                              ## и когда фонарю включаются тени (вблизи), столб закрывает свет целиком.
+		_apply()
 @export var use_fill := false:                       ## старая слабая заливка (второй источник OmniLight) — включена на мосту
 	set(v):
 		use_fill = v
 		_apply()
+
+const TWIN_SHARE := 0.6                              ## яркость каждого из двух плафонов от energy
+const TWIN_DROP := 0.15                              ## свет чуть ниже стекла плафона, чтобы стекло не давало тень
 
 const SPARKLE_SHADER := preload("res://shaders/lamp_sparkle.gdshader")
 
@@ -43,6 +50,7 @@ const SPARKLE_SHADER := preload("res://shaders/lamp_sparkle.gdshader")
 @onready var pool: MeshInstance3D = $Pool
 @onready var fill: OmniLight3D = get_node_or_null("Fill")
 @onready var halo: MeshInstance3D = $Halo
+var spot2: SpotLight3D                               ## второй плафон двойной мачты
 
 
 func _enter_tree() -> void:
@@ -51,6 +59,12 @@ func _enter_tree() -> void:
 		var f := get_node("Fill")
 		remove_child(f)
 		f.free()
+	# второй плафон создаётся до _ready, чтобы light_budget.gd учёл его как обычный источник
+	if twin_spacing > 0.0 and not Engine.is_editor_hint() and not has_node("Spot2"):
+		var s2: SpotLight3D = get_node("Spot").duplicate()
+		s2.set_script(null)                          # мигает только один плафон, второй горит ровно
+		s2.name = "Spot2"
+		add_child(s2)
 
 
 func _ready() -> void:
@@ -61,6 +75,15 @@ func _apply() -> void:
 	if not is_inside_tree() or spot == null:
 		return
 	spot.position = head_offset
+	spot2 = get_node_or_null("Spot2")
+	var e := energy
+	if twin_spacing > 0.0:
+		spot.position = head_offset + Vector3(0, -TWIN_DROP, twin_spacing * 0.5)
+		e = energy * TWIN_SHARE
+		if spot2:
+			spot2.position = head_offset + Vector3(0, -TWIN_DROP, -twin_spacing * 0.5)
+			spot2.light_color = color
+			spot2.light_energy = e
 	pool.position = Vector3(head_offset.x, pool.position.y, head_offset.z)
 	pool.visible = show_pool
 	if fill:
@@ -70,8 +93,8 @@ func _apply() -> void:
 	halo.position = head_offset
 	halo.visible = show_halo
 	spot.light_color = color
-	spot.light_energy = energy
-	spot.set("_base_energy", energy)
+	spot.light_energy = e
+	spot.set("_base_energy", e)
 	spot.set("flicker_chance", 0.15 if flicker else 0.0)
 	if Engine.is_editor_hint():
 		return

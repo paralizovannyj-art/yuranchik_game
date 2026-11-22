@@ -226,6 +226,7 @@ energy = 160
 head_offset = Vector3(0, 19.4, 1.5)
 
 [node name="PlatformLamp1" parent="Lights" instance=ExtResource("sl")]
+twin_spacing = 2.7
 show_pool = false
 use_fill = true
 sparkle = true
@@ -236,6 +237,7 @@ energy = 36
 head_offset = Vector3(0, 11.5, 0)
 
 [node name="PlatformLamp2" parent="Lights" instance=ExtResource("sl")]
+twin_spacing = 2.7
 show_pool = false
 use_fill = true
 sparkle = true
@@ -246,6 +248,7 @@ energy = 36
 head_offset = Vector3(0, 11.5, 0)
 
 [node name="PlatformLamp3" parent="Lights" instance=ExtResource("sl")]
+twin_spacing = 2.7
 show_pool = false
 use_fill = true
 sparkle = true
@@ -257,6 +260,7 @@ head_offset = Vector3(0, 11.5, 0)
 flicker = true
 
 [node name="PlatformLamp4" parent="Lights" instance=ExtResource("sl")]
+twin_spacing = 2.7
 show_pool = false
 use_fill = true
 sparkle = true
@@ -267,6 +271,7 @@ energy = 36
 head_offset = Vector3(0, 11.5, 0)
 
 [node name="PlatformLamp5" parent="Lights" instance=ExtResource("sl")]
+twin_spacing = 2.7
 show_pool = false
 use_fill = true
 sparkle = true
@@ -277,6 +282,7 @@ energy = 36
 head_offset = Vector3(0, 11.5, 0)
 
 [node name="PlatformLamp6" parent="Lights" instance=ExtResource("sl")]
+twin_spacing = 2.7
 show_pool = false
 use_fill = true
 sparkle = true
@@ -287,6 +293,7 @@ energy = 36
 head_offset = Vector3(0, 11.5, 0)
 
 [node name="PlatformLamp7" parent="Lights" instance=ExtResource("sl")]
+twin_spacing = 2.7
 show_pool = false
 use_fill = true
 sparkle = true
@@ -297,6 +304,7 @@ energy = 36
 head_offset = Vector3(0, 11.5, 0)
 
 [node name="PlatformLamp8" parent="Lights" instance=ExtResource("sl")]
+twin_spacing = 2.7
 show_pool = false
 use_fill = true
 sparkle = true
@@ -308,6 +316,7 @@ head_offset = Vector3(0, 11.5, 0)
 flicker = true
 
 [node name="PlatformLamp9" parent="Lights" instance=ExtResource("sl")]
+twin_spacing = 2.7
 show_pool = false
 use_fill = true
 sparkle = true
@@ -318,6 +327,7 @@ energy = 36
 head_offset = Vector3(0, 11.5, 0)
 
 [node name="PlatformLamp10" parent="Lights" instance=ExtResource("sl")]
+twin_spacing = 2.7
 show_pool = false
 use_fill = true
 sparkle = true
@@ -328,6 +338,7 @@ energy = 36
 head_offset = Vector3(0, 11.5, 0)
 
 [node name="PlatformLamp11" parent="Lights" instance=ExtResource("sl")]
+twin_spacing = 2.7
 show_pool = false
 use_fill = true
 sparkle = true
@@ -338,6 +349,7 @@ energy = 36
 head_offset = Vector3(0, 11.5, 0)
 
 [node name="PlatformLamp12" parent="Lights" instance=ExtResource("sl")]
+twin_spacing = 2.7
 show_pool = false
 use_fill = true
 sparkle = true
@@ -348,6 +360,7 @@ energy = 36
 head_offset = Vector3(0, 11.5, 0)
 
 [node name="PlatformLamp13" parent="Lights" instance=ExtResource("sl")]
+twin_spacing = 2.7
 show_pool = false
 use_fill = true
 sparkle = true
@@ -358,6 +371,7 @@ energy = 36
 head_offset = Vector3(0, 11.5, 0)
 
 [node name="PlatformLamp14" parent="Lights" instance=ExtResource("sl")]
+twin_spacing = 2.7
 show_pool = false
 use_fill = true
 sparkle = true
@@ -368,6 +382,7 @@ energy = 36
 head_offset = Vector3(0, 11.5, 0)
 
 [node name="PlatformLamp15" parent="Lights" instance=ExtResource("sl")]
+twin_spacing = 2.7
 show_pool = false
 use_fill = true
 sparkle = true
@@ -378,6 +393,7 @@ energy = 36
 head_offset = Vector3(0, 11.5, 0)
 
 [node name="PlatformLamp16" parent="Lights" instance=ExtResource("sl")]
+twin_spacing = 2.7
 show_pool = false
 use_fill = true
 sparkle = true
@@ -388,6 +404,7 @@ energy = 36
 head_offset = Vector3(0, 11.5, 0)
 
 [node name="PlatformLamp17" parent="Lights" instance=ExtResource("sl")]
+twin_spacing = 2.7
 show_pool = false
 use_fill = true
 sparkle = true
@@ -398,6 +415,7 @@ energy = 36
 head_offset = Vector3(0, 11.5, 0)
 
 [node name="PlatformLamp18" parent="Lights" instance=ExtResource("sl")]
+twin_spacing = 2.7
 show_pool = false
 use_fill = true
 sparkle = true
