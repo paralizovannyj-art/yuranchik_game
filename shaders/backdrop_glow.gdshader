@@ -3,6 +3,7 @@
 //   UV2.x — цвет: 0 натриевый, 1 красный, 2 белый, 3 окно;  UV2.y = 1 — мигает (верхние огни труб).
 shader_type spatial;
 render_mode unshaded, fog_disabled, blend_add, cull_disabled, depth_draw_never;
+#include "res://shaders/compat_srgb.gdshaderinc"
 
 uniform float energy = 1.0;
 uniform float haze_density = 0.003;        // огни тускнеют в тумане с расстоянием, но не гаснут
@@ -24,6 +25,6 @@ void fragment() {
 		blink = 0.25 + 0.75 * smoothstep(0.0, 0.25, sin(TIME * 2.1));
 	}
 	float fade = exp(-length(VERTEX) * haze_density);
-	ALBEDO = col * energy * blink * (0.35 + 0.65 * fade);
-	ALPHA = clamp(a, 0.0, 1.0);
+	ALBEDO = compat_add_rgb(col * energy * blink * (0.35 + 0.65 * fade), clamp(a, 0.0, 1.0));
+	ALPHA = compat_add_alpha(clamp(a, 0.0, 1.0));
 }

@@ -3,6 +3,7 @@
 // Без мягкого пятна — свет вокруг остаётся чистым, без туманного «мыла».
 shader_type spatial;
 render_mode unshaded, blend_add, depth_draw_never, cull_disabled, shadows_disabled, fog_disabled;
+#include "res://shaders/compat_srgb.gdshaderinc"
 
 uniform vec4 color : source_color = vec4(1.0, 0.55, 0.22, 1.0);
 uniform float energy = 2.2;                 // яркость искры
@@ -38,6 +39,6 @@ void fragment() {
 	float d2 = exp(-abs(q.x) / ray_width) * pow(max(1.0 - abs(q.y) * 1.5, 0.0), 2.0);
 
 	float a = core + soft + ((h + v) * ray_strength + (d1 + d2) * diag_strength) * tw;
-	ALBEDO = mix(color.rgb, vec3(1.0), core * 0.7) * energy;
-	ALPHA = clamp(a, 0.0, 1.0);
+	ALBEDO = compat_add_rgb(mix(compat_lin(color.rgb), vec3(1.0), core * 0.7) * energy, clamp(a, 0.0, 1.0));
+	ALPHA = compat_add_alpha(clamp(a, 0.0, 1.0));
 }

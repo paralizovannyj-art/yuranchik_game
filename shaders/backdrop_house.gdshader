@@ -8,6 +8,7 @@
 // сотне-другой метров проступают силуэтами, а дальние почти растворяются, оставляя огни окон.
 shader_type spatial;
 render_mode unshaded, fog_disabled;
+#include "res://shaders/compat_srgb.gdshaderinc"
 
 uniform vec3 wall_color : source_color = vec3(0.035, 0.04, 0.055);
 uniform vec3 haze_color : source_color = vec3(0.13, 0.1, 0.085);     // во что дома тают вдали — цвет тумана сцены
@@ -33,7 +34,7 @@ void fragment() {
 	float haze = min(1.0 - exp(-dist * haze_density), haze_max);
 	float seed = floor(UV2.x);
 	float tone = fract(UV2.x);
-	vec3 col = wall_color * (0.55 + 0.9 * tone);
+	vec3 col = compat_lin(wall_color) * (0.55 + 0.9 * tone);
 	vec3 glow = vec3(0.0);
 	// glTF хранит V перевёрнутой (1 - v): возвращаем метры и код обратно
 	vec2 uv = vec2(UV.x, 1.0 - UV.y);
@@ -68,7 +69,7 @@ void fragment() {
 	}
 	vec3 dir = normalize((INV_VIEW_MATRIX * vec4(VERTEX, 0.0)).xyz);
 	float g = exp(-max(dir.y, 0.0) / glow_height);
-	vec3 haze_col = mix(haze_color, mix(sky_mid, sky_glow, g * g), aerial);
+	vec3 haze_col = mix(compat_lin(haze_color), mix(compat_lin(sky_mid), compat_lin(sky_glow), g * g), aerial);
 	col = mix(col, haze_col, haze);
-	ALBEDO = col + glow * (1.0 - window_fade * haze);
+	ALBEDO = compat_enc(col + glow * (1.0 - window_fade * haze));
 }

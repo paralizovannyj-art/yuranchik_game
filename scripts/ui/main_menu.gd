@@ -47,7 +47,7 @@ func _ready() -> void:
 	box.add_theme_constant_override("separation", 6)
 	root.add_child(box)
 	var first: Button = null
-	var entries := [["Начать игру", Game.new_game], ["Управление", _toggle_help], ["Выход", get_tree().quit]]
+	var entries := [["Начать игру", Game.new_game], [_graphics_text(), _toggle_graphics], ["Управление", _toggle_help], ["Выход", get_tree().quit]]
 	if OS.is_debug_build():                       # отладка: сразу в комнату Юрчика (в собранной игре пункта нет)
 		entries.insert(1, ["Комната Юрчика", Game.start_in_room])
 		entries.insert(2, ["Полигон", Game.new_game.bind(PLAYGROUND)])
@@ -78,6 +78,20 @@ func _ready() -> void:
 	])
 	_help.visible = false
 	HUD.mk_label(root, "звуки — временные заглушки", 10, Color(0.5, 0.5, 0.5), Rect2(64, 452, 400, 16))
+
+
+## Подпись пункта графики: что выбрано сейчас. «авто» — видеокарта не умеет Vulkan, движок сам перешёл на OpenGL.
+func _graphics_text() -> String:
+	if Graphics.low_mode_selected():
+		return "Графика: слабый ПК"
+	if Graphics.opengl:
+		return "Графика: слабый ПК (авто)"
+	return "Графика: обычная"
+
+
+## Переключить режим графики — игра перезапустится (см. scripts/core/graphics.gd).
+func _toggle_graphics() -> void:
+	Graphics.set_low_mode(not Graphics.low_mode_selected())
 
 
 func _toggle_help() -> void:

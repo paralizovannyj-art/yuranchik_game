@@ -1,6 +1,7 @@
 // Зимнее ночное небо над городом: оранжево-серое зарево у горизонта,
 // низкие облака, подсвеченные снизу натриевыми фонарями.
 shader_type sky;
+#include "res://shaders/compat_srgb.gdshaderinc"
 
 uniform vec3 zenith_color : source_color = vec3(0.012, 0.016, 0.03);
 uniform vec3 mid_color : source_color = vec3(0.07, 0.065, 0.07);
@@ -39,24 +40,28 @@ float fbm(vec2 p) {
 }
 
 void sky() {
+	vec3 zenith_c = compat_lin(zenith_color);
+	vec3 mid_c = compat_lin(mid_color);
+	vec3 horizon_c = compat_lin(horizon_color);
+	vec3 ground_c = compat_lin(ground_color);
 	float y = EYEDIR.y;
 	if (y < 0.0) {
-		COLOR = mix(horizon_color * 0.35, ground_color, clamp(-y * 6.0, 0.0, 1.0));
+		COLOR = compat_enc(mix(horizon_c * 0.35, ground_c, clamp(-y * 6.0, 0.0, 1.0)));
 	} else {
 		float g = exp(-y / glow_height);
 		if (dot(glow_dir, glow_dir) > 0.0001) {
 			vec2 d = EYEDIR.xz / max(length(EYEDIR.xz), 0.0001);
 			g *= mix(glow_back, 1.0, smoothstep(-0.6, 0.6, dot(d, normalize(glow_dir))));
 		}
-		vec3 col = mix(zenith_color, mid_color, exp(-y / 0.6));
-		col = mix(col, horizon_color * glow_energy, g * g);
+		vec3 col = mix(zenith_c, mid_c, exp(-y / 0.6));
+		col = mix(col, horizon_c * glow_energy, g * g);
 		// низкие облака: проекция на плоскость
 		vec2 uv = EYEDIR.xz / (y + 0.08) * 0.6 + TIME * cloud_speed;
 		float c = fbm(uv);
 		c = smoothstep(0.42, 0.85, c) * cloud_amount;
 		// облака подсвечены заревом снизу: ярче у горизонта
-		vec3 cloud_col = mix(mid_color * 1.6, horizon_color * 0.9, g);
+		vec3 cloud_col = mix(mid_c * 1.6, horizon_c * 0.9, g);
 		col = mix(col, cloud_col, c * (1.0 - smoothstep(0.6, 1.0, y)));
-		COLOR = col;
+		COLOR = compat_enc(col);
 	}
 }
