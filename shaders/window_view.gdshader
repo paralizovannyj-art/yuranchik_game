@@ -6,6 +6,7 @@
 // после правки достаточно сохранить шейдер, переимпортировать модель не нужно.
 shader_type spatial;
 render_mode unshaded, fog_disabled, cull_back;
+#include "res://shaders/compat_srgb.gdshaderinc"
 
 uniform sampler2D tex : source_color, filter_linear_mipmap, repeat_enable;
 const float brightness = 0.36;     // ниже порога свечения (glow) подъезда, иначе окно засвечивает комнату
@@ -15,10 +16,10 @@ const float fog_start = 1.5;          // у самого стекла туман
 const float low_fog = 4.0;            // каждый метр ниже глаз считается как столько метров тумана
 
 void fragment() {
-	vec3 c = texture(tex, UV).rgb * brightness;
+	vec3 c = compat_lin(texture(tex, UV).rgb) * brightness;
 	vec3 wp = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	float below = max(CAMERA_POSITION_WORLD.y - wp.y, 0.0);
 	float d = max(length(VERTEX) - fog_start, 0.0) + below * low_fog;
 	float f = 1.0 - exp(-d * fog_density);
-	ALBEDO = mix(c, fog_color, f);
+	ALBEDO = compat_enc(mix(c, fog_color, f));
 }

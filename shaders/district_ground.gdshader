@@ -1,6 +1,7 @@
 // Земля микрорайона: на горизонтальных гранях — снег, на вертикальных (уступы террас, стенки котлована) — бетон.
 // Текстуры кладутся по мировым координатам, поэтому плиты любого размера стыкуются без швов.
 shader_type spatial;
+#include "res://shaders/compat_srgb.gdshaderinc"
 
 uniform sampler2D snow_tex : source_color, filter_linear_mipmap, repeat_enable;
 uniform sampler2D wall_tex : source_color, filter_linear_mipmap, repeat_enable;
@@ -19,13 +20,13 @@ void fragment() {
 	vec3 n = abs(wnorm);
 	vec3 col;
 	if (n.y > 0.5) {
-		col = texture(snow_tex, wpos.xz / snow_scale).rgb;
+		col = compat_lin(texture(snow_tex, wpos.xz / snow_scale).rgb);
 		// крупные пятна — чтобы повтор текстуры не бросался в глаза на больших плитах
-		col *= 0.82 + 0.36 * texture(snow_tex, wpos.xz / (snow_scale * 9.3)).g;
+		col *= 0.82 + 0.36 * compat_lin(texture(snow_tex, wpos.xz / (snow_scale * 9.3)).rgb).g;
 	} else {
 		vec2 uv = n.x > n.z ? wpos.zy : wpos.xy;
-		col = texture(wall_tex, uv / wall_scale).rgb;
+		col = compat_lin(texture(wall_tex, uv / wall_scale).rgb);
 	}
-	ALBEDO = col;
+	ALBEDO = compat_enc(col);
 	ROUGHNESS = 0.95;
 }
