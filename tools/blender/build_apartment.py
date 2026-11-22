@@ -263,9 +263,10 @@ def wall(b, M, axis, c, n, s0, s1, openings=(), tex="wall", z0=Z, z1=ZT, scale=(
         if not reveals:                                               # откосы рисует соседняя модель (подъезд)
             s = bb
             continue
-        box(a - 0.01, a, z0, z0 + oh, back, c, {'+' + sk: m})         # откосы
-        box(bb, bb + 0.01, z0, z0 + oh, back, c, {'-' + sk: m})
-        box(a, bb, z0 + oh, z0 + oh + 0.01, back, c, {'-Z': m})
+        rv = m if through else (M["trim"], RT("white"))               # у глухих дверей откосы белые, как наличник
+        box(a - 0.01, a, z0, z0 + oh, back, c, {'+' + sk: rv})        # откосы
+        box(bb, bb + 0.01, z0, z0 + oh, back, c, {'-' + sk: rv})
+        box(a, bb, z0 + oh, z0 + oh + 0.01, back, c, {'-Z': rv})
         # порожек: закрывает пол в глубине проёма (иначе под створкой видна пустота — светлая щель)
         sill = (M["trim"], RT("plinth"))
         box(a, bb, z0 - 0.03, z0 + 0.01, c + n * 0.012, back - n * 0.004, {'+Z': sill, key: sill})
