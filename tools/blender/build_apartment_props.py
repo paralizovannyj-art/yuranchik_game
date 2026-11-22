@@ -38,6 +38,7 @@ globals().update({k: _sh[k] for k in (
 # (то, что задано через HX0 / DOUBLE_DOOR / … — уже сдвинуто в build_apartment.py)
 SHIFT_WEST = ("wardrobe", "shelf", "desk_lamp", "painting", "mop_sticks", "vacuum", "basket")
 
+PAINT_W, PAINT_H = 0.74, 0.60     # картина над комодом: почти во всю его ширину (0.80)
 DOOR_X_IN = -3.05            # внутренняя грань входной двери (AptDoor в build_mvp_assets.py: x −3.05…−3.0, петли y = 0.8)
 
 
@@ -200,31 +201,27 @@ def tex_props():
         a[:] = C(*col) * (1 - var + 2 * var * noise(w, h, cx, cy, rng, oct=2))[..., None]
         return a, h, w
 
-    # картина: чёрная рамка, белое паспарту, 2 x 2: синий, синий, красный, белый; чёрные «розы»-завитки
+    # картина: чёрная рамка, белое паспарту, 2 x 2: синий, синий, красный, белый; чёрные «розы»-завитки.
+    # Картина 0.74 x 0.80 м, а кусок атласа 64 x 88 — пиксель по x шире в K раз: рисуем с поправкой, чтобы не было растяжки
     a, h, w = reg("painting")
     yy, xx = _grid(h, w)
+    K = (PAINT_W / w) / (PAINT_H / h)
+    bx = lambda n: max(1, int(round(n / K)))                                            # n «вертикальных» пикселей по x
     a[:] = C(0.04, 0.04, 0.04)
-    a[3:-3, 3:-3] = C(0.88, 0.87, 0.84)
-    x0, x1, y0, y1, xm, ym = 8, w - 8, 8, h - 8, w // 2, h // 2
+    a[3:-3, bx(3):-bx(3)] = C(0.88, 0.87, 0.84)
+    x0, x1, y0, y1, xm, ym = bx(8), w - bx(8), 8, h - 8, w // 2, h // 2
     a[y0:ym, x0:xm] = C(0.12, 0.26, 0.66); a[y0:ym, xm:x1] = C(0.10, 0.24, 0.62)
     a[ym:y1, x0:xm] = C(0.78, 0.12, 0.10); a[ym:y1, xm:x1] = C(0.90, 0.88, 0.85)
-    for (cx, cy, rr) in ((xm - 6, ym - 10, 13), (xm + 8, ym + 14, 14)):
-        r = np.hypot(xx - cx, yy - cy); th = np.arctan2(yy - cy, xx - cx)
+    for (cx, cy, rr) in ((xm - bx(6), ym - 10, 15), (xm + bx(8), ym + 14, 16)):
+        r = np.hypot((xx - cx) * K, yy - cy); th = np.arctan2(yy - cy, (xx - cx) * K)
         swirl = (np.abs(np.sin(r * 0.55 + th * 1.0)) < 0.38) & (r < rr)
         a[swirl] = C(0.03, 0.03, 0.03)
-    a[(np.abs(xx - xm) < 2) & (yy > y0 + 6) & (yy < y1 - 6) & (np.abs(np.sin(yy * 0.3)) < 0.6)] = C(0.03, 0.03, 0.03)
-    # постер: тёмно-синий фон, светло-серая морда собаки, тёмные глаза и нос
+    a[(np.abs(xx - xm) * K < 2) & (yy > y0 + 6) & (yy < y1 - 6) & (np.abs(np.sin(yy * 0.3)) < 0.6)] = C(0.03, 0.03, 0.03)
+    # постер на комоде (фото 2): белый кролик с карманными часами — фото самого постера (poster_rabbit.png),
+    # обрезано под пропорции холста (морда, глаз и часы); холст 0.42 x 0.58 м, по краю тёмный кант
     a, h, w = reg("poster")
-    yy, xx = _grid(h, w)
-    a[:] = C(0.05, 0.07, 0.14) * (0.7 + 0.5 * smoothstep(h, 0, yy))[..., None]
-    head = ((xx - 32) / 15) ** 2 + ((yy - 44) / 19) ** 2 < 1
-    ears = (((xx - 21) / 6) ** 2 + ((yy - 24) / 12) ** 2 < 1) | (((xx - 43) / 6) ** 2 + ((yy - 24) / 12) ** 2 < 1)
-    dog = head | ears
-    a[dog] = (C(0.72, 0.70, 0.66) * (0.75 + 0.35 * noise(w, h, 8, 8, rng, oct=2))[..., None])[dog]
-    for ex in (26, 38):
-        a[((xx - ex) ** 2 + (yy - 40) ** 2) < 5] = C(0.03, 0.03, 0.03)
-    a[((xx - 32) / 3.5) ** 2 + ((yy - 54) / 2.5) ** 2 < 1] = C(0.04, 0.03, 0.03)
-    a[3:6, 6:w - 6] = C(0.6, 0.6, 0.55); a[h - 9:h - 6, 10:w - 10] = C(0.5, 0.5, 0.45)
+    a[:] = PT.resize(PT.crop(PT.load("poster_rabbit.png"), 0, 40, 335, 501), w, h)
+    a[:1] *= 0.4; a[-1:] *= 0.4; a[:, :1] *= 0.4; a[:, -1:] *= 0.4
     fill("yellow", (0.95, 0.74, 0.10), 0.05)
     fill("teal", (0.06, 0.24, 0.30), 0.1)
     a, h, w = fill("lacquer", (0.06, 0.055, 0.05), 0.15)
@@ -291,6 +288,11 @@ def tex_props():
         x0, y0, x1, y1 = P[name]
         a = PT.flatten(PT.crop(img, *box), max(4, (box[2] - box[0]) / 3), strength=0.6)
         A[y0:y1, x0:x1] = np.clip(PT.resize(a, x1 - x0, y1 - y0) * k, 0, 1)
+    # комод: тот же бежевый ламинат «под клён», что у шкафа-купе (tex_wardrobe), чуть светлее
+    x0, y0, x1, y1 = P["melamine"]
+    ven = PT.flatten(PT.lib("polyhaven/white_maple_veneer"), 60)                      # волокна вдоль панели
+    A[y0:y1, x0:x1] = np.clip(PT.recolor(PT.resize(ven[:200, :400], x1 - x0, y1 - y0), (0.86, 0.79, 0.66),
+                                         contrast=1.1, chroma=0.3), 0, 1)
     save("ap_props", finish(A, 1.0, crisp=0.3))
 
 
@@ -443,21 +445,20 @@ def props():
     wrd.box((X0, YF - 0.03, ZH - 0.04), (X1, YF, ZH), {'-Y': dk, '-Z': dk})              # верхний рельс
     wrd.box((X0, YF - 0.03, Z), (X1, YF, Z + 0.03), {'-Y': dk, '+Z': dk})                # нижний
 
-    # --- открытая полочка (с коллизией): боковины, полки, задник ---
-    S0, S1, SF, ST = -6.20, -5.76, 1.86, Z + 0.95
+    # --- комод-этажерка (с коллизией), по фото 2: низкий (0.62 м), 0.80 м вдоль стены, грязно-белый ЛДСП-короб, торцы сплошные,
+    #     в коридор открыт, пустой: внизу 2 полки, выше одна высокая ниша; снизу цоколь, крышка толще стенок ---
+    S0, S1, SF, ST = -6.56, -5.76, HY1 - 0.38, Z + 0.62
     sh = I("shelf")
     mel = PR("melamine")
     t = 0.018
-    cube(sh, (S0, SF, Z), (S0 + t, HY1, ST), mel)
-    cube(sh, (S1 - t, SF, Z), (S1, HY1, ST), mel)
-    for zz in (Z + 0.03, Z + 0.33, Z + 0.63, ST - t):
-        cube(sh, (S0 + t, SF, zz), (S1 - t, HY1, zz + t), mel)
-    sh.box((S0 + t, HY1 - 0.01, Z), (S1 - t, HY1, ST), {'-Y': mel})
-    shd = I("shelf", nocol=True)                                             # обувь на полках
-    for (zz, kind, xs) in ((Z + 0.048, "shoes", (-6.17, -5.98)), (Z + 0.348, "sneakers", (-6.16, -5.97)),
-                           (Z + 0.648, "shoes", (-6.14, -5.95))):
-        for k, x0_ in enumerate(xs):
-            cube(shd, (x0_, SF + 0.02, zz), (x0_ + 0.16, SF + 0.30, zz + 0.09 - 0.02 * k), PR(kind))
+    cube(sh, (S0, SF, Z), (S0 + t, HY1, ST - 0.022), mel)                               # торцы
+    cube(sh, (S1 - t, SF, Z), (S1, HY1, ST - 0.022), mel)
+    cube(sh, (S0 - 0.004, SF - 0.006, ST - 0.022), (S1 + 0.004, HY1, ST), mel, skip=())   # крышка с напуском
+    cube(sh, (S0 + t, SF + 0.015, Z), (S1 - t, SF + 0.033, Z + 0.05), mel)              # цоколь
+    LV = (Z + 0.05, Z + 0.19)                                                           # две нижние полки
+    for zz in LV:
+        cube(sh, (S0 + t, SF, zz - t), (S1 - t, HY1, zz), mel)
+    sh.box((S0 + t, HY1 - 0.006, Z), (S1 - t, HY1, ST), {'-Y': mel})                     # задник — тот же ламинат
 
     # --- жёлтая настольная лампа на полочке ---
     lp = I("desk_lamp", nocol=True)
@@ -472,8 +473,41 @@ def props():
 
     # --- картина над полочкой (постер с собакой убран — удалён в редакторе) ---
     pt = I("painting", nocol=True)
-    pt.box((-6.62, HY1 - 0.025, Z + 1.30), (-6.12, HY1, Z + 1.98),
+    pt.box((-6.16 - PAINT_W / 2, HY1 - 0.025, Z + 1.20), (-6.16 + PAINT_W / 2, HY1, Z + 1.20 + PAINT_H),
            {'-Y': PR("painting"), '-X': PR("black"), '+X': PR("black"), '-Z': PR("black"), '+Z': PR("black")})
+
+    # --- холст с кроликом: стоит на комоде, верхом прислонён к стене. Подрамник 2.5 см, бока — «галерейная
+    #     обтяжка»: та же картинка, отзеркаленная от края (как ткань, загнутая на подрамник); матовый материал ---
+    ps = I("poster", nocol=True)
+    PW, PH, PX, PT_ = 0.42, 0.58, -6.56 + 0.27, 0.025                         # у дальнего от шкафа края комода
+    zb, yb = Z + 0.62, HY1 - 0.10                                            # низ лицевой стороны на крышке
+    zt = zb + math.sqrt(PH ** 2 - 0.07 ** 2); yt = yb + 0.07                 # верх: оборот почти касается стены
+    up = Vector((0, yt - yb, zt - zb)).normalized()
+    nrm = Vector((1, 0, 0)).cross(up).normalized()                           # наружу, в коридор
+    if nrm.y > 0:
+        nrm = -nrm
+    def F(x, v, d=0.0):                                                      # x — вдоль ширины, v — 0..1 по высоте, d — вглубь
+        return tuple(Vector((x, yb, zb)) + up * (PH * v) - nrm * d)
+    pm = M["poster"]
+    u0, v0, u1, v1 = RA("poster")
+    eu, ev = (u1 - u0) * PT_ / PW, (v1 - v0) * PT_ / PH                     # ширина загиба в UV
+    def quad(pts, uvs, out):
+        n_ = (Vector(pts[1]) - Vector(pts[0])).cross(Vector(pts[2]) - Vector(pts[1]))
+        if n_.dot(out) < 0:
+            pts, uvs = pts[::-1], uvs[::-1]
+        ps.poly([Vector(q) for q in pts], uvs, pm)
+    xl, xr = PX - PW / 2, PX + PW / 2
+    quad([F(xl, 0), F(xr, 0), F(xr, 1), F(xl, 1)], [(u0, v0), (u1, v0), (u1, v1), (u0, v1)], nrm)            # лицо
+    quad([F(xl, 0), F(xl, 1), F(xl, 1, PT_), F(xl, 0, PT_)],                                               # левый бок
+         [(u0, v0), (u0, v1), (u0 + eu, v1), (u0 + eu, v0)], Vector((-1, 0, 0)))
+    quad([F(xr, 0), F(xr, 1), F(xr, 1, PT_), F(xr, 0, PT_)],                                               # правый
+         [(u1, v0), (u1, v1), (u1 - eu, v1), (u1 - eu, v0)], Vector((1, 0, 0)))
+    quad([F(xl, 1), F(xr, 1), F(xr, 1, PT_), F(xl, 1, PT_)],                                               # верх
+         [(u0, v1), (u1, v1), (u1, v1 - ev), (u0, v1 - ev)], up)
+    quad([F(xl, 0), F(xr, 0), F(xr, 0, PT_), F(xl, 0, PT_)],                                               # низ
+         [(u0, v0), (u1, v0), (u1, v0 + ev), (u0, v0 + ev)], -up)
+    bu0, bv0, bu1, bv1 = RA("sack")                                                                         # оборот — сырой холст
+    quad([F(xl, 0, PT_), F(xr, 0, PT_), F(xr, 1, PT_), F(xl, 1, PT_)], [(bu0, bv0), (bu1, bv0), (bu1, bv1), (bu0, bv1)], -nrm)
 
     # --- палки от швабры: прислонены к углу шкафа ---
     ms = I("mop_sticks", nocol=True)
@@ -596,6 +630,7 @@ def main():
         "door_white": mat("ApDoorWhite", "ap_door_white", rough=0.6), "door_glass": mat("ApDoorGlass", "ap_door_glass", rough=0.4),
         "entry": mat("ApEntryIn", "ap_entry_in", rough=0.6), "wardrobe": mat("ApWardrobe", "ap_wardrobe", rough=0.5),
         "glow": mat("ApGlow", "ap_glow", "ap_glow"), "props": mat("ApProps", "ap_props", rough=0.8),
+        "poster": mat("ApPoster", "ap_props", rough=1.0),
     })
     res = props()
     vl = sc.view_layers[0]

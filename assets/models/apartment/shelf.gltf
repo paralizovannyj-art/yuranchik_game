@@ -11,8 +11,7 @@
 		{
 			"name":"ApartmentProps",
 			"nodes":[
-				0,
-				1
+				0
 			]
 		},
 		{
@@ -23,10 +22,6 @@
 		{
 			"mesh":0,
 			"name":"Shelf"
-		},
-		{
-			"mesh":1,
-			"name":"Shelf_nocol"
 		}
 	],
 	"materials":[
@@ -56,20 +51,6 @@
 					"material":0
 				}
 			]
-		},
-		{
-			"name":"Shelf_nocol",
-			"primitives":[
-				{
-					"attributes":{
-						"POSITION":4,
-						"NORMAL":5,
-						"TEXCOORD_0":6
-					},
-					"indices":7,
-					"material":0
-				}
-			]
 		}
 	],
 	"textures":[
@@ -89,119 +70,61 @@
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":124,
+			"count":128,
 			"max":[
-				0.2199997901916504,
-				0.9500007629394531,
-				0.16999995708465576
+				0.40399980545043945,
+				0.6200008392333984,
+				0.1929999589920044
 			],
 			"min":[
-				-0.2199997901916504,
+				-0.40400028228759766,
 				0,
-				-0.1700000762939453
+				-0.19300007820129395
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":124,
+			"count":128,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":124,
+			"count":128,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
 			"componentType":5123,
-			"count":186,
-			"type":"SCALAR"
-		},
-		{
-			"bufferView":4,
-			"componentType":5126,
-			"count":120,
-			"max":[
-				0.19000005722045898,
-				0.7379999160766602,
-				0.1499999761581421
-			],
-			"min":[
-				-0.19000005722045898,
-				0.048000335693359375,
-				-0.13000011444091797
-			],
-			"type":"VEC3"
-		},
-		{
-			"bufferView":5,
-			"componentType":5126,
-			"count":120,
-			"type":"VEC3"
-		},
-		{
-			"bufferView":6,
-			"componentType":5126,
-			"count":120,
-			"type":"VEC2"
-		},
-		{
-			"bufferView":7,
-			"componentType":5123,
-			"count":180,
+			"count":192,
 			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":1488,
+			"byteLength":1536,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":1488,
-			"byteOffset":1488,
+			"byteLength":1536,
+			"byteOffset":1536,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":992,
-			"byteOffset":2976,
+			"byteLength":1024,
+			"byteOffset":3072,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":372,
-			"byteOffset":3968,
-			"target":34963
-		},
-		{
-			"buffer":0,
-			"byteLength":1440,
-			"byteOffset":4340,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":1440,
-			"byteOffset":5780,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":960,
-			"byteOffset":7220,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":360,
-			"byteOffset":8180,
+			"byteLength":384,
+			"byteOffset":4096,
 			"target":34963
 		}
 	],
@@ -213,7 +136,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":8540,
+			"byteLength":4480,
 			"uri":"shelf.bin"
 		}
 	]
