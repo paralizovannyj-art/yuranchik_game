@@ -11,6 +11,8 @@
 ## - F / Y — фонарик.
 ## - Пробел / X — прыжок (немного выносливости). Ctrl — присесть, пока держишь; C / R3 — присесть/встать.
 ##   Вприсядку медленно и тихо: шаги не слышат враги. Под низким потолком не встанет.
+## - V — полёт сквозь стены, как noclip в GMod (только при запуске из редактора / debug-сборке):
+##   WASD — куда смотришь, Пробел — вверх, Ctrl — вниз, Shift — быстрее, Alt — медленнее.
 class_name Player
 extends CharacterBody3D
 
@@ -41,6 +43,8 @@ enum State { NORMAL, AIM, ATTACK, HURT, THROW, BUSY, DEAD }
 @export var crouch_height := 1.15      ## м — высота капсулы вприсядку (стоя — из player.tscn)
 @export var crouch_eye_drop := 0.6     ## м — насколько ниже глаза вприсядку
 @export var crouch_response := 6.0     ## 1/с — как быстро садится и встаёт
+
+@export var noclip_speed := 7.0        ## (отладка) скорость полёта по V, м/с; Shift — ×3, Alt — ×0.3
 
 @export_group("Камера")
 @export var mouse_sensitivity := 0.0022
@@ -96,6 +100,7 @@ var stamina := 100.0
 var exhausted := false
 var control := true                    ## false — игрок не управляет (катсцена, меню)
 var focus: Interactable                ## на что сейчас можно нажать E
+var noclip := false                    ## (отладка) летит сквозь стены — V
 var phone_up := false                  ## телефон в руке (phone.gd): только шаг, без ударов, бега и бросков
 
 var _yaw_target := 0.0
@@ -262,6 +267,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		var s := mouse_sensitivity * (0.65 if state == State.AIM else 1.0)
 		_yaw_target -= event.relative.x * s
 		_pitch_target = clampf(_pitch_target - event.relative.y * s, pitch_min, pitch_max)
+	if OS.is_debug_build() and event is InputEventKey and event.pressed and not event.echo \
+			and (event.physical_keycode == KEY_V or event.keycode == KEY_V) and state != State.DEAD:
+		set_noclip(not noclip)
+		get_viewport().set_input_as_handled()
+		return
 	if not control or state == State.DEAD or phone_up:
 		return
 	if event.is_action_pressed("holster") and (state == State.NORMAL or state == State.AIM):
@@ -297,6 +307,9 @@ func _physics_process(delta: float) -> void:
 	var ls := 1.0 - exp(-look_smoothing * delta)
 	cam_yaw = lerp_angle(cam_yaw, _yaw_target, ls)
 	cam_pitch = lerpf(cam_pitch, _pitch_target, ls)
+	if noclip:
+		_fly(delta)
+		return
 
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back") if control else Vector2.ZERO
 	var want_run := control and not phone_up and Input.is_action_pressed("run") and input.y < -0.3
@@ -414,6 +427,38 @@ func _physics_process(delta: float) -> void:
 	model.update_anim(delta, signed, _sprint_blend, _anim_state(), _yaw_rate, accel, move_angle,
 			crouching, not is_on_floor(), velocity.y)
 	_footsteps()
+	_update_camera(delta)
+
+
+# ----------------------------------------------------------------------------- отладка: полёт (noclip)
+## Включить/выключить полёт сквозь стены, как noclip в GMod.
+func set_noclip(on: bool) -> void:
+	noclip = on
+	collision.disabled = on
+	velocity = Vector3.ZERO
+	move_speed = 0.0
+	if on:
+		state = State.NORMAL
+		_crouch_toggle = false
+		if crouching:
+			_set_crouch(false)
+	Game.sfx("click", null, -6.0)
+
+
+func _fly(delta: float) -> void:
+	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back") if control else Vector2.ZERO
+	var dir := camera.global_basis * Vector3(input.x, 0.0, input.y)       # вперёд — туда, куда смотрит камера
+	if control:
+		dir.y += float(Input.is_action_pressed("jump")) - float(Input.is_action_pressed("crouch"))
+	var speed := noclip_speed
+	if Input.is_action_pressed("run"):
+		speed *= 3.0
+	if Input.is_key_pressed(KEY_ALT):
+		speed *= 0.3
+	velocity = velocity.lerp(dir.limit_length(1.0) * speed, 1.0 - exp(-10.0 * delta))
+	global_position += velocity * delta
+	rotation.y = cam_yaw
+	_update_focus()
 	_update_camera(delta)
 
 

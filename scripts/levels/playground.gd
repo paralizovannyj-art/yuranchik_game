@@ -19,7 +19,7 @@ const HELP := [
 	"5 — вылечиться        6 — все предметы в сумку",
 	"7 — бессмертие        0 — перезапуск полигона",
 	"E у витрины — следующая анимация     ` — отладка",
-	"V — вид со стороны (сзади / сбоку / спереди)",
+	"B — вид со стороны (сзади / сбоку / спереди),  V — полёт (noclip)",
 ]
 
 ## Виды со стороны по клавише V: смещение камеры в осях героя (+X — его правый бок, +Z — за спиной).
@@ -83,7 +83,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			Game.goto_level.call_deferred(scene_file_path)
 		KEY_H:
 			_help.visible = not _help.visible
-		KEY_V:
+		KEY_B:
 			_cycle_view()
 		_:
 			return
