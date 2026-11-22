@@ -99,7 +99,7 @@ shadow_caster_mask = 4294443007
 spot_range = 18.0
 spot_attenuation = 0.9
 spot_angle = 20.0
-spot_angle_attenuation = 2.2
+spot_angle_attenuation = 0.15
 
 [node name="BreathParticles" type="GPUParticles3D" parent="CamPivot/Camera" unique_id=2071320922]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.062128425, -0.17409149)

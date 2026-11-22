@@ -25,11 +25,17 @@ const DECAL_LIFT := 0.15
 ## true — сейчас работает OpenGL (выбран «Слабый ПК» или движок сам откатился на OpenGL)
 var opengl := false
 
+## Матовые материалы в обоих режимах: без бликов (specular) — правило автора «минимум современных эффектов»
+## (docs/design/ps2-style/cry-of-fear-author.md, М1). Свет (фонарик, лампы) на материал действует как раньше —
+## пропадает только блестящее пятно. Применяется к каждому материалу один раз, при появлении узла в сцене:
+## так не нужно править импорт моделей, скрипты и сцены по отдельности.
+const MATTE := true
+var _matte_done := {}
+
 
 func _ready() -> void:
 	opengl = RenderingServer.get_current_rendering_method() == OPENGL
-	if opengl:
-		get_tree().node_added.connect(_on_node_added)
+	get_tree().node_added.connect(_on_node_added)
 
 
 ## Режим, выбранный в меню (может не совпадать с текущим до перезапуска).
@@ -61,6 +67,10 @@ func set_low_mode(on: bool) -> void:
 
 
 func _on_node_added(node: Node) -> void:
+	if MATTE and node is GeometryInstance3D:
+		_make_matte.call_deferred(node)
+	if not opengl:
+		return
 	if node is Light3D:
 		(node as Light3D).shadow_enabled = false     # light_budget.gd запоминает это и тоже не включит тень
 	elif node is WorldEnvironment:
@@ -104,3 +114,33 @@ func _replace_decal(d: Decal) -> void:
 	mi.position.y += d.size.y * DECAL_LIFT
 	d.get_parent().add_child(mi)
 	d.queue_free()
+
+
+## Выключить блик у всех материалов узла (собственные, переопределённые и материалы меша).
+func _make_matte(gi: GeometryInstance3D) -> void:
+	if not is_instance_valid(gi):
+		return
+	_matte(gi.material_override)
+	_matte(gi.material_overlay)
+	if gi is MeshInstance3D:
+		var mi := gi as MeshInstance3D
+		if mi.mesh:
+			for i in mi.mesh.get_surface_count():
+				_matte(mi.get_surface_override_material(i))
+				_matte(mi.mesh.surface_get_material(i))
+	elif gi is CSGShape3D:
+		_matte((gi as CSGShape3D).get("material"))
+
+
+func _matte(m: Material) -> void:
+	if m == null or not m is BaseMaterial3D:
+		return
+	var id := m.get_instance_id()
+	if _matte_done.has(id):
+		return
+	_matte_done[id] = true
+	var bm := m as BaseMaterial3D
+	if bm.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED:
+		return
+	bm.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+	bm.metallic = 0.0
