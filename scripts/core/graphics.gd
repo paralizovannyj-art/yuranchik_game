@@ -32,10 +32,25 @@ var opengl := false
 const MATTE := true
 var _matte_done := {}
 
+## Туман-«стена» (Environment.fog_mode = Depth) в режиме «Обычная» заменяется туманом, который не трогает свет:
+## shaders/lit_fog.gdshader — тёмное уходит в туман, освещённое и светящееся остаётся (правило автора,
+## cry-of-fear-author.md Э3). Берёт begin / end / цвет из окружения. В режиме «Слабый ПК» остаётся туман движка:
+## на OpenGL шейдер с глубиной и экраном не проверялся.
+const LIT_FOG_SHADER := "res://shaders/lit_fog.gdshader"
+
 
 func _ready() -> void:
 	opengl = RenderingServer.get_current_rendering_method() == OPENGL
 	get_tree().node_added.connect(_on_node_added)
+	# сцена, запущенная напрямую (F6 / из редактора), может войти в дерево раньше подписки — пройти её узлы
+	_sweep.call_deferred(get_tree().root)
+
+
+func _sweep(n: Node) -> void:
+	if n != self:
+		_on_node_added(n)
+	for c in n.get_children():
+		_sweep(c)
 
 
 ## Режим, выбранный в меню (может не совпадать с текущим до перезапуска).
@@ -70,6 +85,8 @@ func _on_node_added(node: Node) -> void:
 	if MATTE and node is GeometryInstance3D:
 		_make_matte.call_deferred(node)
 	if not opengl:
+		if node is WorldEnvironment:
+			_add_lit_fog.call_deferred(node)
 		return
 	if node is Light3D:
 		(node as Light3D).shadow_enabled = false     # light_budget.gd запоминает это и тоже не включит тень
@@ -95,7 +112,7 @@ func _fix_environment(we: WorldEnvironment) -> void:
 
 ## Декаль-«пятно» → плоский квадрат с той же текстурой, лежащий на поверхности под ней.
 func _replace_decal(d: Decal) -> void:
-	if not is_instance_valid(d) or not d.is_inside_tree():
+	if not is_instance_valid(d) or not d.is_inside_tree() or d.is_queued_for_deletion():
 		return
 	var m := StandardMaterial3D.new()
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -144,3 +161,30 @@ func _matte(m: Material) -> void:
 		return
 	bm.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 	bm.metallic = 0.0
+
+
+func _add_lit_fog(we: WorldEnvironment) -> void:
+	if not is_instance_valid(we) or we.environment == null:
+		return
+	var env := we.environment
+	if not env.fog_enabled or env.fog_mode != Environment.FOG_MODE_DEPTH or we.has_node("LitFog"):
+		return
+	var sm := ShaderMaterial.new()
+	sm.shader = load(LIT_FOG_SHADER)
+	sm.render_priority = Material.RENDER_PRIORITY_MIN     # первым среди прозрачных: снег и карточки света поверх
+	sm.set_shader_parameter("fog_color", env.fog_light_color)
+	sm.set_shader_parameter("fog_begin", env.fog_depth_begin)
+	sm.set_shader_parameter("fog_end", env.fog_depth_end)
+	var q := QuadMesh.new()
+	q.size = Vector2(2, 2)
+	var mi := MeshInstance3D.new()
+	mi.name = "LitFog"
+	mi.mesh = q
+	mi.material_override = sm
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.custom_aabb = AABB(Vector3.ONE * -100000.0, Vector3.ONE * 200000.0)   # квадрат во весь экран — не отсекать
+	we.add_child(mi)
+	# окружение общее (assets/environments/*.tres) — туман движка выключаем на копии
+	env = env.duplicate()
+	env.fog_enabled = false
+	we.environment = env
