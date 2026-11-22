@@ -19,6 +19,9 @@
 # Надписей в модели нет. PhPrint и PhBackPrint развёрнуты плоской проекцией в одну текстуру 2W×H:
 # левая половина — лицо, правая — спина (зеркально, как на виде сзади). Рисует её phone.gd по phone_layout.json.
 #
+# Полигонаж (PS2, разбор docs/design/ps2-style/how-to-make-ps2-graphics-wushin.md): мало сегментов
+# у скруглений и фасок, детали — в текстуре. Было ~10.3k треугольников.
+#
 # Оси: u — вправо, v — вверх, w — к зрителю (лицо). В Blender это (u, -w, v); в Godot после экспорта — (u, v, w).
 import bpy, bmesh, os, json, math
 
@@ -120,9 +123,9 @@ def build():
         lst.append(dict(kind=kind, rect=[round(x, 3) for x in rect], **kw))
 
     # ---------------- корпус
-    part(rr(0, 0, W, H, R, 8), W_BACK, W_RED, BACK, 3.2, 4, keep=lambda w: w < 0)          # спинка, скруглена назад
-    part(rr(0, 0, W, H - 1.2, R - 0.6, 8), W_RED, W_FACE, RED, 1.2, 3, keep=lambda w: w > 3)  # красная полоса
-    part(rr(0, 0, W - 3.8, H - 0.4, R - 1.0, 8), W_FACE - 0.2, FRONT, PRINT, 0.6, 2, keep=lambda w: w > 5.5)
+    part(rr(0, 0, W, H, R, 4), W_BACK, W_RED, BACK, 3.2, 2, keep=lambda w: w < 0)          # спинка, скруглена назад
+    part(rr(0, 0, W, H - 1.2, R - 0.6, 4), W_RED, W_FACE, RED, 1.2, 1, keep=lambda w: w > 3)  # красная полоса
+    part(rr(0, 0, W - 3.8, H - 0.4, R - 1.0, 4), W_FACE - 0.2, FRONT, PRINT, 0.6, 1, keep=lambda w: w > 5.5)
 
     # экран
     x0, y0, x1, y1 = 4.65, 17.6, 51.35, 52.9
@@ -138,9 +141,9 @@ def build():
     item(front, "mic", [44.0, 105.0, 45.0, 106.0])
 
     # ---------------- навигация
-    def key(rect, top, kind, r=0.9, width=0.45, segs=2, **kw):
+    def key(rect, top, kind, r=0.9, width=0.45, segs=1, seg=2, **kw):
         cu, cv, kw_, kh = tl(*rect)
-        part(rr(cu, cv, kw_, kh, r), FRONT - 0.3, top, PRINT, width, segs, keep=lambda w: w > FRONT)
+        part(rr(cu, cv, kw_, kh, r, seg), FRONT - 0.3, top, PRINT, width, segs, keep=lambda w: w > FRONT)
         item(front, kind, rect, **kw)
     key([2.1, 56.3, 12.5, 72.6], FRONT + 0.6, "lsk", r=1.6)
     key([43.5, 56.3, 53.9, 72.6], FRONT + 0.6, "rsk", r=1.6)
@@ -157,7 +160,7 @@ def build():
         for lat, sym, cyr, span in row:
             rect = [KB_X0 + pitch * col + GAP / 2, ya + GAP / 2, KB_X0 + pitch * (col + span) - GAP / 2, yb - GAP / 2]
             kind = lat[1:] if lat.startswith("@") else "key"
-            key(rect, FRONT + 1.5, kind, r=0.8, width=0.85, segs=3,
+            key(rect, FRONT + 1.5, kind, r=0.8, width=0.85, segs=1, seg=1,
                 lat=lat if kind == "key" else "", sym=sym, cyr=cyr)
             col += span
 
@@ -165,7 +168,7 @@ def build():
     def bu(x):                      # x на виде сзади → u
         return W / 2 - x
     cam = (27.4, 21.0)
-    part(rr(bu(cam[0]), H / 2 - cam[1], 13.4, 13.4, 3.8), W_BACK - 0.7, W_BACK + 0.6, CHROME, 0.5, 2,
+    part(rr(bu(cam[0]), H / 2 - cam[1], 13.4, 13.4, 3.8), W_BACK - 0.7, W_BACK + 0.6, CHROME, 0.5, 1,
          keep=lambda w: w < W_BACK)
     part(rr(bu(cam[0]), H / 2 - cam[1], 9.4, 9.4, 2.2), W_BACK - 0.85, W_BACK + 0.6, BPRINT, 0.2, 1,
          keep=lambda w: w < W_BACK)
@@ -178,12 +181,12 @@ def build():
     # ---------------- боковые кнопки и разъёмы
     def side(y0_, y1_, sgn, out, w0, w1, mat=BACK):
         cv, h = H / 2 - (y0_ + y1_) / 2, y1_ - y0_
-        part(rr(sgn * (W / 2 - 1.0 + out / 2), cv, 2.0 + out, h, min(1.0, h / 2)), w0, w1, mat, 0.35, 2)
+        part(rr(sgn * (W / 2 - 1.0 + out / 2), cv, 2.0 + out, h, min(1.0, h / 2), 2), w0, w1, mat, 0.35, 1)
     side(20.0, 42.5, 1, 0.7, -2.2, 1.0)            # справа: громкость
     side(75.7, 87.0, 1, 0.6, -2.2, 1.0)            # справа: камера/блокировка
     side(20.0, 42.5, -1, 0.15, -4.0, 0.9)          # слева: заглушка карты памяти
     top = H / 2
-    for poly in (circle(-12.0, -3.4, 1.7), rr(1.5, -3.4, 7.0, 2.4, 0.8), circle(13.0, -3.4, 1.1, 12)):
+    for poly in (circle(-12.0, -3.4, 1.7, 8), rr(1.5, -3.4, 7.0, 2.4, 0.8), circle(13.0, -3.4, 1.1, 8)):
         prism(poly, top - 0.3, top + 0.04, HOLE, axis="v")
 
     # спина: грани, смотрящие назад, получают печать
