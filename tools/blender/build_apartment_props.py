@@ -342,7 +342,7 @@ def flip(b, n0):
         b.poly(pts, b.uv[i][::-1], b.mats[b.mi[i]])
 
 
-def blind_door(b, axis, c, n, a, bb, leaves, white, knobs=(), handles=(), cornice=False):
+def blind_door(b, axis, c, n, a, bb, leaves, white, knobs=(), handles=(), cornice=False, casing=True, inset=0.04, jamb=0.0):
     """Закрытая дверь-декор в глухом проёме оболочки: створки утоплены на 4 см, вокруг на стене — белый наличник.
     axis 'x' — стена x = c (вдоль y), 'y' — стена y = c (вдоль x); n — куда смотрит лицо стены.
     leaves — [(начало, конец, (мат, rect))]; knobs — круглые ручки (s, z), handles — нажимные (s, z, ±1 — куда язык)."""
@@ -360,13 +360,23 @@ def blind_door(b, axis, c, n, a, bb, leaves, white, knobs=(), handles=(), cornic
 
     tr = (M["trim"], RT("white"))
     for (s0, s1, fm) in leaves:
-        box(s0, s1, Z + 0.012, Z + DH - 0.004, c - n * 0.08, c - n * 0.04, {key: fm, '+' + sk: tr, '-' + sk: tr, '-Z': tr})
+        box(s0, s1, Z + 0.012, Z + DH - 0.004 - jamb, c - n * (inset + 0.04), c - n * inset,
+            {key: fm, '+' + sk: tr, '-' + sk: tr, '-Z': tr})
+    if jamb:                                                                 # дверная коробка внутри проёма: не выступает
+        fr = {key: tr, '+' + sk: tr, '-' + sk: tr, '-Z': tr}                 # из стены, створки утоплены за ней
+        f0, f1 = c - n * 0.03, c - n * (inset + 0.04)
+        box(a, a + jamb, Z, Z + DH, f0, f1, fr)
+        box(bb - jamb, bb, Z, Z + DH, f0, f1, fr)
+        box(a + jamb, bb - jamb, Z + DH - jamb, Z + DH, f0, f1, fr)
     w = 0.07
     cas = {key: tr, '+Z': tr, '-Z': tr, '+' + sk: tr, '-' + sk: tr}
-    box(a - w, a, Z, Z + DH + w, c, c + n * 0.012, cas)
-    box(bb, bb + w, Z, Z + DH + w, c, c + n * 0.012, cas)
-    box(a, bb, Z + DH, Z + DH + w, c, c + n * 0.012, cas)
-    if cornice:                                                              # карниз над наличником (дверь в зал)
+    if casing:                                                               # наличник на стене вокруг проёма
+        box(a - w, a, Z, Z + DH + w, c, c + n * 0.012, cas)
+        box(bb, bb + w, Z, Z + DH + w, c, c + n * 0.012, cas)
+        box(a, bb, Z + DH, Z + DH + w, c, c + n * 0.012, cas)
+    else:                                                                    # без наличника: рама — в толще стены
+        w = 0.0
+    if cornice:                                                              # карниз над проёмом (дверь в зал)
         box(a - w - 0.03, bb + w + 0.03, Z + DH + w, Z + DH + w + 0.04, c, c + n * 0.035, cas)
     for (s, z) in knobs:                                                     # круглая деревянная ручка
         cyl(b, pt(s, z, -0.04), pt(s, z, 0.0), 0.012, 0.012, PR("brass"), segs=5)
@@ -403,8 +413,9 @@ def props():
     mid = (a + bb) / 2
     dd = I("double_door", nocol=True)
     gl = M["door_glass"]
-    blind_door(dd, 'y', HY0, +1, a, bb, [(a + 0.004, mid - 0.002, (gl, (0.5, 0, 0, 1))), (mid + 0.002, bb - 0.004, (gl, (1, 0, 0.5, 1)))],
-               tr_white, cornice=True)
+    jb = 0.05                                                                # коробка в проёме, створки на 7 см глубже стены
+    blind_door(dd, 'y', HY0, +1, a, bb, [(a + jb, mid - 0.002, (gl, (0, 0, 0.5, 1))), (mid + 0.002, bb - jb, (gl, (0.5, 0, 0, 1)))],
+               tr_white, casing=False, inset=0.07, jamb=jb)                   # рама в стене, без карниза, как на фото
     # --- узкая белая дверь у входа ---
     a, bb = WC_DOOR
     wc = I("door_wc", nocol=True)
