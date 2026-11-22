@@ -15,7 +15,7 @@
 #   YUR_ROOT = r"C:\путь\к\проекту"   # необязательно
 #   exec(open(YUR_ROOT + r"\tools\blender\build_yurchik_v3.py", encoding="utf-8").read())
 # Оси Blender: Z — вверх, персонаж смотрит в -Y (в Godot это +Z), левая сторона персонажа — +X.
-import bpy, os, math
+import bpy, os, math, sys
 import numpy as np
 from mathutils import Vector
 
@@ -1725,6 +1725,8 @@ def main():
             "verts": len(used_b), "density_px_per_m": round(D, 1),
             "tris_hands": sum(len(mb.faces[f]) - 2 for f in fsel_b if mb.ftag[f] == "glove_palm" or mb.ftag[f].startswith("finger_")),
             "fist": {n: tuple(round(a) for a in v) for n, v in FIST.items()}}
+    sys.path.insert(0, os.path.join(ROOT, "tools", "blender")); import ps2_budget
+    info["budget"] = ps2_budget.check("Yurchik", info["tris_body"] + info["tris_hammer"], "hero")
     if STAGE == "geo":
         return info
 

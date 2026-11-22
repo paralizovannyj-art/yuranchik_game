@@ -534,6 +534,8 @@ def main():
     mat = Y["make_material"](name + "Mat", None, False)
     body, fsel, used = Y["make_object"](mb, 0, name + "Mesh", sc.collection, [mat])
     info = {"tris": sum(len(mb.faces[f]) - 2 for f in fsel), "verts": len(used), "density": round(D, 1)}
+    sys.path.insert(0, os.path.join(ROOT, "tools", "blender")); import ps2_budget
+    info["budget"] = ps2_budget.check(name, info["tris"], "character")
 
     variants = {"sergey": SERGEY} if sergey else VARIANTS
     first = None
