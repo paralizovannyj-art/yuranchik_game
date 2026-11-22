@@ -4,6 +4,30 @@
 [ext_resource type="Script" path="res://scripts/world/flicker_light.gd" id="fl"]
 [ext_resource type="Material" path="res://assets/materials/lamp_halo.tres" id="halo"]
 
+[sub_resource type="Gradient" id="pool_grad"]
+offsets = PackedFloat32Array(0, 0.35, 1)
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0.55, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="pool_tex"]
+gradient = SubResource("pool_grad")
+width = 64
+height = 64
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="StandardMaterial3D" id="pool_mat"]
+transparency = 1
+blend_mode = 1
+shading_mode = 0
+albedo_color = Color(0.95, 0.6, 0.26, 0.35)
+albedo_texture = SubResource("pool_tex")
+disable_receive_shadows = true
+
+[sub_resource type="PlaneMesh" id="pool_mesh"]
+material = SubResource("pool_mat")
+size = Vector2(7, 7)
+
 [sub_resource type="QuadMesh" id="halo_mesh"]
 material = ExtResource("halo")
 size = Vector2(2.6, 2.6)
@@ -28,6 +52,7 @@ glow_mesh = NodePath("../Halo")
 
 [node name="Fill" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.9, 1.6)
+visible = false
 light_color = Color(0.96, 0.62, 0.28, 1)
 light_energy = 0.6
 light_volumetric_fog_energy = 0.8
@@ -38,3 +63,8 @@ omni_attenuation = 1.8
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.3, 1.6)
 cast_shadow = 0
 mesh = SubResource("halo_mesh")
+
+[node name="Pool" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 1.6)
+cast_shadow = 0
+mesh = SubResource("pool_mesh")
