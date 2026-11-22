@@ -1,4 +1,4 @@
-[gd_resource type="Environment" format=3]
+[gd_resource type="Environment" format=3 uid="uid://c5fbxebo352ym"]
 
 [ext_resource type="Shader" uid="uid://cl2y4php6t33u" path="res://shaders/city_night_sky.gdshader" id="sky"]
 
@@ -12,6 +12,8 @@ shader_parameter/glow_height = 0.24
 shader_parameter/glow_energy = 0.9
 shader_parameter/cloud_amount = 0.65
 shader_parameter/cloud_speed = 0.004
+shader_parameter/glow_dir = Vector2(0, 0)
+shader_parameter/glow_back = 0.25
 
 [sub_resource type="Sky" id="sky_res"]
 sky_material = SubResource("sky_mat")
@@ -26,29 +28,23 @@ ambient_light_color = Color(0.22, 0.3, 0.52, 1)
 ambient_light_sky_contribution = 0.0
 ambient_light_energy = 0.32
 tonemap_mode = 2
-tonemap_exposure = 1.0
 tonemap_white = 1.5
 glow_enabled = true
 glow_intensity = 0.45
 glow_strength = 0.9
-glow_bloom = 0.0
 glow_hdr_threshold = 1.2
 fog_enabled = true
 fog_mode = 1
 fog_light_color = Color(0.018, 0.02, 0.028, 1)
 fog_density = 1.0
-fog_depth_curve = 1.0
-fog_depth_begin = 3.0
-fog_depth_end = 22.0
 fog_aerial_perspective = 0.3
 fog_sky_affect = 0.6
-volumetric_fog_enabled = false
+fog_depth_begin = 3.0
+fog_depth_end = 22.0
 volumetric_fog_density = 0.022
 volumetric_fog_albedo = Color(0.5, 0.5, 0.55, 1)
 volumetric_fog_anisotropy = 0.55
 volumetric_fog_length = 40.0
-volumetric_fog_ambient_inject = 0.0
 volumetric_fog_sky_affect = 0.0
 adjustment_enabled = true
-adjustment_contrast = 1.0
 adjustment_saturation = 0.95

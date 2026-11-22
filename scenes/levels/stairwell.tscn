@@ -196,22 +196,22 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.469, 8.4, 0.85)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.7594776, 8.4, -1.86)
 
 [node name="Shelf" parent="Apartment" unique_id=419520696 instance=ExtResource("ap_shelf")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.013463, 8.4, -2.007)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.013463, 8.4, -1.9975796)
 
 [node name="DeskLamp" parent="Apartment" unique_id=718936160 instance=ExtResource("ap_desk_lamp")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.906558, 9.02, -1.9726261)
+transform = Transform3D(0.9251732, 0, -0.3795451, 0, 1, 0, 0.3795451, 0, 0.9251732, -6.262902, 9.02, -1.9726261)
 
 [node name="Painting" parent="Apartment" unique_id=294983283 instance=ExtResource("ap_painting")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.9877625, 9.968, -2.188)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.9965124, 9.9136305, -2.188)
 
 [node name="Poster" parent="Apartment" unique_id=988755165 instance=ExtResource("ap_poster")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.17, 9.017, -2.147)
+transform = Transform3D(0.9999538, 0.0011757821, 0.009534376, -0.00013273502, 0.9940779, -0.10866892, -0.009605683, 0.10866265, 0.9940322, -6.0633116, 9.02199, -2.216212)
 
 [node name="MopSticks" parent="Apartment" unique_id=1849264169 instance=ExtResource("ap_mop_sticks")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.7092743, 8.397, -1.8128457)
 
 [node name="Nightstand" parent="Apartment" unique_id=1745761698 instance=ExtResource("ap_nightstand")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.249524, 8.398921, -0.564599)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.249524, 8.398921, -0.63467246)
 
 [node name="VaseFlowers" parent="Apartment" unique_id=1558732250 instance=ExtResource("ap_vase_flowers")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.305, 9.02, -0.6225176)
@@ -432,7 +432,6 @@ omni_attenuation = 1.5
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.48, 10.55, -1.25)
 light_color = Color(1, 0.72, 0.42, 1)
 light_energy = 0.55
-shadow_enabled = true
 shadow_bias = 0.02
 shadow_normal_bias = 0.2
 omni_range = 4.8

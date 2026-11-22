@@ -2,13 +2,12 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://di87x24xovd7o"
+uid="uid://bg5lw4wvx45x8"
 path.s3tc="res://.godot/imported/ap_trim.png-2921ea9060ebc153c248d751ca0de467.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
-generator_parameters={}
 
 [deps]
 
