@@ -15,7 +15,6 @@
 [ext_resource type="PackedScene" uid="uid://b81h0804yqe38" path="res://assets/models/apartment/mug.gltf" id="ap_mug"]
 [ext_resource type="PackedScene" uid="uid://c5xjfqm7braqi" path="res://assets/models/apartment/nightstand.gltf" id="ap_nightstand"]
 [ext_resource type="PackedScene" uid="uid://bfysbbghhhesq" path="res://assets/models/apartment/painting.gltf" id="ap_painting"]
-[ext_resource type="PackedScene" uid="uid://cuw7ju3fmrjyi" path="res://assets/models/apartment/plastic_bag.gltf" id="ap_plastic_bag"]
 [ext_resource type="PackedScene" uid="uid://dbbl6qjqwr2v4" path="res://assets/models/apartment/runner.gltf" id="ap_runner"]
 [ext_resource type="PackedScene" uid="uid://dmje3jfemf7c5" path="res://assets/models/apartment/sconce.gltf" id="ap_sconce"]
 [ext_resource type="PackedScene" uid="uid://e558runhjvcu" path="res://assets/models/apartment/shelf.gltf" id="ap_shelf"]
@@ -193,22 +192,19 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.462, 8.4, -1)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.469, 8.4, 1.5)
 
 [node name="Wardrobe" parent="Apartment" unique_id=1523193955 instance=ExtResource("ap_wardrobe")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 8.4, -1.86)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.7594776, 8.4, -1.86)
 
 [node name="Shelf" parent="Apartment" unique_id=419520696 instance=ExtResource("ap_shelf")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.13, 8.4, -2.03)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.833463, 8.4, -2.03)
 
 [node name="DeskLamp" parent="Apartment" unique_id=718936160 instance=ExtResource("ap_desk_lamp")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.23195, 9.35, -1.9726261)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.906558, 9.35, -1.9726261)
 
 [node name="Painting" parent="Apartment" unique_id=294983283 instance=ExtResource("ap_painting")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.14127, 9.888235, -2.188)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.879921, 9.888235, -2.188)
 
 [node name="MopSticks" parent="Apartment" unique_id=1849264169 instance=ExtResource("ap_mop_sticks")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.95445, 8.397, -1.8128457)
-
-[node name="PlasticBag" parent="Apartment" unique_id=1776187644 instance=ExtResource("ap_plastic_bag")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.8, 8.4, -1.96)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.7092743, 8.397, -1.8128457)
 
 [node name="Nightstand" parent="Apartment" unique_id=1745761698 instance=ExtResource("ap_nightstand")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.258, 8.4, 0.59)
