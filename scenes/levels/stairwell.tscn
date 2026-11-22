@@ -193,7 +193,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.462, 8.4, -1)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.469, 8.4, 1.5)
 
 [node name="Wardrobe" parent="Apartment" unique_id=1523193955 instance=ExtResource("ap_wardrobe")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 8.4, -1.945)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 8.4, -1.86)
 
 [node name="Shelf" parent="Apartment" unique_id=419520696 instance=ExtResource("ap_shelf")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.13, 8.4, -2.03)
