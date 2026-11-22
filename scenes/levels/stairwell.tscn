@@ -183,7 +183,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.175, 8.406, -1.325)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.875, 8.4, -0.428)
 
 [node name="DoorWc" parent="Apartment" unique_id=506032236 instance=ExtResource("ap_door_wc")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.575, 8.4, -0.431)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.65, 8.4, -0.431)
 
 [node name="DoorWhiteA" parent="Apartment" unique_id=1542635988 instance=ExtResource("ap_door_white_a")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.462, 8.4, -1)
@@ -479,7 +479,7 @@ need_item = "locked"
 locked_text = "Не сейчас."
 
 [node name="WcDoorUse" type="Node3D" parent="." unique_id=938991847]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.675, 9.4, -0.42)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.65, 9.4, -0.42)
 script = ExtResource("inter")
 prompt = "Открыть дверь"
 radius = 1.3
