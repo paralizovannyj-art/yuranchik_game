@@ -476,17 +476,38 @@ def props():
     pt.box((-6.16 - PAINT_W / 2, HY1 - 0.025, Z + 1.20), (-6.16 + PAINT_W / 2, HY1, Z + 1.20 + PAINT_H),
            {'-Y': PR("painting"), '-X': PR("black"), '+X': PR("black"), '-Z': PR("black"), '+Z': PR("black")})
 
-    # --- постер с кроликом: стоит на комоде, верхом прислонён к стене ---
+    # --- холст с кроликом: стоит на комоде, верхом прислонён к стене. Подрамник 2.5 см, бока — «галерейная
+    #     обтяжка»: та же картинка, отзеркаленная от края (как ткань, загнутая на подрамник); матовый материал ---
     ps = I("poster", nocol=True)
-    PW, PH, PX = 0.32, 0.44, -6.56 + 0.24                                    # у дальнего от шкафа края комода
-    zb, yb = Z + 0.62, HY1 - 0.07                                           # низ на крышке, в 7 см от стены
-    zt = zb + math.sqrt(PH ** 2 - 0.07 ** 2)
-    pr_ = (M["props"], RA("poster"))
-    bu0, bv0, bu1, bv1 = RA("black")
-    ps.poly([(PX - PW / 2, yb, zb), (PX + PW / 2, yb, zb), (PX + PW / 2, HY1 - 0.004, zt), (PX - PW / 2, HY1 - 0.004, zt)],
-            [(pr_[1][0], pr_[1][1]), (pr_[1][2], pr_[1][1]), (pr_[1][2], pr_[1][3]), (pr_[1][0], pr_[1][3])], M["props"])
-    ps.poly([(PX - PW / 2, HY1 - 0.004, zt), (PX + PW / 2, HY1 - 0.004, zt), (PX + PW / 2, yb, zb), (PX - PW / 2, yb, zb)],
-            [(bu0, bv0), (bu1, bv0), (bu1, bv1), (bu0, bv1)], M["props"])        # оборот — чёрный
+    PW, PH, PX, PT_ = 0.32, 0.44, -6.56 + 0.24, 0.025                         # у дальнего от шкафа края комода
+    zb, yb = Z + 0.62, HY1 - 0.10                                            # низ лицевой стороны на крышке
+    zt = zb + math.sqrt(PH ** 2 - 0.07 ** 2); yt = yb + 0.07                 # верх: оборот почти касается стены
+    up = Vector((0, yt - yb, zt - zb)).normalized()
+    nrm = Vector((1, 0, 0)).cross(up).normalized()                           # наружу, в коридор
+    if nrm.y > 0:
+        nrm = -nrm
+    def F(x, v, d=0.0):                                                      # x — вдоль ширины, v — 0..1 по высоте, d — вглубь
+        return tuple(Vector((x, yb, zb)) + up * (PH * v) - nrm * d)
+    pm = M["poster"]
+    u0, v0, u1, v1 = RA("poster")
+    eu, ev = (u1 - u0) * PT_ / PW, (v1 - v0) * PT_ / PH                     # ширина загиба в UV
+    def quad(pts, uvs, out):
+        n_ = (Vector(pts[1]) - Vector(pts[0])).cross(Vector(pts[2]) - Vector(pts[1]))
+        if n_.dot(out) < 0:
+            pts, uvs = pts[::-1], uvs[::-1]
+        ps.poly([Vector(q) for q in pts], uvs, pm)
+    xl, xr = PX - PW / 2, PX + PW / 2
+    quad([F(xl, 0), F(xr, 0), F(xr, 1), F(xl, 1)], [(u0, v0), (u1, v0), (u1, v1), (u0, v1)], nrm)            # лицо
+    quad([F(xl, 0), F(xl, 1), F(xl, 1, PT_), F(xl, 0, PT_)],                                               # левый бок
+         [(u0, v0), (u0, v1), (u0 + eu, v1), (u0 + eu, v0)], Vector((-1, 0, 0)))
+    quad([F(xr, 0), F(xr, 1), F(xr, 1, PT_), F(xr, 0, PT_)],                                               # правый
+         [(u1, v0), (u1, v1), (u1 - eu, v1), (u1 - eu, v0)], Vector((1, 0, 0)))
+    quad([F(xl, 1), F(xr, 1), F(xr, 1, PT_), F(xl, 1, PT_)],                                               # верх
+         [(u0, v1), (u1, v1), (u1, v1 - ev), (u0, v1 - ev)], up)
+    quad([F(xl, 0), F(xr, 0), F(xr, 0, PT_), F(xl, 0, PT_)],                                               # низ
+         [(u0, v0), (u1, v0), (u1, v0 + ev), (u0, v0 + ev)], -up)
+    bu0, bv0, bu1, bv1 = RA("sack")                                                                         # оборот — сырой холст
+    quad([F(xl, 0, PT_), F(xr, 0, PT_), F(xr, 1, PT_), F(xl, 1, PT_)], [(bu0, bv0), (bu1, bv0), (bu1, bv1), (bu0, bv1)], -nrm)
 
     # --- палки от швабры: прислонены к углу шкафа ---
     ms = I("mop_sticks", nocol=True)
@@ -609,6 +630,7 @@ def main():
         "door_white": mat("ApDoorWhite", "ap_door_white", rough=0.6), "door_glass": mat("ApDoorGlass", "ap_door_glass", rough=0.4),
         "entry": mat("ApEntryIn", "ap_entry_in", rough=0.6), "wardrobe": mat("ApWardrobe", "ap_wardrobe", rough=0.5),
         "glow": mat("ApGlow", "ap_glow", "ap_glow"), "props": mat("ApProps", "ap_props", rough=0.8),
+        "poster": mat("ApPoster", "ap_props", rough=1.0),
     })
     res = props()
     vl = sc.view_layers[0]

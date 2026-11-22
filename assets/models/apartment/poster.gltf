@@ -27,13 +27,12 @@
 	"materials":[
 		{
 			"doubleSided":true,
-			"name":"ApProps",
+			"name":"ApPoster",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
 					"index":0
 				},
-				"metallicFactor":0,
-				"roughnessFactor":0.800000011920929
+				"metallicFactor":0
 			}
 		}
 	],
@@ -70,61 +69,61 @@
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":8,
+			"count":24,
 			"max":[
 				0.16000032424926758,
-				0.43439579010009766,
-				0.03299999237060547
+				0.4383964538574219,
+				0.04700016975402832
 			],
 			"min":[
 				-0.15999984741210938,
-				0,
-				-0.03299999237060547
+				2.384185791015625e-05,
+				-0.047681331634521484
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":8,
+			"count":24,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":8,
+			"count":24,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
 			"componentType":5123,
-			"count":12,
+			"count":36,
 			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":96,
+			"byteLength":288,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":96,
-			"byteOffset":96,
+			"byteLength":288,
+			"byteOffset":288,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":64,
-			"byteOffset":192,
+			"byteLength":192,
+			"byteOffset":576,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":24,
-			"byteOffset":256,
+			"byteLength":72,
+			"byteOffset":768,
 			"target":34963
 		}
 	],
@@ -136,7 +135,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":280,
+			"byteLength":840,
 			"uri":"poster.bin"
 		}
 	]
