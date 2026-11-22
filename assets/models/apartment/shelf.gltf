@@ -11,8 +11,7 @@
 		{
 			"name":"ApartmentProps",
 			"nodes":[
-				0,
-				1
+				0
 			]
 		},
 		{
@@ -23,10 +22,6 @@
 		{
 			"mesh":0,
 			"name":"Shelf"
-		},
-		{
-			"mesh":1,
-			"name":"Shelf_nocol"
 		}
 	],
 	"materials":[
@@ -56,20 +51,6 @@
 					"material":0
 				}
 			]
-		},
-		{
-			"name":"Shelf_nocol",
-			"primitives":[
-				{
-					"attributes":{
-						"POSITION":4,
-						"NORMAL":5,
-						"TEXCOORD_0":6
-					},
-					"indices":7,
-					"material":0
-				}
-			]
 		}
 	],
 	"textures":[
@@ -91,12 +72,12 @@
 			"componentType":5126,
 			"count":188,
 			"max":[
-				0.2239999771118164,
+				0.31399965286254883,
 				0.7200002670288086,
 				0.1929999589920044
 			],
 			"min":[
-				-0.2239999771118164,
+				-0.31400012969970703,
 				0,
 				-0.19300007820129395
 			],
@@ -118,40 +99,6 @@
 			"bufferView":3,
 			"componentType":5123,
 			"count":282,
-			"type":"SCALAR"
-		},
-		{
-			"bufferView":4,
-			"componentType":5126,
-			"count":970,
-			"max":[
-				0.17999982833862305,
-				0.6810007095336914,
-				0.1669999361038208
-			],
-			"min":[
-				-0.19000005722045898,
-				0.05000019073486328,
-				-0.1530001163482666
-			],
-			"type":"VEC3"
-		},
-		{
-			"bufferView":5,
-			"componentType":5126,
-			"count":970,
-			"type":"VEC3"
-		},
-		{
-			"bufferView":6,
-			"componentType":5126,
-			"count":970,
-			"type":"VEC2"
-		},
-		{
-			"bufferView":7,
-			"componentType":5123,
-			"count":1494,
 			"type":"SCALAR"
 		}
 	],
@@ -179,30 +126,6 @@
 			"byteLength":564,
 			"byteOffset":6016,
 			"target":34963
-		},
-		{
-			"buffer":0,
-			"byteLength":11640,
-			"byteOffset":6580,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":11640,
-			"byteOffset":18220,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":7760,
-			"byteOffset":29860,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":2988,
-			"byteOffset":37620,
-			"target":34963
 		}
 	],
 	"samplers":[
@@ -213,7 +136,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":40608,
+			"byteLength":6580,
 			"uri":"shelf.bin"
 		}
 	]
