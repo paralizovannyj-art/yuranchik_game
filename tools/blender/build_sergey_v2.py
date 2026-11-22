@@ -831,6 +831,8 @@ def main():
     info = {"stage": STAGE, "height": round(max(p.z for p in mb.co), 3), "tris": sum(len(mb.faces[f]) - 2 for f in fsel),
             "head_tris": sum(len(mb.faces[f]) - 2 for f in fsel if mb.fisl[f] == "head"), "verts": len(used),
             "density_px_per_m": round(D, 1)}
+    sys.path.insert(0, os.path.join(ROOT, "tools", "blender")); import ps2_budget
+    info["budget"] = ps2_budget.check(NAME, info["tris"], "character")
     add_yurchik(sc)
     if STAGE in ("tex", "full"):
         refs = prep_refs()

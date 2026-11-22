@@ -1526,6 +1526,8 @@ def main():
     body, fsel, used = Y["make_object"](mb, 0, "HyugaMesh", sc.collection, mats)
     info = {"tris": sum(len(mb.faces[f]) - 2 for f in fsel), "verts": len(used), "atlas": ATLAS,
             "density_px_per_m": round(D * DENS_K, 1)}
+    sys.path.insert(0, os.path.join(ROOT, "tools", "blender")); import ps2_budget
+    info["budget"] = ps2_budget.check("Hyuga", info["tris"], "character")
 
     aov = vertex_ao(mb, body.data, fsel, used)
     info["ao_mean"] = round(float(aov[used].mean()), 3)
