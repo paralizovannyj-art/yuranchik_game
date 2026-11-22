@@ -177,7 +177,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.787, 8.37, 0.052)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.825, 8.4, -0.01)
 
 [node name="Runner" parent="Apartment" unique_id=712373901 instance=ExtResource("ap_runner")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.825, 8.406, -1.325)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.175, 8.406, -1.325)
 
 [node name="DoubleDoor" parent="Apartment" unique_id=1740517670 instance=ExtResource("ap_double_door")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.875, 8.4, -0.428)
@@ -231,7 +231,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.347, 9.66399, -0.52)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.31494, 8.4, -0.57016265)
 
 [node name="Basket" parent="Apartment" unique_id=1466548772 instance=ExtResource("ap_basket")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.87, 8.4, -0.6813521)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.8, 8.4, -0.71)
 
 [node name="EntryDoorIn" parent="Apartment" unique_id=469673000 instance=ExtResource("ap_entry_door_in")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.09, 8.403, -1.25)
