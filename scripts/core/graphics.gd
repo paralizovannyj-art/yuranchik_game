@@ -25,11 +25,32 @@ const DECAL_LIFT := 0.15
 ## true — сейчас работает OpenGL (выбран «Слабый ПК» или движок сам откатился на OpenGL)
 var opengl := false
 
+## Матовые материалы в обоих режимах: без бликов (specular) — правило автора «минимум современных эффектов»
+## (docs/design/ps2-style/cry-of-fear-author.md, М1). Свет (фонарик, лампы) на материал действует как раньше —
+## пропадает только блестящее пятно. Применяется к каждому материалу один раз, при появлении узла в сцене:
+## так не нужно править импорт моделей, скрипты и сцены по отдельности.
+const MATTE := true
+var _matte_done := {}
+
+## Туман-«стена» (Environment.fog_mode = Depth) в режиме «Обычная» заменяется туманом, который не трогает свет:
+## shaders/lit_fog.gdshader — тёмное уходит в туман, освещённое и светящееся остаётся (правило автора,
+## cry-of-fear-author.md Э3). Берёт begin / end / цвет из окружения. В режиме «Слабый ПК» остаётся туман движка:
+## на OpenGL шейдер с глубиной и экраном не проверялся.
+const LIT_FOG_SHADER := "res://shaders/lit_fog.gdshader"
+
 
 func _ready() -> void:
 	opengl = RenderingServer.get_current_rendering_method() == OPENGL
-	if opengl:
-		get_tree().node_added.connect(_on_node_added)
+	get_tree().node_added.connect(_on_node_added)
+	# сцена, запущенная напрямую (F6 / из редактора), может войти в дерево раньше подписки — пройти её узлы
+	_sweep.call_deferred(get_tree().root)
+
+
+func _sweep(n: Node) -> void:
+	if n != self:
+		_on_node_added(n)
+	for c in n.get_children():
+		_sweep(c)
 
 
 ## Режим, выбранный в меню (может не совпадать с текущим до перезапуска).
@@ -61,6 +82,12 @@ func set_low_mode(on: bool) -> void:
 
 
 func _on_node_added(node: Node) -> void:
+	if MATTE and node is GeometryInstance3D:
+		_make_matte.call_deferred(node)
+	if not opengl:
+		if node is WorldEnvironment:
+			_add_lit_fog.call_deferred(node)
+		return
 	if node is Light3D:
 		(node as Light3D).shadow_enabled = false     # light_budget.gd запоминает это и тоже не включит тень
 	elif node is WorldEnvironment:
@@ -85,7 +112,7 @@ func _fix_environment(we: WorldEnvironment) -> void:
 
 ## Декаль-«пятно» → плоский квадрат с той же текстурой, лежащий на поверхности под ней.
 func _replace_decal(d: Decal) -> void:
-	if not is_instance_valid(d) or not d.is_inside_tree():
+	if not is_instance_valid(d) or not d.is_inside_tree() or d.is_queued_for_deletion():
 		return
 	var m := StandardMaterial3D.new()
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -104,3 +131,60 @@ func _replace_decal(d: Decal) -> void:
 	mi.position.y += d.size.y * DECAL_LIFT
 	d.get_parent().add_child(mi)
 	d.queue_free()
+
+
+## Выключить блик у всех материалов узла (собственные, переопределённые и материалы меша).
+func _make_matte(gi: GeometryInstance3D) -> void:
+	if not is_instance_valid(gi):
+		return
+	_matte(gi.material_override)
+	_matte(gi.material_overlay)
+	if gi is MeshInstance3D:
+		var mi := gi as MeshInstance3D
+		if mi.mesh:
+			for i in mi.mesh.get_surface_count():
+				_matte(mi.get_surface_override_material(i))
+				_matte(mi.mesh.surface_get_material(i))
+	elif gi is CSGShape3D:
+		_matte((gi as CSGShape3D).get("material"))
+
+
+func _matte(m: Material) -> void:
+	if m == null or not m is BaseMaterial3D:
+		return
+	var id := m.get_instance_id()
+	if _matte_done.has(id):
+		return
+	_matte_done[id] = true
+	var bm := m as BaseMaterial3D
+	if bm.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED:
+		return
+	bm.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+	bm.metallic = 0.0
+
+
+func _add_lit_fog(we: WorldEnvironment) -> void:
+	if not is_instance_valid(we) or we.environment == null:
+		return
+	var env := we.environment
+	if not env.fog_enabled or env.fog_mode != Environment.FOG_MODE_DEPTH or we.has_node("LitFog"):
+		return
+	var sm := ShaderMaterial.new()
+	sm.shader = load(LIT_FOG_SHADER)
+	sm.render_priority = Material.RENDER_PRIORITY_MIN     # первым среди прозрачных: снег и карточки света поверх
+	sm.set_shader_parameter("fog_color", env.fog_light_color)
+	sm.set_shader_parameter("fog_begin", env.fog_depth_begin)
+	sm.set_shader_parameter("fog_end", env.fog_depth_end)
+	var q := QuadMesh.new()
+	q.size = Vector2(2, 2)
+	var mi := MeshInstance3D.new()
+	mi.name = "LitFog"
+	mi.mesh = q
+	mi.material_override = sm
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.custom_aabb = AABB(Vector3.ONE * -100000.0, Vector3.ONE * 200000.0)   # квадрат во весь экран — не отсекать
+	we.add_child(mi)
+	# окружение общее (assets/environments/*.tres) — туман движка выключаем на копии
+	env = env.duplicate()
+	env.fog_enabled = false
+	we.environment = env
