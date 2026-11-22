@@ -5,7 +5,7 @@ extends Node
 
 signal inventory_changed
 signal health_changed
-signal said(text: String)                       ## короткая реплика/подсказка внизу экрана
+signal said(text: String)                       ## короткая реплика (на экран сейчас не выводится — HUD её не показывает)
 signal objective_changed(text: String)          ## новое задание: приходит в телефон закреплённой СМС
 signal message_received(msg: Dictionary)         ## новая СМС в телефоне
 signal noise(pos: Vector3, radius: float)       ## шум, который слышат враги

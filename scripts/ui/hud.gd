@@ -1,4 +1,4 @@
-## Интерфейс во время игры: на экране только мир, субтитры, прицел и затемнения.
+## Интерфейс во время игры: на экране только мир, прицел, подсказки «[E] …» и затемнения. Реплик внизу экрана нет.
 ## Цель, самочувствие и статистика — в телефоне Юрчика (phone.gd, Tab), инвентарь — сумка (inventory_ui.gd, I).
 ## Ранение показывают красная виньетка и сердцебиение, усталость — тяжёлое дыхание.
 ## Здесь же меню паузы, экран смерти и финальный экран. Весь интерфейс собирается кодом — уровень просто создаёт HUD.
@@ -18,7 +18,6 @@ var phone: Phone
 var _root: Control
 var _vignette: TextureRect
 var _fade: ColorRect
-var _say: Label
 var _prompt: Label
 var _title: Label
 var _sub: Label
@@ -26,7 +25,6 @@ var _cross: Crosshair
 var _menu: PanelContainer
 var _menu_box: VBoxContainer
 var _menu_kind := ""
-var _say_t := 0.0
 var _flash := 0.0
 var _last_hp := 100.0
 var _beat := 0.0
@@ -40,7 +38,6 @@ func _ready() -> void:
 	layer = 20
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build()
-	Game.said.connect(_on_said)
 	Game.health_changed.connect(_on_health)
 	_last_hp = Game.hp
 	if player:
@@ -139,7 +136,6 @@ func _build() -> void:
 	_root.add_child(_cross)
 
 	_prompt = mk_label(_root, "", 21, Color.WHITE, Rect2(W / 2 - 375, 525, 750, 30), HORIZONTAL_ALIGNMENT_CENTER)
-	_say = mk_label(_root, "", 21, C_TEXT, Rect2(W / 2 - 465, 576, 930, 90), HORIZONTAL_ALIGNMENT_CENTER)
 
 	inventory = InventoryUI.new()
 	inventory.hud = self
@@ -160,10 +156,6 @@ func _build() -> void:
 
 func _process(delta: float) -> void:
 	var paused := get_tree().paused
-	# реплика
-	if _say_t > 0.0 and not paused:
-		_say_t -= delta
-		_say.modulate.a = clampf(_say_t / 0.6, 0.0, 1.0)
 	# виньетка
 	_flash = move_toward(_flash, 0.0, delta * 1.6)
 	var low := clampf(1.0 - Game.hp / 35.0, 0.0, 1.0)
@@ -286,13 +278,7 @@ func _can_open() -> bool:
 	return player != null and not player.is_dead() and player.control and _fade.color.a < 0.5
 
 
-# ----------------------------------------------------------------------------- сообщения
-func _on_said(text: String) -> void:
-	_say.text = text
-	_say.modulate.a = 1.0
-	_say_t = 2.5 + text.length() * 0.06
-
-
+# ----------------------------------------------------------------------------- здоровье
 func _on_health() -> void:
 	if Game.hp < _last_hp:
 		_flash = clampf((_last_hp - Game.hp) / 25.0, 0.25, 0.8)
