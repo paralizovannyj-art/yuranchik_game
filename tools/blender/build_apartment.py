@@ -41,6 +41,7 @@ sys.path.insert(0, HERE)
 from tex_lib import save
 from ps2_hero import C, finish
 from ps2_style import noise, smoothstep, mottle, blur
+import photo_tex as PT
 
 _ns = {"NO_MAIN": True, "__file__": os.path.join(HERE, "build_yard.py")}
 exec(compile(open(os.path.join(HERE, "build_yard.py"), encoding="utf-8").read(), "build_yard.py", "exec"), _ns)
@@ -66,203 +67,94 @@ RUNNER = (-6.45, -3.55, 0.85, 1.67)                  # ковровая доро
 
 
 # =====================================================================================
-#  Текстуры (низкое разрешение, PS2: мягко, 15-битный цвет — finish())
+#  Текстуры — из фото квартиры (docs/references/apartment, фотобашинг, photo_tex.py) и CC0 (texture_library).
+#  Плотность у стен, пола и потолка — 128 px на метр (тайл 2 x 2 м = 256 px).
 # =====================================================================================
-def _voronoi(w, h, n, rng, jitter=0.85, ny=None):
-    """Тайлящийся Вороной: расстояния до ближайшей и второй точки (в пикселях) и номер клетки.
-    n клеток по ширине, ny — по высоте (по умолчанию столько же)."""
-    ny = ny or n
-    cw, ch = w / n, h / ny
-    P = (np.stack(np.meshgrid(np.arange(n), np.arange(ny), indexing="xy"), -1) + 0.5
-         + (rng.random((ny, n, 2)) - 0.5) * jitter) * np.array([cw, ch])
-    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
-    gx, gy = (xx // cw).astype(int), (yy // ch).astype(int)
-    d1 = np.full((h, w), 1e9, np.float32); d2 = d1.copy(); idx = np.zeros((h, w), int)
-    for oy in (-1, 0, 1):
-        for ox in (-1, 0, 1):
-            cx_, cy_ = gx + ox, gy + oy
-            px = P[cy_ % ny, cx_ % n, 0] + np.floor_divide(cx_, n) * w
-            py = P[cy_ % ny, cx_ % n, 1] + np.floor_divide(cy_, ny) * h
-            d = np.hypot(xx - px, yy - py)
-            cid = (cy_ % ny) * n + (cx_ % n)
-            closer = d < d1
-            d2 = np.where(closer, d1, np.minimum(d2, d)); idx = np.where(closer, cid, idx); d1 = np.minimum(d1, d)
-    return d1, d2, idx
+PPM = 128
+H1, H2 = "hall_1_to_room.webp", "hall_2_to_entrance.webp"
 
 
-def _blocks(w, h, rng, rows, cuts, warp):
-    """Тайлящаяся «каменная кладка» из рядов: высота ряда h/rows, в каждом ряду cuts стыков в случайных местах,
-    все швы чуть волнистые (warp, px). Возвращает расстояние до ближайшего шва (px) и номер плиты."""
-    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
-    sx = (xx + (noise(w, h, 6, 6, rng, oct=3) - 0.5) * warp) % w
-    sy = (yy + (noise(w, h, 6, 6, rng, oct=3) - 0.5) * warp) % h
-    rh = h / rows
-    r = np.minimum((sy // rh).astype(int), rows - 1)
-    fy = sy - r * rh
-    K = cuts + 1
-    CU = np.full((rows, K), np.inf, np.float32)
-    for i in range(rows):
-        k = max(2, cuts + int(rng.integers(-1, 2)))
-        CU[i, :k] = np.sort(rng.random(k) * w)
-    d = np.full((h, w), 1e9, np.float32); cnt = np.zeros((h, w), int)
-    for k in range(K):
-        ck = CU[r, k]
-        dk = np.abs(sx - ck); dk = np.minimum(dk, w - dk)
-        d = np.where(np.isfinite(ck), np.minimum(d, dk), d)
-        cnt += (sx > ck) & np.isfinite(ck)
-    edge = np.minimum(np.minimum(fy, rh - fy), d)
-    return edge, r * 16 + cnt
-
-
-def _stone(w, h, rng, base, rows, cuts, warp, pebble, cracks=0.22, seams=0.45, diag=0):
-    """Декоративная штукатурка «под камень» (оба фото): плиты рядами, тонкие тёмные швы с тенью снизу и светлой
-    кромкой сверху, плиты чуть разного тона, по всему — мелкая «шагрень» (pebble — сила), волосяные трещины."""
-    edge, bid = _blocks(w, h, rng, rows, cuts, warp)
-    seam = np.exp(-(edge / 0.8) ** 2)
-    below = np.clip(np.roll(seam, -1, 0) - seam, 0, 1)
-    above = np.clip(np.roll(np.roll(seam, 2, 0), 1, 1) - seam, 0, 1)
-    tone = (0.94 + 0.10 * rng.random(16 * 64).astype(np.float32))[bid % (16 * 64)]
-    arr = np.ones((h, w, 3), np.float32) * C(*base)
-    arr *= tone[..., None]
-    arr *= (0.96 + 0.04 * smoothstep(0.0, 10.0, edge))[..., None]
-    bump = noise(w, h, w // 3, h // 3, rng, oct=2)                                   # «шагрень»: бугорки с тенью
-    relief = bump - np.roll(np.roll(bump, 1, 0), 1, 1)
-    arr *= (1.0 + pebble * relief)[..., None]
-    arr *= (0.94 + 0.08 * noise(w, h, 10, 10, rng, oct=3))[..., None]
-    arr *= (1 + 0.15 * above)[..., None]
-    arr *= (1 - seams * seam - 0.15 * below)[..., None]
-    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
-    for _ in range(diag):                                                           # косые трещины через плиты
-        x0, y0 = rng.random() * w, rng.random() * h
-        ang = rng.uniform(-0.9, 0.9) + (math.pi / 2 if rng.random() < 0.4 else 0.0)
-        L = rng.uniform(0.15, 0.35) * w
-        dx, dy = math.cos(ang), math.sin(ang)
-        t = np.clip((xx - x0) * dx + (yy - y0) * dy, 0, L)
-        dd = np.hypot(xx - x0 - t * dx, yy - y0 - t * dy) + (noise(w, h, 8, 8, rng, oct=2) - 0.5) * 3
-        arr *= (1 - 0.3 * np.exp(-(dd / 0.7) ** 2))[..., None]
-    n2 = noise(w, h, 5, 5, rng, oct=3)                                               # волосяные трещины по плитам
-    hair = np.exp(-((n2 - 0.5) / 0.005) ** 2) * smoothstep(0.55, 0.7, noise(w, h, 3, 3, rng, oct=2))
-    arr *= (1 - cracks * hair)[..., None]
-    return arr
+def _piece(photo, quad, wm, hm, sigma=10, mean=0.5, sharpen=0.0):
+    """Кусок фото: выпрямить перспективу (размер — по метрам, PPM), убрать свет, привести яркость к mean."""
+    a = PT.flatten(PT.rectify(PT.load(photo), quad, max(4, int(wm * PPM)), max(4, int(hm * PPM)), ss=3), sigma)
+    if sharpen:                                                                        # трещины и швы чётче
+        a = a + (a - PT.blur(a, 1.5)) * sharpen
+    return np.clip(a * (mean / max(float(PT.lum(a).mean()), 1e-4)), 0, 1.5)
 
 
 def tex_wall():
-    """Стены: бежево-кремовая штукатурка «под камень» — плиты рядами по ~0.4 м, длиной 0.4–0.9 м (фото 1 и 2),
-    желтоватые и зеленовато-серые разводы. Тайл 2 x 2 м, 256 px."""
+    """Стены: бежево-кремовые обои «под камень» с трещинами-швами — склейка кусков стены с фото 1
+    (у двустворчатой двери, над ней, над дверью комнаты). Тайл 2 x 2 м, 256 px."""
     rng = np.random.default_rng(4701)
-    arr = _stone(256, 256, rng, (0.87, 0.82, 0.66), rows=5, cuts=3, warp=24, pebble=0.5, seams=0.3, diag=6)
-    arr *= mottle(256, 256, rng, 2, 0.10)[..., None]
-    patina = smoothstep(0.55, 0.8, noise(256, 256, 3, 3, rng, oct=3))
-    arr = arr * (1 - 0.10 * patina[..., None] * C(0.3, 0.15, 0.9))
+    p1 = _piece(H1, [(330, 360), (520, 370), (520, 1150), (330, 1150)], 0.53, 2.0, sharpen=0.7)
+    p3 = _piece(H1, [(20, 330), (170, 335), (170, 600), (20, 590)], 0.45, 0.7, sharpen=0.7)
+    p2 = _piece(H1, [(820, 515), (1075, 515), (1075, 665), (820, 665)], 0.95, 0.55, sharpen=0.7)
+    pieces, x = [], 0
+    for k in range(5):
+        src = p1 if k % 2 == 0 else np.flip(p1, 1)
+        pieces.append((src, x, int(rng.integers(0, 256)))); x += src.shape[1] - 10
+    pieces += [(p3, 30, 20), (p2, 150, 150), (np.flip(p3, 1), 190, 60)]
+    arr = PT.seamless(PT.bash(256, 256, pieces, feather=10), 0.2, rng)
+    arr = PT.recolor(arr, (0.79, 0.73, 0.56), contrast=1.9, chroma=0.15, shadow_deg=6)
+    arr = PT.grime(256, 256, rng, 3, 0.12)(arr)                                        # засаленные пятна
     save("ap_wall", finish(arr, 1.0, crisp=0.35))
 
 
 def tex_coarse():
-    """Выступ стены (фото 1, по центру): та же «каменная» разделка, но светлее и с крупной «шагренью» —
-    кремово-белая, не серая. Тайл 1 м, 128 px."""
+    """Выступ стены: белая крупная «шуба» — кусок угла с фото 2 (справа, у пылесоса). Тайл 1 м, 128 px."""
     rng = np.random.default_rng(4702)
-    arr = _stone(128, 128, rng, (0.93, 0.90, 0.80), rows=3, cuts=2, warp=10, pebble=0.55, cracks=0.15, seams=0.3, diag=2)
-    save("ap_coarse", finish(arr, 1.0, crisp=0.45))
+    a = _piece(H2, [(1250, 880), (1440, 860), (1400, 1320), (1200, 1340)], 1.0, 1.25, sigma=8)
+    a = PT.resize(a[24:150, 22:128], 128, 128)
+    arr = PT.seamless(a, 0.25, rng)
+    arr = PT.recolor(arr, (0.84, 0.81, 0.72), contrast=1.5, chroma=0.1, shadow_deg=5)
+    save("ap_coarse", finish(arr, 1.0, crisp=0.4))
 
 
 def tex_ceiling():
-    """Потолок: белая фактурная штукатурка с голубовато-серыми разводами «иней» (оба фото): извилистые пятна
-    шпателя, у края пятна тень. Тайл 2 x 2 м, 256 px."""
+    """Потолок: белая фактурная штукатурка с голубовато-серыми разводами «иней» — потолок коридора с фото 1
+    (кусок 1 x 1.8 м) и его отражения. Тайл 2 x 2 м, 256 px."""
     rng = np.random.default_rng(4703)
-    w = h = 256
-    wx = noise(w, h, 5, 5, rng, oct=3); wy = noise(w, h, 5, 5, rng, oct=3)
-    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
-    sx = ((xx + (wx - 0.5) * 60) % w).astype(int); sy = ((yy + (wy - 0.5) * 60) % h).astype(int)
-    n = noise(w, h, 9, 9, rng, oct=4)[sy, sx]
-    frost = smoothstep(0.56, 0.62, n) * (1 - smoothstep(0.66, 0.74, n))            # «лепестки» разводов
-    frost = np.maximum(frost, 0.5 * smoothstep(0.30, 0.33, n) * (1 - smoothstep(0.35, 0.40, n)))
-    shade = np.clip(np.roll(np.roll(frost, -2, 0), -2, 1) - frost, 0, 1)
-    arr = np.ones((h, w, 3), np.float32) * C(0.90, 0.90, 0.87)
-    blue = C(0.68, 0.78, 0.80)
-    arr = arr * (1 - frost[..., None] * 0.6) + blue * frost[..., None] * 0.6
-    arr *= (1 - 0.18 * shade)[..., None]
-    arr *= (0.94 + 0.08 * noise(w, h, 30, 30, rng, oct=2))[..., None]
-    arr *= mottle(h, w, rng, 2, 0.08)[..., None]
-    save("ap_ceiling", finish(arr, 1.2, crisp=0.3))
+    a = _piece(H1, [(700, 0), (1235, 0), (1095, 495), (815, 495)], 1.0, 1.8, sigma=7)[8:-10, 6:-6]
+    a = PT.resize(a, 128, 256)
+    pieces = [(a, 0, 0), (np.flip(a, 0), 128, 90), (np.flip(a, 1), 64, 170)]
+    arr = PT.seamless(PT.bash(256, 256, pieces, feather=12), 0.2, rng)
+    arr = PT.duotone(arr, (0.50, 0.62, 0.68), (0.88, 0.88, 0.85), contrast=1.5, bias=0.3)     # белый + голубые разводы
+    save("ap_ceiling", finish(arr, 1.2, crisp=0.25))
 
 
-def tex_laminate():
-    """Ламинат «под дерево» (фото 1): светлые розовато-бежевые доски 1.2 x 0.15 м вразбежку, тёмные волокна, тёмные стыки,
-    доски заметно разного тона, у стен грязнее. Тайл 2 x 2 м, 256 px."""
+def tex_laminate(name="ap_laminate"):
+    """Ламинат «под дерево» — доски 1.2 x 0.15 м вразбежку, каждая доска — кусок пола коридора с фото 1
+    (у двери комнаты). Тот же — в комнате (yr_laminate, решение автора). Тайл 2 x 2 м, 256 px, доски вдоль u."""
     rng = np.random.default_rng(4704)
-    w = h = 256
-    rows = 13
-    rh = h / rows
-    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
-    row = (yy // rh).astype(int)
-    shift = (rng.random(rows) * w).astype(np.float32)
-    PL = 154.0                                                       # 1.2 м
-    xs = (xx + shift[row]) % w
-    plank = (xs // PL).astype(int) + row * 7
-    tone = (0.86 + 0.22 * rng.random(200)).astype(np.float32)
-    grain = noise(w, h, 3, 60, rng, oct=4)
-    arr = np.ones((h, w, 3), np.float32) * C(0.84, 0.64, 0.48)
-    arr *= tone[plank % 200][..., None]
-    arr *= (0.80 + 0.30 * grain)[..., None]
-    streak = np.abs(np.sin((yy + grain * 30 + plank * 3.1) * 1.3)) < 0.12        # тёмные «волокна»
-    arr[streak] *= 0.82
-    fy = yy % rh; fx = xs % PL
-    arr[fy < 1.0] *= 0.5; arr[(fy >= 1.0) & (fy < 2.0)] *= 1.05
-    arr[fx < 1.2] *= 0.55
-    arr *= mottle(h, w, rng, 2, 0.12)[..., None]
-    save("ap_laminate", finish(arr, 1.1, crisp=0.35))
+    src = _piece(H1, [(560, 1548), (1060, 1572), (1100, 2000), (540, 2000)], 1.5, 1.0, sigma=14)[24:128, 0:186]
+    arr = PT.planks(256, 256, 13, int(1.2 * PPM), src, rng, tone_var=0.1)
+    arr = PT.recolor(arr, (0.68, 0.51, 0.37), contrast=1.15, chroma=0.5)
+    arr = PT.grime(256, 256, rng, 3, 0.22, (0.45, 0.40, 0.33))(arr)                    # затоптано
+    save(name, finish(arr, 1.1, crisp=0.3))
 
 
 def tex_runner():
-    """Ковровая дорожка (оба фото): тёмно-зелёное поле, по нему решётка из виноградных листьев (бурые с оливковым)
-    на тонких лозах-завитках, кайма — светлая оливково-бежевая полоса и тёмная кромка. Одна текстура на всю
+    """Ковровая дорожка — с фото 2: тёмно-зелёное поле с бурыми виноградными листьями и лозами (середина
+    дорожки, без шкафа и корзины), светлая оливковая кайма — оттуда же. Одна текстура на всю
     дорожку 0.82 x 2.9 м (128 x 448 px), u — поперёк, v — вдоль."""
     rng = np.random.default_rng(4705)
-    w, h = 128, 448
-    pm = w / (RUNNER[3] - RUNNER[2])                                 # пикселей на метр
-    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
-    field = C(0.10, 0.20, 0.15)
-    arr = np.ones((h, w, 3), np.float32) * field
-    arr *= (0.85 + 0.25 * noise(w, h, 12, 40, rng, oct=3))[..., None]
-    # лозы: синусоиды вдоль дорожки
-    for k, ph in ((0.30, 0.0), (0.70, math.pi)):
-        cx = w * k + 10 * np.sin(yy / (0.14 * pm) + ph)
-        vine = np.exp(-((xx - cx) / 1.1) ** 2)
-        arr = arr * (1 - vine[..., None] * 0.6) + C(0.38, 0.36, 0.22) * vine[..., None] * 0.6
-    # листья: решётка ромбом, 5-лопастная «ладошка» с прожилками
-    cell = 0.20 * pm
-    inner0, inner1 = 15, w - 15
-    for j in range(int(h / cell) + 2):
-        for i in range(3):
-            cx = inner0 + (i + 0.5 * (j % 2)) * (inner1 - inner0) / 2.5 + rng.uniform(-3, 3)
-            cy = j * cell + rng.uniform(-3, 3)
-            if not (inner0 + 4 < cx < inner1 - 4):
-                continue
-            ang = rng.uniform(-0.6, 0.6) + (math.pi if j % 2 else 0.0)
-            dx, dy = xx - cx, yy - cy
-            r = np.hypot(dx, dy); th = np.arctan2(dy, dx) - ang
-            R_ = 0.085 * pm * (0.62 + 0.38 * np.abs(np.cos(2.5 * th)))
-            leaf = smoothstep(1.0, 0.85, r / R_)
-            col = C(0.36, 0.26, 0.15) if (i + j) % 3 else C(0.40, 0.38, 0.20)
-            vein = (np.abs(np.sin(th * 2.5)) < 0.12) & (r < R_ * 0.9)
-            lc = np.ones((h, w, 3), np.float32) * col
-            lc[vein] *= 0.6
-            arr = arr * (1 - leaf[..., None]) + lc * leaf[..., None]
-            # гроздь «ягод» рядом с листом
-            bx, by = cx + math.cos(ang + 2.2) * 0.07 * pm, cy + math.sin(ang + 2.2) * 0.07 * pm
-            for q in range(5):
-                ox_, oy_ = bx + rng.uniform(-4, 4), by + rng.uniform(-4, 4)
-                berry = smoothstep(2.6, 1.8, np.hypot(xx - ox_, yy - oy_))
-                arr = arr * (1 - berry[..., None]) + C(0.30, 0.30, 0.20) * berry[..., None]
-    # кайма: тёмная кромка, светлая полоса, тонкая тёмная, узорчик «волной»
-    e = np.minimum(xx, w - 1 - xx); ev = np.minimum(yy, h - 1 - yy)
-    edge = np.minimum(e, ev)
-    band = (edge >= 3) & (edge < 9)
-    arr[edge < 3] = C(0.06, 0.12, 0.09)
-    arr[band] = C(0.52, 0.48, 0.30) * (0.9 + 0.15 * np.sin(np.where(e < ev, yy, xx) / 2.2))[band][..., None]
-    arr[(edge >= 9) & (edge < 10)] = C(0.10, 0.16, 0.10)
-    arr *= (0.9 + 0.15 * noise(w, h, 4, 14, rng, oct=2))[..., None]                # затоптано
-    save("ap_runner", finish(arr, 1.05, crisp=0.35))
+    full = PT.rectify(PT.load(H2), [(700, 1055), (868, 1055), (1140, 2000), (470, 2000)], 128, 448, ss=3)
+    field = PT.flatten(full[16:380, 26:112], 24)                                      # середина без помех
+    field = PT.resize(field, 108, 364)
+    canvas = PT.bash(108, 448, [(field, 0, 0), (field[30:200], 0, 330)], feather=14, wrap=False)
+    border = PT.flatten(PT.rectify(PT.load(H2), [(862, 1080), (884, 1080), (960, 1420), (930, 1420)], 8, 200, ss=3), 20)
+    border = PT.recolor(border, (0.46, 0.43, 0.29), contrast=1.2, chroma=0.3)
+    arr = np.zeros((448, 128, 3), np.float32)
+    arr[:, 10:118] = canvas
+    band = np.concatenate([border, border[::-1], border, border[::-1]], 0)[:448]
+    arr[:, 3:10] = band[:, :7]; arr[:, 118:125] = np.flip(band[:, :7], 1)
+    arr[:3] = arr[3:6]; arr[-3:] = arr[-6:-3]
+    arr[:, :3] = (0.06, 0.12, 0.09); arr[:, -3:] = (0.06, 0.12, 0.09)                 # тёмная кромка
+    arr[:3, :] = (0.06, 0.12, 0.09); arr[-3:, :] = (0.06, 0.12, 0.09)
+    arr = PT.tone(arr, rgb=(0.16, 0.20, 0.13), contrast=1.7)
+    arr *= PT.blur(rng.random((448, 128, 1)).astype(np.float32), 14) * 0.3 + 0.85     # затоптано пятнами
+    arr *= (1 - 0.18 * np.exp(-((np.arange(128) - 64) / 30.0) ** 2))[None, :, None]   # вытерто посередине
+    save("ap_runner", finish(np.clip(arr, 0, 1), 1.05, crisp=0.3))
 
 
 TRIM = {"plinth": (0, 0, 64, 16), "molding": (0, 16, 64, 32), "dark": (0, 32, 64, 48), "white": (0, 48, 64, 64)}
@@ -274,19 +166,18 @@ def RT(name):
 
 
 def tex_trim():
-    """Мелкий атлас: коричневый плинтус (фото 1), белый потолочный карниз с тенью в изгибе, тёмная «пустота» за
-    закрытыми дверями, белая краска (наличники)."""
-    rng = np.random.default_rng(4706)
+    """Мелкий атлас: коричневый крашеный плинтус (фото 1), белый потолочный карниз с тенью в изгибе, тёмная
+    «пустота» за закрытыми дверями, белая краска (наличники). Краска — CC0 ambientCG PaintedWood009C."""
+    paint = PT.flatten(PT.lib("ambientcg/PaintedWood009C"), 80)
     a = np.zeros((64, 64, 3), np.float32)
-    yy, xx = np.mgrid[0:16, 0:64].astype(np.float32)
-    pl = np.ones((16, 64, 3), np.float32) * C(0.30, 0.12, 0.07) * (0.85 + 0.25 * noise(64, 16, 8, 2, rng, oct=2))[..., None]
-    pl[:3] *= 1.35; pl[3:4] *= 0.7                                                   # скруглённый верх с бликом
+    yy = np.mgrid[0:16, 0:64][0].astype(np.float32)
+    pl = PT.recolor(PT.resize(paint[:256, :], 64, 16), (0.30, 0.13, 0.08), contrast=1.6)
+    pl[:3] *= 1.3; pl[3:4] *= 0.7                                                    # скруглённый верх
     a[0:16] = pl
-    mo = np.ones((16, 64, 3), np.float32) * C(0.88, 0.87, 0.84)
-    mo *= (0.70 + 0.30 * np.abs(np.sin(yy / 16 * math.pi * 1.5)))[..., None]       # профиль карниза: тени в изгибах
-    a[16:32] = mo
+    mo = PT.recolor(PT.resize(paint[256:512, :], 64, 16), (0.86, 0.85, 0.82), contrast=0.6)
+    a[16:32] = mo * (0.70 + 0.30 * np.abs(np.sin(yy / 16 * math.pi * 1.5)))[..., None]  # профиль карниза
     a[32:48] = C(0.03, 0.025, 0.02)
-    a[48:64] = C(0.82, 0.81, 0.77) * (0.95 + 0.08 * noise(64, 16, 6, 2, rng, oct=2))[..., None]
+    a[48:64] = PT.recolor(PT.resize(paint[512:768, :], 64, 16), (0.81, 0.80, 0.76), contrast=0.6)
     save("ap_trim", finish(a, 1.0, crisp=0.2))
 
 

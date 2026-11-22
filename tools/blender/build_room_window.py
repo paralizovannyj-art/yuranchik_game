@@ -25,6 +25,7 @@ sys.path.insert(0, HERE)
 from tex_lib import save
 from ps2_hero import C, finish
 from ps2_style import noise
+import photo_tex as PT
 
 _ns = {"NO_MAIN": True}
 exec(compile(open(os.path.join(HERE, "build_yard.py"), encoding="utf-8").read(), "build_yard.py", "exec"), _ns)
@@ -69,8 +70,8 @@ def save_rgba(name, rgb, alpha):
 def tex_pvc():
     """Белый ПВХ, пожелтевший: неровная желтизна пятнами, серые точки грязи, редкие царапины. Тайл 0.5 м."""
     s = 64
-    arr = np.ones((s, s, 3), np.float32) * C(0.86, 0.85, 0.79)
-    arr *= (0.94 + 0.08 * noise(s, s, 4, 4, R, oct=3))[..., None]
+    # основа — фото матового пластика (CC0 ambientCG Plastic013A), кусок ~0.5 м
+    arr = PT.recolor(PT.resize(PT.flatten(PT.lib("ambientcg/Plastic013A"), 80), s, s), (0.86, 0.85, 0.79), contrast=0.9)
     yel = noise(s, s, 3, 3, R, oct=2)
     arr = arr * (1 - 0.10 * yel[..., None]) + C(0.80, 0.72, 0.52) * 0.10 * yel[..., None]
     specks = R.random((s, s)) < 0.006
@@ -88,17 +89,16 @@ def tex_pvc():
 def tex_seal():
     """Чёрный резиновый уплотнитель вокруг стекла."""
     s = 16
-    arr = np.ones((s, s, 3), np.float32) * C(0.10, 0.10, 0.10)
-    arr *= (0.85 + 0.3 * R.random((s, s)).astype(np.float32))[..., None]
+    arr = PT.recolor(PT.resize(PT.flatten(PT.lib("ambientcg/Plastic006"), 60)[:128, :128], s, s), (0.10, 0.10, 0.10), contrast=1.2)
     save("rw_seal", finish(arr, 1.0, crisp=0.0))
 
 
 def tex_fit():
     """Фурнитура: ручка и накладки петель — тот же белый пластик, но чище и чуть теплее; петли — серые колпачки."""
     s = 32
-    arr = np.ones((s, s, 3), np.float32) * C(0.88, 0.86, 0.80)
-    arr *= (0.9 + 0.12 * noise(s, s, 4, 4, R, oct=2))[..., None]
-    arr[:, s // 2:] = C(0.62, 0.62, 0.60) * (0.9 + 0.12 * noise(s, s, 4, 4, R, oct=2)[:, s // 2:])[..., None]
+    pl = PT.resize(PT.flatten(PT.lib("ambientcg/Plastic013A"), 80)[:256, :256], s, s)       # CC0 ambientCG Plastic013A
+    arr = PT.recolor(pl, (0.88, 0.86, 0.80), contrast=0.9)
+    arr[:, s // 2:] = PT.recolor(pl, (0.62, 0.62, 0.60), contrast=0.9)[:, s // 2:]
     save("rw_fit", finish(arr, 1.0, crisp=0.1))
 
 
@@ -109,12 +109,9 @@ def tex_reveal():
     w, h = 64, 256
     yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
     u, v = xx / w, 1 - yy / h
-    arr = np.ones((h, w, 3), np.float32) * C(0.84, 0.80, 0.70)
-    arr *= (0.92 + 0.10 * noise(w, h, 3, 10, R, oct=4))[..., None]
-    stain = np.clip(noise(w, h, 2, 6, R, oct=3) - 0.55, 0, 1) * 2.2           # бурые разводы
-    arr = arr * (1 - 0.25 * stain[..., None]) + C(0.62, 0.50, 0.34) * 0.25 * stain[..., None]
-    peel = noise(w, h, 5, 20, R, oct=2) > 0.80                                 # облупилось до серой шпаклёвки
-    arr[peel] = arr[peel] * 0.5 + C(0.78, 0.78, 0.74) * 0.5
+    # основа — стена у окна с фото комнаты (cbc47…jpg, полоса слева от окна): разводы и пятна шпаклёвки
+    ph = PT.flatten(PT.crop(PT.load("cbc47ca0-bf80-4454-94af-6537039bbe80.jpg"), 70, 100, 158, 380), 30)
+    arr = PT.recolor(PT.resize(ph, w, h), (0.84, 0.80, 0.70), contrast=1.5, chroma=0.15, shadow_deg=5)
     near = np.clip(1 - u / 0.22, 0, 1) ** 1.6                                   # грязь у рамы
     arr *= (1 - 0.35 * near * (0.6 + 0.4 * noise(w, h, 6, 20, R, oct=2)))[..., None]
     crack = (u < 0.05) & (noise(w, h, 2, 40, R, oct=2) > 0.45)
@@ -135,9 +132,10 @@ def tex_glass():
     haze = np.clip((v - 0.55) / 0.45, 0, 1) ** 1.5 * (0.6 + 0.4 * noise(s, s, 3, 3, R, oct=2))   # белёсый верх
     alpha += 0.30 * haze
     rgb = rgb * (1 - haze[..., None] * 0.6) + C(0.78, 0.80, 0.82) * haze[..., None] * 0.6
-    wipe = noise(s, s, 2, 5, R, oct=3)                                         # разводы тряпкой — дугами
-    arc = np.abs(np.sin((np.hypot(xx - s * 0.4, yy - s * 1.2) / s) * 18 + wipe * 3))
-    alpha += 0.06 * (arc > 0.92) * wipe
+    # разводы и налёт — с фото окна комнаты (cbc47…jpg, левая створка): светлые места стекла — гуще налёт
+    g = PT.lum(PT.flatten(PT.crop(PT.load("cbc47ca0-bf80-4454-94af-6537039bbe80.jpg"), 240, 205, 318, 330), 12))
+    g = PT.blur(PT.resize(g[..., None], s, s), 1.5)[..., 0]
+    alpha += 0.12 * np.clip((g - g.mean()) / (g.std() * 3 + 1e-4), 0, 1)
     for _ in range(180):                                                       # капли
         cx, cy, r = R.uniform(0, s), R.uniform(0, s), R.uniform(0.6, 2.0)
         d = np.hypot(xx - cx, yy - cy)
