@@ -68,9 +68,8 @@ ROOM_DOOR = (-7.25 - EXT, -6.40 - EXT)                         # дверь ко
 DOUBLE_DOOR = (-5.20 - EXT, -4.25 - EXT)             # двустворчатая со стеклом (стена y = HY0)
 WC_DOOR = (-3.85, -3.30)                             # узкая белая у входа (стена y = HY0)
 WEST_DOORS = ((0.60, 1.40), (-1.90, -1.10))          # две белые двери справа по коридору (стена x = HX0)
-RUNNER = (-6.45 - EXT, -3.55, 0.48, 1.53)                  # ковровая дорожка x0, x1, y0, y1: почти во всю ширину —
-                                                     # 3 см до стены с дверями, 2 см до шкафа (фото 2)
-RUNNER_NOTCH = (PX1 + 0.02, PY1 + 0.02)              # вырез под выступ: западнее x, южнее y ковра нет
+RUNNER = (PX1 + 0.03, HX1 - 0.03, HY0 + 0.10, HY1 - 0.10)  # ковёр x0, x1, y0, y1: почти весь пол прихожей — от стен
+                                                     # по бокам 10 см, у торцов 3 см (фото 2), с запада — до выступа; шкаф и полочка стоят на нём
 
 
 # =====================================================================================
@@ -131,26 +130,31 @@ def tex_laminate(name="ap_laminate"):
 
 
 def tex_runner():
-    """Ковровая дорожка — с фото 2: тёмно-зелёное поле с бурыми виноградными листьями и лозами (середина
-    дорожки, без шкафа и корзины), светлая оливковая кайма — оттуда же. Одна текстура на всю
-    дорожку 1.05 x 4.05 м (128 x 448 px), u — поперёк, v — вдоль."""
+    """Ковёр — с фото 2: тёмно-зелёное поле с бурыми виноградными листьями и лозами (середина
+    дорожки, без шкафа и корзины), светлая оливковая кайма — оттуда же. Одна текстура на весь ковёр,
+    128 px на метр (u — поперёк, по y; v — вдоль, по x); поле — кусок фото, повторённый зеркально."""
     rng = np.random.default_rng(4705)
+    x0, x1, y0, y1 = RUNNER
+    w, h = int(round((y1 - y0) * PPM)), int(round((x1 - x0) * PPM))
     full = PT.rectify(PT.load(H2), [(700, 1055), (868, 1055), (1140, 2000), (470, 2000)], 128, 448, ss=3)
-    field = PT.flatten(full[16:380, 26:112], 24)                                      # середина без помех
-    field = PT.resize(field, 108, 364)
-    canvas = PT.bash(108, 448, [(field, 0, 0), (field[30:200], 0, 330)], feather=14, wrap=False)
+    field = PT.resize(PT.flatten(full[16:380, 26:112], 24), 88, 296)                  # масштаб листьев как на фото
+    tile = np.concatenate([field, field[:, ::-1]], 1)
+    tile = np.concatenate([tile, tile[::-1]], 0)
+    canvas = np.tile(tile, (h // tile.shape[0] + 1, (w - 20) // tile.shape[1] + 1, 1))[:h, :w - 20]
     border = PT.flatten(PT.rectify(PT.load(H2), [(862, 1080), (884, 1080), (960, 1420), (930, 1420)], 8, 200, ss=3), 20)
     border = PT.recolor(border, (0.46, 0.43, 0.29), contrast=1.2, chroma=0.3)
-    arr = np.zeros((448, 128, 3), np.float32)
-    arr[:, 10:118] = canvas
-    band = np.concatenate([border, border[::-1], border, border[::-1]], 0)[:448]
-    arr[:, 3:10] = band[:, :7]; arr[:, 118:125] = np.flip(band[:, :7], 1)
-    arr[:3] = arr[3:6]; arr[-3:] = arr[-6:-3]
+    band = np.concatenate([border, border[::-1]] * (h // 400 + 1), 0)[:h]
+    arr = np.zeros((h, w, 3), np.float32)
+    arr[:, 10:w - 10] = canvas
+    arr[:, 3:10] = band[:, :7]; arr[:, w - 10:w - 3] = np.flip(band[:, :7], 1)
+    bandx = np.concatenate([border, border[::-1]] * (w // 400 + 1), 0)[:w]           # кайма по торцам
+    arr[3:10, 3:w - 3] = np.transpose(bandx[3:w - 3, :7], (1, 0, 2))
+    arr[h - 10:h - 3, 3:w - 3] = np.flip(np.transpose(bandx[3:w - 3, :7], (1, 0, 2)), 0)
     arr[:, :3] = (0.06, 0.12, 0.09); arr[:, -3:] = (0.06, 0.12, 0.09)                 # тёмная кромка
     arr[:3, :] = (0.06, 0.12, 0.09); arr[-3:, :] = (0.06, 0.12, 0.09)
     arr = PT.tone(arr, rgb=(0.16, 0.20, 0.13), contrast=1.7)
-    arr *= PT.blur(rng.random((448, 128, 1)).astype(np.float32), 14) * 0.3 + 0.85     # затоптано пятнами
-    arr *= (1 - 0.18 * np.exp(-((np.arange(128) - 64) / 30.0) ** 2))[None, :, None]   # вытерто посередине
+    arr *= PT.blur(rng.random((h, w, 1)).astype(np.float32), 14) * 0.3 + 0.85         # затоптано пятнами
+    arr *= (1 - 0.18 * np.exp(-((np.arange(w) - w / 2) / (w * 0.23)) ** 2))[None, :, None]   # вытерто посередине
     save("ap_runner", finish(np.clip(arr, 0, 1), 1.05, crisp=0.3))
 
 
@@ -356,7 +360,6 @@ def apartment(M):
 
     # --- ковровая дорожка: тонкая, без коллизии, одна текстура на всю длину ---
     x0, x1, y0, y1 = RUNNER
-    nx, ny = RUNNER_NOTCH
     rn = I("runner", nocol=True)
 
     def rq(xa, xb, ya, yb, uv, z=Z + 0.006):
@@ -364,11 +367,7 @@ def apartment(M):
                 [uv(xa, ya), uv(xb, ya), uv(xb, yb), uv(xa, yb)], M["runner"])
 
     UV = lambda x, y: ((y - y0) / (y1 - y0), (x - x0) / (x1 - x0))                     # u — поперёк, v — вдоль (по x)
-    rq(nx, x1, y0, y1, UV)                                                             # основная часть
-    rq(x0, nx, ny, y1, UV)                                                             # у выступа — уже
-    bw, bu = (10 / 128) * (y1 - y0), 10 / 128                                          # кайма с тёмной кромкой по вырезу
-    rq(x0, nx, ny, ny + bw, lambda x, y: ((y - ny) / bw * bu, (x - x0) / (x1 - x0)), Z + 0.0065)
-    rq(nx, nx + bw, y0, ny + bw, lambda x, y: ((x - nx) / bw * bu, (y - y0) / (x1 - x0)), Z + 0.0065)
+    rq(x0, x1, y0, y1, UV)
 
     layout = export_items(I, coll)
     return {"items": len(layout), "layout": layout,
