@@ -15,6 +15,7 @@
 [ext_resource type="PackedScene" uid="uid://b81h0804yqe38" path="res://assets/models/apartment/mug.gltf" id="ap_mug"]
 [ext_resource type="PackedScene" uid="uid://c5xjfqm7braqi" path="res://assets/models/apartment/nightstand.gltf" id="ap_nightstand"]
 [ext_resource type="PackedScene" uid="uid://bfysbbghhhesq" path="res://assets/models/apartment/painting.gltf" id="ap_painting"]
+[ext_resource type="PackedScene" uid="uid://ctwbcu3j7xt3g" path="res://assets/models/apartment/poster.gltf" id="ap_poster"]
 [ext_resource type="PackedScene" uid="uid://dbbl6qjqwr2v4" path="res://assets/models/apartment/runner.gltf" id="ap_runner"]
 [ext_resource type="PackedScene" uid="uid://dmje3jfemf7c5" path="res://assets/models/apartment/sconce.gltf" id="ap_sconce"]
 [ext_resource type="PackedScene" uid="uid://e558runhjvcu" path="res://assets/models/apartment/shelf.gltf" id="ap_shelf"]
@@ -202,6 +203,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.906558, 9.02, -1.9726261)
 
 [node name="Painting" parent="Apartment" unique_id=294983283 instance=ExtResource("ap_painting")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.9877625, 9.768, -2.188)
+
+[node name="Poster" parent="Apartment" instance=ExtResource("ap_poster")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.173, 9.02, -2.163)
 
 [node name="MopSticks" parent="Apartment" unique_id=1849264169 instance=ExtResource("ap_mop_sticks")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.7092743, 8.397, -1.8128457)
