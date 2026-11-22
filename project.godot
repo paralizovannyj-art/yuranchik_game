@@ -31,7 +31,7 @@ window/size/viewport_width=854
 window/size/viewport_height=480
 window/size/window_width_override=1708
 window/size/window_height_override=960
-window/stretch/mode="viewport"
+window/stretch/mode="canvas_items"
 
 [editor_plugins]
 

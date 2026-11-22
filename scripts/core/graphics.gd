@@ -38,10 +38,17 @@ var _matte_done := {}
 ## на OpenGL шейдер с глубиной и экраном не проверялся.
 const LIT_FOG_SHADER := "res://shaders/lit_fog.gdshader"
 
+## Внутреннее разрешение 3D — 720 строк при любом окне (1280×720 в 16:9). Интерфейс живёт в сетке 854×480
+## (display/window/stretch/mode = canvas_items) и рисуется в разрешении окна, а 3D уменьшается через
+## scaling_3d_scale и растягивается обратно мягко (билинейно) — PS2-мыльность без «вырвиглазных» пикселей.
+const RENDER_HEIGHT := 720.0
+
 
 func _ready() -> void:
 	opengl = RenderingServer.get_current_rendering_method() == OPENGL
 	get_tree().node_added.connect(_on_node_added)
+	get_tree().root.size_changed.connect(_fit_3d_resolution)
+	_fit_3d_resolution()
 	# сцена, запущенная напрямую (F6 / из редактора), может войти в дерево раньше подписки — пройти её узлы
 	_sweep.call_deferred(get_tree().root)
 
@@ -51,6 +58,12 @@ func _sweep(n: Node) -> void:
 		_on_node_added(n)
 	for c in n.get_children():
 		_sweep(c)
+
+
+func _fit_3d_resolution() -> void:
+	var root := get_tree().root
+	root.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
+	root.scaling_3d_scale = clampf(RENDER_HEIGHT / maxf(root.size.y, 1.0), 0.25, 1.0)
 
 
 ## Режим, выбранный в меню (может не совпадать с текущим до перезапуска).
