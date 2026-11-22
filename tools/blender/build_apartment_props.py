@@ -38,6 +38,7 @@ globals().update({k: _sh[k] for k in (
 # (то, что задано через HX0 / DOUBLE_DOOR / … — уже сдвинуто в build_apartment.py)
 SHIFT_WEST = ("wardrobe", "shelf", "desk_lamp", "painting", "mop_sticks", "vacuum", "basket")
 
+PAINT_W, PAINT_H = 0.74, 0.80     # картина над комодом: почти во всю его ширину (0.80)
 DOOR_X_IN = -3.05            # внутренняя грань входной двери (AptDoor в build_mvp_assets.py: x −3.05…−3.0, петли y = 0.8)
 
 
@@ -200,19 +201,22 @@ def tex_props():
         a[:] = C(*col) * (1 - var + 2 * var * noise(w, h, cx, cy, rng, oct=2))[..., None]
         return a, h, w
 
-    # картина: чёрная рамка, белое паспарту, 2 x 2: синий, синий, красный, белый; чёрные «розы»-завитки
+    # картина: чёрная рамка, белое паспарту, 2 x 2: синий, синий, красный, белый; чёрные «розы»-завитки.
+    # Картина 0.74 x 0.80 м, а кусок атласа 64 x 88 — пиксель по x шире в K раз: рисуем с поправкой, чтобы не было растяжки
     a, h, w = reg("painting")
     yy, xx = _grid(h, w)
+    K = (PAINT_W / w) / (PAINT_H / h)
+    bx = lambda n: max(1, int(round(n / K)))                                            # n «вертикальных» пикселей по x
     a[:] = C(0.04, 0.04, 0.04)
-    a[3:-3, 3:-3] = C(0.88, 0.87, 0.84)
-    x0, x1, y0, y1, xm, ym = 8, w - 8, 8, h - 8, w // 2, h // 2
+    a[3:-3, bx(3):-bx(3)] = C(0.88, 0.87, 0.84)
+    x0, x1, y0, y1, xm, ym = bx(8), w - bx(8), 8, h - 8, w // 2, h // 2
     a[y0:ym, x0:xm] = C(0.12, 0.26, 0.66); a[y0:ym, xm:x1] = C(0.10, 0.24, 0.62)
     a[ym:y1, x0:xm] = C(0.78, 0.12, 0.10); a[ym:y1, xm:x1] = C(0.90, 0.88, 0.85)
-    for (cx, cy, rr) in ((xm - 6, ym - 10, 13), (xm + 8, ym + 14, 14)):
-        r = np.hypot(xx - cx, yy - cy); th = np.arctan2(yy - cy, xx - cx)
+    for (cx, cy, rr) in ((xm - bx(6), ym - 10, 15), (xm + bx(8), ym + 14, 16)):
+        r = np.hypot((xx - cx) * K, yy - cy); th = np.arctan2(yy - cy, (xx - cx) * K)
         swirl = (np.abs(np.sin(r * 0.55 + th * 1.0)) < 0.38) & (r < rr)
         a[swirl] = C(0.03, 0.03, 0.03)
-    a[(np.abs(xx - xm) < 2) & (yy > y0 + 6) & (yy < y1 - 6) & (np.abs(np.sin(yy * 0.3)) < 0.6)] = C(0.03, 0.03, 0.03)
+    a[(np.abs(xx - xm) * K < 2) & (yy > y0 + 6) & (yy < y1 - 6) & (np.abs(np.sin(yy * 0.3)) < 0.6)] = C(0.03, 0.03, 0.03)
     # постер: тёмно-синий фон, светло-серая морда собаки, тёмные глаза и нос
     a, h, w = reg("poster")
     yy, xx = _grid(h, w)
@@ -476,7 +480,7 @@ def props():
 
     # --- картина над полочкой (постер с собакой убран — удалён в редакторе) ---
     pt = I("painting", nocol=True)
-    pt.box((-6.62, HY1 - 0.025, Z + 1.30), (-6.12, HY1, Z + 1.98),
+    pt.box((-6.16 - PAINT_W / 2, HY1 - 0.025, Z + 1.20), (-6.16 + PAINT_W / 2, HY1, Z + 1.20 + PAINT_H),
            {'-Y': PR("painting"), '-X': PR("black"), '+X': PR("black"), '-Z': PR("black"), '+Z': PR("black")})
 
     # --- палки от швабры: прислонены к углу шкафа ---
