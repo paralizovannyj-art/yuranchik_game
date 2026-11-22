@@ -157,7 +157,7 @@ func _process(delta: float) -> void:
 	_vignette.modulate.a = maxf(_flash, pulse)
 	if player == null or not is_instance_valid(player):
 		return
-	if phone.is_open and (player.is_dead() or player.state == Player.State.GRABBED or not player.control):
+	if phone.is_open and (player.is_dead() or not player.control):
 		phone.close()
 	var playing := not paused and not player.is_dead() and _menu_kind == ""
 	var free := playing and not phone.is_open
@@ -196,8 +196,7 @@ func _input(event: InputEvent) -> void:
 		elif _menu_kind == "" and _can_open():
 			open_inventory()
 		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("phone") and not inventory.visible and _menu_kind == "" and _can_open() \
-			and player.state != Player.State.GRABBED:
+	elif event.is_action_pressed("phone") and not inventory.visible and _menu_kind == "" and _can_open():
 		phone.open()
 		get_viewport().set_input_as_handled()
 

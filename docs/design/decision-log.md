@@ -595,3 +595,7 @@ VIS-054, 055 — сказано в VIS-019 (находки и сюжет, без
 и с фонариком): `ps2-style/img/ab-apartment-hall-*.jpg`, `ab-apartment-room-*.jpg`, `ab-apartment-door-window-chair-*.jpg`;
 снимки делает `tools/capture_apartment.gd`. Батарея (`radiator.png`) общая с подъездом и двором — не трогали.
 
+### Решение: без захвата, без реплик и подсказок внизу экрана · 2026-11-22
+Решили: враги больше не хватают Юрчика — только бьют. Внизу экрана нет ни реплик Юрчика, ни подсказок «[E] …» и «ВЫРЫВАЙСЯ!».
+Почему: так попросил автор.
+Меняет: `scripts/enemies/enemy.gd` (нет состояния GRAB и полей `can_grab`, `grab_*`), `scripts/player/player.gd` (нет состояния GRABBED и вырывания по E), `scenes/characters/sergey.tscn`, `scripts/ui/hud.gd` (нет надписей внизу), `scripts/ui/main_menu.gd` (подсказка управления). Отменяет MEC-055 и MEC-056 в анкете.

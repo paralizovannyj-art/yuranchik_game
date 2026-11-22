@@ -34,7 +34,6 @@ attack_windup = 0.5
 attack_total = 1.1
 attack_cooldown = 1.4
 heavy_hits = true
-can_grab = false
 
 [node name="Collision" type="CollisionShape3D" parent="." unique_id=460379396]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)

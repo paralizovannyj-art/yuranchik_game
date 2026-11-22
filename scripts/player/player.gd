@@ -7,7 +7,7 @@
 ## - ПКМ / LT — замах: камера приближается, медленная ходьба.
 ## - ЛКМ / RT — удар молотком. С замахом (ПКМ) — сильный: целься выше — в голову, ниже — по ногам.
 ## - Q / крестовина влево — убрать молоток в сумку или достать. Без молотка ЛКМ — удар кулаком (слабее).
-## - G / RB — бросить бутылку или кирпич. E / A — подобрать, открыть, вырваться из захвата.
+## - G / RB — бросить бутылку или кирпич. E / A — подобрать, открыть.
 ## - F / Y — фонарик.
 ## - Пробел / X — прыжок (немного выносливости). Ctrl — присесть, пока держишь; C / R3 — присесть/встать.
 ##   Вприсядку медленно и тихо: шаги не слышат враги. Под низким потолком не встанет.
@@ -16,7 +16,7 @@ extends CharacterBody3D
 
 signal died
 
-enum State { NORMAL, AIM, ATTACK, HURT, GRABBED, THROW, BUSY, DEAD }
+enum State { NORMAL, AIM, ATTACK, HURT, THROW, BUSY, DEAD }
 
 @export_group("Движение")
 @export var walk_speed := 1.7         ## под клип ходьбы: быстрее — ноги начинают семенить/скользить
@@ -97,7 +97,6 @@ var stamina := 100.0
 var exhausted := false
 var control := true                    ## false — игрок не управляет (катсцена, меню)
 var focus: Interactable                ## на что сейчас можно нажать E
-var escape := 0.0                      ## прогресс вырывания из захвата 0..1
 var phone_up := false                  ## телефон в руке (phone.gd): только шаг, без ударов, бега и бросков
 
 var _yaw_target := 0.0
@@ -121,8 +120,6 @@ var _hit_done := false
 var _invuln := 0.0
 var _knock := Vector3.ZERO
 var _shake := 0.0
-var _grabber: Enemy
-var _grab_immune := 0.0
 var _throw_id := ""
 var _thrown := false
 var _last_step := 0
@@ -163,7 +160,7 @@ var cam_clip_enabled := true          ## отладка: false — камера 
 ## в player.tscn), иначе тень от собственных плеч и рук падала бы прямо перед глазами.
 const BODY_LAYER := 1 << 19
 ## Во что упирается камера: мир (статика, двери, ящики). Враги (4), брошенные предметы (32),
-## триггеры Area3D и само тело — нет: иначе камера дёргалась бы при броске и в захвате.
+## триггеры Area3D и само тело — нет: иначе камера дёргалась бы при броске.
 const CAM_CLIP_MASK := 1
 ## Кости, которые камера не должна видеть: иначе голова изнутри закрывает обзор.
 const HIDDEN_BONES := ["Head"]
@@ -282,9 +279,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		flashlight.visible = not flashlight.visible
 		Game.sfx("click", null, -6.0)
 	if event.is_action_pressed("interact"):
-		if state == State.GRABBED:
-			_mash()
-		elif focus and (state == State.NORMAL or state == State.AIM):
+		if focus and (state == State.NORMAL or state == State.AIM):
 			focus.interact(self)
 
 
@@ -292,7 +287,6 @@ func _physics_process(delta: float) -> void:
 	_attack_buffer = maxf(_attack_buffer - delta, 0.0)
 	_throw_buffer = maxf(_throw_buffer - delta, 0.0)
 	_invuln = maxf(_invuln - delta, 0.0)
-	_grab_immune = maxf(_grab_immune - delta, 0.0)
 	_jump_buffer = maxf(_jump_buffer - delta, 0.0)
 	_coyote = 0.12 if is_on_floor() else maxf(_coyote - delta, 0.0)
 	_land = move_toward(_land, 0.0, delta * 3.0)
@@ -359,16 +353,6 @@ func _physics_process(delta: float) -> void:
 			move_speed = 0.0
 			if _timer <= 0.0:
 				state = State.NORMAL
-		State.GRABBED:
-			hv = Vector3.ZERO
-			move_speed = 0.0
-			escape = maxf(escape - 0.2 * delta, 0.0)
-			shake(escape * 0.45)                 # чем ближе к тому, чтобы вырваться, тем сильнее трясёт
-			if not is_instance_valid(_grabber) or not _grabber.is_grabbing():
-				grab_release()
-			else:
-				var to := _grabber.global_position - global_position
-				_yaw_target = lerp_angle(_yaw_target, atan2(-to.x, -to.z), 1.0 - exp(-6.0 * delta))
 		State.THROW:
 			_timer -= delta
 			hv = _move(hv, input, aim_walk_speed * 0.6, delta)
@@ -524,7 +508,7 @@ func _ground_eta() -> float:
 
 func _update_crouch(delta: float) -> void:
 	var want := control and (Input.is_action_pressed("crouch") or _crouch_toggle) \
-		and state != State.DEAD and state != State.GRABBED
+		and state != State.DEAD
 	if want and not crouching and is_on_floor():
 		_set_crouch(true)
 	elif not want and crouching and _can_stand():
@@ -670,7 +654,7 @@ func _release_throw() -> void:
 	Game.sfx("throw", global_position + Vector3.UP * 1.5, -4.0)
 
 
-# ----------------------------------------------------------------------------- урон, захват, смерть
+# ----------------------------------------------------------------------------- урон, смерть
 func take_damage(amount: float, from: Vector3, heavy := false) -> void:
 	if state == State.DEAD or _invuln > 0.0:
 		return
@@ -684,8 +668,6 @@ func take_damage(amount: float, from: Vector3, heavy := false) -> void:
 		_die()
 		return
 	Game.sfx_rand("player_hurt", 2, null, -2.0)
-	if state == State.GRABBED:
-		return
 	if state == State.ATTACK and not heavy and _timer < attack_time * 0.7:
 		return                                                       # замах уже пошёл — слабый удар его не сбивает
 	state = State.HURT
@@ -696,54 +678,8 @@ func take_damage(amount: float, from: Vector3, heavy := false) -> void:
 	model.play_action("FlinchHead" if heavy else "FlinchStomach")
 
 
-## Урон «по чуть-чуть», пока офник держит (без оглушения и неуязвимости).
-func take_grab_damage(amount: float) -> void:
-	if state == State.DEAD or Game.god:
-		return
-	Game.hp = maxf(Game.hp - amount, 0.0)
-	Game.health_changed.emit()
-	if Game.hp <= 0.0:
-		_die()
-
-
-func can_be_grabbed() -> bool:
-	return _grab_immune <= 0.0 and state in [State.NORMAL, State.AIM, State.HURT, State.THROW]
-
-
-func grab_start(enemy: Enemy) -> bool:
-	if not can_be_grabbed():
-		return false
-	state = State.GRABBED
-	_grabber = enemy
-	escape = 0.0
-	model.play_action("Push")
-	Game.sfx("struggle", global_position + Vector3.UP, -2.0)
-	return true
-
-
-func _mash() -> void:
-	escape += 0.17
-	shake(0.25)
-	if escape >= 1.0:
-		var g := _grabber
-		grab_release()
-		if is_instance_valid(g):
-			g.grab_broken()
-		Game.sfx("punch", global_position + Vector3.UP, 0.0)
-
-
-func grab_release() -> void:
-	if state == State.GRABBED:
-		state = State.NORMAL
-	_grabber = null
-	_grab_immune = 2.5
-	escape = 0.0
-	model.stop_action()
-
-
 func _die() -> void:
 	state = State.DEAD
-	_grabber = null
 	Game.stats["deaths"] += 1
 	Game.sfx("player_die", null, -2.0)
 	model.play_death()
@@ -804,7 +740,7 @@ func _toggle_hammer() -> void:
 
 ## Занять героя на время (отпирает дверь, подбирает вещь) — он останавливается и не атакует.
 func busy(duration: float, anim := "") -> void:
-	if state == State.DEAD or state == State.GRABBED:
+	if state == State.DEAD:
 		return
 	if _swap_at >= 0.0:                    # не дотянулись до пояса — молоток перекладываем сразу
 		_swap_at = -1.0

@@ -1,5 +1,5 @@
 ## Враг: офник или Сергей (is_stalker).
-## Поведение: стоит/бродит → замечает (зрение, слух) → преследует → бьёт или хватает.
+## Поведение: стоит/бродит → замечает (зрение, слух) → преследует → бьёт.
 ## От ударов: в голову — оглушение, по ногам — падает, лежачего бить больнее; смерть — падает и остаётся лежать.
 ## Сергей: не умирает — когда «здоровье» кончается, на время падает на колено, потом встаёт и идёт дальше.
 ## Все числа ниже можно менять в инспекторе у конкретного врага на уровне.
@@ -8,7 +8,7 @@ extends CharacterBody3D
 
 signal died_signal(enemy: Enemy)
 
-enum S { IDLE, WANDER, INVESTIGATE, CHASE, ATTACK, GRAB, STAGGER, DOWN, GETUP, STUNNED, DEAD }
+enum S { IDLE, WANDER, INVESTIGATE, CHASE, ATTACK, STAGGER, DOWN, GETUP, STUNNED, DEAD }
 
 @export_group("Кто это")
 @export var display_name := "Офник"
@@ -44,10 +44,6 @@ enum S { IDLE, WANDER, INVESTIGATE, CHASE, ATTACK, GRAB, STAGGER, DOWN, GETUP, S
 @export var attack_total := 1.0
 @export var attack_cooldown := 1.3
 @export var heavy_hits := false         ## удар отбрасывает игрока
-@export var can_grab := true
-@export var grab_chance := 0.35
-@export var grab_dps := 4.0
-@export var grab_time := 4.0
 @export var stun_time := 10.0           ## (Сергей) сколько стоит на колене
 
 var state := S.IDLE
@@ -61,7 +57,6 @@ var _timer := 0.0
 var _think := 0.0
 var _lost := 0.0
 var _attack_cd := 0.0
-var _grab_cd := 0.0
 var _struck := false
 var _path := PackedVector3Array()
 var _path_i := 0
@@ -118,10 +113,6 @@ func is_dead() -> bool:
 	return state == S.DEAD
 
 
-func is_grabbing() -> bool:
-	return state == S.GRAB
-
-
 func is_passive() -> bool:
 	return state == S.IDLE or state == S.WANDER or state == S.INVESTIGATE
 
@@ -133,7 +124,6 @@ func _player() -> Player:
 func _physics_process(delta: float) -> void:
 	_think -= delta
 	_attack_cd -= delta
-	_grab_cd -= delta
 	var player := _player()
 	match state:
 		S.IDLE, S.WANDER, S.INVESTIGATE:
@@ -142,8 +132,6 @@ func _physics_process(delta: float) -> void:
 			_chase(delta, player)
 		S.ATTACK:
 			_attack(delta, player)
-		S.GRAB:
-			_grab(delta, player)
 		S.STAGGER, S.GETUP:
 			_slow(delta)
 			_timer -= delta
@@ -288,11 +276,6 @@ func _chase(delta: float, player: Player) -> void:
 
 
 func _begin_attack(player: Player) -> void:
-	if can_grab and _grab_cd <= 0.0 and randf() < grab_chance and player.grab_start(self):
-		state = S.GRAB
-		_timer = grab_time
-		_play("Grab", 0.15, 1.6)
-		return
 	state = S.ATTACK
 	_timer = 0.0
 	_struck = false
@@ -320,44 +303,10 @@ func _attack(delta: float, player: Player) -> void:
 		_attack_cd = attack_cooldown
 
 
-func _grab(delta: float, player: Player) -> void:
-	_slow(delta)
-	if player == null or player.is_dead() or player.state != Player.State.GRABBED:
-		state = S.CHASE
-		_grab_cd = 6.0
-		_attack_cd = 1.0
-		return
-	_face(player.global_position - global_position, delta)
-	player.take_grab_damage(grab_dps * delta)
-	_timer -= delta
-	if _timer <= 0.0:                                                # сам отпустил — оттолкнул
-		player.grab_release()
-		player.take_damage(6.0, global_position)
-		state = S.CHASE
-		_grab_cd = 7.0
-		_attack_cd = 1.2
-
-
-## Игрок вырвался.
-func grab_broken() -> void:
-	_grab_cd = 8.0
-	_stagger(1.5, "Knockback")
-	velocity = global_basis.z * 3.0
-
-
-func _release_player() -> void:
-	var p := _player()
-	if p and p.state == Player.State.GRABBED:
-		p.grab_release()
-	_grab_cd = 6.0
-
-
 # ----------------------------------------------------------------------------- получение урона
 func take_hit(dmg: float, zone: String, from: Vector3, heavy: bool) -> void:
 	if state == S.DEAD:
 		return
-	if state == S.GRAB:
-		_release_player()
 	var mult := 1.0
 	if state == S.DOWN:
 		mult = 1.5
