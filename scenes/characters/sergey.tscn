@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://dflwp0fde62yp" path="res://scripts/enemies/enemy.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://v5suu556tu5o" path="res://assets/models/sergey.gltf" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/props/blob_shadow.tscn" id="blob"]
 
 [sub_resource type="CapsuleShape3D" id="capsule"]
 radius = 0.38
@@ -43,3 +44,6 @@ shape = SubResource("capsule")
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
 
 [node name="Mesh" parent="Model" unique_id=1728111513 instance=ExtResource("2")]
+
+[node name="BlobShadow" parent="." instance=ExtResource("blob")]
+transform = Transform3D(1.2, 0, 0, 0, 1, 0, 0, 0, 1.2, 0, 0.02, 0)
