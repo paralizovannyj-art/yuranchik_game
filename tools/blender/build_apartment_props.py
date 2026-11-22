@@ -403,7 +403,7 @@ def props():
     mid = (a + bb) / 2
     dd = I("double_door", nocol=True)
     gl = M["door_glass"]
-    blind_door(dd, 'y', HY0, +1, a, bb, [(a + 0.004, mid - 0.002, (gl, (0.5, 0, 0, 1))), (mid + 0.002, bb - 0.004, (gl, (1, 0, 0.5, 1)))],
+    blind_door(dd, 'y', HY0, +1, a, bb, [(a + 0.004, mid - 0.002, (gl, (0, 0, 0.5, 1))), (mid + 0.002, bb - 0.004, (gl, (0.5, 0, 0, 1)))],
                tr_white, cornice=True)
     # --- узкая белая дверь у входа ---
     a, bb = WC_DOOR
