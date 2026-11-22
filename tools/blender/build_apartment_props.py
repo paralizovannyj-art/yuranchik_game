@@ -530,16 +530,17 @@ def props():
 
     # --- крючки с зонтом и плетёной сумочкой (стена y = HY0, между дверями) ---
     hk = I("hooks_umbrella", nocol=True)
+    hc = (DOUBLE_DOOR[1] + WC_DOOR[0]) / 2                                     # середина простенка
     hz = Z + 1.72
-    hk.box((-4.15, HY0, hz - 0.02), (-3.95, HY0 + 0.018, hz + 0.02), {k: PR("pine") for k in ('+Y', '+X', '-X', '+Z', '-Z')})
-    for hx_ in (-4.12, -4.05, -3.98):
+    hk.box((hc - 0.10, HY0, hz - 0.02), (hc + 0.10, HY0 + 0.018, hz + 0.02), {k: PR("pine") for k in ('+Y', '+X', '-X', '+Z', '-Z')})
+    for hx_ in (hc - 0.07, hc, hc + 0.07):
         cyl(hk, (hx_, HY0 + 0.018, hz), (hx_, HY0 + 0.07, hz + 0.03), 0.006, 0.006, PR("metal"), segs=4, caps=True)
-    ux, uy = -4.05, HY0 + 0.085
+    ux, uy = hc, HY0 + 0.085
     cyl(hk, (ux, HY0 + 0.07, hz + 0.02), (ux, uy, hz - 0.06), 0.008, 0.008, PR("black"), segs=4)       # ручка-крюк
     lathe(hk, ux, uy, [(0.012, Z + 0.95), (0.04, Z + 1.25), (0.05, Z + 1.55), (0.02, hz - 0.06)], PR("umbrella"), segs=6)
-    lathe(hk, -4.12, HY0 + 0.07, [(0.06, Z + 1.38), (0.085, Z + 1.46), (0.08, Z + 1.58)], PR("wicker"), segs=6)
-    cyl(hk, (-4.17, HY0 + 0.07, Z + 1.58), (-4.12, HY0 + 0.07, hz + 0.02), 0.005, 0.005, PR("wicker"), segs=3)
-    cyl(hk, (-4.07, HY0 + 0.07, Z + 1.58), (-4.12, HY0 + 0.07, hz + 0.02), 0.005, 0.005, PR("wicker"), segs=3)
+    lathe(hk, hc - 0.07, HY0 + 0.07, [(0.06, Z + 1.38), (0.085, Z + 1.46), (0.08, Z + 1.58)], PR("wicker"), segs=6)
+    cyl(hk, (hc - 0.12, HY0 + 0.07, Z + 1.58), (hc - 0.07, HY0 + 0.07, hz + 0.02), 0.005, 0.005, PR("wicker"), segs=3)
+    cyl(hk, (hc - 0.02, HY0 + 0.07, Z + 1.58), (hc - 0.07, HY0 + 0.07, hz + 0.02), 0.005, 0.005, PR("wicker"), segs=3)
 
     # --- пылесос у двери в зал: корпус и шланг дугой ---
     vc = I("vacuum", nocol=True)
