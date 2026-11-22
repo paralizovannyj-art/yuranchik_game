@@ -57,7 +57,6 @@ enum State { NORMAL, AIM, ATTACK, HURT, THROW, BUSY, DEAD }
 @export var strafe_roll := 0.008       ## крен камеры при шаге вбок
 @export var head_forward := 0.14       ## м — камера чуть впереди кости головы, чтобы плечи и спина оставались сзади
 @export var look_down_forward := 0.3   ## м — глядя вниз, камера выносится вперёд, чтобы видеть ноги, а не грудь
-@export var focus_size := 0.45         ## м — насколько можно промахнуться взглядом мимо предмета, чтобы он подсветился
 @export var cam_clip_margin := 0.03    ## м — запас сферы камеры сверх углов ближней плоскости (не видно сквозь стену)
 @export var cam_clip_return := 10.0    ## 1/с — как быстро камера возвращается на место, отойдя от стены
 @export var cam_body_push_max := 0.45  ## м — насколько тело может отступить вслед за прижатой к стене камерой
@@ -756,7 +755,8 @@ func _update_focus() -> void:
 	focus = null
 	if not control or phone_up or not (state == State.NORMAL or state == State.AIM):
 		return
-	# фокус — то, на что смотрит камера: предмет в радиусе и близко к линии взгляда
+	# фокус — только то, во что точно попадает луч взгляда (сама модель предмета, створка двери),
+	# в радиусе и не за стеной; если на луче несколько — ближайшее
 	var best := 1e9
 	var eye := camera.global_position
 	var look := -camera.global_basis.z
@@ -764,25 +764,25 @@ func _update_focus() -> void:
 		var i := it as Interactable
 		if i == null or not i.enabled:
 			continue
-		if i.has_method("aim_hit"):                   # дверь: только если прицел на самой створке
-			var hit: float = i.call("aim_hit", eye, look)
-			if hit >= 0.0 and hit * 0.001 < best:     # попадание по створке важнее остального
-				best = hit * 0.001
-				focus = i
+		if not i is Door:                             # у двери своя дальность (reach) — в aim_hit
+			var to := i.global_position - global_position
+			var dy := absf(to.y - 0.9)
+			to.y = 0.0
+			if to.length() > i.radius or dy > 1.6:
+				continue
+		var t := i.aim_hit(eye, look)
+		if t < 0.0 or t >= best or _aim_blocked(eye, look, t):
 			continue
-		var to := i.global_position - global_position
-		var dy := absf(to.y - 0.9)
-		to.y = 0.0
-		if to.length() > i.radius or dy > 1.6:
-			continue
-		var ray := i.global_position - eye
-		var dist := ray.length()
-		var miss := look.angle_to(ray) if dist > 0.01 else 0.0
-		if miss > maxf(atan2(focus_size, dist), deg_to_rad(8.0)):
-			continue
-		if miss < best:
-			best = miss
-			focus = i
+		best = t
+		focus = i
+
+
+## Между глазами и точкой на предмете стена или другой предмет мира (слой 1)?
+func _aim_blocked(eye: Vector3, look: Vector3, t: float) -> bool:
+	if t < 0.06:
+		return false
+	var q := PhysicsRayQueryParameters3D.create(eye, eye + look * (t - 0.05), 1, [get_rid()])
+	return not get_world_3d().direct_space_state.intersect_ray(q).is_empty()
 
 
 func _footsteps() -> void:
