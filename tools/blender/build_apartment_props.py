@@ -9,8 +9,9 @@
 #   door_wc         — узкая белая дверь у входа; door_white_a / door_white_b — белые филёнчатые двери по коридору
 #                     (одна с круглой деревянной ручкой). Все — закрытый декор, за ними пока ничего нет;
 #   wardrobe        — бежевый шкаф-купе почти до потолка; shelf — открытая полочка с обувью; desk_lamp — жёлтая лампа;
-#   painting, poster — абстрактная картина (синий, красный, чёрная «роза») и постер с собакой над полочкой;
-#   mop_sticks, bags_shoes, plastic_bag — палки от швабры, гора пакетов и обуви, белый пакет у шкафа;
+#   painting        — абстрактная картина (синий, красный, чёрная «роза») над полочкой;
+#   mop_sticks, plastic_bag — палки от швабры, белый пакет у шкафа;
+#   (постер с собакой и гору пакетов с обувью убрали — лишние; их кусок атласа текстур оставлен, чтобы не сдвигать остальные)
 #   nightstand, vase_flowers, mug — чёрная тумбочка в коридоре, на ней ваза с сухоцветами и кружка;
 #   sconce, switch_entry, switch_corridor — бра над входной дверью и выключатели;
 #   hooks_umbrella  — крючки с чёрным зонтом и плетёной сумочкой; vacuum, basket — пылесос и плетёная корзина.
@@ -31,7 +32,11 @@ exec(compile(open(os.path.join(HERE, "build_apartment.py"), encoding="utf-8").re
 globals().update({k: _sh[k] for k in (
     "B", "mat", "save", "C", "finish", "noise", "smoothstep", "mottle", "blur", "Items", "export_items", "RT",
     "Z", "H", "ZT", "HX0", "HX1", "HY0", "HY1", "CX0", "CX1", "CY0", "PX1", "PY1", "T", "DH",
-    "ENTRY", "DOUBLE_DOOR", "WC_DOOR", "WEST_DOORS", "RUNNER", "PT")})
+    "ENTRY", "DOUBLE_DOOR", "WC_DOOR", "WEST_DOORS", "RUNNER", "PT", "EXT", "X_CUT")})
+
+# вещи, заданные числами по старой (короткой) прихожей и стоящие западнее X_CUT: при экспорте сдвигаются на EXT к −x
+# (то, что задано через HX0 / DOUBLE_DOOR / … — уже сдвинуто в build_apartment.py)
+SHIFT_WEST = ("wardrobe", "shelf", "desk_lamp", "painting", "mop_sticks", "vacuum", "basket")
 
 DOOR_X_IN = -3.05            # внутренняя грань входной двери (AptDoor в build_mvp_assets.py: x −3.05…−3.0, петли y = 0.8)
 
@@ -454,31 +459,17 @@ def props():
     cyl(lp, (lx + 0.02, ly - 0.03, hz_ + 0.03), (hx, hy_, hz_ - 0.03), 0.022, 0.072, PR("teal"), segs=8)
     flip(lp, n0); del lp.f[n0:n0 + 8], lp.uv[n0:n0 + 8], lp.mi[n0:n0 + 8]                 # внутри абажура — тёмное
 
-    # --- картина над полочкой и постер с собакой, прислонённый к стене ---
+    # --- картина над полочкой (постер с собакой убран — удалён в редакторе) ---
     pt = I("painting", nocol=True)
     pt.box((-6.62, HY1 - 0.025, Z + 1.30), (-6.12, HY1, Z + 1.98),
            {'-Y': PR("painting"), '-X': PR("black"), '+X': PR("black"), '-Z': PR("black"), '+Z': PR("black")})
-    ps = I("poster", nocol=True)
-    ps.poly([Vector((-6.15, HY1 - 0.09, ST + 0.002)), Vector((-5.83, HY1 - 0.09, ST + 0.002)),
-             Vector((-5.83, HY1 - 0.01, ST + 0.47)), Vector((-6.15, HY1 - 0.01, ST + 0.47))],
-            [(RA("poster")[0], RA("poster")[1]), (RA("poster")[2], RA("poster")[1]),
-             (RA("poster")[2], RA("poster")[3]), (RA("poster")[0], RA("poster")[3])], M["props"])
 
     # --- палки от швабры: прислонены к углу шкафа ---
     ms = I("mop_sticks", nocol=True)
     cyl(ms, (-5.92, 1.76, Z), (-5.73, 2.15, Z + 2.02), 0.013, 0.013, PR("pine"), segs=5)
     cyl(ms, (-5.85, 1.80, Z), (-5.74, 2.17, Z + 1.72), 0.012, 0.012, PR("pine"), segs=5)
 
-    # --- гора пакетов и обуви в углу у полочки ---
-    bg = I("bags_shoes", nocol=True)
-    lathe(bg, -6.46, 1.98, [(0.12, Z), (0.21, Z + 0.06), (0.22, Z + 0.26), (0.16, Z + 0.44), (0.05, Z + 0.50)],
-          PR("sack"), segs=7, cap=True)
-    bg.box((-6.60, 1.58, Z), (-6.30, 1.86, Z + 0.16), {k: PR("jacket") for k in ('+X', '-X', '+Y', '-Y', '+Z')})
-    bg.box((-6.67, 1.62, Z + 0.16), (-6.42, 1.80, Z + 0.40), {k: PR("red") for k in ('+X', '-X', '+Y', '-Y', '+Z')})
-    lathe(bg, -6.37, 1.72, [(0.09, Z + 0.16), (0.12, Z + 0.24), (0.08, Z + 0.36), (0.02, Z + 0.40)], PR("bags"), segs=6, cap=True)
-    for (x0_, y0_) in ((-6.38, 1.50), (-6.35, 1.38)):
-        cube(bg, (x0_, y0_, Z), (x0_ + 0.28, y0_ + 0.10, Z + 0.10), PR("shoes"))
-    cube(bg, (-6.28, 1.66, Z), (-6.24, 1.95, Z + 0.09), PR("sneakers"))
+    # --- белый пакет у шкафа ---
     pb = I("plastic_bag", nocol=True)
     lathe(pb, -3.80, 1.96, [(0.10, Z), (0.16, Z + 0.08), (0.14, Z + 0.22), (0.06, Z + 0.30), (0.03, Z + 0.36)],
           PR("white"), segs=6, cap=True)
@@ -530,16 +521,17 @@ def props():
 
     # --- крючки с зонтом и плетёной сумочкой (стена y = HY0, между дверями) ---
     hk = I("hooks_umbrella", nocol=True)
+    hc = (DOUBLE_DOOR[1] + WC_DOOR[0]) / 2                                     # середина простенка
     hz = Z + 1.72
-    hk.box((-4.15, HY0, hz - 0.02), (-3.95, HY0 + 0.018, hz + 0.02), {k: PR("pine") for k in ('+Y', '+X', '-X', '+Z', '-Z')})
-    for hx_ in (-4.12, -4.05, -3.98):
+    hk.box((hc - 0.10, HY0, hz - 0.02), (hc + 0.10, HY0 + 0.018, hz + 0.02), {k: PR("pine") for k in ('+Y', '+X', '-X', '+Z', '-Z')})
+    for hx_ in (hc - 0.07, hc, hc + 0.07):
         cyl(hk, (hx_, HY0 + 0.018, hz), (hx_, HY0 + 0.07, hz + 0.03), 0.006, 0.006, PR("metal"), segs=4, caps=True)
-    ux, uy = -4.05, HY0 + 0.085
+    ux, uy = hc, HY0 + 0.085
     cyl(hk, (ux, HY0 + 0.07, hz + 0.02), (ux, uy, hz - 0.06), 0.008, 0.008, PR("black"), segs=4)       # ручка-крюк
     lathe(hk, ux, uy, [(0.012, Z + 0.95), (0.04, Z + 1.25), (0.05, Z + 1.55), (0.02, hz - 0.06)], PR("umbrella"), segs=6)
-    lathe(hk, -4.12, HY0 + 0.07, [(0.06, Z + 1.38), (0.085, Z + 1.46), (0.08, Z + 1.58)], PR("wicker"), segs=6)
-    cyl(hk, (-4.17, HY0 + 0.07, Z + 1.58), (-4.12, HY0 + 0.07, hz + 0.02), 0.005, 0.005, PR("wicker"), segs=3)
-    cyl(hk, (-4.07, HY0 + 0.07, Z + 1.58), (-4.12, HY0 + 0.07, hz + 0.02), 0.005, 0.005, PR("wicker"), segs=3)
+    lathe(hk, hc - 0.07, HY0 + 0.07, [(0.06, Z + 1.38), (0.085, Z + 1.46), (0.08, Z + 1.58)], PR("wicker"), segs=6)
+    cyl(hk, (hc - 0.12, HY0 + 0.07, Z + 1.58), (hc - 0.07, HY0 + 0.07, hz + 0.02), 0.005, 0.005, PR("wicker"), segs=3)
+    cyl(hk, (hc - 0.02, HY0 + 0.07, Z + 1.58), (hc - 0.07, HY0 + 0.07, hz + 0.02), 0.005, 0.005, PR("wicker"), segs=3)
 
     # --- пылесос у двери в зал: корпус и шланг дугой ---
     vc = I("vacuum", nocol=True)
@@ -565,6 +557,10 @@ def props():
     lathe(bk, kx, ky, [(0.22, Z + 0.001), (0.0, Z + 0.002)], PR("wicker"), segs=10)
     lathe(bk, kx, ky, [(0.27, Z + 0.08), (0.22, Z + 0.15), (0.12, Z + 0.17), (0.02, Z + 0.16)], PR("cloth"), segs=10)
     bk.v[n0:] = [(x_, ky + (y_ - ky) * 0.72, z_) for (x_, y_, z_) in bk.v[n0:]]                 # овальная
+
+    for k in SHIFT_WEST:                                                       # удлинённая прихожая (EXT)
+        for (b_, _) in I.items[k].values():
+            b_.v[:] = [(x_ - EXT, y_, z_) for (x_, y_, z_) in b_.v]
 
     layout = export_items(I, coll)
     return {"items": len(layout), "layout": layout,
