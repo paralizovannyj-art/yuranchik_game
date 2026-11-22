@@ -4,7 +4,7 @@ shader_type canvas_item;
 
 uniform sampler2D screen_tex : hint_screen_texture, filter_linear_mipmap;
 
-// «Мыльность» PS2 / ЭЛТ
+// «Мыльность» PS2 / ЭЛТ — в пикселях картинки 720 строк (не окна): одинаково в окне и на весь экран
 uniform float blur_px : hint_range(0.0, 2.0) = 0.4;
 // Квантование цвета + дизеринг. Дизеринг выключен (решение 2026-11-22, разбор Garbaj: на PS2 дизеринга нет)
 uniform float color_levels : hint_range(4.0, 256.0) = 128.0;
@@ -35,7 +35,9 @@ float hash(vec2 p) {
 }
 
 void fragment() {
-	vec2 px = SCREEN_PIXEL_SIZE * blur_px;
+	// сколько пикселей окна в одном пикселе 720p
+	float k = max(1.0 / (SCREEN_PIXEL_SIZE.y * 720.0), 1.0);
+	vec2 px = SCREEN_PIXEL_SIZE * blur_px * k;
 	vec3 c = texture(screen_tex, SCREEN_UV).rgb * 0.4;
 	c += texture(screen_tex, SCREEN_UV + vec2(px.x, 0.0)).rgb * 0.15;
 	c += texture(screen_tex, SCREEN_UV - vec2(px.x, 0.0)).rgb * 0.15;
@@ -64,7 +66,7 @@ void fragment() {
 	c *= clamp(1.0 - dot(d, d) * vignette * 2.2, 0.0, 1.0);
 
 	// зерно
-	c += (hash(FRAGCOORD.xy + fract(TIME * 7.0) * 100.0) - 0.5) * grain;
+	c += (hash(floor(FRAGCOORD.xy / k) + fract(TIME * 7.0) * 100.0) - 0.5) * grain;
 
 	// дизеринг + квантование
 	ivec2 ip = ivec2(FRAGCOORD.xy) % 4;
