@@ -291,10 +291,11 @@ def tex_props():
         x0, y0, x1, y1 = P[name]
         a = PT.flatten(PT.crop(img, *box), max(4, (box[2] - box[0]) / 3), strength=0.6)
         A[y0:y1, x0:x1] = np.clip(PT.resize(a, x1 - x0, y1 - y0) * k, 0, 1)
-    # торец комода (фото 2): рисунок грязи с фото, тон — грязно-белый ЛДСП без тёплого света лампы
+    # комод: тот же бежевый ламинат «под клён», что у шкафа-купе (tex_wardrobe), чуть светлее
     x0, y0, x1, y1 = P["melamine"]
-    a = PT.flatten(PT.crop(h2, 432, 1350, 484, 1480), 12, strength=0.6)
-    A[y0:y1, x0:x1] = np.clip(PT.recolor(PT.resize(a, x1 - x0, y1 - y0), (0.84, 0.82, 0.76), contrast=1.3), 0, 1)
+    ven = PT.flatten(PT.lib("polyhaven/white_maple_veneer"), 60)                      # волокна вдоль панели
+    A[y0:y1, x0:x1] = np.clip(PT.recolor(PT.resize(ven[:200, :400], x1 - x0, y1 - y0), (0.86, 0.79, 0.66),
+                                         contrast=1.1, chroma=0.3), 0, 1)
     save("ap_props", finish(A, 1.0, crisp=0.3))
 
 
