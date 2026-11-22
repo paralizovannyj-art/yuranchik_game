@@ -99,14 +99,14 @@
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":104,
+			"count":44,
 			"max":[
-				0.6749997138977051,
-				2.160000801086426,
+				0.6050000190734863,
+				2.078000068664551,
 				0.057999998331069946
 			],
 			"min":[
-				-0.6750001907348633,
+				-0.6050000190734863,
 				0,
 				-0.05700001120567322
 			],
@@ -115,19 +115,19 @@
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":104,
+			"count":44,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":104,
+			"count":44,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
 			"componentType":5123,
-			"count":156,
+			"count":66,
 			"type":"SCALAR"
 		},
 		{
@@ -136,12 +136,12 @@
 			"count":8,
 			"max":[
 				0.5710000991821289,
-				2.0460004806518555,
+				2.0340003967285156,
 				0.018000006675720215
 			],
 			"min":[
 				-0.5710000991821289,
-				0.012000083923339844,
+				0,
 				0.018000006675720215
 			],
 			"type":"VEC3"
@@ -168,50 +168,50 @@
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":1248,
+			"byteLength":528,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":1248,
-			"byteOffset":1248,
+			"byteLength":528,
+			"byteOffset":528,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":832,
-			"byteOffset":2496,
+			"byteLength":352,
+			"byteOffset":1056,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":312,
-			"byteOffset":3328,
+			"byteLength":132,
+			"byteOffset":1408,
 			"target":34963
 		},
 		{
 			"buffer":0,
 			"byteLength":96,
-			"byteOffset":3640,
+			"byteOffset":1540,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":96,
-			"byteOffset":3736,
+			"byteOffset":1636,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":64,
-			"byteOffset":3832,
+			"byteOffset":1732,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":24,
-			"byteOffset":3896,
+			"byteOffset":1796,
 			"target":34963
 		}
 	],
@@ -223,7 +223,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":3920,
+			"byteLength":1820,
 			"uri":"double_door.bin"
 		}
 	]
