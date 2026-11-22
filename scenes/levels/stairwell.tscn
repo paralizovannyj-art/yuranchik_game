@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://rrqth1gst2c6"]
 
-[ext_resource type="Material" path="res://assets/environments/ps2_post_night.tres" id="post_night"]
+[ext_resource type="Material" path="res://assets/environments/ps2_post.tres" id="ps2_post"]
 [ext_resource type="PackedScene" path="res://assets/models/apartment/apartment_shell.gltf" id="ap_apartment_shell"]
 [ext_resource type="PackedScene" path="res://assets/models/apartment/apartment_trim.gltf" id="ap_apartment_trim"]
 [ext_resource type="PackedScene" path="res://assets/models/apartment/runner.gltf" id="ap_runner"]
@@ -574,7 +574,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -1)
 layer = 10
 
 [node name="Filter" type="ColorRect" parent="PS2Post" unique_id=1963241749]
-material = ExtResource("post_night")
+material = ExtResource("ps2_post")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
