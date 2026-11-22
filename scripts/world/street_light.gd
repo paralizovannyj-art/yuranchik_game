@@ -1,6 +1,6 @@
 @tool
-## Уличный фонарь: конус света вниз из головы фонаря, слабая заливка вокруг
-## и ореол, который виден издалека. Ставится в основание столба, голова — в head_offset (как у модели lamp_pole).
+## Уличный фонарь: конус света вниз из головы фонаря, «карточка света» на земле
+## (плоскость с тёплым пятном вместо второго источника — приём lighting cards из разбора DemiDevi) и ореол, который виден издалека. Ставится в основание столба, голова — в head_offset (как у модели lamp_pole).
 ## Цвет, яркость и мигание меняются в инспекторе.
 extends Node3D
 
@@ -27,12 +27,30 @@ extends Node3D
 		halo_size = v
 		_apply()
 @export_range(0.0, 1.0) var halo_alpha := 0.5      ## яркость ореола: выше — плафон превращается в светящийся шар
+@export var show_pool := true:                       ## тёплое пятно света на земле под фонарём (плоскость, не источник)
+	set(v):
+		show_pool = v
+		_apply()
+@export_range(0.0, 1.0) var pool_alpha := 0.35      ## яркость пятна на земле
+@export var use_fill := false:                       ## старая слабая заливка (второй источник OmniLight) — включена на мосту
+	set(v):
+		use_fill = v
+		_apply()
 
 const SPARKLE_SHADER := preload("res://shaders/lamp_sparkle.gdshader")
 
 @onready var spot: SpotLight3D = $Spot
-@onready var fill: OmniLight3D = $Fill
+@onready var pool: MeshInstance3D = $Pool
+@onready var fill: OmniLight3D = get_node_or_null("Fill")
 @onready var halo: MeshInstance3D = $Halo
+
+
+func _enter_tree() -> void:
+	# без заливки источник удаляется до _ready, чтобы light_budget.gd его не подхватил и не включил
+	if not use_fill and not Engine.is_editor_hint() and has_node("Fill"):
+		var f := get_node("Fill")
+		remove_child(f)
+		f.free()
 
 
 func _ready() -> void:
@@ -43,16 +61,25 @@ func _apply() -> void:
 	if not is_inside_tree() or spot == null:
 		return
 	spot.position = head_offset
-	fill.position = head_offset - Vector3(0, 0.4, 0)
+	pool.position = Vector3(head_offset.x, pool.position.y, head_offset.z)
+	pool.visible = show_pool
+	if fill:
+		fill.position = head_offset - Vector3(0, 0.4, 0)
+		fill.visible = use_fill
+		fill.light_color = color.lerp(Color.WHITE, 0.08)
 	halo.position = head_offset
 	halo.visible = show_halo
 	spot.light_color = color
-	fill.light_color = color.lerp(Color.WHITE, 0.08)
 	spot.light_energy = energy
 	spot.set("_base_energy", energy)
 	spot.set("flicker_chance", 0.15 if flicker else 0.0)
 	if Engine.is_editor_hint():
 		return
+	var pm := pool.mesh.surface_get_material(0) if pool.mesh else null
+	if pm:
+		pm = pm.duplicate()
+		pm.albedo_color = Color(color.r, color.g, color.b, pool_alpha)
+		pool.material_override = pm
 	if halo.mesh is QuadMesh and not is_equal_approx(halo.mesh.size.x, halo_size):
 		var q: QuadMesh = halo.mesh.duplicate()
 		q.size = Vector2.ONE * halo_size

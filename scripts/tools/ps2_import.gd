@@ -1,5 +1,6 @@
 ## Пост-обработка импорта моделей из Blender (.gltf).
 ## - чинит свечение (умножение вместо сложения);
+## - если в модели есть цвета вершин (запечённый AO), они умножают текстуру;
 ## - для окружения добавляет статические коллизии (персонажам и предметам — нет);
 ## - узлы с «nocol» в имени остаются без коллизии (ступени, перила — по ним ходят через невидимые пандусы);
 ## - вид из окна (window_view.gltf): без коллизии, материалы заменяются шейдером shaders/window_view.gdshader —
@@ -41,6 +42,8 @@ func _fix(node: Node, root: Node, collide: bool, fog := true) -> void:
 		if mat == null:
 			continue
 		mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		if mesh.surface_get_format(i) & Mesh.ARRAY_FORMAT_COLOR:
+			mat.vertex_color_use_as_albedo = true   # AO, запечённый в цвета вершин, умножает текстуру (разбор DemiDevi); glTF-импорт ставит это не всем материалам
 		if mat.resource_name in NO_SPECULAR:
 			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 		if not fog:
