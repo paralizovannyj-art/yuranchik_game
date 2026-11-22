@@ -5,8 +5,8 @@
 [resource]
 shader = ExtResource("post")
 shader_parameter/blur_px = 0.55
-shader_parameter/color_levels = 32.0
-shader_parameter/dither_strength = 1.0
+shader_parameter/color_levels = 128.0
+shader_parameter/dither_strength = 0.0
 shader_parameter/black_crush = 0.01
 shader_parameter/s_curve = 0.2
 shader_parameter/saturation = 0.85
