@@ -9,7 +9,7 @@
 #     вдоль одной стены — бежевый шкаф-купе почти до потолка, открытая полочка с жёлтой лампой, гора пакетов и обуви,
 #     над полочкой картина и постер с собакой; вдоль другой — двустворчатая дверь с янтарным рифлёным стеклом
 #     (перед ней пылесос и плетёная корзина), крючки с зонтом, узкая белая дверь у входа;
-#   * в конце прихожей — выступ стены (угол в белой крупной «шубе») (балки над проходом нет); за ним поворот налево
+#   * в конце прихожей — выступ стены (та же штукатурка, что и стены) (балки над проходом нет); за ним поворот налево
 #     в узкий коридор (~1 м): пол — ламинат «под дерево», коричневый плинтус, справа чёрная тумбочка и две белые
 #     филёнчатые двери, в конце — дверь комнаты Юрчика (со стеклом и полотенцем, build_room_door.py);
 #   * отделка везде одна: стены — бежево-жёлтая декоративная штукатурка «под камень» (крупные плиты с трещинами-швами,
@@ -98,16 +98,6 @@ def tex_wall():
     arr = PT.recolor(arr, (0.79, 0.73, 0.56), contrast=1.9, chroma=0.15, shadow_deg=6)
     arr = PT.grime(256, 256, rng, 3, 0.12)(arr)                                        # засаленные пятна
     save("ap_wall", finish(arr, 1.0, crisp=0.35))
-
-
-def tex_coarse():
-    """Выступ стены: белая крупная «шуба» — кусок угла с фото 2 (справа, у пылесоса). Тайл 1 м, 128 px."""
-    rng = np.random.default_rng(4702)
-    a = _piece(H2, [(1250, 880), (1440, 860), (1400, 1320), (1200, 1340)], 1.0, 1.25, sigma=8)
-    a = PT.resize(a[24:150, 22:128], 128, 128)
-    arr = PT.seamless(a, 0.25, rng)
-    arr = PT.recolor(arr, (0.84, 0.81, 0.72), contrast=1.5, chroma=0.1, shadow_deg=5)
-    save("ap_coarse", finish(arr, 1.0, crisp=0.4))
 
 
 def tex_ceiling():
@@ -202,9 +192,10 @@ class Items:
 
 
 def export(name, obs):
-    sc = bpy.context.scene
-    for o in sc.objects:
-        o.select_set(o in obs)
+    for s_ in bpy.data.scenes:                                  # выделение в других сценах (стартовый куб) тоже уходит в экспорт
+        for vl_ in s_.view_layers:
+            for o in s_.objects:
+                o.select_set(o in obs and s_ == bpy.context.scene, view_layer=vl_)
     bpy.context.view_layer.objects.active = obs[0]
     bpy.ops.export_scene.gltf(filepath=os.path.join(OUT, name + ".gltf"), use_selection=True, export_keep_originals=True,
                               export_format='GLTF_SEPARATE', export_apply=True, export_yup=True)
@@ -333,9 +324,9 @@ def apartment(M):
     wall(sh, M, 'x', HX0, +1, CY0, HY1, [(a, b_, DH, False) for (a, b_) in WEST_DOORS])     # западная: две двери
     wall(sh, M, 'x', CX1, -1, CY0, HY0)                                                    # левая стена коридора
     wall(sh, M, 'y', CY0, +1, CX0, CX1, [(ROOM_DOOR[0], ROOM_DOOR[1], DH, True)])          # торец: дверь комнаты
-    # --- выступ (угол в «шубе»); балки над входом в коридор нет — потолок сплошной ---
-    co = M["coarse"]
-    sh.box((CX1, HY0, Z), (PX1, PY1, ZT), {'+Y': co, '+X': co, '-X': co}, scale=(1.0, 1.0))
+    # --- выступ — продолжение стены той же текстурой; балки над входом в коридор нет — потолок сплошной ---
+    w = M["wall"]
+    sh.box((CX1, HY0, Z), (PX1, PY1, ZT), {'+Y': w, '+X': w, '-X': w}, scale=(2.0, 2.0))
 
     # --- плинтусы (коричневые) и потолочный карниз (белый) ---
     south_holes = [DOUBLE_DOOR, WC_DOOR]
@@ -376,9 +367,9 @@ def main():
     for c in list(sc.collection.children):
         if c.name.startswith("ap_"):
             bpy.data.collections.remove(c)
-    tex_wall(); tex_coarse(); tex_ceiling(); tex_laminate(); tex_runner(); tex_trim()
+    tex_wall(); tex_ceiling(); tex_laminate(); tex_runner(); tex_trim()
     M = {
-        "wall": mat("ApWall", "ap_wall"), "coarse": mat("ApCoarse", "ap_coarse"),
+        "wall": mat("ApWall", "ap_wall"),
         "ceiling": mat("ApCeiling", "ap_ceiling"), "laminate": mat("ApLaminate", "ap_laminate", rough=0.5),
         "runner": mat("ApRunner", "ap_runner"), "trim": mat("ApTrim", "ap_trim", rough=0.7),
     }
