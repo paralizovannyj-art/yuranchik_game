@@ -1,0 +1,18 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" uid="uid://507jlrfn4qwu" path="res://shaders/ps2_post.gdshader" id="post"]
+
+[resource]
+shader = ExtResource("post")
+shader_parameter/blur_px = 1.0
+shader_parameter/color_levels = 128.0
+shader_parameter/dither_strength = 0.0
+shader_parameter/black_crush = 0.05
+shader_parameter/s_curve = 0.45
+shader_parameter/saturation = 0.6
+shader_parameter/exposure = 0.92
+shader_parameter/shadow_tint = Color(0.06, 0.07, 0.09, 1)
+shader_parameter/highlight_tint = Color(0.97, 0.98, 1, 1)
+shader_parameter/halo = 0.1
+shader_parameter/grain = 0.04
+shader_parameter/vignette = 0.35

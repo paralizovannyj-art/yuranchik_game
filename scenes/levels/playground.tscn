@@ -1,7 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Environment" path="res://assets/environments/night_exterior.tres" id="env_night"]
-[ext_resource type="Material" path="res://assets/environments/ps2_post_night.tres" id="post_night"]
+[ext_resource type="Material" path="res://assets/environments/ps2_post.tres" id="ps2_post"]
 [ext_resource type="Script" path="res://scripts/levels/playground.gd" id="lvl"]
 [ext_resource type="Script" path="res://scripts/tools/blockout_box.gd" id="box"]
 [ext_resource type="Script" path="res://scripts/tools/creature_showcase.gd" id="show"]
@@ -404,7 +404,7 @@ item_id = "bottle"
 layer = 10
 
 [node name="Filter" type="ColorRect" parent="PS2Post"]
-material = ExtResource("post_night")
+material = ExtResource("ps2_post")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0

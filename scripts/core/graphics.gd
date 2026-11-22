@@ -43,9 +43,12 @@ const LIT_FOG_SHADER := "res://shaders/lit_fog.gdshader"
 ## scaling_3d_scale и растягивается обратно мягко (билинейно) — PS2-мыльность без «вырвиглазных» пикселей.
 const RENDER_HEIGHT := 720.0
 
-## PS2-фильтр один на всю игру: assets/environments/ps2_post_night.tres. Уровни ставят его сами (узел PS2Post);
-## если в сцене с WorldEnvironment его нет — добавляется здесь, чтобы ни одна сцена не осталась без фильтра.
-const PS2_POST := "res://assets/environments/ps2_post_night.tres"
+## PS2-фильтр: общий assets/environments/ps2_post.tres и дневной ps2_post_day.tres (холоднее, контрастнее, темнее).
+## Дневная локация — сцена, чьё имя файла кончается на «_day» (east_bridge_day.tscn): у неё фильтр всегда дневной,
+## у остальных — общий. Уровни ставят фильтр сами (узел PS2Post); если в сцене с WorldEnvironment его нет —
+## добавляется здесь, чтобы ни одна сцена не осталась без фильтра.
+const PS2_POST := "res://assets/environments/ps2_post.tres"
+const PS2_POST_DAY := "res://assets/environments/ps2_post_day.tres"
 
 
 func _ready() -> void:
@@ -212,16 +215,23 @@ func _add_lit_fog(we: WorldEnvironment) -> void:
 func _ensure_ps2_post(we: WorldEnvironment) -> void:
 	if not is_instance_valid(we) or not we.is_inside_tree():
 		return
-	if not get_tree().root.find_children("PS2Post", "CanvasLayer", true, false).is_empty():
+	var host := we.owner if we.owner else we.get_parent()
+	# окружение может лежать во вложенной сцене (локация) — день/ночь решает запущенная сцена уровня
+	var level := get_tree().current_scene if get_tree().current_scene else host
+	var day := level.scene_file_path.get_file().get_basename().ends_with("_day")
+	var existing := get_tree().root.find_children("PS2Post", "CanvasLayer", true, false)
+	if not existing.is_empty():
+		var f := (existing[0] as Node).get_node_or_null("Filter") as CanvasItem
+		if day and f and (f.material == null or f.material.resource_path != PS2_POST_DAY):
+			f.material = load(PS2_POST_DAY)
 		return
 	var layer := CanvasLayer.new()
 	layer.name = "PS2Post"
 	layer.layer = 10
 	var rect := ColorRect.new()
 	rect.name = "Filter"
-	rect.material = load(PS2_POST)
+	rect.material = load(PS2_POST_DAY if day else PS2_POST)
 	rect.set_anchors_preset(Control.PRESET_FULL_RECT)
 	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(rect)
-	var host := we.owner if we.owner else we.get_parent()
 	host.add_child(layer)

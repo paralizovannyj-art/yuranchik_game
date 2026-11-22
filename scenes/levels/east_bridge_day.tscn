@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/levels/east_bridge_day.gd" id="lvl"]
 [ext_resource type="PackedScene" path="res://scenes/east_bridge/eb_location.tscn" id="loc"]
-[ext_resource type="Material" path="res://assets/environments/ps2_post_night.tres" id="post_night"]
+[ext_resource type="Material" path="res://assets/environments/ps2_post_day.tres" id="ps2_post"]
 [ext_resource type="PackedScene" uid="uid://l6yy2wslyolu" path="res://scenes/characters/player.tscn" id="player"]
 [ext_resource type="Script" uid="uid://c01wbk2jc6k0b" path="res://scripts/world/light_budget.gd" id="light_budget"]
 [ext_resource type="Shader" path="res://shaders/snow_streak.gdshader" id="streak"]
@@ -204,7 +204,7 @@ draw_pass_1 = SubResource("mesh_puff")
 layer = 10
 
 [node name="Filter" type="ColorRect" parent="PS2Post"]
-material = ExtResource("post_night")
+material = ExtResource("ps2_post")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
