@@ -13,7 +13,7 @@
 #   * белая стена с дверью: над столом надписи красным маркером (как на фото — текст в списке WRITING),
 #     выключатель на 1.5 м у проёма, розетка под ним;
 #     на столе миска с ложкой, на системнике красная мягкая игрушка;
-#   * стена напротив дивана — у двери коллаж из страниц манги, на левую половину стены (страницы свои, процедурные);
+#   * стена напротив дивана — у двери коллаж из страниц манги, на левую половину стены (с фото коллажа);
 #     люстра с тремя плафонами, светлый ламинат.
 #
 # Запуск (Blender 5.2, из корня проекта; надписи рисуются шрифтами Windows Segoe Print и Ink Free):
@@ -42,8 +42,9 @@ ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 sys.path.insert(0, HERE)
 from tex_lib import save
 import ps2_hero
-from ps2_hero import C, finish, plaster, peeled, scribble
-from ps2_style import noise, smoothstep, blur, floor_grime, mottle
+from ps2_hero import C, finish
+from ps2_style import noise, blur
+import photo_tex as PT
 
 _ns = {"NO_MAIN": True}
 exec(compile(open(os.path.join(HERE, "build_yard.py"), encoding="utf-8").read(), "build_yard.py", "exec"), _ns)
@@ -73,189 +74,167 @@ PANEL_HOLES = ((-7.22, 1.94), (-6.96, 1.95), (-6.60, 1.70), (-6.63, 1.55), (-7.0
                (-6.85, 1.42), (-6.71, 1.42), (-6.53, 1.43), (-6.38, 1.44), (-7.20, 1.28))
 
 
+# Фото комнаты (docs/references/apartment): EE — стена с панелями над столом, CB — стена с окном и плед,
+# SF — комната с дивана (плед целиком), AC — кресло у окна, DR — комод под скатертью, MG — коллаж манги на белой стене.
+EE = "ee0800e3-c02e-4862-a4ff-dbccb98c6391.jpg"
+CB = "cbc47ca0-bf80-4454-94af-6537039bbe80.jpg"
+SF = "083edd83-9bb5-40bf-8b3f-aae9159b7bd9.jpg"
+AC = "b47f8e16-9237-4f27-8c6f-d4998d8188ce.jpg"
+DR = "4c8a8482-0686-4ce6-a433-55b70697e644.jpg"
+MG = "photo_2026-11-16_20-48-30.jpg"
+
+
+def _unhole(a, k=0.62, sigma=6):
+    """Убрать с куска фото тёмные точки (дырки от дюбелей, соринки) — залить их размытым окружением."""
+    bl = PT.blur(a, sigma)
+    m = (PT.lum(a) < k * PT.lum(bl)).astype(np.float32)[..., None]
+    m = np.clip(PT.blur(m, 2) * 4, 0, 1)
+    return a * (1 - m) + bl * m
+
+
+def _mean(a, m=0.5):
+    return a * (m / max(float(PT.lum(a).mean()), 1e-4))
+
+
 def tex_panels():
-    """Бежевые фактурные панели над диваном (как на фото): светлый «венецианский» узор — дуги и завитки шпателя
-    чуть темнее фона, мелкий рельеф. Текстура на всю стену: стыки и дырки стоят точно по PANEL_SEAMS_* / PANEL_HOLES."""
+    """Бежевые фактурные «венецианские» панели над диваном — из фото стены над столом (EE): два чистых пояса
+    панелей (над и под горизонтальным стыком, дырки от дюбелей замазаны) -> бесшовный кусок ~1 м; каждая панель
+    стены — этот кусок со своим сдвигом и отражением. Стыки и дырки — точно по PANEL_SEAMS_* / PANEL_HOLES.
+    Текстура на всю стену 512 x 332 (~122 px на метр)."""
     WL = X1 - X0
-    w, h = 1024, 664                                                               # ~245 px на метр по обеим осям
+    w, h = 512, 332
     PR = np.random.default_rng(301)
-    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
-    warp = noise(w, h, 12, 8, PR, oct=3) * 60
-    arcs = np.zeros((h, w), np.float32)
-    for _ in range(36):                                                            # дуги-мазки вокруг случайных центров
-        cx, cy, rad = PR.uniform(0, w), PR.uniform(0, h), PR.uniform(40, 140)
-        rr = np.hypot(xx - cx, yy - cy) + warp
-        ring = np.exp(-((np.sin(rr / rad * 6.0)) ** 2) / 0.03) * np.exp(-(rr / (rad * 1.6)) ** 2)
-        arcs = np.maximum(arcs, ring)
-    n2 = noise(w, h, 96, 62, PR, oct=3)
-    hgt = n2 * 0.5 + arcs * 0.5
-    sh = 1 + ((hgt - np.roll(hgt, 1, 1)) + (hgt - np.roll(hgt, 1, 0))) * 1.2       # рельеф, свет сверху-слева
-    arr = np.ones((h, w, 3), np.float32) * C(0.80, 0.74, 0.58)
-    arr = arr * (1 - arcs[..., None] * 0.08) + arcs[..., None] * C(0.58, 0.50, 0.34) * 0.08
-    arr *= sh[..., None]
-    arr *= mottle(h, w, PR, 4, 0.08)[..., None]
+    ph = PT.load(EE)                                                               # ~1240 px на метр
+    k = 122.0 / 1240
+    sm = lambda a: PT.resize(a, int(a.shape[1] * k), int(a.shape[0] * k))
+    top = _mean(_unhole(_unhole(sm(PT.flatten(PT.crop(ph, 240, 10, 1580, 360), 250)), 0.9, 3), 0.9, 3))   # 131 x 34
+    bot = _mean(_unhole(_unhole(sm(PT.flatten(PT.crop(ph, 240, 500, 1580, 1150), 250)), 0.9, 3), 0.9, 3))  # 131 x 63
+    t = PT.columns(128, 128, [top, bot], PR, overlap=8, feather=8)
+    t = PT.seamless(t, 0.25, PR)
     px = lambda x: int(round((x - X0) / WL * w))
     py = lambda z: int(round((1 - z / H) * h))
-    for x in PANEL_SEAMS_X:                                                        # стыки панелей: тёмная щель + светлая кромка
-        k = px(x)
-        arr[:, k - 1:k + 1] *= 0.64; arr[:, k + 1:k + 2] *= 1.06
+    xs = [0] + sorted(px(x) for x in PANEL_SEAMS_X) + [w]
+    ys = [0] + sorted(py(z) for z in PANEL_SEAMS_Z) + [h]
+    arr = np.zeros((h, w, 3), np.float32)
+    for i in range(len(ys) - 1):
+        for j in range(len(xs) - 1):                                                # панель — свой кусок рисунка
+            v = np.roll(t, (int(PR.integers(0, 128)), int(PR.integers(0, 128))), (0, 1))
+            if PR.random() < 0.5:
+                v = np.flip(v, 1)
+            ch, cw = ys[i + 1] - ys[i], xs[j + 1] - xs[j]
+            arr[ys[i]:ys[i + 1], xs[j]:xs[j + 1]] = PT.tile(v, cw, ch)
+    arr = PT.recolor(arr, (0.77, 0.70, 0.53), contrast=2.4, chroma=0.25, shadow_deg=6)
+    arr = PT.grime(h, w, PR, 4, 0.14, wrap=False)(arr)                              # засаленные пятна
+    arr *= PT.edge_ao(h, w, bottom=0.25, top=0.12, left=0.15, right=0.15, size=0.06)
+    for x in PANEL_SEAMS_X:                                                        # стыки: тёмная щель + светлая кромка
+        k_ = px(x)
+        arr[:, k_ - 1:k_] *= 0.6; arr[:, k_:k_ + 1] *= 1.06
     for z in PANEL_SEAMS_Z:
-        k = py(z)
-        arr[k - 1:k + 1] *= 0.62; arr[k + 1:k + 2] *= 1.08
-    for (x, z) in PANEL_HOLES:                                                     # дырки: чёрный квадратик со сколом краски
+        k_ = py(z)
+        arr[k_ - 1:k_] *= 0.58; arr[k_:k_ + 1] *= 1.08
+    for (x, z) in PANEL_HOLES:                                                     # дырки: чёрный квадратик со сколом
         cx, cy = px(x), py(z)
-        s = int(PR.integers(5, 8))
-        arr[cy - s // 2 - 1:cy + s // 2 + 2, cx - s // 2 - 1:cx + s // 2 + 2] *= 1.08
-        arr[cy - s // 2:cy + s // 2 + 1, cx - s // 2:cx + s // 2 + 1] = C(0.10, 0.08, 0.06)
-        arr[cy + s // 2 + 1:cy + s // 2 + 3, cx - s // 2:cx + s // 2 + 1] *= 0.82
+        s = int(PR.integers(3, 5))
+        arr[cy - 1:cy + s + 1, cx - 1:cx + s + 1] *= 1.08
+        arr[cy:cy + s, cx:cx + s] = C(0.10, 0.08, 0.06)
+        arr[cy + s:cy + s + 1, cx:cx + s] *= 0.8
     save("yr_panels", finish(arr, 1.15, crisp=0.3))
 
 
 def tex_west():
-    """Стена с окном (как на фото): светлая кремовая побелка; там, где содрали обои, — пятна белой шпаклёвки
-    с жёлтой каймой и клочки старых обоев с мелким «червячковым» узором."""
-    w = h = 512
+    """Стена с окном — из фото CB: кремовая побелка с разводами и пятнами шпаклёвки (полосы стены слева и справа
+    от окна, пояс над окном). Тайл 2.5 x 2.5 м (WS), 256 px."""
+    w = h = 256
     WR_ = np.random.default_rng(302)
-    arr = plaster(WR_, w, h, (0.85, 0.80, 0.67), streak=0.06, stains=0.08, crack=0.06)
-    patch = smoothstep(0.52, 0.58, noise(w, h, 6, 6, WR_, oct=4))
-    rim = np.clip(patch - np.roll(patch, (3, 3), (0, 1)), 0, 1)
-    white = C(0.89, 0.87, 0.80) * (0.95 + 0.08 * noise(w, h, 30, 30, WR_))[..., None]
-    arr = arr * (1 - patch[..., None]) + white * patch[..., None]
-    arr *= (1 - rim * 0.12)[..., None]
-    paper = smoothstep(0.62, 0.66, noise(w, h, 5, 5, WR_, oct=3)) * (1 - patch)        # клочки обоев
-    worm = np.abs(noise(w, h, 90, 90, WR_, oct=2) - 0.5) < 0.035
-    pap = C(0.86, 0.82, 0.69) * np.where(worm, 1.08, 0.93)[..., None]
-    arr = arr * (1 - paper[..., None]) + pap * paper[..., None]
-    arr *= (1 - smoothstep(0.7, 0.9, noise(w, h, 4, 4, WR_, oct=3)) * 0.12)[..., None]   # лёгкая желтизна
+    ph = PT.load(CB)                                                               # ~175 px на метр
+    k = w / 2.5 / 175
+
+    def strip(x0, y0, x1, y1):
+        a = _mean(_unhole(PT.flatten(PT.crop(ph, x0, y0, x1, y1), 30)))
+        return PT.resize(a, int((x1 - x0) * k), int((y1 - y0) * k))
+    L = strip(70, 100, 158, 380)
+    Rt = strip(458, 100, 560, 430)
+    T = strip(185, 95, 555, 148)
+    arr = PT.columns(w, h, [L, Rt], WR_)
+    arr = PT.bash(w, h, [(arr, 0, 0), (T, 10, 40), (np.flip(T, 1), 120, 170)], feather=10)
+    arr = PT.seamless(arr, 0.2, WR_)
+    arr = PT.recolor(arr, (0.84, 0.80, 0.68), contrast=1.6, chroma=0.15, shadow_deg=5)
+    arr = PT.grime(h, w, WR_, 3, 0.12)(arr)
     save("yr_west", finish(arr, 1.15, crisp=0.3))
 
 
-RM = np.random.default_rng(2015)             # свой генератор для манги и надписей — остальные текстуры не «плывут»
-
-
-def manga_page(pw, ph, rng):
-    """Страница манги «по мотивам» (своя, процедурная): кадры с белыми полями, штриховка, чёрные заливки,
-    линии скорости, силуэты и облачка речи. Ч/б с серым, бумага чуть желтоватая."""
-    paper = C(0.86, 0.84, 0.78) * (0.92 + 0.12 * rng.random())
-    pg = np.ones((ph, pw, 3), np.float32) * paper
-    yy, xx = np.mgrid[0:ph, 0:pw].astype(np.float32)
-
-    def fill(x0, y0, x1, y1):
-        if x1 - x0 < 4 or y1 - y0 < 4:
-            return
-        w, h = x1 - x0, y1 - y0
-        ly, lx = yy[y0:y1, x0:x1] - y0, xx[y0:y1, x0:x1] - x0
-        kind = rng.choice(["hatch", "dark", "speed", "figure", "hatch", "dark"])
-        if kind == "hatch":                                   # штриховка + серые пятна
-            n = noise(w, h, max(2, w // 6), max(2, h // 6), rng, oct=3)
-            v = np.where(n > 0.55, 0.15, np.where(((lx + ly) % 3 < 1) & (n > 0.4), 0.35, 0.9))
-        elif kind == "dark":                                  # чёрная заливка с белыми прожилками
-            n = noise(w, h, max(2, w // 4), max(2, h // 4), rng, oct=4)
-            v = np.where(np.abs(n - 0.5) < 0.03, 0.85, 0.06)
-        elif kind == "speed":                                 # линии скорости к центру
-            cx, cy = w * rng.uniform(0.3, 0.7), h * rng.uniform(0.3, 0.7)
-            ang = np.arctan2(ly - cy, lx - cx)
-            v = np.where(np.sin(ang * rng.integers(18, 30)) > 0.6, 0.15, 0.92)
-            r = np.hypot(lx - cx, ly - cy)
-            v = np.where(r < min(w, h) * 0.25, 0.92, v)
-        else:                                                 # силуэт: голова и плечи
-            cx, cy = w * rng.uniform(0.3, 0.7), h * rng.uniform(0.35, 0.6)
-            r = min(w, h) * rng.uniform(0.18, 0.3)
-            body = ((lx - cx) / (r * 1.8)) ** 2 + ((ly - cy - r * 2.0) / (r * 1.3)) ** 2 < 1
-            head = (lx - cx) ** 2 + (ly - cy) ** 2 < r * r
-            hair = head & (ly < cy - r * 0.1)
-            bg = np.where(noise(w, h, 3, 3, rng, oct=2) > 0.5, 0.8, 0.92)
-            v = np.where(body, 0.08, bg)
-            v = np.where(head, 0.88, v)
-            v = np.where(hair, 0.1, v)
-        pg[y0:y1, x0:x1] = paper * v[..., None]
-        pg[y0, x0:x1] = 0.05                                  # рамка кадра
-        pg[y1 - 1, x0:x1] = 0.05
-        pg[y0:y1, x0] = 0.05
-        pg[y0:y1, x1 - 1] = 0.05
-        if rng.random() < 0.55 and w > 10 and h > 9:          # облачко речи
-            bw, bh = rng.uniform(0.3, 0.55) * w, rng.uniform(0.25, 0.4) * h
-            bx = x0 + rng.uniform(0.1, 0.9) * (w - bw) + bw / 2
-            by = y0 + rng.uniform(0.1, 0.9) * (h - bh) + bh / 2
-            e = ((xx - bx) / (bw / 2)) ** 2 + ((yy - by) / (bh / 2)) ** 2
-            box = (xx >= x0) & (xx < x1) & (yy >= y0) & (yy < y1)
-            pg[(e >= 1) & (e < 1.35) & box] = 0.08
-            pg[(e < 1) & box] = paper * 0.97
-            for k in range(int(bh // 3)):                     # строчки текста
-                ty = int(by - bh / 2 + 2 + k * 3)
-                tx0, tx1 = int(bx - bw * 0.3), int(bx + bw * 0.3)
-                if y0 < ty < y1 - 1:
-                    pg[ty, max(tx0, x0 + 1):min(tx1, x1 - 1)] = paper * 0.45
-
-    if rng.random() < 0.12:                                   # разворот-заливка на всю страницу
-        fill(1, 1, pw - 1, ph - 1)
-    else:
-        rows = int(rng.integers(2, 4))
-        cuts = sorted(rng.uniform(0.2, 0.8, rows - 1))
-        ys = [1] + [int(c * ph) for c in cuts] + [ph - 1]
-        for r in range(len(ys) - 1):
-            xs = [1] + ([int(rng.uniform(0.3, 0.7) * pw)] if rng.random() < 0.5 else []) + [pw - 1]
-            for c in range(len(xs) - 1):
-                fill(xs[c] + 1, ys[r] + 1, xs[c + 1] - 1, ys[r + 1] - 1)
-    return pg
+def _white_wall(w, h, ppm_x, ppm_y, rng):
+    """Белая крашеная стена — из фото MG (под коллажем манги, ~400 px на метр): полосы стены, разложенные со
+    сдвигом и отражениями на всю стену w x h (плотность ppm_x / ppm_y px на метр)."""
+    ph = PT.load(MG)
+    band = _mean(PT.flatten(PT.crop(ph, 0, 1045, 960, 1280), 60))                  # 2.4 x 0.59 м
+    gap = _mean(PT.flatten(PT.crop(ph, 570, 930, 750, 1030), 30))
+    band = PT.resize(band, int(960 / 400 * ppm_x), int(235 / 400 * ppm_y))
+    gap = PT.resize(gap, int(180 / 400 * ppm_x), int(100 / 400 * ppm_y))
+    pieces, y = [], -10
+    while y < h:
+        for x in (-int(rng.integers(0, band.shape[1])), ):
+            while x < w:
+                b = band if rng.random() < 0.5 else np.flip(band, 1)
+                pieces.append((b if rng.random() < 0.5 else np.flip(b, 0), x, y))
+                x += b.shape[1] - 12
+        y += band.shape[0] - 12
+    for _ in range(4):
+        pieces.append((gap, int(rng.integers(0, w - gap.shape[1])), int(rng.integers(0, h - gap.shape[0]))))
+    arr = PT.bash(w, h, pieces, feather=10, wrap=False)
+    arr = PT.recolor(arr, (0.75, 0.74, 0.69), contrast=1.8, chroma=0.1, shadow_deg=4)
+    arr = PT.grime(h, w, rng, 4, 0.12, (0.6, 0.57, 0.5), wrap=False)(arr)
+    return arr * PT.edge_ao(h, w, bottom=0.22, top=0.1, size=0.08)
 
 
 def tex_south():
-    """Стена напротив дивана: белая штукатурка, как у стены с дверью; у двери (левый край текстуры) — коллаж из страниц манги на левую половину стены,
-    ряды к низу обрываются неровно, как на фото. 1024 x 512 на 3.88 x 2.5 м."""
+    """Стена напротив дивана: белая крашеная стена (фото MG) и у двери (левый край текстуры) — настоящий коллаж
+    из страниц манги с того же фото (в 0.25 м от угла): 14 столбцов, 6 полных рядов и неровный низ, от потолка; страница ~0.16 x 0.21 м.
+    1024 x 512 на 4.18 x 2.7 м — исключение из правила «не больше 512» (решение автора): при 512 страница выходит
+    ~20 px в ширину и коллаж превращается в серую рябь."""
     w, h = 1024, 512
-    # прежняя основа (облезлая серая штукатурка) больше не рисуется, но её вызовы оставлены: они двигают общий
-    # генератор R, и без них поменялись бы все текстуры после этой (стена с дверью, пол, плед, атлас...)
-    _ = peeled(plaster(R, w, h, (0.76, 0.75, 0.70), streak=0.2, stains=0.3, crack=0.25), R, C(0.56, 0.54, 0.48), 16, 0.04)
-    _ = floor_grime(h, w, R, 0.25, 0.45)
-    # основа — как у стены с дверью (tex_east): белая штукатурка с бледными разводами, у потолка краска
-    # облупилась до светлой шпаклёвки; масштаб пятен — тот же на метр стены. Свой генератор — R не трогаем.
     SR = np.random.default_rng(303)
-    arr = plaster(SR, w, h, (0.78, 0.77, 0.72), streak=0.12, stains=0.08, crack=0.15)
-    top = np.zeros((h, w), np.float32); top[:140] = 1
-    top = blur(top[..., None], 16)[..., 0]
-    patches = smoothstep(0.55, 0.62, noise(w, h, 13, 5, SR, oct=3)) * top
-    under = C(0.86, 0.85, 0.80) * (0.94 + 0.1 * noise(w, h, 21, 8, SR))[..., None]
-    arr = arr * (1 - patches[..., None]) + under * patches[..., None]
-    rim = np.clip(patches - np.roll(patches, (3, 3), (0, 1)), 0, 1)
-    arr *= (1 - rim * 0.18)[..., None]
-    arr *= (1 - floor_grime(h, w, SR, 0.2, 0.4))[..., None]
-    ppm_x, ppm_y = w / (X1 - X0), h / H                        # пикселей на метр
-    PW, PH = 0.205, 0.285                                      # страница, м
-    # 8 столбцов (~1.65 м) у самой двери, четыре полных ряда, ниже — неровный обрыв; правая половина стены пустая
-    cols_in_row = [range(8)] * 4 + [range(7), [1, 2, 3, 5], [2, 6]]
-    top = 2.45                                                 # верх коллажа от пола, м
-    for r, cols in enumerate(cols_in_row):
-        for c in cols:
-            x_m = 0.35 + c * PW + RM.uniform(-0.012, 0.012)        # от угла с дверью — 0.35 м
-            z_m = top - (r + 1) * PH + RM.uniform(-0.012, 0.012)
-            x0, y0 = int(x_m * ppm_x), int((H - z_m - PH) * ppm_y)
-            pw, ph = int(PW * ppm_x) - 1, int(PH * ppm_y) - 1
-            pg = manga_page(pw, ph, RM)
-            pg *= np.linspace(1.0, 0.94, ph, dtype=np.float32)[:, None, None]     # низ страницы чуть темнее
-            arr[y0 + ph:y0 + ph + 2, x0 + 2:x0 + pw + 2] *= 0.7                      # тень под листом
-            arr[y0:y0 + ph, x0 + pw:x0 + pw + 2] *= 0.8
-            arr[y0:y0 + ph, x0:x0 + pw] = pg
+    ppm_x, ppm_y = w / (X1 - X0), h / H
+    arr = _white_wall(w, h, ppm_x, ppm_y, SR)
+    # коллаж на фото (~400 px на метр): углы шести полных рядов — (89, 295), (945, 306), (958, 834), (62, 817);
+    # снизу четырёхугольник продолжен по боковым краям до неровного низа (y ≈ 1030) -> 2.2 x 1.84 м, ряды ровные
+    Q = [(89, 295), (945, 306), (963, 1047), (51, 1030)]
+    cw, chh = int(2.2 * ppm_x), int(1.84 * ppm_y)
+    col = PT.rectify(PT.load(MG), Q, cw, chh, ss=3)
+    col = PT.flatten(col, 40, strength=0.8)
+    col = PT.tone(col, sat=0.7, contrast=1.35)
+    # форма коллажа (доли ширины / высоты): 6 полных рядов, ниже — неровный обрыв, как на фото
+    m = np.zeros((chh, cw), np.float32)
+    box = lambda u0, v0, u1, v1: m.__setitem__((slice(int(v0 * chh), int(v1 * chh)), slice(int(u0 * cw), int(u1 * cw))), 1)
+    box(0, 0, 1, 0.712)
+    box(0.273, 0.70, 0.855, 0.848)
+    box(0.346, 0.83, 0.560, 0.995)
+    box(0.776, 0.83, 0.856, 0.995)
+    m[:2] = 0; m[:, :2] = 0; m[:, -2:] = 0
+    m = np.clip(PT.blur(m[..., None], 1.6)[..., 0], 0, 1)                          # мягкий край — не «наклейка»
+    # где на фото между страницами и по краю голая стена — её не берём: стена гладкая, а страницы «рябые» от рисунка
+    Lc = PT.lum(col)[..., None]
+    sd = np.sqrt(np.clip(PT.blur(Lc * Lc, 3) - PT.blur(Lc, 3) ** 2, 0, 1))
+    m *= np.clip((PT.blur(sd, 4)[..., 0] - 0.027) / 0.04, 0, 1)
+    x0, y0 = int(0.25 * ppm_x), int(0.05 * ppm_y)                                  # от угла у двери, от потолка
+    sh = np.clip(np.roll(PT.blur(m[..., None], 3)[..., 0], (2, 1), (0, 1)) - m, 0, 1)   # мягкая тень под листами
+    reg = arr[y0:y0 + chh, x0:x0 + cw]
+    reg *= (1 - sh * 0.2)[..., None]
+    arr[y0:y0 + chh, x0:x0 + cw] = reg * (1 - m[..., None]) + col * m[..., None]
     save("yr_south", finish(arr, 1.1, crisp=0.3))
 
 
 def tex_east():
-    """Стена с дверью: белая штукатурка, у потолка отвалилась; выключатель на 1.5 м у проёма, розетка под ним.
-    Надписи маркером над столом — отдельная прозрачная наклейка (render_writing). Левый край текстуры — северный угол."""
+    """Стена с дверью: та же белая крашеная стена (фото MG), выключатель на 1.5 м у проёма, розетка под ним.
+    Надписи маркером над столом — отдельная прозрачная наклейка (render_writing). Левый край текстуры — северный угол.
+    512 x 256 на 2.95 x 2.7 м."""
     w, h = 512, 256
-    # Как на фото: пятна и разводы бледные (сероватые, не бурые); у потолка краска облупилась до светлой,
-    # почти белой шпаклёвки — сколы светлее стены, по краю лишь тонкая серая кромка.
-    arr = plaster(R, w, h, (0.78, 0.77, 0.72), streak=0.12, stains=0.08, crack=0.15)
-    top = np.zeros((h, w), np.float32); top[:70] = 1
-    top = blur(top[..., None], 8)[..., 0]
-    patches = smoothstep(0.55, 0.62, noise(w, h, 10, 5, R, oct=3)) * top
-    under = C(0.86, 0.85, 0.80) * (0.94 + 0.1 * noise(w, h, 16, 8, R))[..., None]
-    arr = arr * (1 - patches[..., None]) + under * patches[..., None]
-    rim = np.clip(patches - np.roll(patches, (2, 2), (0, 1)), 0, 1)
-    arr *= (1 - rim * 0.18)[..., None]
+    ER = np.random.default_rng(307)
+    arr = _white_wall(w, h, w / (Y1 - Y0), h / H, ER)
     ux = lambda y: int((Y1 - y) / (Y1 - Y0) * w)
     vy = lambda z: int((1 - z / H) * h)
     sx, sy = ux(2.10) - 6, vy(1.55) - 7                         # выключатель (y ≈ 2.07 м, h ≈ 1.5 м)
+    arr[sy - 3:sy + 17, sx - 3:sx + 15] *= 0.85                 # залапано вокруг
     arr[sy - 1:sy + 15, sx - 1:sx + 13] *= 0.6
     arr[sy:sy + 14, sx:sx + 12] = C(0.80, 0.78, 0.70)
     arr[sy + 2:sy + 12, sx + 3:sx + 9] = C(0.70, 0.68, 0.60)
@@ -263,8 +242,10 @@ def tex_east():
     arr[oy - 1:oy + 11, ox - 1:ox + 11] *= 0.6
     arr[oy:oy + 10, ox:ox + 10] = C(0.78, 0.76, 0.68)
     arr[oy + 4:oy + 6, ox + 2:ox + 4] = C(0.1, 0.1, 0.1); arr[oy + 4:oy + 6, ox + 6:ox + 8] = C(0.1, 0.1, 0.1)
-    arr *= (1 - floor_grime(h, w, R, 0.2, 0.4))[..., None]
     save("yr_east", finish(arr, 1.2))
+
+
+RM = np.random.default_rng(2015)             # свой генератор для надписей — остальные текстуры не «плывут»
 
 
 # --- надписи маркером над столом (как на фото стены): рендер текста Blender'ом в прозрачную текстуру ---
@@ -367,180 +348,63 @@ def render_writing():
 
 
 def tex_floor_ceiling():
-    """Ламинат (как на фото): светлый «дуб» с напечатанными волокнами, доски 1.3 x 0.2 м вразбежку, тёмные стыки,
-    у стен грязнее. Потолок — ровная светлая побелка с бледными разводами."""
+    """Пол — тот же ламинат, что в прихожей (tex_laminate из build_apartment.py, решение автора), 256 на 2 x 2 м.
+    Потолок — гладкая побелка (CC0 Poly Haven white_plaster_02) с бледными разводами, тайл 1.6 м, 256 px."""
+    ap = {"__file__": os.path.join(HERE, "build_apartment.py"), "__name__": "ap_shell"}
+    exec(compile(open(os.path.join(HERE, "build_apartment.py"), encoding="utf-8").read(), "build_apartment.py", "exec"), ap)
+    ap["tex_laminate"]("yr_laminate")
     FR = np.random.default_rng(303)
-    w = h = 512                                                    # 2 x 2 м
-    rows = 10
-    rh = h / rows
-    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
-    row = (yy // rh).astype(int)
-    shift = (FR.random(rows) * w).astype(np.float32)
-    PL = 333.0                                                     # длина доски, px
-    xs = (xx + shift[row]) % w
-    plank = (xs // PL).astype(int) + row * 7
-    tone = (0.88 + 0.22 * FR.random(200)).astype(np.float32)
-    grain = noise(w, h, 3, 90, FR, oct=4)
-    fine = noise(w, h, 6, 200, FR, oct=2)
-    arr = np.ones((h, w, 3), np.float32) * C(0.74, 0.58, 0.40)
-    arr *= tone[plank % 200][..., None]
-    arr *= (0.86 + 0.22 * grain + 0.08 * fine)[..., None]
-    knots = np.abs(np.sin((yy + grain * 40) * 0.9)) < 0.08
-    arr[knots] *= 0.9
-    fy = (yy % rh); fx = xs % PL
-    arr[(fy < 1.2)] *= 0.55; arr[(fy >= 1.2) & (fy < 2.4)] *= 1.06
-    arr[(fx < 1.5)] *= 0.6
-    arr *= mottle(h, w, FR, 2, 0.12)[..., None]
-    save("yr_laminate", finish(arr, 1.1, crisp=0.3))
-    c = plaster(FR, 256, 256, (0.84, 0.82, 0.77), streak=0.0, stains=0.12, rough=0.03, crack=0.08)
+    c = PT.resize(PT.flatten(PT.lib("polyhaven/white_plaster_02"), 120), 256, 256)
+    c = PT.seamless(c, 0.25, FR)
+    c = PT.duotone(c, (0.72, 0.72, 0.70), (0.87, 0.86, 0.82), contrast=1.0, bias=0.3)
+    c = PT.grime(256, 256, FR, 3, 0.10, (0.7, 0.66, 0.58))(c)                         # бледные разводы
     save("yr_ceiling", finish(c, 1.3))
 
 
 def tex_blanket():
-    """Плед (как на фото): ржаво-оранжевый ворсистый, по полю — тёмные и золотистые завитки-вензеля и крупные
-    пионы (персиковые лепестки слоями, оливковые листья), в центре кремово-золотой медальон с букетом,
-    по краю — «леопардовая» кайма с розетками. 512 x 512 на весь плед вместе со свесами."""
-    s = 512
+    """Плед — с фото SF (комната с дивана, плед виден целиком): ржаво-оранжевый ворсистый, пионы, кремово-золотой
+    медальон в центре, «леопардовая» кайма. Выпрямлен в квадрат, свет и складки сглажены. 256 x 256 на весь плед
+    вместе со свесами."""
     BR = np.random.default_rng(304)
+    ph = PT.load(CB)
+    part = lambda q, w_, h_, sg: PT.flatten(PT.rectify(ph, q, w_, h_, ss=3), sg, strength=0.85)
+    med = PT.flatten(PT.rectify(PT.load(SF), [(207, 345), (352, 352), (355, 470), (210, 475)], 170, 112, ss=3), 30, 0.85)   # медальон (фото SF)
+    fld = part([(285, 730), (455, 728), (455, 850), (285, 850)], 100, 72, 20)        # пионы по рыжему полю
+    leo = part([(207, 632), (278, 628), (278, 850), (207, 850)], 26, 100, 15)        # «леопардовая» кайма
+    s = 256
+    arr = PT.columns(s, s, [fld, fld[:, ::-1]], BR, overlap=12, feather=12)
     yy, xx = np.mgrid[0:s, 0:s].astype(np.float32)
-    u = (xx - s / 2 + 0.5) / (s / 2); v = (yy - s / 2 + 0.5) / (s / 2)
-    sq = np.maximum(np.abs(u), np.abs(v))
-    arr = np.ones((s, s, 3), np.float32) * C(0.62, 0.28, 0.09)
-    arr *= (0.85 + 0.3 * noise(s, s, 10, 10, BR, oct=3))[..., None]
-    sc1 = np.abs(noise(s, s, 14, 14, BR, oct=2) - 0.5) < 0.022                     # тёмные вензеля
-    sc2 = np.abs(noise(s, s, 11, 11, BR, oct=2) - 0.5) < 0.010                     # золотистые вензеля
-    arr[sc1] = arr[sc1] * 0.55
-    arr[sc2] = arr[sc2] * 0.4 + C(0.80, 0.52, 0.24) * 0.6
-
-    def leafy(cx, cy, ang, L, W):
-        ca, sa = math.cos(ang), math.sin(ang)
-        lx = (xx - cx) * ca + (yy - cy) * sa; ly = -(xx - cx) * sa + (yy - cy) * ca
-        m = ((lx - L / 2) / (L / 2)) ** 2 + (ly / (W / 2)) ** 2 < 1
-        vein = m & (np.abs(ly) < 0.9)
-        return m, vein
-
-    def peony(cx, cy, r, light, dark):
-        dx, dy = xx - cx, yy - cy
-        rr = np.hypot(dx, dy); a = np.arctan2(dy, dx)
-        edge = r * (0.86 + 0.10 * np.sin(a * 7 + cx) + 0.04 * np.sin(a * 13))
-        m = rr < edge
-        t = rr / r
-        layers = 0.5 + 0.5 * np.cos(2 * np.pi * (t * 3.2 + 0.18 * np.sin(a * 6 + cy)))
-        shade = np.clip(layers * (0.55 + 0.45 * t), 0, 1)
-        col = light * (1 - shade[..., None] * 0.6) + dark * (shade[..., None] * 0.6)
-        col = np.where((t < 0.22)[..., None], dark * 0.9, col)
-        return m, col
-
-    def bouquet(cx, cy, r, k_leaves=5):
-        for k in range(k_leaves):
-            ang = BR.uniform(0, 6.283)
-            m, vein = leafy(cx + math.cos(ang) * r * 0.7, cy + math.sin(ang) * r * 0.7, ang, r * 1.1, r * 0.45)
-            arr[m] = C(0.50, 0.52, 0.24) * (0.8 + 0.3 * BR.random())
-            arr[vein] = C(0.30, 0.32, 0.12)
-        m, col = peony(cx, cy, r, C(0.98, 0.76, 0.55), C(0.72, 0.30, 0.12))
-        arr[m] = col[m]
-
-    for (cx, cy) in ((70, 70), (442, 70), (70, 442), (442, 442), (256, 58), (256, 454), (58, 256), (454, 256),
-                     (150, 170), (362, 170), (150, 342), (362, 342)):
-        bouquet(cx + BR.integers(-8, 9), cy + BR.integers(-8, 9), 34 + BR.integers(0, 10), 5)
-    # медальон: кремово-золотой овал с кольцами и букетом
-    e = (u / 0.50) ** 2 + (v / 0.40) ** 2
-    med = C(0.86, 0.72, 0.46) * (0.9 + 0.15 * noise(s, s, 20, 20, BR))[..., None]
-    arr = np.where((e < 1.0)[..., None], med, arr)
-    arr = np.where(((e > 0.88) & (e < 0.96))[..., None], C(0.50, 0.20, 0.08), arr)
-    arr = np.where(((e > 0.74) & (e < 0.79))[..., None], C(0.72, 0.45, 0.20), arr)
-    lace = (e < 0.74) & (np.abs(noise(s, s, 24, 24, BR, oct=2) - 0.5) < 0.03)
-    arr[lace] *= 0.82
-    bouquet(256, 256, 58, 8)
-    for (cx, cy) in ((200, 238), (312, 238), (230, 300), (284, 300)):
-        bouquet(cx, cy, 28, 3)
-    # кайма «под леопарда»: розетки — тёмное кольцо вокруг рыжего пятна
-    border = sq > 0.84
-    cells = noise(s, s, 40, 40, BR, oct=1)
-    ros = (cells > 0.60) & (cells < 0.68)
-    core = cells >= 0.68
-    leo = np.ones((s, s, 3), np.float32) * C(0.80, 0.58, 0.30)
-    leo[ros] = C(0.22, 0.10, 0.04); leo[core] = C(0.62, 0.32, 0.10)
-    arr = np.where(border[..., None], leo, arr)
-    arr = np.where(((sq > 0.80) & (sq <= 0.84))[..., None], C(0.48, 0.18, 0.06), arr)
-    arr *= (0.84 + 0.26 * noise(s, s, 128, 128, BR, oct=2))[..., None]               # ворс
-    arr *= mottle(s, s, BR, 2, 0.10)[..., None]
-    save("yr_blanket", finish(blur(arr, 0.7, wrap=False), 1.1, crisp=0.3))
+    e = ((xx - s / 2) / 82) ** 2 + ((yy - s / 2) / 54) ** 2                          # медальон в центре
+    m = np.clip((1.0 - e) * 6, 0, 1)[..., None]
+    big = np.zeros_like(arr); big[s // 2 - 56:s // 2 + 56, s // 2 - 85:s // 2 + 85] = med
+    arr = arr * (1 - m) + big * m
+    side = PT.tile(np.concatenate([leo, leo[::-1]], 0), 22, s)
+    arr[:, :22] = side; arr[:, -22:] = side[:, ::-1]
+    arr[:22] = np.rot90(side, 1)[:, :s][::-1]; arr[-22:] = np.rot90(side, 1)[:, :s]
+    arr *= (1 - 0.45 * np.clip(1 - np.abs(e - 0.9) * 12, 0, 1))[..., None]           # бурая рамка медальона
+    for cy_ in (0, s - 22):                                                           # углы каймы
+        for cx_ in (0, s - 22):
+            arr[cy_:cy_ + 22, cx_:cx_ + 22] = leo[70:92, 4:26]
+    arr[:, 22:24] *= 0.6; arr[:, -24:-22] *= 0.6; arr[22:24, 22:-22] *= 0.6; arr[-24:-22, 22:-22] *= 0.6
+    arr = PT.tone(arr, rgb=(0.62, 0.38, 0.18), sat=0.9, contrast=1.15)
+    save("yr_blanket", finish(arr, 1.1, crisp=0.3))
 
 
 def tex_fabric():
-    """Обивка дивана и кресла (как на фото): бежевый велюр — пятна примятого ворса светлее/темнее, мелкий ворс."""
+    """Обивка дивана — бежевый велюр с фото EE (подлокотник дивана слева от стола): примятый ворс; тайл 128.
+    Кресло у окна — тёмная серо-сиреневая обивка с крупными блёклыми цветами (как на фото AC): CC0 Poly Haven
+    floral_jacquard, перекрашенный в цвет кресла; тайл 64."""
     FB = np.random.default_rng(305)
-    s = 128
-    arr = np.ones((s, s, 3), np.float32) * C(0.60, 0.52, 0.41)
-    arr *= (0.86 + 0.22 * noise(s, s, 5, 5, FB, oct=3))[..., None]                  # примятый ворс
-    arr *= (0.94 + 0.10 * noise(s, s, 64, 64, FB, oct=1))[..., None]
-    arr *= (0.97 + 0.06 * FB.random((s, s)).astype(np.float32))[..., None]
-    save("yr_fabric", finish(arr, 1.1, crisp=0.2))
-    # кресло у окна (как на фото): тёмная серо-сиреневая обивка с крупными блёклыми цветами
-    s_ = 64
-    yy, xx = np.mgrid[0:s_, 0:s_].astype(np.float32)
-    a = np.ones((s_, s_, 3), np.float32) * C(0.27, 0.25, 0.32)
-    for (cx, cy, r) in ((14, 16, 9), (44, 12, 7), (30, 40, 10), (54, 46, 8), (8, 52, 7)):
-        rr = np.hypot(xx - cx, yy - cy); ang = np.arctan2(yy - cy, xx - cx)
-        petal = (rr < r * (0.7 + 0.3 * np.cos(ang * 5))) & (rr > r * 0.25)
-        a = np.where(petal[..., None], C(0.45, 0.43, 0.52), a)
-        a = np.where((rr <= r * 0.25)[..., None], C(0.22, 0.20, 0.26), a)
-    a *= (0.85 + 0.25 * noise(s_, s_, 16, 16, np.random.default_rng(77), oct=2))[..., None]   # свой генератор
-    save("yr_armchair", finish(a, 1.1))
-
-
-def tex_window():
-    """Окно в белой пластиковой раме: две створки, стекло полупрозрачное (вид за окном — отдельная модель)."""
-    s = 128
-    yy, xx = np.mgrid[0:s, 0:s].astype(np.float32)
-    g = (yy / s)[..., None]
-    glass = C(0.02, 0.03, 0.07) * (1 - g) + C(0.12, 0.08, 0.07) * g
-    house = (yy > 34) & (xx > 10) & (xx < 112)
-    glass = np.where(house[..., None], C(0.035, 0.035, 0.045), glass)
-    lit = np.zeros((s, s), np.float32)
-    for wy in range(40, 124, 10):
-        for wx in range(16, 108, 9):
-            if R.random() < 0.10:                                          # редкие тусклые окна напротив
-                lit[wy:wy + 4, wx:wx + 3] = 0.25 + 0.3 * R.random()
-    glass = glass + lit[..., None] * C(0.85, 0.55, 0.28)
-    glass *= (0.8 + 0.4 * noise(s, s, 6, 6, R))[..., None]
-    frame = np.zeros((s, s), bool)
-    frame[:8] = frame[-8:] = True; frame[:, :8] = frame[:, -8:] = True
-    frame[:, 60:68] = True                                                # импост
-    for (a, b_) in ((8, 60), (68, 120)):                                  # рамы створок
-        frame[8:14, a:b_] = True; frame[-14:-8, a:b_] = True
-        frame[8:-8, a:a + 5] = True; frame[8:-8, b_ - 5:b_] = True
-    frame[58:74, 70:74] = True                                            # ручка — на правой створке у импоста, как на фото
-    frame[18:28, 118:122] = True; frame[100:110, 118:122] = True          # петли правой створки
-    white = C(0.80, 0.80, 0.76) * (0.85 + 0.2 * noise(s, s, 8, 8, R))[..., None]
-    alb = np.where(frame[..., None], white, glass)
-    alb[58:74, 70:74] = C(0.86, 0.84, 0.74)
-    alb[18:28, 118:122] = C(0.55, 0.55, 0.53); alb[100:110, 118:122] = C(0.55, 0.55, 0.53)
-    # Стекло прозрачное (за ним — 3D-вид из окна, tools/blender/build_window_view.py): чуть синеватое, с засохшими
-    # каплями и потёками, как на фото, и грязью у нижнего края рамы. Случайности — свои, чтобы не сдвигать R.
-    WR = np.random.default_rng(2526)
-    alpha = np.full((s, s), 0.10, np.float32)
-    tint = np.ones((s, s, 3), np.float32) * C(0.10, 0.11, 0.13)
-    for _ in range(260):                                                  # капли
-        cx, cy, r = WR.uniform(0, s), WR.uniform(0, s), WR.uniform(0.6, 1.8)
-        d = np.hypot(xx - cx, yy - cy)
-        m = np.clip(1 - d / r, 0, 1) * WR.uniform(0.15, 0.35)
-        alpha = np.maximum(alpha, m)
-    for _ in range(18):                                                   # потёки сверху вниз
-        cx, y0 = WR.uniform(10, s - 10), WR.uniform(8, s * 0.6)
-        ln = WR.uniform(10, 50)
-        m = (np.abs(xx - cx - np.sin(yy * 0.3) * 0.6) < 0.7) & (yy > y0) & (yy < y0 + ln)
-        alpha = np.where(m, np.maximum(alpha, 0.2), alpha)
-    alpha += np.clip((yy - (s - 34)) / 20.0, 0, 1) * 0.18                   # грязь у нижнего края
-    alpha *= 0.85 + 0.3 * noise(s, s, 8, 8, WR)
-    tint = tint * (1 - alpha[..., None]) + C(0.55, 0.55, 0.56) * alpha[..., None]
-    alb = np.where(frame[..., None], white, tint)
-    alb[58:74, 70:74] = C(0.86, 0.84, 0.74)
-    alb[18:28, 118:122] = C(0.55, 0.55, 0.53); alb[100:110, 118:122] = C(0.55, 0.55, 0.53)
-    alb = finish(alb, 1.1, crisp=0.3)
-    # Текстура больше не сохраняется: окно теперь отдельная 3D-модель (build_room_window.py). Расчёт оставлен,
-    # чтобы случайности у следующих текстур не сдвинулись.
+    a = _mean(PT.flatten(PT.crop(PT.load(EE), 62, 1390, 192, 1640), 15))
+    a = PT.resize(a, 64, 123)
+    t = PT.columns(128, 128, [a], FB, overlap=10, feather=10)
+    t = PT.seamless(t, 0.25, FB)
+    t = PT.recolor(t, (0.54, 0.46, 0.35), contrast=0.9, chroma=0.3, shadow_deg=4)
+    save("yr_fabric", finish(t, 1.1, crisp=0.2))
+    j = PT.flatten(PT.lib("polyhaven/floral_jacquard"), 80)
+    j = PT.seamless(PT.resize(j[:400, :400], 64, 64), 0.25, FB)                   # крупные цветы, как на кресле
+    j = PT.recolor(j, (0.25, 0.23, 0.30), contrast=1.6, chroma=0.3, shadow_deg=4)
+    save("yr_armchair", finish(j, 1.1))
 
 
 def save_rgba(name, rgb, alpha):
@@ -638,7 +502,6 @@ def tex_atlas():
         w, h = x1 - x0, y1 - y0
         put(name, np.ones((h, w, 3), np.float32) * C(*col) * (1 - amp / 2 + amp * noise(w, h, cells, cells, R))[..., None])
 
-    flat("black", (0.07, 0.07, 0.075), 0.3)
     # корпус: тёмно-серый, DVD-привод, заглушка, кардридер, кнопка, синий диод, USB, решётка
     f = np.ones((72, 32, 3), np.float32) * C(0.12, 0.12, 0.13) * (0.9 + 0.2 * noise(32, 72, 4, 8, R))[..., None]
     f[4:14, 3:29] = C(0.52, 0.53, 0.55); f[9:10, 5:27] = C(0.2, 0.2, 0.22); f[11:13, 24:27] = C(0.3, 0.3, 0.32)
@@ -662,8 +525,6 @@ def tex_atlas():
     sp[r1 < 12] = C(0.45, 0.45, 0.47); sp[r1 < 10.5] = C(0.13, 0.13, 0.14); sp[r1 < 3] = C(0.25, 0.25, 0.27)
     sp[r2 < 5] = C(0.45, 0.45, 0.47); sp[r2 < 3.5] = C(0.16, 0.16, 0.17)
     put("speaker", sp)
-    yy, xx = np.mgrid[0:32, 0:64]
-    put("cloth", C(0.80, 0.79, 0.74) * (0.88 + 0.12 * np.sin(xx / 3.0 + noise(64, 32, 4, 4, R) * 4))[..., None])
     # клавиатура: чёрная, серые клавиши
     kb = np.ones((40, 128, 3), np.float32) * C(0.05, 0.05, 0.05)
     for r in range(6):
@@ -679,20 +540,6 @@ def tex_atlas():
         for x in range(98, 124, 6):
             kb[y0:y0 + 5, x:x + 5] = C(0.17, 0.17, 0.18)
     put("keyb", kb)
-    # комод (как на фото): светлый рыже-коричневый шпон «под ольху», четыре ящика с узкими ручками
-    wd = np.ones((64, 64, 3), np.float32) * C(0.56, 0.31, 0.14) * (0.75 + 0.5 * noise(64, 64, 2, 16, R, oct=3))[..., None]
-    put("wood", wd.copy())
-    for k in (0, 16, 32, 48):
-        wd[k:k + 2] *= 0.35
-        wd[k + 7:k + 9, 24:40] = C(0.35, 0.22, 0.12)
-    wd[:, :2] *= 0.5; wd[:, -2:] *= 0.5
-    put("drawer", wd)
-    flat("pot", (0.80, 0.37, 0.08), 0.2)
-    lf = np.ones((32, 32, 3), np.float32) * C(0.10, 0.30, 0.09) * (0.8 + 0.4 * noise(32, 32, 4, 4, R))[..., None]
-    lf[:, 15:17] = C(0.25, 0.45, 0.20)
-    for k in range(2, 32, 6):
-        lf[k, 4:28] *= 1.25
-    put("leaf", lf)
     pic = np.ones((64, 64, 3), np.float32) * C(0.60, 0.48, 0.22) * (0.8 + 0.4 * noise(64, 64, 8, 8, R))[..., None]
     yy, xx = np.mgrid[0:52, 0:52]
     inner = C(0.15, 0.20, 0.30) * (1 - (yy / 52)[..., None]) + C(0.10, 0.14, 0.08) * (yy / 52)[..., None]
@@ -710,27 +557,6 @@ def tex_atlas():
     bo = np.ones((32, 64, 3), np.float32) * C(0.55, 0.08, 0.06) * (0.85 + 0.3 * noise(64, 32, 6, 4, R))[..., None]
     bo[8:12, 10:50] = C(0.85, 0.70, 0.30); bo[16:19, 14:40] = C(0.85, 0.70, 0.30); bo[:, :3] *= 0.6
     put("book", bo)
-    # одежда — четыре куска 32x32: чёрная толстовка (красный шнурок), джинса, серый трикотаж, тёмно-синяя куртка;
-    # по каждому — тени складок
-    cl = np.zeros((64, 64, 3), np.float32)
-    yy, xx = np.mgrid[0:32, 0:32].astype(np.float32)
-    for q, (col, kind) in enumerate(((C(0.06, 0.06, 0.07), "hood"), (C(0.25, 0.34, 0.50), "denim"),
-                                     (C(0.42, 0.42, 0.44), "knit"), (C(0.11, 0.13, 0.20), "jacket"))):
-        sw_ = np.ones((32, 32, 3), np.float32) * col
-        folds = 0.82 + 0.3 * noise(32, 32, 3, 3, R, oct=2)
-        sw_ *= folds[..., None]
-        if kind == "denim":
-            sw_ *= (0.9 + 0.12 * ((xx + yy) % 3 < 1))[..., None]
-            sw_[:, 14:15] = C(0.70, 0.55, 0.25)                         # шов
-        elif kind == "knit":
-            sw_ *= (0.9 + 0.12 * (yy % 2 < 1))[..., None]
-        elif kind == "hood":
-            sw_[np.abs(xx - 10 - 3 * np.sin(yy / 4)) < 0.5] = C(0.45, 0.08, 0.07)
-        else:
-            sw_[16:17] = C(0.5, 0.5, 0.52)                               # молния
-        y_, x_ = (q // 2) * 32, (q % 2) * 32
-        cl[y_:y_ + 32, x_:x_ + 32] = sw_
-    put("clothes", cl)
     flat("brass", (0.58, 0.44, 0.20), 0.3)
     dr = np.ones((56, 32, 3), np.float32) * C(0.80, 0.79, 0.74) * (0.9 + 0.15 * noise(32, 56, 4, 6, R))[..., None]
     dr[4:24, 4:28] = C(0.62, 0.54, 0.40) * (0.85 + 0.25 * np.sin(np.arange(24)[None, :] / 1.5))[..., None]   # стекло со шторкой
@@ -743,9 +569,6 @@ def tex_atlas():
     mp[np.abs(yy - 20 - 6 * np.sin(xx / 6)) < 1.2] = C(0.65, 0.10, 0.08)
     mp[np.abs(yy - 10 - 4 * np.sin(xx / 4 + 1)) < 0.8] = C(0.55, 0.08, 0.06)
     put("mousepad", mp)
-    flat("white", (0.80, 0.80, 0.77), 0.15)
-    pl = np.ones((24, 32, 3), np.float32) * C(0.40, 0.43, 0.52) * (0.85 + 0.3 * noise(32, 24, 4, 4, R))[..., None]
-    put("pillow", pl)                                                                             # серо-голубая подушка
     flat("soil", (0.10, 0.07, 0.05), 0.4)
     flat("cap", (0.15, 0.35, 0.75), 0.2)
     pl = np.ones((32, 32, 3), np.float32) * C(0.78, 0.12, 0.10) * (0.7 + 0.6 * R.random((32, 32, 1)).astype(np.float32))
@@ -754,6 +577,35 @@ def tex_atlas():
     bd = np.ones((32, 32, 3), np.float32) * C(0.08, 0.50, 0.22)
     bd[4:12, 4:12] = C(0.45, 0.85, 0.55)                                                          # бусина гирлянды: блик
     put("bead", bd)
+    # Материалы — из фото (рисунки выше — клавиатура, икона, кружка, корпус — остаются): скатерть, горшок и листья —
+    # с фото комода DR, одежда — с кресла AC, шпон комода, пластик стола, велюр подушки, побелка — CC0.
+    ph_dr, ph_ac = PT.load(DR), PT.load(AC)
+
+    def photo(name, img, box, rgb, contrast=1.0, chroma=0.3, sigma=None, cell=None):
+        x0, y0, x1, y1 = cell or A[name]
+        p_ = PT.flatten(img if box is None else PT.crop(img, *box), sigma, strength=0.8)
+        p_ = PT.recolor(PT.resize(p_, x1 - x0, y1 - y0), rgb, contrast=contrast, chroma=chroma, shadow_deg=4)
+        a[y0:y1, x0:x1] = p_
+        return p_
+    photo("black", PT.lib("ambientcg/Plastic006"), (0, 0, 512, 512), (0.07, 0.07, 0.075), 0.8)
+    photo("cloth", ph_dr, (240, 335, 330, 385), (0.80, 0.79, 0.74), 0.6)
+    veneer = PT.lib("polyhaven/okoume_veneer")
+    wd = photo("wood", veneer, (0, 0, 512, 512), (0.56, 0.31, 0.14), 1.2, 0.4)
+    wd = wd.copy()
+    for k in (0, 16, 32, 48):                                                        # ящики комода: щели и ручки
+        wd[k:k + 2] *= 0.35
+        wd[k + 7:k + 9, 24:40] = C(0.35, 0.22, 0.12)
+    wd[:, :2] *= 0.5; wd[:, -2:] *= 0.5
+    put("drawer", wd)
+    photo("pot", ph_dr, (370, 115, 418, 158), (0.80, 0.37, 0.08), 1.0, 0.5)
+    photo("leaf", ph_dr, (170, 125, 270, 225), (0.12, 0.28, 0.10), 1.4, 0.6)
+    for q, (box, col) in enumerate((((255, 300, 315, 360), (0.06, 0.06, 0.07)), ((190, 262, 235, 307), (0.25, 0.34, 0.50)),
+                                    (None, (0.42, 0.42, 0.44)), ((215, 330, 260, 375), (0.11, 0.13, 0.20)))):
+        x0, y0 = A["clothes"][0] + (q % 2) * 32, A["clothes"][1] + (q // 2) * 32
+        src = ph_ac if box else PT.lib("polyhaven/terry_cloth")                      # серый трикотаж — CC0
+        photo(None, src, box or (0, 0, 256, 256), col, 1.3, 0.4 if box else 0.0, cell=(x0, y0, x0 + 32, y0 + 32))      # толстовка, джинса, трикотаж, куртка
+    photo("pillow", PT.lib("polyhaven/velour_velvet"), (0, 0, 400, 300), (0.40, 0.43, 0.52), 1.0, 0.0)
+    photo("white", PT.lib("ambientcg/PaintedPlaster015"), (0, 0, 512, 256), (0.80, 0.80, 0.77), 0.8)
     save("yr_atlas", finish(a, 1.0, crisp=0.3))
 
 
@@ -1098,8 +950,7 @@ def room(M):
     for (ya, yb, za, zb) in ((Y0, WY0, Z, ZT), (WY1, Y1, Z, ZT), (WY0, WY1, Z, WZ0), (WY0, WY1, WZ1, ZT)):
         shell.box((X0 - 0.2, ya, za), (X0, yb, zb), {'+X': M["west"]}, scale=WS)
     # Откосы, рама со стёклами и подоконник — отдельная 3D-модель (tools/blender/build_room_window.py →
-    # room_window.gltf), стоит в stairwell.tscn в точке (X0, WY0, WZ0). Текстура yr_window больше не нужна
-    # (tex_window только тратит случайности, чтобы не сдвинуть остальные текстуры).
+    # room_window.gltf), стоит в stairwell.tscn в точке (X0, WY0, WZ0).
     # батарея и стояк
     # чугунная батарея МС-140 под левой половиной окна (как на фото): 8 секций — по две круглые колонки с перемычкой,
     # сверху и снизу секции соединены ниппелями (сквозные трубы). Коллизия — простой ящик (см. col ниже)
@@ -1329,7 +1180,7 @@ def main():
         if c.name.startswith("yr_"):
             bpy.data.collections.remove(c)
     tex_panels(); tex_west(); tex_south(); tex_east(); tex_floor_ceiling()
-    tex_blanket(); tex_fabric(); tex_window(); tex_screen(); tex_atlas()
+    tex_blanket(); tex_fabric(); tex_screen(); tex_atlas()
     render_writing()
     M = {
         "panels": mat("YrPanels", "yr_panels"), "west": mat("YrWest", "yr_west"), "south": mat("YrSouth", "yr_south"),

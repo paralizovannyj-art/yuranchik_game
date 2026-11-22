@@ -28,6 +28,7 @@ sys.path.insert(0, HERE)
 from tex_lib import save
 from ps2_hero import C, finish
 from ps2_style import noise
+import photo_tex as PT
 
 _ns = {"NO_MAIN": True}
 exec(compile(open(os.path.join(HERE, "build_yard.py"), encoding="utf-8").read(), "build_yard.py", "exec"), _ns)
@@ -47,15 +48,30 @@ SEAT_U, SEAT_Y0, SEAT_Y1 = 0.20, -0.26, 0.28   # область текстуры
 # =====================================================================================
 #  Текстуры
 # =====================================================================================
+EE = "ee0800e3-c02e-4862-a4ff-dbccb98c6391.jpg"          # фото стола с креслом (docs/references/apartment)
+_LEATHER = {}
+
+
+def _leather_src(kind):
+    """Кусочки кожзама с фото кресла: зелёные валики и чёрный бок спинки (заломы и простёжка — настоящие)."""
+    if kind not in _LEATHER:
+        ph = PT.load(EE)
+        boxes = {"green": ((1106, 2200, 1150, 2400), (1040, 1790, 1095, 1950)),
+                 "black": ((1280, 2050, 1335, 2300),)}[kind]
+        out = []
+        for b in boxes:
+            a = PT.flatten(PT.crop(ph, *b), 20)
+            out.append(PT.resize(a, int(a.shape[1] * 0.5), int(a.shape[0] * 0.5)))
+        _LEATHER[kind] = out
+    return _LEATHER[kind]
+
+
 def leather(w, h, col, amp=0.22, crease=0.18):
-    """Кожзам: неровный тон, мелкое зерно, светлые заломы-морщинки (свет «запечён»)."""
-    a = np.ones((h, w, 3), np.float32) * C(*col)
-    a *= (1 - amp / 2 + amp * noise(w, h, 4, 4, R, oct=3))[..., None]
-    a *= (0.93 + 0.10 * R.random((h, w)).astype(np.float32))[..., None]
-    n = noise(w, h, 10, 10, R, oct=2)
-    ridge = np.clip(1 - np.abs(n - 0.5) * 30, 0, 1)                 # тонкие линии по изолиниям шума — заломы
-    a *= (1 + crease * ridge)[..., None]
-    return a
+    """Кожзам — из фото кресла (EE): кусочки зелёного или чёрного кожзама, без дыр уложенные на холст,
+    перекрашены в цвет детали; crease — насколько видны заломы."""
+    kind = "green" if col[1] > col[0] * 2 else "black"
+    a = PT.columns(w, h, _leather_src(kind), R, overlap=6, feather=6)
+    return PT.recolor(a, col, contrast=0.6 + crease * 1.5, chroma=0.2)
 
 
 def tex_black():
@@ -68,9 +84,8 @@ def tex_green():
 
 
 def tex_plastic():
-    a = np.ones((64, 64, 3), np.float32) * C(0.045, 0.045, 0.05)
-    a *= (0.85 + 0.3 * noise(64, 64, 4, 4, R, oct=2))[..., None]
-    a *= (0.95 + 0.08 * R.random((64, 64)).astype(np.float32))[..., None]
+    pl = PT.flatten(PT.lib("ambientcg/Plastic006"), 60)[:256, :256]                       # CC0 ambientCG Plastic006
+    a = PT.recolor(PT.resize(pl, 64, 64), (0.045, 0.045, 0.05), contrast=1.2)
     save("gc_plastic", finish(a, 1.0, crisp=0.2))
 
 

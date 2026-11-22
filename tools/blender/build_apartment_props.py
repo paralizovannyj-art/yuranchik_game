@@ -31,7 +31,7 @@ exec(compile(open(os.path.join(HERE, "build_apartment.py"), encoding="utf-8").re
 globals().update({k: _sh[k] for k in (
     "B", "mat", "save", "C", "finish", "noise", "smoothstep", "mottle", "blur", "Items", "export_items", "RT",
     "Z", "H", "ZT", "HX0", "HX1", "HY0", "HY1", "CX0", "CX1", "CY0", "PX1", "PY1", "T", "DH",
-    "ENTRY", "DOUBLE_DOOR", "WC_DOOR", "WEST_DOORS", "RUNNER")})
+    "ENTRY", "DOUBLE_DOOR", "WC_DOOR", "WEST_DOORS", "RUNNER", "PT")})
 
 DOOR_X_IN = -3.05            # внутренняя грань входной двери (AptDoor в build_mvp_assets.py: x −3.05…−3.0, петли y = 0.8)
 
@@ -58,10 +58,13 @@ def _bevel(arr, mask, d=2, dark=0.72, light=1.10):
 
 
 def _paint(w, h, rng, base):
-    arr = np.ones((h, w, 3), np.float32) * C(*base)
-    arr *= (0.93 + 0.09 * noise(w, h, 4, 6, rng, oct=4))[..., None]
-    arr *= (0.97 + 0.04 * noise(w, h, 30, 2, rng, oct=2))[..., None]              # мазки кисти вдоль створки
-    return arr
+    """Крашеное дерево — фото CC0 ambientCG PaintedWood009C (мазки кисти, сколы), приведённое к тону base;
+    свой кусок для каждой створки."""
+    src = PT.flatten(PT.lib("ambientcg/PaintedWood009C"), 80)
+    sw, sh = min(2 * w, src.shape[1]), min(2 * h, src.shape[0])                       # кусок фото в 2 раза крупнее
+    x0, y0 = int(rng.integers(0, src.shape[1] - sw + 1)), int(rng.integers(0, src.shape[0] - sh + 1))
+    a = PT.resize(src[y0:y0 + sh, x0:x0 + sw], w, h)
+    return PT.recolor(a, base, contrast=0.7)
 
 
 def _dirt(arr, rng, hu, hv):
@@ -96,14 +99,15 @@ def tex_door_glass():
     тёмно-коричневым (за ним темно). Каждая 0.6 x 2.05 м, 64 x 256; вся текстура 128 x 256."""
     rng = np.random.default_rng(4712)
     w, h = 64, 256
+    # рифлёное янтарное стекло — с фото 1 (левая створка двустворчатой двери), без света с улицы
+    glass_photo = PT.flatten(PT.rectify(PT.load("hall_1_to_room.webp"), [(178, 730), (262, 735), (262, 1040), (190, 1040)],
+                                        40, 150, ss=3), 10)
     leaves = []
     for glass, bright in ((C(0.86, 0.54, 0.14), 0.30), (C(0.30, 0.17, 0.09), 0.12)):
         arr = _paint(w, h, rng, (0.87, 0.86, 0.80))
         yy, xx = _grid(h, w); u, v = xx / w, yy / h
         gl = (u > 0.16) & (u < 0.84) & (v > 0.07) & (v < 0.60)
-        peb = noise(w, h, 64, 256, rng, oct=1)                                           # мелкая «изморозь»
-        peb2 = noise(w, h, 20, 80, rng, oct=2)
-        g = glass * (0.86 + 0.22 * peb[..., None]) * (0.9 + 0.16 * peb2[..., None])
+        g = PT.resize(glass_photo, w, h) * (glass / glass_photo.reshape(-1, 3).mean(0))
         g *= (1 - bright + bright * 2 * smoothstep(0.62, 0.05, v))[..., None]            # сверху светлее
         arr[gl] = g[gl]
         _bevel(arr, gl, d=1, dark=0.7, light=1.15)
@@ -115,12 +119,13 @@ def tex_door_glass():
 
 
 def tex_entry_in():
-    """Входная дверь изнутри (фото 2): гладкая, тёмно-коричневая с бордовым, краска с вертикальными мазками;
+    """Входная дверь изнутри — с фото 2 (выпрямлена): гладкая, тёмно-коричневая с бордовым;
     глазок на 1.5 м, у замка (u ≈ 0.1) — скважина, низ затёрт. 0.9 x 2.05 м, 64 x 128."""
     rng = np.random.default_rng(4713)
     w, h = 64, 128
-    arr = np.ones((h, w, 3), np.float32) * C(0.30, 0.11, 0.09)
-    arr *= (0.85 + 0.25 * noise(w, h, 24, 3, rng, oct=3))[..., None]
+    photo = PT.flatten(PT.rectify(PT.load("hall_2_to_entrance.webp"), [(706, 666), (824, 664), (821, 1006), (709, 1008)],
+                                  w, h, ss=4), 20)                                     # дверь с фото 2
+    arr = PT.recolor(photo, (0.27, 0.10, 0.085), contrast=1.6, chroma=0.3)
     yy, xx = _grid(h, w); u, v = xx / w, yy / h
     edge = np.minimum(np.minimum(u, 1 - u) * 9, np.minimum(v, 1 - v) * 20)
     arr *= (0.75 + 0.25 * np.clip(edge, 0, 1))[..., None]
@@ -137,12 +142,12 @@ def tex_entry_in():
 
 
 def tex_wardrobe():
-    """Створка шкафа-купе (фото 2): бежевый ламинат «под клён» почти без рисунка, по краям — вертикальный
+    """Створка шкафа-купе (фото 2): бежевый ламинат «под клён» (CC0 Poly Haven white_maple_veneer), по краям — вертикальный
     профиль цвета шампань, сверху и снизу — рельсы. 0.87 x 2.4 м, 128 x 256."""
     rng = np.random.default_rng(4714)
     w, h = 128, 256
-    arr = np.ones((h, w, 3), np.float32) * C(0.86, 0.78, 0.64)
-    arr *= (0.94 + 0.08 * noise(w, h, 2, 30, rng, oct=3))[..., None]                     # еле заметные волокна
+    ven = np.rot90(PT.flatten(PT.lib("polyhaven/white_maple_veneer"), 60))           # волокна вдоль створки
+    arr = PT.recolor(PT.resize(ven[:, :400], w, h), (0.84, 0.76, 0.62), contrast=1.1, chroma=0.3)
     yy, xx = _grid(h, w); u, v = xx / w, yy / h
     arr *= (0.93 + 0.1 * smoothstep(0.0, 0.5, u) * smoothstep(1.0, 0.5, u))[..., None]   # блик по середине
     prof = (u < 0.04) | (u > 0.96)
@@ -264,6 +269,23 @@ def tex_props():
     a, h, w = fill("jacket", (0.10, 0.11, 0.13), 0.25, 6, 4)
     a, h, w = fill("sack", (0.72, 0.64, 0.50), 0.2, 6, 5)
     fill("black", (0.03, 0.03, 0.035), 0.1)
+    # фотобашинг: материалы мелочи — куски фото прихожей (картина и постер остаются нарисованными)
+    h1, h2 = PT.load("hall_1_to_room.webp"), PT.load("hall_2_to_entrance.webp")
+    for name, img, box, k in (
+            ("wicker", h1, (380, 1350, 540, 1420), 1.0),       # плетёная корзина
+            ("lacquer", h1, (905, 1440, 1085, 1600), 1.0),     # чёрная тумбочка
+            ("bags", h2, (170, 1450, 440, 1720), 1.0),         # гора пакетов и одежды
+            ("jacket", h2, (190, 1700, 330, 1880), 1.0),       # тёмная куртка
+            ("vac", h2, (950, 1390, 1040, 1500), 1.0),         # пылесос
+            ("cloth", h1, (410, 1395, 540, 1480), 1.0),        # тряпка в корзине
+            ("flowers", h1, (1045, 1150, 1110, 1250), 1.0),    # сухие цветы
+            ("mug", h1, (1028, 1305, 1080, 1385), 1.0),        # кружка
+            ("switch", h1, (1176, 962, 1200, 1022), 1.0),      # выключатель
+            ("umbrella", h2, (905, 760, 945, 900), 1.0),       # зонт на крючке
+            ("shoes", h1, (30, 1870, 150, 1990), 1.0)):        # обувь
+        x0, y0, x1, y1 = P[name]
+        a = PT.flatten(PT.crop(img, *box), max(4, (box[2] - box[0]) / 3), strength=0.6)
+        A[y0:y1, x0:x1] = np.clip(PT.resize(a, x1 - x0, y1 - y0) * k, 0, 1)
     save("ap_props", finish(A, 1.0, crisp=0.3))
 
 

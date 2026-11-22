@@ -23,12 +23,13 @@ sys.path.insert(0, HERE)
 from tex_lib import save
 from ps2_hero import C, finish
 from ps2_style import noise
+import photo_tex as PT
 
 _ns = {"NO_MAIN": True}
 exec(compile(open(os.path.join(HERE, "build_yard.py"), encoding="utf-8").read(), "build_yard.py", "exec"), _ns)
 B, mat = _ns["B"], _ns["mat"]
 OUT = os.path.join(ROOT, "assets", "models")
-R = np.random.default_rng(4848)
+R = np.random.default_rng(4848)               # грязь и сколы на текстурах
 
 # --- размеры створки ---
 Y0, Y1 = 0.0, 0.85             # во всю ширину проёма — по бокам без щелей
@@ -45,10 +46,9 @@ def tex_paint():
     """Белая масляная краска в несколько слоёв: пожелтела, мазки кисти вдоль створки, у ручки — засаленное пятно,
     внизу — следы ботинок и пыль, по краям — сколы до старого голубоватого слоя."""
     w, h = 128, 256
-    arr = np.ones((h, w, 3), np.float32) * C(0.86, 0.85, 0.80)
-    arr *= (0.93 + 0.09 * noise(w, h, 4, 6, R, oct=4))[..., None]                     # неровный слой, желтизна пятнами
-    brush = noise(w, h, 40, 2, R, oct=2)                                                # мазки кисти — вдоль (по высоте)
-    arr *= (0.96 + 0.05 * brush)[..., None]
+    # основа — фото крашеного дерева (CC0 ambientCG PaintedWood009C): мазки кисти вдоль створки, неровный слой
+    paint = np.rot90(PT.flatten(PT.lib("ambientcg/PaintedWood009C"), 80))
+    arr = PT.recolor(PT.resize(paint[:512, :256], w, h), (0.86, 0.85, 0.80), contrast=0.8, shadow_deg=4)
     yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
     v = 1.0 - yy / h                                                                    # 0 — низ двери, 1 — верх
     u = xx / w
@@ -74,12 +74,11 @@ def tex_paint():
 
 
 def tex_glass():
-    """Узорчатое стекло «изморозь» (как в старых межкомнатных дверях) — молочное, рябое."""
+    """Узорчатое стекло «изморозь» (как в старых межкомнатных дверях) — молочное, рябое: стекло двустворчатой
+    двери с фото прихожей (hall_1_to_room.webp)."""
     w, h = 64, 128
-    n = noise(w, h, 10, 20, R, oct=3)
-    arr = np.ones((h, w, 3), np.float32) * C(0.70, 0.72, 0.70)
-    arr *= (0.82 + 0.3 * n)[..., None]
-    arr *= (0.94 + 0.08 * R.random((h, w)).astype(np.float32))[..., None]
+    g = PT.flatten(PT.rectify(PT.load("hall_1_to_room.webp"), [(178, 730), (262, 735), (262, 1040), (190, 1040)], 40, 150, ss=3), 10)
+    arr = PT.recolor(PT.resize(g[8:92, 6:-6], w, h), (0.70, 0.72, 0.70), contrast=0.9)   # без края створки и светлого угла внизу
     save("rd_glass", finish(arr, 1.0, crisp=0.1))
 
 
@@ -87,11 +86,10 @@ def tex_towel():
     """Бежевое махровое полотенце, как на фото: серо-бежевое, ворс крупным зерном, внизу — тканая полоса-кайма,
     по ткани — тени складок вдоль, пара застиранных пятен. v = 0 — край на стороне коридора, v = 1 — нижний край в комнате."""
     w, h = 128, 256
-    arr = np.ones((h, w, 3), np.float32) * C(0.70, 0.64, 0.55)
+    # махра — фото (CC0 Poly Haven terry_cloth), кусок ~0.4 x 0.8 м
+    t = PT.flatten(PT.lib("polyhaven/terry_cloth"), 60)
+    arr = PT.recolor(PT.resize(t[:1024, :512], w, h), (0.70, 0.64, 0.55), contrast=1.1, shadow_deg=4)
     arr *= (0.88 + 0.16 * noise(w, h, 6, 10, R, oct=3))[..., None]                    # неровно выцвело
-    loops = R.random((h, w)).astype(np.float32)                                        # петли махры
-    arr *= (0.86 + 0.20 * loops)[..., None]
-    arr *= (0.95 + 0.07 * noise(w, h, 64, 128, R, oct=1))[..., None]
     yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
     v = 1.0 - yy / h
     # кайма у нижнего края (в комнате) и у короткого края (в коридоре): гладкая тканая полоса
@@ -109,8 +107,8 @@ def tex_towel():
 def tex_metal():
     """Старая латунная ручка: потемнела, на нажимной части стёрта до блеска."""
     s = 32
-    arr = np.ones((s, s, 3), np.float32) * C(0.55, 0.45, 0.28)
-    arr *= (0.75 + 0.35 * noise(s, s, 4, 4, R, oct=2))[..., None]
+    # потёртая поверхность — фото пластика в царапинах (CC0 ambientCG Plastic006), перекрашено в латунь
+    arr = PT.recolor(PT.resize(PT.flatten(PT.lib("ambientcg/Plastic006"), 60)[:128, :128], s, s), (0.55, 0.45, 0.28), contrast=0.8)
     save("rd_metal", finish(arr, 1.0, crisp=0.1))
 
 
@@ -214,7 +212,7 @@ def towel(b, M):
     for k in range(1, len(path)):
         S.append(S[-1] + math.hypot(path[k][0] - path[k - 1][0], path[k][1] - path[k - 1][1]))
     total = S[-1]
-    ph = R.uniform(0, 6.28, 4)
+    ph = (5.569455185187808, 1.881138401198921, 1.0948766503375371, 0.05247816283283724)   # фазы складок (как были)
     grid = []
     for j in range(NY + 1):
         y = ty0 + (ty1 - ty0) * j / NY
