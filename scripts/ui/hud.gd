@@ -1,4 +1,4 @@
-## Интерфейс во время игры: на экране только мир, прицел, подсказки «[E] …» и затемнения. Реплик внизу экрана нет.
+## Интерфейс во время игры: на экране только мир, прицел и затемнения. Ни реплик, ни подсказок «[E] …» нет.
 ## Цель, самочувствие и статистика — в телефоне Юрчика (phone.gd, Tab), инвентарь — сумка (inventory_ui.gd, I).
 ## Ранение показывают красная виньетка и сердцебиение, усталость — тяжёлое дыхание.
 ## Здесь же меню паузы, экран смерти и финальный экран. Весь интерфейс собирается кодом — уровень просто создаёт HUD.
@@ -9,7 +9,6 @@ const W := 1280.0               ## сетка интерфейса = display/win
 const H := 720.0
 const C_TEXT := Color(0.86, 0.85, 0.80)
 const C_ACCENT := Color(1.0, 0.62, 0.25)
-const PROMPT_TIMES := 3        ## сколько раз показывать «[E] …» для каждого вида действия
 
 var player: Player
 var inventory: InventoryUI
@@ -18,7 +17,6 @@ var phone: Phone
 var _root: Control
 var _vignette: TextureRect
 var _fade: ColorRect
-var _prompt: Label
 var _title: Label
 var _sub: Label
 var _cross: Crosshair
@@ -29,9 +27,6 @@ var _flash := 0.0
 var _last_hp := 100.0
 var _beat := 0.0
 var _breath := 0.0
-var _focus_seen: Interactable          ## предмет, для которого уже решили, показывать ли «[E] …»
-var _focus_prompt := false
-var _grab_hint := false
 
 
 func _ready() -> void:
@@ -135,7 +130,6 @@ func _build() -> void:
 	_cross.size = Vector2(W, H)
 	_root.add_child(_cross)
 
-	_prompt = mk_label(_root, "", 21, Color.WHITE, Rect2(W / 2 - 375, 525, 750, 30), HORIZONTAL_ALIGNMENT_CENTER)
 
 	inventory = InventoryUI.new()
 	inventory.hud = self
@@ -169,7 +163,6 @@ func _process(delta: float) -> void:
 	var free := playing and not phone.is_open
 	_cross.alpha = move_toward(_cross.alpha, ((0.35 if player.move_speed > player.walk_speed * 1.3 else 1.0) if free else 0.0), delta * 5.0)
 	_cross.step(delta, player.focus != null, player.is_aiming())
-	_update_prompt(free)
 	# сердцебиение при малом здоровье, тяжёлое дыхание, когда выдохся
 	if playing and low > 0.0:
 		_beat -= delta
@@ -183,22 +176,6 @@ func _process(delta: float) -> void:
 			Game.sfx_rand("player_breath", 3, null, -4.0)
 	else:
 		_breath = 0.0
-
-
-## «[E] …» показываем только первые PROMPT_TIMES раз для каждого вида действия, дальше хватает прицела и блика.
-## «Вырывайся» — один раз за игру, в первом захвате.
-func _update_prompt(free: bool) -> void:
-	if free and player.state == Player.State.GRABBED:
-		if not _grab_hint and Game.hint("grab"):
-			_grab_hint = true
-		_prompt.text = "ВЫРЫВАЙСЯ!   ЖМИ  [E]" if _grab_hint else ""
-		return
-	_grab_hint = false
-	var f := player.focus if free else null
-	if f != _focus_seen:
-		_focus_seen = f
-		_focus_prompt = f != null and Game.hint("prompt:" + ("pickup" if f is Pickup else f.prompt), PROMPT_TIMES)
-	_prompt.text = "[E]  %s" % f.prompt if f and _focus_prompt else ""
 
 
 func _input(event: InputEvent) -> void:
