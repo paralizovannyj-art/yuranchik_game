@@ -38,7 +38,7 @@ globals().update({k: _sh[k] for k in (
 # (то, что задано через HX0 / DOUBLE_DOOR / … — уже сдвинуто в build_apartment.py)
 SHIFT_WEST = ("wardrobe", "shelf", "desk_lamp", "painting", "mop_sticks", "vacuum", "basket")
 
-PAINT_W, PAINT_H = 0.74, 0.80     # картина над комодом: почти во всю его ширину (0.80)
+PAINT_W, PAINT_H = 0.74, 0.60     # картина над комодом: почти во всю его ширину (0.80)
 DOOR_X_IN = -3.05            # внутренняя грань входной двери (AptDoor в build_mvp_assets.py: x −3.05…−3.0, петли y = 0.8)
 
 

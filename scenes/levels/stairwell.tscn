@@ -202,7 +202,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.013463, 8.4, -2.007)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.906558, 9.02, -1.9726261)
 
 [node name="Painting" parent="Apartment" unique_id=294983283 instance=ExtResource("ap_painting")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.9877625, 9.768, -2.188)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.9877625, 9.968, -2.188)
 
 [node name="Poster" parent="Apartment" unique_id=988755165 instance=ExtResource("ap_poster")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.17, 9.017, -2.147)
