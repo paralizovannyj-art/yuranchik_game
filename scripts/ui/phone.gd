@@ -8,7 +8,7 @@ extends Node3D
 
 const MODEL := preload("res://assets/models/phone.gltf")
 const LAYOUT := preload("res://assets/models/phone_layout.json")
-const SCALE := 1.92                              ## крупнее настоящего, чтобы экран читался на 854×480
+const SCALE := 1.92                              ## крупнее настоящего, чтобы экран читался на экране
 ## Кисть, которая держит телефон, увеличена меньше: телефон в ладони чуть крупнее настоящего (×1.2),
 ## иначе рядом с вязаной перчаткой он выглядит мелким. Поза кисти считается под это отношение (pose_phone_hold.py).
 const HAND_SCALE := 1.6

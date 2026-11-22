@@ -43,7 +43,7 @@ func _start() -> void:
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(root)
-	_help = HUD.mk_label(root, "", 10, HUD.C_TEXT, Rect2(10, 8, 460, 130))
+	_help = HUD.mk_label(root, "", 15, HUD.C_TEXT, Rect2(15, 12, 690, 195))
 	_refresh_help()
 	Game.set_objective("Полигон: тестируй что хочешь")
 
