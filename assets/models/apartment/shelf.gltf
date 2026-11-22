@@ -70,14 +70,14 @@
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":188,
+			"count":128,
 			"max":[
-				0.31399965286254883,
-				0.7200002670288086,
+				0.40399980545043945,
+				0.6200008392333984,
 				0.1929999589920044
 			],
 			"min":[
-				-0.31400012969970703,
+				-0.40400028228759766,
 				0,
 				-0.19300007820129395
 			],
@@ -86,45 +86,45 @@
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":188,
+			"count":128,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":188,
+			"count":128,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
 			"componentType":5123,
-			"count":282,
+			"count":192,
 			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":2256,
+			"byteLength":1536,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":2256,
-			"byteOffset":2256,
+			"byteLength":1536,
+			"byteOffset":1536,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":1504,
-			"byteOffset":4512,
+			"byteLength":1024,
+			"byteOffset":3072,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":564,
-			"byteOffset":6016,
+			"byteLength":384,
+			"byteOffset":4096,
 			"target":34963
 		}
 	],
@@ -136,7 +136,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":6580,
+			"byteLength":4480,
 			"uri":"shelf.bin"
 		}
 	]

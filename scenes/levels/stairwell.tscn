@@ -195,10 +195,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.469, 8.4, 0.85)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.7594776, 8.4, -1.86)
 
 [node name="Shelf" parent="Apartment" unique_id=419520696 instance=ExtResource("ap_shelf")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.923463, 8.4, -2.007)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.013463, 8.4, -2.007)
 
 [node name="DeskLamp" parent="Apartment" unique_id=718936160 instance=ExtResource("ap_desk_lamp")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.906558, 9.12, -1.9726261)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.906558, 9.02, -1.9726261)
 
 [node name="Painting" parent="Apartment" unique_id=294983283 instance=ExtResource("ap_painting")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.879921, 9.888235, -2.188)
