@@ -20,10 +20,10 @@ config/icon="res://icon.svg"
 
 Game="*res://scripts/core/game.gd"
 DebugOverlay="*res://scripts/core/debug_overlay.gd"
+Graphics="*res://scripts/core/graphics.gd"
 MCPScreenshot="*res://addons/godot_mcp/mcp_screenshot_service.gd"
 MCPInputService="*res://addons/godot_mcp/mcp_input_service.gd"
 MCPGameInspector="*res://addons/godot_mcp/mcp_game_inspector_service.gd"
-Graphics="*res://scripts/core/graphics.gd"
 
 [display]
 

@@ -98,7 +98,8 @@ func _ready() -> void:
 
 ## Расцветка: одна модель, три текстуры одежды. У Сергея капюшон виден изнутри — отключаем отсечение граней.
 func _dress() -> void:
-	for mi: MeshInstance3D in find_children("*", "MeshInstance3D", true, false):
+	var body: Node = get_node("Model") if has_node("Model") else self   # не трогаем BlobShadow
+	for mi: MeshInstance3D in body.find_children("*", "MeshInstance3D", true, false):
 		var mat := mi.get_active_material(0) as StandardMaterial3D
 		if mat == null:
 			continue
