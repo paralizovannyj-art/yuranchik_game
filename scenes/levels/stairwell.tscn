@@ -171,10 +171,10 @@ environment = SubResource("env")
 [node name="Apartment" type="Node3D" parent="." unique_id=1481862001]
 
 [node name="Shell" parent="Apartment" unique_id=1579564976 instance=ExtResource("ap_apartment_shell")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.787, 8.37, 0.052)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.787, 8.37, -0.148)
 
 [node name="Trim" parent="Apartment" unique_id=1432318515 instance=ExtResource("ap_apartment_trim")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.825, 8.4, -0.01)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.825, 8.4, -0.21)
 
 [node name="Runner" parent="Apartment" unique_id=712373901 instance=ExtResource("ap_runner")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.175, 8.406, -1.325)
@@ -189,7 +189,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.65, 8.4, -0.431)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.463, 8.4, -1.25)
 
 [node name="DoorWhiteB" parent="Apartment" unique_id=1844459425 instance=ExtResource("ap_door_white_b")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.469, 8.4, 1.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.469, 8.4, 1.1)
 
 [node name="Wardrobe" parent="Apartment" unique_id=1523193955 instance=ExtResource("ap_wardrobe")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.7594776, 8.4, -1.86)
@@ -237,7 +237,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.8, 8.4, -0.71)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.09, 8.403, -1.25)
 
 [node name="YurchikRoom" type="Node3D" parent="." unique_id=1792968832]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -6.5, 0, -4.02)
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -6.5, 0, -4.42)
 
 [node name="RoomShell" parent="YurchikRoom" unique_id=804113273 instance=ExtResource("yr_room_shell")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.35, 8.4, -2.425)
@@ -350,10 +350,10 @@ modulate = Color(0.35, 0.3, 0.28, 1)
 cull_mask = 1047551
 
 [node name="RoomWindow" parent="." unique_id=1427705113 instance=ExtResource("rwindow")]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -8.26, 9.3, 6.48)
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -8.26, 9.3, 6.08)
 
 [node name="WindowView" parent="." unique_id=998683274 instance=ExtResource("view")]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -6.5, 0, -4.02)
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -6.5, 0, -4.42)
 
 [node name="SnowOutside" type="GPUParticles3D" parent="WindowView" unique_id=455122601]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.5, 14, -20)
@@ -417,7 +417,7 @@ light_energy = 0.45
 shadow_enabled = true
 
 [node name="AptRoom" type="OmniLight3D" parent="Lights" unique_id=1846523846]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -8.925, 10.6, 4.39)
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -8.925, 10.6, 3.99)
 light_color = Color(1, 0.76, 0.5, 1)
 light_energy = 1.3
 shadow_enabled = true
@@ -435,14 +435,14 @@ omni_range = 4.8
 omni_attenuation = 1.6
 
 [node name="Monitor" type="OmniLight3D" parent="Lights" unique_id=119520343]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -9.8, 9.45, 3)
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -9.8, 9.45, 2.6)
 light_color = Color(0.55, 0.68, 1, 1)
 light_energy = 0.0
 shadow_enabled = true
 omni_range = 3.0
 
 [node name="WindowDay" type="OmniLight3D" parent="Lights" unique_id=1225608182]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -8.945, 10, 5.98)
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -8.945, 10, 5.58)
 light_color = Color(0.6, 0.66, 0.8, 1)
 light_energy = 0.25
 
@@ -495,7 +495,7 @@ need_item = "locked"
 locked_text = "Не сейчас."
 
 [node name="WhiteDoorBUse" type="Node3D" parent="." unique_id=637212807]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.43, 9.4, 1.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.43, 9.4, 1.1)
 script = ExtResource("inter")
 prompt = "Открыть дверь"
 radius = 1.3
@@ -503,7 +503,7 @@ need_item = "locked"
 locked_text = "Не сейчас."
 
 [node name="PCUse" type="Node3D" parent="." unique_id=2072950525]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -10.2, 9.45, 3)
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -10.2, 9.45, 2.6)
 script = ExtResource("inter")
 prompt = "Включить компьютер"
 radius = 1.9
@@ -511,13 +511,13 @@ enabled = false
 one_shot = true
 
 [node name="LightSwitchUse" type="Node3D" parent="." unique_id=1196206228]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -8.6, 9.95, 2.38)
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -8.6, 9.95, 1.98)
 script = ExtResource("inter")
 prompt = "Включить свет"
 radius = 1.4
 
 [node name="RoomDoor" type="Node3D" parent="." unique_id=1538550053]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -7.97, 9.3, 2.28)
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -7.97, 9.3, 1.88)
 script = ExtResource("door")
 prompt = "Открыть дверь"
 radius = 1.3
@@ -560,4 +560,4 @@ grow_vertical = 2
 mouse_filter = 2
 
 [node name="GamingChair" parent="." unique_id=1568008533 instance=ExtResource("14_x75pi")]
-transform = Transform3D(-0.2079117, 0, 0.9781476, 0, 1, 0, -0.9781476, 0, -0.2079117, -9.22, 8.4, 2.95)
+transform = Transform3D(-0.2079117, 0, 0.9781476, 0, 1, 0, -0.9781476, 0, -0.2079117, -9.22, 8.4, 2.55)
