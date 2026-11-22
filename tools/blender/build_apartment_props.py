@@ -31,7 +31,11 @@ exec(compile(open(os.path.join(HERE, "build_apartment.py"), encoding="utf-8").re
 globals().update({k: _sh[k] for k in (
     "B", "mat", "save", "C", "finish", "noise", "smoothstep", "mottle", "blur", "Items", "export_items", "RT",
     "Z", "H", "ZT", "HX0", "HX1", "HY0", "HY1", "CX0", "CX1", "CY0", "PX1", "PY1", "T", "DH",
-    "ENTRY", "DOUBLE_DOOR", "WC_DOOR", "WEST_DOORS", "RUNNER", "PT")})
+    "ENTRY", "DOUBLE_DOOR", "WC_DOOR", "WEST_DOORS", "RUNNER", "PT", "EXT", "X_CUT")})
+
+# вещи, заданные числами по старой (короткой) прихожей и стоящие западнее X_CUT: при экспорте сдвигаются на EXT к −x
+# (то, что задано через HX0 / DOUBLE_DOOR / … — уже сдвинуто в build_apartment.py)
+SHIFT_WEST = ("wardrobe", "shelf", "desk_lamp", "painting", "poster", "mop_sticks", "bags_shoes", "vacuum", "basket")
 
 DOOR_X_IN = -3.05            # внутренняя грань входной двери (AptDoor в build_mvp_assets.py: x −3.05…−3.0, петли y = 0.8)
 
@@ -566,6 +570,10 @@ def props():
     lathe(bk, kx, ky, [(0.22, Z + 0.001), (0.0, Z + 0.002)], PR("wicker"), segs=10)
     lathe(bk, kx, ky, [(0.27, Z + 0.08), (0.22, Z + 0.15), (0.12, Z + 0.17), (0.02, Z + 0.16)], PR("cloth"), segs=10)
     bk.v[n0:] = [(x_, ky + (y_ - ky) * 0.72, z_) for (x_, y_, z_) in bk.v[n0:]]                 # овальная
+
+    for k in SHIFT_WEST:                                                       # удлинённая прихожая (EXT)
+        for (b_, _) in I.items[k].values():
+            b_.v[:] = [(x_ - EXT, y_, z_) for (x_, y_, z_) in b_.v]
 
     layout = export_items(I, coll)
     return {"items": len(layout), "layout": layout,
