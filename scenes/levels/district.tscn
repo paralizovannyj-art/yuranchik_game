@@ -128,6 +128,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.75, 4, -64.2)
 script = ExtResource("inter")
 prompt = "Открыть дверь подъезда"
 radius = 2.3
+aim_size = Vector3(1.2, 1.8, 1.2)
 need_item = "key_home"
 locked_text = "Заперто. Ключей в кармане нет — остались в гараже, в куртке."
 

@@ -44,6 +44,7 @@ func _ready() -> void:
 		_glint.mesh = q
 		_glint.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		_glint.position = Vector3(0, 0.12, 0)
+		_glint.set_meta("no_aim", true)          # блик — не предмет, в него целиться не надо
 		add_child(_glint)
 		_t = randf() * 3.0
 

@@ -7,16 +7,18 @@
 ## - ПКМ / LT — замах: камера приближается, медленная ходьба.
 ## - ЛКМ / RT — удар молотком. С замахом (ПКМ) — сильный: целься выше — в голову, ниже — по ногам.
 ## - Q / крестовина влево — убрать молоток в сумку или достать. Без молотка ЛКМ — удар кулаком (слабее).
-## - G / RB — бросить бутылку или кирпич. E / A — подобрать, открыть, вырваться из захвата.
+## - G / RB — бросить бутылку или кирпич. E / A — подобрать, открыть.
 ## - F / Y — фонарик.
 ## - Пробел / X — прыжок (немного выносливости). Ctrl — присесть, пока держишь; C / R3 — присесть/встать.
 ##   Вприсядку медленно и тихо: шаги не слышат враги. Под низким потолком не встанет.
+## - V — полёт сквозь стены, как noclip в GMod (только при запуске из редактора / debug-сборке):
+##   WASD — куда смотришь, Пробел — вверх, Ctrl — вниз, Shift — быстрее, Alt — медленнее.
 class_name Player
 extends CharacterBody3D
 
 signal died
 
-enum State { NORMAL, AIM, ATTACK, HURT, GRABBED, THROW, BUSY, DEAD }
+enum State { NORMAL, AIM, ATTACK, HURT, THROW, BUSY, DEAD }
 
 @export_group("Движение")
 @export var walk_speed := 1.7         ## под клип ходьбы: быстрее — ноги начинают семенить/скользить
@@ -42,6 +44,8 @@ enum State { NORMAL, AIM, ATTACK, HURT, GRABBED, THROW, BUSY, DEAD }
 @export var crouch_eye_drop := 0.6     ## м — насколько ниже глаза вприсядку
 @export var crouch_response := 6.0     ## 1/с — как быстро садится и встаёт
 
+@export var noclip_speed := 7.0        ## (отладка) скорость полёта по V, м/с; Shift — ×3, Alt — ×0.3
+
 @export_group("Камера")
 @export var mouse_sensitivity := 0.0022
 @export var stick_sensitivity := 2.6
@@ -57,7 +61,6 @@ enum State { NORMAL, AIM, ATTACK, HURT, GRABBED, THROW, BUSY, DEAD }
 @export var strafe_roll := 0.008       ## крен камеры при шаге вбок
 @export var head_forward := 0.14       ## м — камера чуть впереди кости головы, чтобы плечи и спина оставались сзади
 @export var look_down_forward := 0.3   ## м — глядя вниз, камера выносится вперёд, чтобы видеть ноги, а не грудь
-@export var focus_size := 0.45         ## м — насколько можно промахнуться взглядом мимо предмета, чтобы он подсветился
 @export var cam_clip_margin := 0.03    ## м — запас сферы камеры сверх углов ближней плоскости (не видно сквозь стену)
 @export var cam_clip_return := 10.0    ## 1/с — как быстро камера возвращается на место, отойдя от стены
 @export var cam_body_push_max := 0.45  ## м — насколько тело может отступить вслед за прижатой к стене камерой
@@ -97,7 +100,7 @@ var stamina := 100.0
 var exhausted := false
 var control := true                    ## false — игрок не управляет (катсцена, меню)
 var focus: Interactable                ## на что сейчас можно нажать E
-var escape := 0.0                      ## прогресс вырывания из захвата 0..1
+var noclip := false                    ## (отладка) летит сквозь стены — V
 var phone_up := false                  ## телефон в руке (phone.gd): только шаг, без ударов, бега и бросков
 
 var _yaw_target := 0.0
@@ -121,8 +124,6 @@ var _hit_done := false
 var _invuln := 0.0
 var _knock := Vector3.ZERO
 var _shake := 0.0
-var _grabber: Enemy
-var _grab_immune := 0.0
 var _throw_id := ""
 var _thrown := false
 var _last_step := 0
@@ -163,7 +164,7 @@ var cam_clip_enabled := true          ## отладка: false — камера 
 ## в player.tscn), иначе тень от собственных плеч и рук падала бы прямо перед глазами.
 const BODY_LAYER := 1 << 19
 ## Во что упирается камера: мир (статика, двери, ящики). Враги (4), брошенные предметы (32),
-## триггеры Area3D и само тело — нет: иначе камера дёргалась бы при броске и в захвате.
+## триггеры Area3D и само тело — нет: иначе камера дёргалась бы при броске.
 const CAM_CLIP_MASK := 1
 ## Кости, которые камера не должна видеть: иначе голова изнутри закрывает обзор.
 const HIDDEN_BONES := ["Head"]
@@ -266,6 +267,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		var s := mouse_sensitivity * (0.65 if state == State.AIM else 1.0)
 		_yaw_target -= event.relative.x * s
 		_pitch_target = clampf(_pitch_target - event.relative.y * s, pitch_min, pitch_max)
+	if OS.is_debug_build() and event is InputEventKey and event.pressed and not event.echo \
+			and (event.physical_keycode == KEY_V or event.keycode == KEY_V) and state != State.DEAD:
+		set_noclip(not noclip)
+		get_viewport().set_input_as_handled()
+		return
 	if not control or state == State.DEAD or phone_up:
 		return
 	if event.is_action_pressed("holster") and (state == State.NORMAL or state == State.AIM):
@@ -282,9 +288,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		flashlight.visible = not flashlight.visible
 		Game.sfx("click", null, -6.0)
 	if event.is_action_pressed("interact"):
-		if state == State.GRABBED:
-			_mash()
-		elif focus and (state == State.NORMAL or state == State.AIM):
+		if focus and (state == State.NORMAL or state == State.AIM):
 			focus.interact(self)
 
 
@@ -292,7 +296,6 @@ func _physics_process(delta: float) -> void:
 	_attack_buffer = maxf(_attack_buffer - delta, 0.0)
 	_throw_buffer = maxf(_throw_buffer - delta, 0.0)
 	_invuln = maxf(_invuln - delta, 0.0)
-	_grab_immune = maxf(_grab_immune - delta, 0.0)
 	_jump_buffer = maxf(_jump_buffer - delta, 0.0)
 	_coyote = 0.12 if is_on_floor() else maxf(_coyote - delta, 0.0)
 	_land = move_toward(_land, 0.0, delta * 3.0)
@@ -304,6 +307,9 @@ func _physics_process(delta: float) -> void:
 	var ls := 1.0 - exp(-look_smoothing * delta)
 	cam_yaw = lerp_angle(cam_yaw, _yaw_target, ls)
 	cam_pitch = lerpf(cam_pitch, _pitch_target, ls)
+	if noclip:
+		_fly(delta)
+		return
 
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back") if control else Vector2.ZERO
 	var want_run := control and not phone_up and Input.is_action_pressed("run") and input.y < -0.3
@@ -359,16 +365,6 @@ func _physics_process(delta: float) -> void:
 			move_speed = 0.0
 			if _timer <= 0.0:
 				state = State.NORMAL
-		State.GRABBED:
-			hv = Vector3.ZERO
-			move_speed = 0.0
-			escape = maxf(escape - 0.2 * delta, 0.0)
-			shake(escape * 0.45)                 # чем ближе к тому, чтобы вырваться, тем сильнее трясёт
-			if not is_instance_valid(_grabber) or not _grabber.is_grabbing():
-				grab_release()
-			else:
-				var to := _grabber.global_position - global_position
-				_yaw_target = lerp_angle(_yaw_target, atan2(-to.x, -to.z), 1.0 - exp(-6.0 * delta))
 		State.THROW:
 			_timer -= delta
 			hv = _move(hv, input, aim_walk_speed * 0.6, delta)
@@ -431,6 +427,38 @@ func _physics_process(delta: float) -> void:
 	model.update_anim(delta, signed, _sprint_blend, _anim_state(), _yaw_rate, accel, move_angle,
 			crouching, not is_on_floor(), velocity.y)
 	_footsteps()
+	_update_camera(delta)
+
+
+# ----------------------------------------------------------------------------- отладка: полёт (noclip)
+## Включить/выключить полёт сквозь стены, как noclip в GMod.
+func set_noclip(on: bool) -> void:
+	noclip = on
+	collision.disabled = on
+	velocity = Vector3.ZERO
+	move_speed = 0.0
+	if on:
+		state = State.NORMAL
+		_crouch_toggle = false
+		if crouching:
+			_set_crouch(false)
+	Game.sfx("click", null, -6.0)
+
+
+func _fly(delta: float) -> void:
+	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back") if control else Vector2.ZERO
+	var dir := camera.global_basis * Vector3(input.x, 0.0, input.y)       # вперёд — туда, куда смотрит камера
+	if control:
+		dir.y += float(Input.is_action_pressed("jump")) - float(Input.is_action_pressed("crouch"))
+	var speed := noclip_speed
+	if Input.is_action_pressed("run"):
+		speed *= 3.0
+	if Input.is_key_pressed(KEY_ALT):
+		speed *= 0.3
+	velocity = velocity.lerp(dir.limit_length(1.0) * speed, 1.0 - exp(-10.0 * delta))
+	global_position += velocity * delta
+	rotation.y = cam_yaw
+	_update_focus()
 	_update_camera(delta)
 
 
@@ -524,7 +552,7 @@ func _ground_eta() -> float:
 
 func _update_crouch(delta: float) -> void:
 	var want := control and (Input.is_action_pressed("crouch") or _crouch_toggle) \
-		and state != State.DEAD and state != State.GRABBED
+		and state != State.DEAD
 	if want and not crouching and is_on_floor():
 		_set_crouch(true)
 	elif not want and crouching and _can_stand():
@@ -670,7 +698,7 @@ func _release_throw() -> void:
 	Game.sfx("throw", global_position + Vector3.UP * 1.5, -4.0)
 
 
-# ----------------------------------------------------------------------------- урон, захват, смерть
+# ----------------------------------------------------------------------------- урон, смерть
 func take_damage(amount: float, from: Vector3, heavy := false) -> void:
 	if state == State.DEAD or _invuln > 0.0:
 		return
@@ -684,8 +712,6 @@ func take_damage(amount: float, from: Vector3, heavy := false) -> void:
 		_die()
 		return
 	Game.sfx_rand("player_hurt", 2, null, -2.0)
-	if state == State.GRABBED:
-		return
 	if state == State.ATTACK and not heavy and _timer < attack_time * 0.7:
 		return                                                       # замах уже пошёл — слабый удар его не сбивает
 	state = State.HURT
@@ -696,54 +722,8 @@ func take_damage(amount: float, from: Vector3, heavy := false) -> void:
 	model.play_action("FlinchHead" if heavy else "FlinchStomach")
 
 
-## Урон «по чуть-чуть», пока офник держит (без оглушения и неуязвимости).
-func take_grab_damage(amount: float) -> void:
-	if state == State.DEAD or Game.god:
-		return
-	Game.hp = maxf(Game.hp - amount, 0.0)
-	Game.health_changed.emit()
-	if Game.hp <= 0.0:
-		_die()
-
-
-func can_be_grabbed() -> bool:
-	return _grab_immune <= 0.0 and state in [State.NORMAL, State.AIM, State.HURT, State.THROW]
-
-
-func grab_start(enemy: Enemy) -> bool:
-	if not can_be_grabbed():
-		return false
-	state = State.GRABBED
-	_grabber = enemy
-	escape = 0.0
-	model.play_action("Push")
-	Game.sfx("struggle", global_position + Vector3.UP, -2.0)
-	return true
-
-
-func _mash() -> void:
-	escape += 0.17
-	shake(0.25)
-	if escape >= 1.0:
-		var g := _grabber
-		grab_release()
-		if is_instance_valid(g):
-			g.grab_broken()
-		Game.sfx("punch", global_position + Vector3.UP, 0.0)
-
-
-func grab_release() -> void:
-	if state == State.GRABBED:
-		state = State.NORMAL
-	_grabber = null
-	_grab_immune = 2.5
-	escape = 0.0
-	model.stop_action()
-
-
 func _die() -> void:
 	state = State.DEAD
-	_grabber = null
 	Game.stats["deaths"] += 1
 	Game.sfx("player_die", null, -2.0)
 	model.play_death()
@@ -804,7 +784,7 @@ func _toggle_hammer() -> void:
 
 ## Занять героя на время (отпирает дверь, подбирает вещь) — он останавливается и не атакует.
 func busy(duration: float, anim := "") -> void:
-	if state == State.DEAD or state == State.GRABBED:
+	if state == State.DEAD:
 		return
 	if _swap_at >= 0.0:                    # не дотянулись до пояса — молоток перекладываем сразу
 		_swap_at = -1.0
@@ -820,7 +800,8 @@ func _update_focus() -> void:
 	focus = null
 	if not control or phone_up or not (state == State.NORMAL or state == State.AIM):
 		return
-	# фокус — то, на что смотрит камера: предмет в радиусе и близко к линии взгляда
+	# фокус — только то, во что точно попадает луч взгляда (сама модель предмета, створка двери),
+	# в радиусе и не за стеной; если на луче несколько — ближайшее
 	var best := 1e9
 	var eye := camera.global_position
 	var look := -camera.global_basis.z
@@ -828,25 +809,25 @@ func _update_focus() -> void:
 		var i := it as Interactable
 		if i == null or not i.enabled:
 			continue
-		if i.has_method("aim_hit"):                   # дверь: только если прицел на самой створке
-			var hit: float = i.call("aim_hit", eye, look)
-			if hit >= 0.0 and hit * 0.001 < best:     # попадание по створке важнее остального
-				best = hit * 0.001
-				focus = i
+		if not i is Door:                             # у двери своя дальность (reach) — в aim_hit
+			var to := i.global_position - global_position
+			var dy := absf(to.y - 0.9)
+			to.y = 0.0
+			if to.length() > i.radius or dy > 1.6:
+				continue
+		var t := i.aim_hit(eye, look)
+		if t < 0.0 or t >= best or _aim_blocked(eye, look, t):
 			continue
-		var to := i.global_position - global_position
-		var dy := absf(to.y - 0.9)
-		to.y = 0.0
-		if to.length() > i.radius or dy > 1.6:
-			continue
-		var ray := i.global_position - eye
-		var dist := ray.length()
-		var miss := look.angle_to(ray) if dist > 0.01 else 0.0
-		if miss > maxf(atan2(focus_size, dist), deg_to_rad(8.0)):
-			continue
-		if miss < best:
-			best = miss
-			focus = i
+		best = t
+		focus = i
+
+
+## Между глазами и точкой на предмете стена или другой предмет мира (слой 1)?
+func _aim_blocked(eye: Vector3, look: Vector3, t: float) -> bool:
+	if t < 0.06:
+		return false
+	var q := PhysicsRayQueryParameters3D.create(eye, eye + look * (t - 0.05), 1, [get_rid()])
+	return not get_world_3d().direct_space_state.intersect_ray(q).is_empty()
 
 
 func _footsteps() -> void:
