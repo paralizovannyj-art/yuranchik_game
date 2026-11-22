@@ -24,12 +24,12 @@ func _ready() -> void:
 		set_process_unhandled_input(false)
 		return
 	_label = Label.new()
-	_label.position = Vector2(4, 4)
+	_label.position = Vector2(6, 6)
 	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_label.add_theme_font_size_override("font_size", 10)
+	_label.add_theme_font_size_override("font_size", 15)
 	_label.add_theme_color_override("font_color", Color(0.75, 1.0, 0.6))
 	_label.add_theme_color_override("font_outline_color", Color.BLACK)
-	_label.add_theme_constant_override("outline_size", 3)
+	_label.add_theme_constant_override("outline_size", 4)
 	add_child(_label)
 	_apply_mode()
 

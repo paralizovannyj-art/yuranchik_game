@@ -1,7 +1,7 @@
 ## Проверка локации «Восточный ж/д мост» (YUR-7) без редактора: снимки с нескольких точек, высоты пола и проход по лестницам.
 ## Запуск (окно нужно — снимки берутся с экрана):
-##   Godot.exe --path . --resolution 854x480 --script res://tools/verify_east_bridge.gd -- night <папка для снимков>
-##   Godot.exe --path . --resolution 854x480 --script res://tools/verify_east_bridge.gd -- day <папка для снимков>
+##   Godot.exe --path . --resolution 1280x720 --script res://tools/verify_east_bridge.gd -- night <папка для снимков>
+##   Godot.exe --path . --resolution 1280x720 --script res://tools/verify_east_bridge.gd -- day <папка для снимков>
 ## Результат — PNG в папке и строки «FLOOR …», «WALK …» в выводе.
 extends SceneTree
 

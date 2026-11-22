@@ -5,8 +5,8 @@
 class_name HUD
 extends CanvasLayer
 
-const W := 854.0
-const H := 480.0
+const W := 1280.0               ## сетка интерфейса = display/window/size/viewport_* (1280×720)
+const H := 720.0
 const C_TEXT := Color(0.86, 0.85, 0.80)
 const C_ACCENT := Color(1.0, 0.62, 0.25)
 const PROMPT_TIMES := 3        ## сколько раз показывать «[E] …» для каждого вида действия
@@ -52,14 +52,14 @@ func _ready() -> void:
 
 static func make_theme() -> Theme:
 	var t := Theme.new()
-	t.default_font_size = 14
+	t.default_font_size = 21
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(0.05, 0.055, 0.06, 0.88)
 	sb.border_color = Color(0.30, 0.30, 0.32)
-	sb.set_border_width_all(1)
-	sb.set_content_margin_all(6)
-	sb.content_margin_left = 18
-	sb.content_margin_right = 18
+	sb.set_border_width_all(2)
+	sb.set_content_margin_all(9)
+	sb.content_margin_left = 27
+	sb.content_margin_right = 27
 	var sf := sb.duplicate() as StyleBoxFlat
 	sf.bg_color = Color(0.50, 0.20, 0.07, 0.92)
 	sf.border_color = C_ACCENT
@@ -73,8 +73,8 @@ static func make_theme() -> Theme:
 	var pn := StyleBoxFlat.new()
 	pn.bg_color = Color(0.03, 0.035, 0.04, 0.9)
 	pn.border_color = Color(0.25, 0.25, 0.27)
-	pn.set_border_width_all(1)
-	pn.set_content_margin_all(14)
+	pn.set_border_width_all(2)
+	pn.set_content_margin_all(21)
 	t.set_stylebox("panel", "PanelContainer", pn)
 	return t
 
@@ -86,7 +86,7 @@ static func mk_label(parent: Control, text: String, font_size: int, color: Color
 	var ls := LabelSettings.new()
 	ls.font_size = font_size
 	ls.font_color = color
-	ls.outline_size = 4
+	ls.outline_size = 6
 	ls.outline_color = Color(0, 0, 0, 0.9)
 	l.label_settings = ls
 	l.position = rect.position
@@ -138,8 +138,8 @@ func _build() -> void:
 	_cross.size = Vector2(W, H)
 	_root.add_child(_cross)
 
-	_prompt = mk_label(_root, "", 14, Color.WHITE, Rect2(W / 2 - 250, 350, 500, 20), HORIZONTAL_ALIGNMENT_CENTER)
-	_say = mk_label(_root, "", 14, C_TEXT, Rect2(W / 2 - 310, 384, 620, 60), HORIZONTAL_ALIGNMENT_CENTER)
+	_prompt = mk_label(_root, "", 21, Color.WHITE, Rect2(W / 2 - 375, 525, 750, 30), HORIZONTAL_ALIGNMENT_CENTER)
+	_say = mk_label(_root, "", 21, C_TEXT, Rect2(W / 2 - 465, 576, 930, 90), HORIZONTAL_ALIGNMENT_CENTER)
 
 	inventory = InventoryUI.new()
 	inventory.hud = self
@@ -147,14 +147,14 @@ func _build() -> void:
 
 	_fade = _rect(_root, Color(0, 0, 0, 1), Rect2(0, 0, W, H))
 	_fade.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_title = mk_label(_root, "", 30, Color(0.85, 0.1, 0.08), Rect2(0, 110, W, 44), HORIZONTAL_ALIGNMENT_CENTER)
-	_sub = mk_label(_root, "", 13, C_TEXT, Rect2(W / 2 - 250, 160, 500, 110), HORIZONTAL_ALIGNMENT_CENTER)
+	_title = mk_label(_root, "", 45, Color(0.85, 0.1, 0.08), Rect2(0, 165, W, 66), HORIZONTAL_ALIGNMENT_CENTER)
+	_sub = mk_label(_root, "", 20, C_TEXT, Rect2(W / 2 - 375, 240, 750, 165), HORIZONTAL_ALIGNMENT_CENTER)
 
 	_menu = PanelContainer.new()
 	_menu.visible = false
 	_root.add_child(_menu)
 	_menu_box = VBoxContainer.new()
-	_menu_box.add_theme_constant_override("separation", 6)
+	_menu_box.add_theme_constant_override("separation", 9)
 	_menu.add_child(_menu_box)
 
 
@@ -352,7 +352,7 @@ func _open_menu(kind: String, entries: Array) -> void:
 	for e: Array in entries:
 		var b := Button.new()
 		b.text = e[0]
-		b.custom_minimum_size = Vector2(230, 0)
+		b.custom_minimum_size = Vector2(345, 0)
 		b.pressed.connect(e[1])
 		b.mouse_entered.connect(b.grab_focus)
 		_menu_box.add_child(b)
@@ -360,7 +360,7 @@ func _open_menu(kind: String, entries: Array) -> void:
 			first = b
 	_menu.visible = true
 	_menu.reset_size()
-	_menu.position = Vector2((W - 266.0) / 2.0, 300.0 if kind != "pause" else 200.0)
+	_menu.position = Vector2(roundf((W - _menu.size.x) / 2.0), 450.0 if kind != "pause" else 300.0)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	first.grab_focus.call_deferred()
 

@@ -4,9 +4,9 @@
 class_name Crosshair
 extends Control
 
-const DOT_R := 1.3             ## радиус точки, px (экран 854×480)
-const RING_FOCUS := 6.0        ## радиус кольца, когда смотришь на предмет
-const RING_AIM := 3.5          ## то же в замахе
+const DOT_R := 1.95            ## радиус точки, px (сетка интерфейса 1280×720)
+const RING_FOCUS := 9.0        ## радиус кольца, когда смотришь на предмет
+const RING_AIM := 5.25         ## то же в замахе
 const SPRING := 320.0          ## жёсткость пружины кольца
 const BOUNCE := 0.5            ## < 1 — кольцо чуть перелетает и встаёт на место
 const C_FILL := Color(0.90, 0.88, 0.82)                  ## тот же тёплый белый, что и текст HUD
@@ -28,18 +28,18 @@ func step(delta: float, focus: bool, aim: bool) -> void:
 	var goal := 1.0 if focus or aim else 0.0
 	_ring_vel += ((goal - _ring) * SPRING - _ring_vel * 2.0 * sqrt(SPRING) * BOUNCE) * delta
 	_ring = clampf(_ring + _ring_vel * delta, 0.0, 1.3)
-	_radius = move_toward(_radius, RING_AIM if aim else RING_FOCUS, delta * 30.0)
+	_radius = move_toward(_radius, RING_AIM if aim else RING_FOCUS, delta * 45.0)
 	visible = alpha > 0.01
 	queue_redraw()
 
 
 func _draw() -> void:
 	var c := (size / 2.0).floor() + Vector2(0.5, 0.5)
-	draw_circle(c, DOT_R + 1.0, Color(C_EDGE, C_EDGE.a * alpha), true, -1.0, true)
+	draw_circle(c, DOT_R + 1.5, Color(C_EDGE, C_EDGE.a * alpha), true, -1.0, true)
 	draw_circle(c, DOT_R, Color(C_FILL, 0.95 * alpha), true, -1.0, true)
 	var k := clampf(_ring, 0.0, 1.0)
 	if k < 0.03:
 		return
 	var r := _radius * (0.6 + 0.4 * _ring)          # кольцо раскрывается от точки
-	draw_arc(c, r, 0.0, TAU, 40, Color(C_EDGE, C_EDGE.a * alpha * k), 3.0, true)
-	draw_arc(c, r, 0.0, TAU, 40, Color(C_FILL, 0.85 * alpha * k), 1.0, true)
+	draw_arc(c, r, 0.0, TAU, 40, Color(C_EDGE, C_EDGE.a * alpha * k), 4.5, true)
+	draw_arc(c, r, 0.0, TAU, 40, Color(C_FILL, 0.85 * alpha * k), 1.5, true)

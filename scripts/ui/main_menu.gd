@@ -40,11 +40,11 @@ func _ready() -> void:
 	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(shade)
-	HUD.mk_label(root, "ЮРЧИК", 54, Color(0.88, 0.86, 0.80), Rect2(60, 70, 500, 70))
-	HUD.mk_label(root, "ночь на Паскоте  ·  демо-версия", 13, HUD.C_ACCENT, Rect2(64, 136, 500, 20))
+	HUD.mk_label(root, "ЮРЧИК", 81, Color(0.88, 0.86, 0.80), Rect2(90, 105, 750, 105))
+	HUD.mk_label(root, "ночь на Паскоте  ·  демо-версия", 20, HUD.C_ACCENT, Rect2(96, 204, 750, 30))
 	var box := VBoxContainer.new()
-	box.position = Vector2(64, 220)
-	box.add_theme_constant_override("separation", 6)
+	box.position = Vector2(96, 330)
+	box.add_theme_constant_override("separation", 9)
 	root.add_child(box)
 	var first: Button = null
 	var entries := [["Начать игру", Game.new_game], [_graphics_text(), _toggle_graphics], ["Управление", _toggle_help], ["Выход", get_tree().quit]]
@@ -54,7 +54,7 @@ func _ready() -> void:
 	for e: Array in entries:
 		var b := Button.new()
 		b.text = e[0]
-		b.custom_minimum_size = Vector2(220, 0)
+		b.custom_minimum_size = Vector2(330, 0)
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.pressed.connect(e[1])
 		b.mouse_entered.connect(b.grab_focus)
@@ -62,7 +62,7 @@ func _ready() -> void:
 		if first == null:
 			first = b
 	first.grab_focus.call_deferred()
-	_help = HUD.mk_label(root, "", 12, HUD.C_TEXT, Rect2(330, 200, 480, 250))
+	_help = HUD.mk_label(root, "", 18, HUD.C_TEXT, Rect2(495, 300, 720, 375))
 	_help.text = "\n".join([
 		"WASD / левый стик — идти          мышь / правый стик — смотреть",
 		"Shift / B — бег вперёд (тратит силы)",
@@ -77,7 +77,7 @@ func _ready() -> void:
 		"Esc / Start — пауза",
 	])
 	_help.visible = false
-	HUD.mk_label(root, "звуки — временные заглушки", 10, Color(0.5, 0.5, 0.5), Rect2(64, 452, 400, 16))
+	HUD.mk_label(root, "звуки — временные заглушки", 15, Color(0.5, 0.5, 0.5), Rect2(96, 678, 600, 24))
 
 
 ## Подпись пункта графики: что выбрано сейчас. «авто» — видеокарта не умеет Vulkan, движок сам перешёл на OpenGL.
