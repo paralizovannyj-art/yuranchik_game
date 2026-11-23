@@ -1,6 +1,6 @@
-## «Колобок»: катайся по лабиринту, собирай крошки и убегай от офников. Съел большую крошку —
-## офники на время синеют и боятся, их можно поймать. Собрал всё — следующий уровень, офники быстрее.
-class_name PhoneKolobok
+## Pac-Man: ешь точки в лабиринте и убегай от привидений. Съел энерджайзер — привидения на время
+## синеют и боятся, их можно съесть. Собрал всё — следующий уровень, привидения быстрее.
+class_name PhonePacman
 extends PhoneGame
 
 const T := 10                                    ## клетка, пикселей
@@ -25,8 +25,10 @@ const HALF := [
 	"################",
 ]
 const START := Vector2i(15, 10)
-const DOOR := Vector2i(15, 6)                    ## клетка у двери домика: сюда выходят офники
-const HOME := [Vector2i(14, 8), Vector2i(16, 8), Vector2i(17, 8)]
+const DOOR := Vector2i(15, 6)                    ## клетка у двери домика: сюда выходят привидения
+const HOME := [Vector2i(14, 8), Vector2i(15, 8), Vector2i(16, 8), Vector2i(17, 8)]
+## Цвета привидений: красное гонится, розовое заходит наперерез, голубое и оранжевое бродят.
+const GHOSTS := [Color("ff2a2a"), Color("ffb0e0"), Color("40e8f0"), Color("ffb040")]
 const DIRS := [Vector2i.UP, Vector2i.LEFT, Vector2i.DOWN, Vector2i.RIGHT]
 
 var grid: Array[String] = []
@@ -42,11 +44,11 @@ var _time := 0.0
 
 
 func title() -> String:
-	return "Колобок"
+	return "Pac-Man"
 
 
 func status() -> String:
-	return "Колобок  жизни %d  ур.%d  %d" % [lives, level, score]
+	return "Pac-Man  ж%d  ур.%d  %d" % [lives, level, score]
 
 
 func start() -> void:
@@ -76,7 +78,7 @@ func _reset_actors() -> void:
 	me = {"cell": START, "dir": Vector2i.ZERO, "prog": 0.0, "want": Vector2i.ZERO}
 	foes.clear()
 	for i in HOME.size():
-		foes.append({"cell": HOME[i], "dir": Vector2i.ZERO, "prog": 0.0, "wait": 1.0 + i * 3.5, "id": i})
+		foes.append({"cell": HOME[i], "dir": Vector2i.ZERO, "prog": 0.0, "wait": 1.0 + i * 3.0, "id": i})
 	scared_t = 0.0
 	_pause_t = 1.2
 	_banner = "Уровень %d" % level
@@ -172,7 +174,7 @@ func _arrive() -> void:
 		me["dir"] = Vector2i.ZERO
 
 
-## Офник на перекрёстке: не разворачивается, идёт туда, откуда ближе к цели; испуганный — наугад.
+## Привидение на перекрёстке: не разворачивается, идёт туда, откуда ближе к цели; испуганный — наугад.
 func _choose(f: Dictionary) -> void:
 	var c: Vector2i = f["cell"]
 	var back: Vector2i = -(f["dir"] as Vector2i)
@@ -189,9 +191,9 @@ func _choose(f: Dictionary) -> void:
 	var target: Vector2i = me["cell"]
 	match f["id"]:
 		1: target += (me["dir"] as Vector2i) * 4          # заходит наперерез
-		2:                                                # вблизи отваливает в свой угол
+		2, 3:                                             # вблизи отваливает в свой угол
 			if Vector2(c).distance_to(Vector2(target)) < 7.0:
-				target = Vector2i(1, grid.size() - 2)
+				target = Vector2i(1 if f["id"] == 2 else grid[0].length() - 2, grid.size() - 2)
 	var best_d: Vector2i = opts[0]
 	var best_len := INF
 	for d: Vector2i in opts:
@@ -267,31 +269,42 @@ func _wall(x: int, y: int) -> bool:
 
 func _draw_me(ci: CanvasItem) -> void:
 	var d: Vector2i = me["dir"] if me["dir"] != Vector2i.ZERO else me["want"]
+	if d == Vector2i.ZERO:
+		d = Vector2i.RIGHT
 	var c := _o + (_pos(me) + Vector2(0.5, 0.5)) * T
-	c.y -= absf(sin(_time * 14.0)) * 1.2 if me["dir"] != Vector2i.ZERO else 0.0   # катится вприпрыжку
-	ci.draw_circle(c, 4.8, Color("8a5a1c"))
-	ci.draw_circle(c, 4.2, Color("e8a63a"))
-	ci.draw_circle(c + Vector2(-1.2, -1.6), 1.4, Color("f6cf7a"))
-	var look := Vector2(d) * 1.3
-	var side := Vector2(-1.0, 0.0) if d.y != 0 else Vector2(0.0, -1.0)
-	ci.draw_rect(Rect2(c + look + side * 1.6 - Vector2(0.6, 0.6), Vector2(1.3, 1.3)), Color.BLACK)
-	ci.draw_rect(Rect2(c + look - side * 1.6 - Vector2(0.6, 0.6), Vector2(1.3, 1.3)), Color.BLACK)
+	var moving: bool = me["dir"] != Vector2i.ZERO
+	var open := absf(sin(_time * 18.0)) if moving else 0.5   # рот хлопает на ходу
+	var a0 := Vector2(d).angle()
+	var half := open * 0.8
+	var pts := PackedVector2Array([c])
+	for i in 17:
+		pts.append(c + Vector2.from_angle(a0 + half + (TAU - 2.0 * half) * i / 16.0) * 4.8)
+	ci.draw_colored_polygon(pts, Color("ffe135"))
 
 
-## Офник: тёмный силуэт с красными глазами; испуганный — синий, под конец мигает.
+## Привидение: купол с бахромой и глаза, смотрящие по ходу; испуганное — синее, под конец мигает.
 func _draw_foe(ci: CanvasItem, f: Dictionary) -> void:
 	var c := _o + (_pos(f) + Vector2(0.5, 0.5)) * T
 	if f["wait"] > 0.0:
-		c.y += sin(_time * 5.0 + f["id"]) * 1.0           # топчется в домике
-	var body := Color("3b4048")
-	var eye := Color("ff4030")
-	if scared_t > 0.0 and f["wait"] <= 0.0:
-		body = Color("2f4fc4") if scared_t > 1.5 or int(_time * 6.0) % 2 == 0 else Color("dfe6f0")
-		eye = Color.WHITE
-	ci.draw_circle(c + Vector2(0, -2.5), 2.6, body)                               # голова
-	ci.draw_rect(Rect2(c + Vector2(-3.5, -0.5), Vector2(7, 5)), body)              # тело
-	var lp := sin(_time * 12.0) * 0.8
-	ci.draw_rect(Rect2(c + Vector2(-3, 4.5 + lp), Vector2(2, 1.5)), body)          # ноги
-	ci.draw_rect(Rect2(c + Vector2(1, 4.5 - lp), Vector2(2, 1.5)), body)
-	ci.draw_rect(Rect2(c + Vector2(-1.8, -3.2), Vector2(1.2, 1.0)), eye)
-	ci.draw_rect(Rect2(c + Vector2(0.6, -3.2), Vector2(1.2, 1.0)), eye)
+		c.y += sin(_time * 5.0 + f["id"]) * 1.0           # покачивается в домике
+	var body: Color = GHOSTS[f["id"]]
+	var scared: bool = scared_t > 0.0 and f["wait"] <= 0.0
+	if scared:
+		body = Color("2121de") if scared_t > 1.5 or int(_time * 6.0) % 2 == 0 else Color("f0f0f0")
+	var r := 4.6
+	var pts := PackedVector2Array()
+	for i in 9:                                        # купол
+		pts.append(c + Vector2.from_angle(PI + PI * i / 8.0) * r + Vector2(0, -0.5))
+	var wave := int(_time * 8.0) % 2
+	for i in 7:                                        # бахрома снизу
+		var x := r - i * (2.0 * r / 6.0)
+		pts.append(c + Vector2(x, 4.5 - (1.5 if (i + wave) % 2 == 1 else 0.0)))
+	ci.draw_colored_polygon(pts, body)
+	if scared:
+		ci.draw_rect(Rect2(c + Vector2(-2.2, -1.5), Vector2(1.3, 1.3)), Color("ffd0a0"))
+		ci.draw_rect(Rect2(c + Vector2(1.0, -1.5), Vector2(1.3, 1.3)), Color("ffd0a0"))
+		return
+	var look := Vector2(f["dir"] as Vector2i) * 0.8
+	for ex: float in [-1.8, 1.8]:
+		ci.draw_circle(c + Vector2(ex, -1.2), 1.5, Color.WHITE)
+		ci.draw_circle(c + Vector2(ex, -1.2) + look, 0.8, Color("2121de"))

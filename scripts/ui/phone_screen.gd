@@ -1,5 +1,5 @@
 ## Экран телефона Юрчика (Nokia, 320×240) в духе Series 40: рабочий стол с панелью ярлыков, меню,
-## «Сообщения» по контактам, плеер «Музыка», «Игры» (Змейка, Танки, Колобок), «Интернет» без сети,
+## «Сообщения» по контактам, плеер «Музыка», «Игры» (Змейка, Battle City, Pac-Man), «Интернет» без сети,
 ## «Настройки», «Самочувствие», «Шагомер». Живёт внутри SubViewport телефона (phone.gd) и рисуется целиком
 ## в _draw — как экран кнопочного телефона. Управление приходит от телефона: move(), ok(), back().
 class_name PhoneScreen
@@ -20,9 +20,8 @@ const C_SEL := Color("2b1d0c")
 const C_OK := Color("5fbf63")
 const C_WARN := Color("e6bf35")
 const C_BAD := Color("d9483c")
-const C_GLASS := Color(0.04, 0.09, 0.14, 0.62)
-const C_GLASS_EDGE := Color(1, 1, 1, 0.35)
 const OPERATOR := "ЮГ-GSM"
+const WALLPAPER := preload("res://assets/ui/phone_wallpaper.png")   ## обои с фото Nokia из YUR-34 (tools/make_phone_wallpaper.py)
 const DATE := "Ср 14.12.2011"                    ## дата на рабочем столе (день и год пока условные)
 ## Панель ярлыков на рабочем столе, слева направо (как на фото Nokia в YUR-34; вместо Ovi — настройки).
 const SHORTCUTS := [Screen.MUSIC, Screen.CONTACTS, Screen.GAMES, Screen.WEB, Screen.SETTINGS]
@@ -37,10 +36,10 @@ const CONTACTS := [
 		["вчера", "Юра, купи хлеба и молока по дороге", false],
 		["вчера", "Ок", true],
 		["вчера", "Суп в холодильнике, погрей. Шапку надень, обещали минус двадцать", false]]},
-	{"name": "Хьюга", "history": [
-		["вчера", "Ты где пропал? Заходи, приставку подключил", false],
-		["вчера", "После пар зайду", true],
-		["вчера", "Ну короче жду. Пиво не бери, есть", false]]},
+	{"name": "Папа", "history": [
+		["вчера", "Хьюгу вечером выгуляй, я на смене до утра", false],
+		["вчера", "Ок", true],
+		["вчера", "И корм ему купи, пачка кончается", false]]},
 	{"name": "Димон", "history": [
 		["пн", "Скинь «Пятиэтажки» по блютузу", false],
 		["пн", "Завтра скину, батарея села", true],
@@ -53,7 +52,7 @@ const CONTACTS := [
 const MUSIC_DIR := "res://assets/audio/phone_music/"
 const TRACKS := [["pyatietazhki", "Гудрон — Пятиэтажки"], ["posledniaia_elektrichka", "ДК Энергетик — Последняя электричка"],
 	["sneg_na_provodakh", "Лампа — Снег на проводах"], ["kvartal", "Гудрон — Квартал"]]
-const GAME_NAMES := ["Змейка", "Танки", "Колобок"]
+const GAME_NAMES := ["Змейка", "Battle City", "Pac-Man"]
 const SETTINGS := [["Громкость плеера", "volume"], ["Звук клавиш", "keys"], ["Вибрация", "vibra"], ["Яркость экрана", "bright"]]
 
 ## Настройки телефона — общие на всю игру (телефон пересоздаётся на каждом уровне).
@@ -78,7 +77,6 @@ var _font: Font
 var _ecg := PackedFloat32Array()
 var _ecg_t := 0.0
 var _bpm := 72.0
-var _snow := PackedVector2Array()
 var _music: AudioStreamPlayer
 var _tracks: Array[Dictionary] = []
 var _track := -1                                 ## что играет (индекс в _tracks), -1 — ничего
@@ -89,10 +87,6 @@ func _ready() -> void:
 	_font = ThemeDB.fallback_font
 	_ecg.resize(150)
 	_ecg.fill(0.0)
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 47
-	for i in 70:
-		_snow.append(Vector2(rng.randf() * W, rng.randf() * (H - BAR * 2.0) + BAR))
 	for t: Array in TRACKS:
 		var path: String = MUSIC_DIR + t[0] + ".wav"
 		if ResourceLoader.exists(path):
@@ -270,8 +264,8 @@ func _play(i: int) -> void:
 func _start_game(i: int) -> void:
 	match i:
 		0: _game = PhoneSnake.new()
-		1: _game = PhoneTanks.new()
-		_: _game = PhoneKolobok.new()
+		1: _game = PhoneBattleCity.new()
+		_: _game = PhonePacman.new()
 	_game.area = Rect2(0, BAR, W, H - BAR * 2.0)
 	_game.font = _font
 	_game.start()
@@ -377,11 +371,6 @@ func _box(col: Color, radius: int, border := Color.TRANSPARENT, bw := 0) -> Styl
 	return sb
 
 
-func _glass(r: Rect2) -> void:
-	draw_style_box(_box(C_GLASS, 6, C_GLASS_EDGE, 1), r)
-	draw_rect(Rect2(r.position + Vector2(3, 2), Vector2(r.size.x - 6, r.size.y * 0.35)), Color(1, 1, 1, 0.06))
-
-
 func _signal_and_battery(x: float) -> void:
 	for i in 4:                                  # палки сети
 		var h := 4.0 + i * 3.0
@@ -437,70 +426,47 @@ func _draw() -> void:
 		draw_rect(Rect2(0, 0, W, H), Color(0, 0, 0, dim))
 
 
-## Обои: ночное небо, силуэты панелек с окнами, снег.
-func _wallpaper() -> void:
-	var hor := 150.0
-	for y in range(0, int(hor), 4):
-		var t := y / hor
-		draw_rect(Rect2(0, y, W, 4), Color("0a1626").lerp(Color("1d3550"), t))
-	draw_rect(Rect2(0, hor, W, H - hor), Color("8fa3b2"))
-	draw_rect(Rect2(0, hor, W, 4), Color("c9d6de"))
-	var houses := [Rect2(14, 96, 70, 54), Rect2(98, 80, 56, 70), Rect2(176, 104, 80, 46), Rect2(268, 88, 46, 62)]
-	var lit := [Vector2(30, 106), Vector2(52, 124), Vector2(112, 92), Vector2(134, 116), Vector2(196, 116), Vector2(236, 126), Vector2(286, 100)]
-	for r: Rect2 in houses:
-		draw_rect(r, Color("0b141e"))
-	for p: Vector2 in lit:
-		draw_rect(Rect2(p, Vector2(5, 5)), C_ACCENT)
-	for s: Vector2 in _snow:
-		draw_rect(Rect2(s, Vector2(2, 2)), Color(1, 1, 1, 0.5))
-
-
 func _draw_home() -> void:
-	_wallpaper()
-	draw_rect(Rect2(0, 0, W, BAR), Color(0, 0, 0, 0.35))
-	_signal_and_battery(8.0)
-	_text("E", Vector2(72, 21), 15, Color("8fd0ff"))
-	_shadow_text(OPERATOR, Vector2(0, 21), 17, C_TEXT, HORIZONTAL_ALIGNMENT_RIGHT, W - 10)
-	# часы слева, дата и события справа — стеклянные панели, как на фото в задаче
-	_shadow_text(Game.clock_text(), Vector2(4, 66), 38, C_TEXT)
-	var date := Rect2(112, 32, 202, 38)
-	_glass(date)
-	_shadow_text(DATE, date.position + Vector2(12, 26), 19, C_TEXT)
-	var info := Rect2(112, 76, 202, 70)
-	_glass(info)
-	var y := info.position.y + 22.0
+	# обои — картинка с фото из задачи; стеклянные панели уже нарисованы на ней, сверху только содержимое
+	draw_texture_rect(WALLPAPER, Rect2(0, 0, W, H), false)
+	# строка статуса: сеть, батарея, EDGE, оператор
+	_signal_and_battery(4.0)
+	_shadow_text("E", Vector2(64, 15), 15, Color("8fd0ff"))
+	_shadow_text(OPERATOR, Vector2(150, 17), 18, C_TEXT, HORIZONTAL_ALIGNMENT_CENTER, 120)
+	# часы слева, как на фото: тёмные цифры на светлом небе
+	draw_string(_font, Vector2(1, 68), Game.clock_text(), HORIZONTAL_ALIGNMENT_LEFT, -1, 27, Color(1, 1, 1, 0.55))
+	draw_string(_font, Vector2(0, 67), Game.clock_text(), HORIZONTAL_ALIGNMENT_LEFT, -1, 27, Color("161616"))
+	# верхняя панель — дата
+	_shadow_text(DATE, Vector2(94, 47), 20, C_TEXT)
+	# средняя панель — события
+	var info := Rect2(80, 77, 237, 71)
+	var y := info.position.y + 24.0
 	var n := Game.unread_count()
 	if n > 0:
 		var blink := int(Time.get_ticks_msec() / 600.0) % 2 == 0
-		_shadow_text("Новых сообщений: %d" % n, Vector2(info.position.x + 10, y), 15, C_ACCENT if blink else C_TEXT)
-		y += 22.0
+		_shadow_text("Новых сообщений: %d" % n, Vector2(info.position.x + 12, y), 16, C_ACCENT if blink else C_TEXT)
+		y += 24.0
 	if _track >= 0:
-		_play_mark(Vector2(info.position.x + 16, y - 5), _music.stream_paused, C_LCD)
-		_shadow_text(_short(_tracks[_track]["title"], 25), Vector2(info.position.x + 28, y), 14, C_LCD)
-		y += 22.0
-	if n == 0 and _track < 0:
-		_shadow_text("Нет новых событий", Vector2(info.position.x + 10, y), 14, Color(C_TEXT, 0.6))
-	# панель ярлыков
-	var bar := Rect2(6, 152, 308, 52)
-	_glass(bar)
+		_play_mark(Vector2(info.position.x + 18, y - 5), _music.stream_paused, C_TEXT)
+		_shadow_text(_short(_tracks[_track]["title"], 26), Vector2(info.position.x + 30, y), 15, C_TEXT)
+	# нижняя панель — пять ярлыков
+	var bar := Rect2(80, 155, 237, 53)
 	var cw := bar.size.x / SHORTCUTS.size()
 	for i in SHORTCUTS.size():
 		var cell := Rect2(bar.position.x + i * cw, bar.position.y, cw, bar.size.y)
 		if i == _bar and not _menu_focus:
-			draw_style_box(_box(Color(1, 0.62, 0.25, 0.35), 6, C_ACCENT, 2), cell.grow(-2.0))
-		elif i > 0:
-			draw_line(cell.position + Vector2(0, 8), cell.position + Vector2(0, cell.size.y - 8), Color(1, 1, 1, 0.2), 1.0)
-		PhoneIcons.draw(self, ICONS[SHORTCUTS[i]], cell.get_center(), 1.05)
+			draw_style_box(_box(Color(1, 1, 1, 0.28), 5, Color(1, 1, 1, 0.85), 2), cell.grow(-1.0))
+		PhoneIcons.draw(self, ICONS[SHORTCUTS[i]], cell.get_center(), 0.95)
 		if SHORTCUTS[i] == Screen.CONTACTS:
-			_unread_badge(cell.get_center() + Vector2(17, -14))
-	# софт-клавиши: «Выбрать» · «Меню» · «Имена»
-	draw_rect(Rect2(0, H - BAR, W, BAR), Color(C_BAR, 0.88))
-	draw_line(Vector2(0, H - BAR), Vector2(W, H - BAR), Color(1, 1, 1, 0.25), 1.0)
+			_unread_badge(cell.get_center() + Vector2(15, -15))
+	# софт-клавиши «Перейти · Меню · Имена» на голубой полосе
+	draw_rect(Rect2(0, H - BAR, W, BAR), Color(0.42, 0.62, 0.78, 0.9))
+	draw_rect(Rect2(0, H - BAR, W, 9), Color(1, 1, 1, 0.12))
 	if _menu_focus:
-		draw_style_box(_box(Color(1, 0.62, 0.25, 0.35), 5, C_ACCENT, 2), Rect2(W / 2 - 42, H - BAR + 2, 84, BAR - 4))
-	_text("Выбрать", Vector2(10, H - 8), 17, C_TEXT)
-	_text("Меню", Vector2(0, H - 8), 17, C_TEXT, HORIZONTAL_ALIGNMENT_CENTER, W)
-	_text("Имена", Vector2(0, H - 8), 17, C_TEXT, HORIZONTAL_ALIGNMENT_RIGHT, W - 10)
+		draw_style_box(_box(Color(1, 1, 1, 0.28), 5, Color(1, 1, 1, 0.85), 2), Rect2(W / 2 - 40, H - BAR + 2, 80, BAR - 4))
+	_shadow_text("Перейти", Vector2(6, H - 6), 19, Color.WHITE)
+	_shadow_text("Меню", Vector2(0, H - 6), 19, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, W)
+	_shadow_text("Имена", Vector2(0, H - 6), 19, Color.WHITE, HORIZONTAL_ALIGNMENT_RIGHT, W - 6)
 
 
 func _draw_menu() -> void:
@@ -642,23 +608,31 @@ func _draw_game_icon(i: int, c: Vector2) -> void:
 			for p: Vector2 in [Vector2(-10, 6), Vector2(-4, 6), Vector2(2, 6), Vector2(2, 0), Vector2(2, -6), Vector2(8, -6)]:
 				draw_rect(Rect2(c + p - Vector2(2.5, 2.5), Vector2(5, 5)), Color("1d3311"))
 			draw_rect(Rect2(c + Vector2(-11, -9), Vector2(4, 4)), Color("1d3311"))
-		1:                                            # танк
+		1:                                            # танк Battle City
 			draw_rect(Rect2(c - Vector2(16, 16), Vector2(32, 32)), Color("101214"))
 			draw_rect(Rect2(c + Vector2(-10, -10), Vector2(5, 20)), Color("6a5a20"))
 			draw_rect(Rect2(c + Vector2(5, -10), Vector2(5, 20)), Color("6a5a20"))
 			draw_rect(Rect2(c + Vector2(-6, -7), Vector2(12, 14)), Color("e8c040"))
 			draw_line(c, c + Vector2(0, -14), Color("f4dc80"), 3.0)
-		_:                                            # колобок
+		_:                                            # пакман
 			draw_rect(Rect2(c - Vector2(16, 16), Vector2(32, 32)), Color("05080c"))
-			draw_circle(c, 9.0, Color("e8a63a"))
-			draw_rect(Rect2(c + Vector2(1, -3), Vector2(2, 2)), Color.BLACK)
-			draw_rect(Rect2(c + Vector2(5, -3), Vector2(2, 2)), Color.BLACK)
+			_pac_body(c, 9.0, 0.35, Vector2i.RIGHT)
+
+
+## Жёлтый пакман с открытым ртом (open — доля от полного раскрытия).
+func _pac_body(c: Vector2, r: float, open: float, d: Vector2i) -> void:
+	var a0 := Vector2(d).angle()
+	var half := open * 0.8
+	var pts := PackedVector2Array([c])
+	for i in 21:
+		pts.append(c + Vector2.from_angle(a0 + half + (TAU - 2.0 * half) * i / 20.0) * r)
+	draw_colored_polygon(pts, Color("ffe135"))
 
 
 func _draw_game() -> void:
 	_game.draw(self)
 	_status(_game.status())
-	_soft("" if _game.over else "Огонь" if _game is PhoneTanks else "", "Выход")
+	_soft("" if _game.over else "Огонь" if _game is PhoneBattleCity else "", "Выход")
 
 
 ## Браузер: страница поисковика грузится и падает — интернета нет (денег на счету тоже).

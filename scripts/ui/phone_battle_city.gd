@@ -1,6 +1,6 @@
-## «Танки»: защищай штаб внизу поля от вражеских танков. Стрелки — ехать, OK — выстрел.
+## Battle City: защищай штаб с орлом внизу поля от вражеских танков. Стрелки — ехать, OK — выстрел.
 ## Кирпич пробивается по кусочку, бетон — нет. Попали в штаб или кончились жизни — проигрыш.
-class_name PhoneTanks
+class_name PhoneBattleCity
 extends PhoneGame
 
 const S := 8                                     ## мелкая клетка (четверть плитки), пикселей
@@ -8,7 +8,7 @@ const TILE := 16                                 ## плитка карты и �
 const COLS := 40
 const ROWS := 22
 enum { EMPTY, BRICK, STEEL, BASE }
-## Карта плитками 20×11: . пусто, # кирпич, @ бетон, B штаб.
+## Карта плитками 20×11: . пусто, # кирпич, @ бетон, B штаб (орёл).
 const MAP := [
 	"....................",
 	".##.##.##..##.##.##.",
@@ -41,11 +41,11 @@ var _base_dead := false
 
 
 func title() -> String:
-	return "Танки"
+	return "Battle City"
 
 
 func status() -> String:
-	return "Танки  жизни %d  враги %d  %d" % [lives, to_spawn + _enemies(), score]
+	return "Battle City  ж%d  враги %d  %d" % [lives, to_spawn + _enemies(), score]
 
 
 func start() -> void:
@@ -308,11 +308,15 @@ func _draw_base(ci: CanvasItem) -> void:
 		for q: Vector2 in [Vector2(3, 9), Vector2(8, 11), Vector2(11, 6), Vector2(5, 4)]:
 			ci.draw_rect(Rect2(r.position + q, Vector2(3, 3)), Color("4a4440"))
 		return
-	ci.draw_rect(r, Color("2a2f26"))
-	ci.draw_line(r.position + Vector2(5, 2), r.position + Vector2(5, 14), Color("c8ccd0"), 1.5)   # флагшток
-	ci.draw_colored_polygon(PackedVector2Array([r.position + Vector2(6, 2), r.position + Vector2(13, 4.5),
-		r.position + Vector2(6, 7)]), Color("d9483c"))
-	ci.draw_rect(Rect2(r.position + Vector2(2, 13), Vector2(12, 2)), Color("c8ccd0"))
+	ci.draw_rect(r, Color("101214"))
+	# орёл: серый силуэт с крыльями, как в оригинале
+	var e := Color("b8bcc4")
+	var c := r.get_center()
+	ci.draw_colored_polygon(PackedVector2Array([c + Vector2(-7, -4), c + Vector2(-2, -1), c + Vector2(-2, 4), c + Vector2(-6, 2)]), e)
+	ci.draw_colored_polygon(PackedVector2Array([c + Vector2(7, -4), c + Vector2(2, -1), c + Vector2(2, 4), c + Vector2(6, 2)]), e)
+	ci.draw_rect(Rect2(c + Vector2(-2, -4), Vector2(4, 10)), e)
+	ci.draw_circle(c + Vector2(0, -5), 2.2, e)
+	ci.draw_rect(Rect2(c + Vector2(-4, 6), Vector2(8, 1.5)), e)
 
 
 func _draw_tank(ci: CanvasItem, t: Dictionary) -> void:
