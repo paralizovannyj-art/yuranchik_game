@@ -36,10 +36,6 @@ const CONTACTS := [
 		["вчера", "Юра, купи хлеба и молока по дороге", false],
 		["вчера", "Ок", true],
 		["вчера", "Суп в холодильнике, погрей. Шапку надень, обещали минус двадцать", false]]},
-	{"name": "Папа", "history": [
-		["вчера", "Хьюгу вечером выгуляй, я на смене до утра", false],
-		["вчера", "Ок", true],
-		["вчера", "И корм ему купи, пачка кончается", false]]},
 	{"name": "Димон", "history": [
 		["пн", "Скинь «Пятиэтажки» по блютузу", false],
 		["пн", "Завтра скину, батарея села", true],
@@ -432,7 +428,6 @@ func _draw_home() -> void:
 	# строка статуса: сеть, батарея, EDGE, оператор
 	_signal_and_battery(4.0)
 	_shadow_text("E", Vector2(64, 15), 15, Color("8fd0ff"))
-	_shadow_text(OPERATOR, Vector2(150, 17), 18, C_TEXT, HORIZONTAL_ALIGNMENT_CENTER, 120)
 	# часы слева, как на фото: тёмные цифры на светлом небе
 	draw_string(_font, Vector2(1, 68), Game.clock_text(), HORIZONTAL_ALIGNMENT_LEFT, -1, 27, Color(1, 1, 1, 0.55))
 	draw_string(_font, Vector2(0, 67), Game.clock_text(), HORIZONTAL_ALIGNMENT_LEFT, -1, 27, Color("161616"))
@@ -681,7 +676,7 @@ func _draw_settings() -> void:
 			for s in steps:
 				var bw := 70.0 / steps
 				draw_rect(Rect2(W - 82 + s * bw, y + 12, bw - 2, 12), C_ACCENT if s < int(v) else Color("18303a"))
-	_text("Nokia X2-01 · " + OPERATOR, Vector2(0, H - BAR - 10), 12, C_DIM, HORIZONTAL_ALIGNMENT_CENTER, W)
+	_text("Nokia X2-01", Vector2(0, H - BAR - 10), 12, C_DIM, HORIZONTAL_ALIGNMENT_CENTER, W)
 	_soft("Изменить" if cfg[SETTINGS[_row][1]] is bool else "Влево/вправо", "Назад")
 
 
