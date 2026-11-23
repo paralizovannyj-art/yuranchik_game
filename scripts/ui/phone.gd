@@ -1,4 +1,4 @@
-## Телефон Юрчика — Nokia X2-00 (кнопочный QWERTY-брусок), который он поднимает перед собой (Tab).
+## Телефон Юрчика — Nokia X2-01 (кнопочный QWERTY-брусок), который он поднимает перед собой (Tab).
 ## Модель — assets/models/phone.gltf (tools/blender/build_phone.py). Экран — SubViewport с PhoneScreen,
 ## «печать» лица и спины (буквы, иконки, надписи, шов крышки) — второй SubViewport, нарисованный один раз
 ## по phone_layout.json. Висит на камере игрока; мир за ним размывается (DOF).
@@ -137,6 +137,7 @@ func open() -> void:
 	is_open = true
 	visible = true
 	screen.reset()
+	screen.active = true
 	_screen_vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	if player:
 		player.phone_up = true
@@ -151,6 +152,7 @@ func close() -> void:
 	if not is_open:
 		return
 	is_open = false
+	screen.active = false
 	if player and is_instance_valid(player):
 		player.phone_up = false
 	Game.sfx("ui_open", null, -14.0, 0.1)
@@ -203,8 +205,9 @@ func _blur(on: bool) -> void:
 # ----------------------------------------------------------------------------- вибрация, сеть
 ## Новая СМС или задание: вибрация (звук и отдача на геймпаде), на экране ничего.
 func _buzz() -> void:
-	Game.sfx("phone_vibrate", null, -6.0, 0.0)
-	Input.start_joy_vibration(0, 0.25, 0.0, 0.5)
+	if PhoneScreen.cfg["vibra"]:                    # вибрацию можно выключить в «Настройках»
+		Game.sfx("phone_vibrate", null, -6.0, 0.0)
+		Input.start_joy_vibration(0, 0.25, 0.0, 0.5)
 	if is_open:
 		Game.sfx("phone_sms", null, -10.0, 0.0)
 		screen.queue_redraw()
