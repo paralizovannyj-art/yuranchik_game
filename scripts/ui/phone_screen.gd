@@ -20,9 +20,8 @@ const C_SEL := Color("2b1d0c")
 const C_OK := Color("5fbf63")
 const C_WARN := Color("e6bf35")
 const C_BAD := Color("d9483c")
-const OPERATOR := "ЮГ-GSM"
+const OPERATOR := "Kyivstar"
 const WALLPAPER := preload("res://assets/ui/phone_wallpaper.png")   ## обои с фото Nokia из YUR-34 (tools/make_phone_wallpaper.py)
-const DATE := "Ср 14.12.2011"                    ## дата на рабочем столе (день и год пока условные)
 ## Панель ярлыков на рабочем столе, слева направо (как на фото Nokia в YUR-34; вместо Ovi — настройки).
 const SHORTCUTS := [Screen.MUSIC, Screen.CONTACTS, Screen.GAMES, Screen.WEB, Screen.SETTINGS]
 const APPS := [["Сообщения", Screen.CONTACTS], ["Музыка", Screen.MUSIC], ["Игры", Screen.GAMES],
@@ -41,7 +40,7 @@ const CONTACTS := [
 		["пн", "Завтра скину, батарея села", true],
 		["пн", "Ты на районе ночью не ходи, там опять какие-то в пиджаках шатаются", false]]},
 	{"name": OPERATOR, "history": [
-		["пн", "Ваш баланс: 3,40 р. Пополните счёт, чтобы оставаться на связи.", false],
+		["пн", "Ваш баланс: 3,40 грн. Пополните счёт, чтобы оставаться на связи.", false],
 		["вт", "Услуга «Интернет» недоступна: недостаточно средств.", false]]},
 ]
 ## Песни в памяти телефона: файл в assets/audio/phone_music/ и название в плеере.
@@ -101,6 +100,22 @@ func reset() -> void:
 
 
 # ----------------------------------------------------------------------------- управление
+## Колесо мыши: на рабочем столе и в меню идёт по значкам по очереди слева направо (вниз — дальше,
+## вверх — назад, по кругу), в списках и переписке листает вверх-вниз.
+func scroll(step: int) -> void:
+	match screen:
+		Screen.HOME:
+			_menu_focus = false
+			_bar = wrapi(_bar + step, 0, SHORTCUTS.size())
+		Screen.MENU:
+			_app = wrapi(_app + step, 0, APPS.size())
+		_:
+			move(Vector2i(0, step))
+			return
+	_click()
+	queue_redraw()
+
+
 func move(d: Vector2i) -> void:
 	match screen:
 		Screen.HOME:
@@ -423,16 +438,13 @@ func _draw() -> void:
 
 
 func _draw_home() -> void:
-	# обои — картинка с фото из задачи; стеклянные панели уже нарисованы на ней, сверху только содержимое
+	# сам снимок из задачи: значок сети, батарея, Bluetooth, E, дата, значки ярлыков и Go to / Menu / Names уже на нём;
+	# сверху рисуется только то, что меняется: часы, оператор, события, значок Настроек и выделение
 	draw_texture_rect(WALLPAPER, Rect2(0, 0, W, H), false)
-	# строка статуса: сеть, батарея, EDGE, оператор
-	_signal_and_battery(4.0)
-	_shadow_text("E", Vector2(64, 15), 15, Color("8fd0ff"))
+	draw_string(_font, Vector2(170, 18), OPERATOR, HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color("262626"))
 	# часы слева, как на фото: тёмные цифры на светлом небе
 	draw_string(_font, Vector2(1, 68), Game.clock_text(), HORIZONTAL_ALIGNMENT_LEFT, -1, 27, Color(1, 1, 1, 0.55))
 	draw_string(_font, Vector2(0, 67), Game.clock_text(), HORIZONTAL_ALIGNMENT_LEFT, -1, 27, Color("161616"))
-	# верхняя панель — дата
-	_shadow_text(DATE, Vector2(94, 47), 20, C_TEXT)
 	# средняя панель — события
 	var info := Rect2(80, 77, 237, 71)
 	var y := info.position.y + 24.0
@@ -450,18 +462,14 @@ func _draw_home() -> void:
 	for i in SHORTCUTS.size():
 		var cell := Rect2(bar.position.x + i * cw, bar.position.y, cw, bar.size.y)
 		if i == _bar and not _menu_focus:
-			draw_style_box(_box(Color(1, 1, 1, 0.28), 5, Color(1, 1, 1, 0.85), 2), cell.grow(-1.0))
-		PhoneIcons.draw(self, ICONS[SHORTCUTS[i]], cell.get_center(), 0.95)
+			draw_style_box(_box(Color(1, 1, 1, 0.14), 5, Color(1, 1, 1, 0.9), 2), cell.grow(-1.0))
+		if SHORTCUTS[i] == Screen.SETTINGS:      # остальные четыре значка — с фото
+			PhoneIcons.draw(self, ICONS[SHORTCUTS[i]], cell.get_center() + Vector2(0, -3), 0.95)
 		if SHORTCUTS[i] == Screen.CONTACTS:
 			_unread_badge(cell.get_center() + Vector2(15, -15))
-	# софт-клавиши «Перейти · Меню · Имена» на голубой полосе
-	draw_rect(Rect2(0, H - BAR, W, BAR), Color(0.42, 0.62, 0.78, 0.9))
-	draw_rect(Rect2(0, H - BAR, W, 9), Color(1, 1, 1, 0.12))
+	# софт-клавиши Go to · Menu · Names — с фото, тут только выделение «Menu»
 	if _menu_focus:
-		draw_style_box(_box(Color(1, 1, 1, 0.28), 5, Color(1, 1, 1, 0.85), 2), Rect2(W / 2 - 40, H - BAR + 2, 80, BAR - 4))
-	_shadow_text("Перейти", Vector2(6, H - 6), 19, Color.WHITE)
-	_shadow_text("Меню", Vector2(0, H - 6), 19, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, W)
-	_shadow_text("Имена", Vector2(0, H - 6), 19, Color.WHITE, HORIZONTAL_ALIGNMENT_RIGHT, W - 6)
+		draw_style_box(_box(Color(1, 1, 1, 0.14), 5, Color(1, 1, 1, 0.9), 2), Rect2(W / 2 - 38, H - 28, 76, 27))
 
 
 func _draw_menu() -> void:
@@ -636,7 +644,7 @@ func _draw_web() -> void:
 	_status("Интернет")
 	var addr := Rect2(6, BAR + 4, W - 12, 22)
 	draw_style_box(_box(Color.WHITE, 3, Color("8a96a0"), 1), addr)
-	_text("www.google.ru", addr.position + Vector2(8, 16), 14, Color("3a4650"))
+	_text("www.google.com", addr.position + Vector2(8, 16), 14, Color("3a4650"))
 	var load_k := clampf(_web_t / 1.8, 0.0, 1.0)
 	if load_k < 1.0:
 		var bar := Rect2(20, 124, W - 40, 10)
@@ -655,7 +663,6 @@ func _draw_web() -> void:
 	var field := Rect2(30, 118, W - 60, 22)
 	draw_style_box(_box(Color.WHITE, 3, Color("b0bac4"), 1), field)
 	_text("нет соединения с интернетом", Vector2(0, 168), 16, Color("c0392b"), HORIZONTAL_ALIGNMENT_CENTER, W)
-	_text("Проверьте настройки или баланс", Vector2(0, 188), 12, Color("6a7680"), HORIZONTAL_ALIGNMENT_CENTER, W)
 	_soft("Повторить", "Назад")
 
 

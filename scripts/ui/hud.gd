@@ -215,8 +215,8 @@ func _phone_input(event: InputEvent) -> void:
 			open_inventory()
 	elif event is InputEventMouseButton and event.pressed:
 		match event.button_index:
-			MOUSE_BUTTON_WHEEL_UP: s.move(Vector2i(0, -1))
-			MOUSE_BUTTON_WHEEL_DOWN: s.move(Vector2i(0, 1))
+			MOUSE_BUTTON_WHEEL_UP: s.scroll(-1)
+			MOUSE_BUTTON_WHEEL_DOWN: s.scroll(1)
 			MOUSE_BUTTON_LEFT: s.ok()
 			MOUSE_BUTTON_RIGHT: _phone_back()
 			_: used = false
