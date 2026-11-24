@@ -7,8 +7,9 @@ extends Level
 
 @export var sergey_scene: PackedScene
 @export var sergey_delay := 10.0        ## через сколько секунд после входа Сергей заходит в подъезд
-@export var apt_ambient := 0.16         ## общий свет в квартире: ночь как на улице — темно, но силуэты видно
+@export var apt_ambient := 0.03         ## общий свет в квартире: почти ноль — вдали темнота
 @export var apt_ambient_color := Color(0.22, 0.3, 0.52)   ## синий ночной, как в night_exterior.tres
+@export var apt_near_sight := 0.25      ## в квартире видно только рядом с собой (см. Level.set_near_sight)
 
 @onready var apt_use: Interactable = $AptDoorUse
 @onready var apt_trigger: Area3D = $AptTrigger
@@ -247,8 +248,9 @@ func _set_warm() -> void:
 		b.emitting = false
 
 
-## Квартира ночью — как улица: общий свет (ambient) тусклый и синий, подсветка коридора (AptHall) выключена.
-## Без лампы темно, но силуэты видно; ярко только у люстры, монитора, окна и в пятне фонарика.
+## Квартира ночью — темнота как в жизни: общий свет (ambient) почти гаснет, подсветка коридора (AptHall) выключена,
+## а вокруг Юрчика слабо видно на пару метров (глаза привыкли). Дальше — тьма; ярко только у люстры, монитора,
+## окна и в пятне фонарика.
 ## Окружение — копия: подъезд в следующий раз начнётся со своей обычной яркостью.
 func _set_apartment_dark(fade: float) -> void:
 	var we := $WorldEnvironment as WorldEnvironment
@@ -262,3 +264,4 @@ func _set_apartment_dark(fade: float) -> void:
 			we.environment.ambient_light_energy = apt_ambient
 			we.environment.ambient_light_color = apt_ambient_color
 	$Lights/AptHall.visible = false
+	set_near_sight(apt_near_sight, fade)

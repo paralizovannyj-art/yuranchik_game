@@ -9,6 +9,8 @@ extends Node3D
 @export var step_sound := "step_snow"   ## звук шагов Юрчика на этом уровне
 @export var step_variants := 4
 @export var flashlight_energy := 8.0   ## яркость фонарика (главный свет в темноте): в тесных помещениях нужна меньше
+@export var near_sight_energy := 0.0   ## «глаза привыкли к темноте»: слабый свет вокруг Юрчика (0 — выключен)
+@export var near_sight_range := 3.2    ## на сколько метров видно в темноте без фонарика
 @export var tools_on_direct_start := true   ## запуск уровня из редактора (F6) — сразу с молотком и фонариком
 @export_group("Навигация врагов")
 @export var bake_navigation := true     ## строить ли сетку при запуске (для большого района без врагов — выключено)
@@ -37,6 +39,8 @@ func _ready() -> void:
 	Game.save_checkpoint(scene_file_path)
 	Game.health_changed.emit()
 	Game.ambience(ambience_sound, ambience_db)
+	if near_sight_energy > 0.0:
+		set_near_sight(near_sight_energy)
 	if bake_navigation:
 		_bake_navigation()
 	hud.fade_in(1.6)
@@ -83,3 +87,25 @@ func spawn(scene: PackedScene, at: Node3D, alerted := true) -> Enemy:
 	add_child(e)
 	e.global_transform = at.global_transform
 	return e
+
+
+## Темнота как в жизни: рядом с Юрчиком чуть светлее (глаза привыкли), дальше — тьма.
+## Невидимый слабый свет у камеры: без теней и бликов, гаснет к near_sight_range. 0 — выключить.
+func set_near_sight(energy: float, fade := 0.0) -> void:
+	if player == null:
+		return
+	var l := player.camera.get_node_or_null("NearSight") as OmniLight3D
+	if l == null:
+		l = OmniLight3D.new()
+		l.name = "NearSight"
+		l.light_color = Color(0.6, 0.66, 0.8)
+		l.light_specular = 0.0
+		l.omni_attenuation = 1.5
+		l.light_energy = 0.0
+		player.camera.add_child(l)
+		l.position = Vector3(0, 0.1, 0)
+	l.omni_range = near_sight_range
+	if fade > 0.0:
+		create_tween().tween_property(l, "light_energy", energy, fade)
+	else:
+		l.light_energy = energy
