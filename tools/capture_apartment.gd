@@ -55,7 +55,8 @@ func _lights(lit: bool) -> void:
 		(L.get_node(n) as Light3D).visible = lit
 	var room := L.get_node("AptRoom") as OmniLight3D
 	room.visible = lit
-	room.light_energy = 1.3 if lit else 0.0
+	var room_e = level.get("_room_energy")            # люстра из инспектора (stairwell.gd запомнил до выключения)
+	room.light_energy = (float(room_e) if room_e != null else 3.5) if lit else 0.0
 	torch.visible = not lit
 
 
@@ -80,6 +81,14 @@ func _run() -> void:
 	torch.spot_angle_attenuation = 1.0
 	torch.position = Vector3(0.18, -0.22, -0.05)
 	cam.add_child(torch)
+	var spill := SpotLight3D.new()                 # рассеянный ореол, как Spill в player.tscn
+	spill.set_script(load("res://scripts/player/flashlight_spill.gd"))
+	spill.shadow_enabled = true
+	spill.spot_range = 28.8
+	spill.spot_attenuation = 2.0
+	spill.spot_angle = 42.0
+	spill.spot_angle_attenuation = 2.5
+	torch.add_child(spill)
 	await _wait(60)
 	for mode: String in ["lit", "dark"]:
 		_lights(mode == "lit")

@@ -6,6 +6,8 @@
 // Рисуется первым среди прозрачных (render_priority -128): частицы снега и карточки света ложатся поверх него.
 shader_type spatial;
 render_mode unshaded, fog_disabled, depth_test_disabled, depth_draw_never, cull_disabled, shadows_disabled;
+// на OpenGL экран и цвета приходят в sRGB: пороги яркости и смешивание считаем в линейном, как на Vulkan
+#include "res://shaders/compat_srgb.gdshaderinc"
 
 uniform sampler2D screen_tex : hint_screen_texture, filter_nearest;
 uniform sampler2D depth_tex : hint_depth_texture, filter_nearest;
@@ -40,8 +42,9 @@ void fragment() {
 #else
 	bool is_sky = depth <= 0.00001;      // Forward+: обратный Z, небо на дальней плоскости = 0
 #endif
-	float lum = dot(c, vec3(0.2126, 0.7152, 0.0722));
+	vec3 cl = compat_lin(c);
+	float lum = dot(cl, vec3(0.2126, 0.7152, 0.0722));
 	float lit = smoothstep(light_lo, light_hi, lum);
 	float amount = is_sky ? sky_fog : fog * (1.0 - lit);
-	ALBEDO = mix(c, fog_color, amount);
+	ALBEDO = compat_enc(mix(cl, compat_lin(fog_color), amount));
 }

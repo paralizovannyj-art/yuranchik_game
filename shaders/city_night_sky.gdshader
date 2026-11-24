@@ -18,7 +18,8 @@ uniform float glow_back : hint_range(0.0, 1.0) = 0.25;
 // Луна — там, откуда светит DirectionalLight «Moon» (LIGHT0). Видна всегда: сквозь облака — размытым пятном.
 // Реальный угловой радиус 0.25°; чуть больше, чтобы читалась в 720 строк (луна у горизонта и так кажется крупнее).
 uniform vec3 moon_color : source_color = vec3(0.86, 0.88, 0.95);
-uniform float moon_radius_deg : hint_range(0.1, 3.0) = 1.0;
+uniform float moon_radius_deg : hint_range(0.1, 3.0) = 0.4;   // настоящая луна ≈ 0.26°; 0.4 — чтобы не пропала в PS2-мыле
+uniform float moon_halo_deg : hint_range(0.5, 20.0) = 6.0;    // ширина ореола — от дымки, не от диска
 uniform float moon_energy : hint_range(0.0, 8.0) = 1.6;
 uniform float moon_halo : hint_range(0.0, 2.0) = 0.35;     // ореол в снежной дымке
 uniform float moon_cloud_dim : hint_range(0.0, 1.0) = 0.6; // насколько облако гасит диск
@@ -74,8 +75,8 @@ void sky() {
 			vec3 mc = compat_lin(moon_color);
 			float cosd = dot(EYEDIR, normalize(LIGHT0_DIRECTION));
 			float ang = degrees(acos(clamp(cosd, -1.0, 1.0)));
-			float disk = 1.0 - smoothstep(moon_radius_deg * 0.85, moon_radius_deg, ang);
-			float halo = exp(-ang / (moon_radius_deg * 6.0)) * moon_halo;
+			float disk = 1.0 - smoothstep(moon_radius_deg * 0.7, moon_radius_deg, ang);
+			float halo = exp(-ang / moon_halo_deg) * moon_halo;
 			col += mc * moon_energy * disk * (1.0 - cover * moon_cloud_dim);
 			col += mc * halo * (0.4 + cover);
 		}

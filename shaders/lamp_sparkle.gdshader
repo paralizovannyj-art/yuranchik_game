@@ -13,6 +13,7 @@ uniform float diag_strength = 0.3;          // яркость косых луч�
 uniform float core_size = 0.09;             // радиус белой сердцевины
 uniform float twinkle = 0.3;                // насколько мерцает
 uniform float pull = 0.6;                   // на сколько метров вынести к камере
+instance uniform float glow : hint_range(0.0, 1.0) = 1.0;   // гаснет вместе с мигающей лампой (flicker_light.gd)
 
 void vertex() {
 	MODELVIEW_MATRIX = VIEW_MATRIX * mat4(INV_VIEW_MATRIX[0], INV_VIEW_MATRIX[1], INV_VIEW_MATRIX[2], MODEL_MATRIX[3]);
@@ -38,7 +39,7 @@ void fragment() {
 	float d1 = exp(-abs(q.y) / ray_width) * pow(max(1.0 - abs(q.x) * 1.5, 0.0), 2.0);
 	float d2 = exp(-abs(q.x) / ray_width) * pow(max(1.0 - abs(q.y) * 1.5, 0.0), 2.0);
 
-	float a = core + soft + ((h + v) * ray_strength + (d1 + d2) * diag_strength) * tw;
+	float a = (core + soft + ((h + v) * ray_strength + (d1 + d2) * diag_strength) * tw) * glow;
 	ALBEDO = compat_add_rgb(mix(compat_lin(color.rgb), vec3(1.0), core * 0.7) * energy, clamp(a, 0.0, 1.0));
 	ALPHA = compat_add_alpha(clamp(a, 0.0, 1.0));
 }

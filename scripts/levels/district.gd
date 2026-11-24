@@ -23,6 +23,7 @@ func _start() -> void:
 	garage_lock.interacted.connect(_open_garage)
 	garage_lock.locked.connect(_on_garage_locked)
 	Game.item_picked.connect(_on_item)
+	garage_light.set_meta("off", true)   # LightBudget не включит свет в закрытом гараже
 	garage_light.visible = false
 	_objective()
 	await after(2.5)
@@ -82,6 +83,7 @@ func _open_garage(p: Player) -> void:
 		tw.tween_property(left, "rotation:y", deg_to_rad(-105.0), 1.5)
 	if right:
 		tw.tween_property(right, "rotation:y", deg_to_rad(100.0), 1.5)
+	garage_light.set_meta("off", false)
 	garage_light.visible = true
 
 

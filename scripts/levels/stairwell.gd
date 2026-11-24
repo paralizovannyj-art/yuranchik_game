@@ -40,6 +40,7 @@ func _start() -> void:
 	pc_use.interacted.connect(_use_pc)
 	_setup_screen()
 	_setup_room_light()
+	_sconce_off()
 	if Game.flags.get("start_in_room", false):  # отладка (F9 / пункт меню): сразу в комнате
 		Game.flags.erase("start_in_room")
 		_start_in_room()
@@ -125,7 +126,8 @@ func _use_pc(p: Player) -> void:
 	var tw := create_tween().set_parallel()
 	if _screen:
 		tw.tween_property(_screen, "emission_energy_multiplier", 0.9, 1.2)
-	tw.tween_property(monitor_light, "light_energy", 0.53, 1.2)
+	monitor_light.visible = true                  # пока экран выключен, источник скрыт (не занимает лимит OpenGL)
+	tw.tween_property(monitor_light, "light_energy", 0.3, 1.2)   # ЭЛТ-экран ≈ 10 кд — втрое слабее лампочки 40 Вт
 	Game.set_objective("Дома")
 	await after(1.5)
 	Game.say("Загудел. Старичок ещё живой.")
@@ -235,8 +237,28 @@ func _flicker_loop() -> void:
 			await after(randf_range(0.04, 0.12))
 
 
+## Бра в коридоре квартиры не горит (свет AptHall выключен — в коридоре темно): плафон тоже тёмный,
+## иначе светящаяся лампа висит в темноте и ничего не освещает. Материал — копия, чтобы не погасить другие.
+func _sconce_off() -> void:
+	var sc := $Apartment.find_child("Sconce_nocol", true, false) as MeshInstance3D
+	if sc == null or sc.mesh == null:
+		return
+	for i in sc.mesh.get_surface_count():
+		var m := sc.mesh.surface_get_material(i) as StandardMaterial3D
+		if m and m.emission_enabled:
+			var off := m.duplicate() as StandardMaterial3D
+			off.emission_energy_multiplier = 0.0
+			sc.set_surface_override_material(i, off)
+
+
 ## Дома тепло: изо рта больше не идёт пар (в подъезде — холодно, там он есть).
+## На OpenGL теней нет — лампы подъезда светили бы сквозь стену в тёмную квартиру; дверь закрыта, гасим их.
 func _set_warm() -> void:
+	if Graphics.opengl:
+		for n: String in ["Bulb1", "Bulb2", "Bulb4", "Window1", "Window2", "Window3"]:
+			var l := get_node_or_null("Lights/" + n) as Light3D
+			if l:
+				l.visible = false
 	var b := player.find_child("BreathParticles", true, false) as GPUParticles3D
 	if b:
 		b.set("warm", true)

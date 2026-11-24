@@ -126,8 +126,10 @@ func _fix_environment(we: WorldEnvironment) -> void:
 	# окружение общее (assets/environments/*.tres) и живёт в кэше — правим один раз, на копии
 	env = env.duplicate()
 	env.volumetric_fog_enabled = false
-	env.fog_enabled = true
-	env.fog_density += env.volumetric_fog_density * VOL_FOG_TO_FOG
+	# где тумана движка нет (подъезд: воздух в помещении чистый, лёгкая пыль только в объёмном),
+	# не включаем его — тёмный экспоненциальный туман съел бы лампы и окна
+	if env.fog_enabled:
+		env.fog_density += env.volumetric_fog_density * VOL_FOG_TO_FOG
 	we.environment = env
 
 

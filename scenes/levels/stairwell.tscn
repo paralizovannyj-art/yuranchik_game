@@ -84,11 +84,10 @@ glow_enabled = true
 glow_intensity = 0.5
 glow_strength = 0.9
 glow_hdr_threshold = 1.2
-fog_enabled = true
 fog_light_color = Color(0.012, 0.014, 0.018, 1)
 fog_density = 0.02
 volumetric_fog_enabled = true
-volumetric_fog_density = 0.03
+volumetric_fog_density = 0.004
 volumetric_fog_albedo = Color(0.55, 0.56, 0.58, 1)
 volumetric_fog_anisotropy = 0.4
 volumetric_fog_length = 24.0
@@ -136,7 +135,7 @@ fill_to = Vector2(0.5, 0)
 transparency = 1
 shading_mode = 0
 disable_fog = true
-albedo_color = Color(0.6, 0.61, 0.63, 1)
+albedo_color = Color(0.12, 0.12, 0.13, 1)
 albedo_texture = SubResource("tex_flake")
 billboard_mode = 3
 particles_anim_h_frames = 1
@@ -160,7 +159,6 @@ ambience_sound = "amb_room"
 ambience_db = -16.0
 step_sound = "step_floor"
 step_variants = 3
-flashlight_energy = 10.0
 near_sight_energy = 0.25
 near_sight_range = 3.2
 nav_agent_radius = 0.375
@@ -379,7 +377,7 @@ size = Vector3(13.45, 14, 14.68)
 [node name="Bulb1" type="OmniLight3D" parent="Lights" unique_id=1761647443]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, -1.3)
 light_color = Color(1, 0.8, 0.55, 1)
-light_energy = 2.809
+light_energy = 1.0
 light_volumetric_fog_energy = 0.7
 shadow_enabled = true
 omni_range = 11.2
@@ -390,7 +388,7 @@ flicker_chance = 0.35
 [node name="Bulb2" type="OmniLight3D" parent="Lights" unique_id=503565627]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.2, -1.3)
 light_color = Color(1, 0.78, 0.5, 1)
-light_energy = 1.513
+light_energy = 0.6
 shadow_enabled = true
 omni_range = 9.6
 omni_attenuation = 2.0
@@ -398,7 +396,7 @@ omni_attenuation = 2.0
 [node name="Bulb4" type="OmniLight3D" parent="Lights" unique_id=568336771]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10.6, -1.3)
 light_color = Color(1, 0.8, 0.55, 1)
-light_energy = 2.809
+light_energy = 1.0
 light_volumetric_fog_energy = 0.7
 shadow_enabled = true
 omni_range = 11.2
@@ -409,29 +407,29 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.9, -6.4)
 omni_range = 8
 omni_attenuation = 2.0
 light_color = Color(0.8, 0.55, 0.38, 1)
-light_energy = 0.787
-shadow_enabled = true
+light_energy = 0.08
+shadow_enabled = false
 
 [node name="Window2" type="OmniLight3D" parent="Lights" unique_id=1008051306]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.7, -6.4)
 omni_range = 8
 omni_attenuation = 2.0
 light_color = Color(0.8, 0.55, 0.38, 1)
-light_energy = 0.787
-shadow_enabled = true
+light_energy = 0.08
+shadow_enabled = false
 
 [node name="Window3" type="OmniLight3D" parent="Lights" unique_id=1446138996]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.5, -6.4)
 omni_range = 8
 omni_attenuation = 2.0
 light_color = Color(0.8, 0.55, 0.38, 1)
-light_energy = 0.787
-shadow_enabled = true
+light_energy = 0.08
+shadow_enabled = false
 
 [node name="AptRoom" type="OmniLight3D" parent="Lights" unique_id=1846523846]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -8.925, 10.6, 3.59)
 light_color = Color(1, 0.76, 0.5, 1)
-light_energy = 1.884
+light_energy = 3.5
 shadow_enabled = true
 omni_range = 9.6
 omni_attenuation = 2.0
@@ -453,12 +451,13 @@ light_color = Color(0.55, 0.68, 1, 1)
 light_energy = 0
 shadow_enabled = true
 omni_range = 4.8
+visible = false
 
 [node name="WindowDay" type="OmniLight3D" parent="Lights" unique_id=1225608182]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -8.945, 10, 5.18)
 light_color = Color(0.6, 0.66, 0.8, 1)
-light_energy = 0.45
-omni_range = 2.5
+light_energy = 0.04
+omni_range = 3.0
 omni_attenuation = 2.0
 
 [node name="Items" type="Node3D" parent="." unique_id=395394839]
