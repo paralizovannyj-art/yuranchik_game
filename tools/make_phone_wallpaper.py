@@ -11,7 +11,7 @@ W, H = 320, 240
 im = Image.open(src).convert("RGB")
 sx, sy = W / im.width, H / im.height
 a = np.asarray(im.resize((W, H), Image.LANCZOS)).astype(np.float32)
-rects = [(0,0,80,75),(670,5,985,82),(0,178,272,288),(1102,632,1228,754)]
+rects = [(0,0,80,75),(670,5,985,82),(0,178,272,288),(1092,622,1238,788)]
 m = np.zeros((H, W), bool)
 for x0,y0,x1,y1 in rects:
     m[int(y0*sy):int(np.ceil(y1*sy)), int(x0*sx):int(np.ceil(x1*sx))] = True

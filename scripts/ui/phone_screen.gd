@@ -100,6 +100,22 @@ func reset() -> void:
 
 
 # ----------------------------------------------------------------------------- управление
+## Колесо мыши: на рабочем столе и в меню идёт по значкам по очереди слева направо (вниз — дальше,
+## вверх — назад, по кругу), в списках и переписке листает вверх-вниз.
+func scroll(step: int) -> void:
+	match screen:
+		Screen.HOME:
+			_menu_focus = false
+			_bar = wrapi(_bar + step, 0, SHORTCUTS.size())
+		Screen.MENU:
+			_app = wrapi(_app + step, 0, APPS.size())
+		_:
+			move(Vector2i(0, step))
+			return
+	_click()
+	queue_redraw()
+
+
 func move(d: Vector2i) -> void:
 	match screen:
 		Screen.HOME:
@@ -631,7 +647,7 @@ func _draw_web() -> void:
 	_status("Интернет")
 	var addr := Rect2(6, BAR + 4, W - 12, 22)
 	draw_style_box(_box(Color.WHITE, 3, Color("8a96a0"), 1), addr)
-	_text("www.google.ru", addr.position + Vector2(8, 16), 14, Color("3a4650"))
+	_text("www.google.com", addr.position + Vector2(8, 16), 14, Color("3a4650"))
 	var load_k := clampf(_web_t / 1.8, 0.0, 1.0)
 	if load_k < 1.0:
 		var bar := Rect2(20, 124, W - 40, 10)
