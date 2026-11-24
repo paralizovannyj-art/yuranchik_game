@@ -1,11 +1,11 @@
 ## Экран телефона Юрчика (Nokia, 320×240) в духе Series 40: рабочий стол с панелью ярлыков, меню,
 ## «Сообщения» по контактам, плеер «Музыка», «Игры» (Змейка, Battle City, Pac-Man), «Интернет» без сети,
-## «Настройки», «Самочувствие», «Шагомер». Живёт внутри SubViewport телефона (phone.gd) и рисуется целиком
+## «Настройки». Живёт внутри SubViewport телефона (phone.gd) и рисуется целиком
 ## в _draw — как экран кнопочного телефона. Управление приходит от телефона: move(), ok(), back().
 class_name PhoneScreen
 extends Control
 
-enum Screen { HOME, MENU, CONTACTS, CHAT, TASK, MUSIC, GAMES, GAME, WEB, SETTINGS, HEALTH, STEPS }
+enum Screen { HOME, MENU, CONTACTS, CHAT, TASK, MUSIC, GAMES, GAME, WEB, SETTINGS }
 
 const W := 320.0
 const H := 240.0
@@ -25,9 +25,9 @@ const WALLPAPER := preload("res://assets/ui/phone_wallpaper.png")   ## обои 
 ## Панель ярлыков на рабочем столе, слева направо (как на фото Nokia в YUR-34; вместо Ovi — настройки).
 const SHORTCUTS := [Screen.MUSIC, Screen.CONTACTS, Screen.GAMES, Screen.WEB, Screen.SETTINGS]
 const APPS := [["Сообщения", Screen.CONTACTS], ["Музыка", Screen.MUSIC], ["Игры", Screen.GAMES],
-	["Интернет", Screen.WEB], ["Настройки", Screen.SETTINGS], ["Самочувствие", Screen.HEALTH], ["Шагомер", Screen.STEPS]]
+	["Интернет", Screen.WEB], ["Настройки", Screen.SETTINGS]]
 const ICONS := {Screen.CONTACTS: "sms", Screen.MUSIC: "music", Screen.GAMES: "games", Screen.WEB: "web",
-	Screen.SETTINGS: "settings", Screen.HEALTH: "health", Screen.STEPS: "steps"}
+	Screen.SETTINGS: "settings"}
 ## Контакты Юрчика и старая переписка (до начала игры). true — сообщение от самого Юрчика.
 ## Новые СМС из игры (Game.text) попадают в переписку с тем же именем; незнакомое имя — новый контакт.
 const CONTACTS := [
@@ -55,7 +55,6 @@ static var cfg := {"volume": 6, "keys": true, "vibra": true, "bright": 5}
 
 var screen := Screen.HOME
 var signal_bars := 4                             ## 1..4, телефон выставляет по расстоянию до Сергея
-var player: Player
 var active := false                              ## телефон в руке: идут игры и анимации
 
 var _bar := 0                                    ## выбранный ярлык на рабочем столе
@@ -69,9 +68,6 @@ var _scroll_max := 0.0
 var _game: PhoneGame
 var _web_t := 0.0
 var _font: Font
-var _ecg := PackedFloat32Array()
-var _ecg_t := 0.0
-var _bpm := 72.0
 var _music: AudioStreamPlayer
 var _tracks: Array[Dictionary] = []
 var _track := -1                                 ## что играет (индекс в _tracks), -1 — ничего
@@ -80,8 +76,6 @@ var _track := -1                                 ## что играет (инд�
 func _ready() -> void:
 	size = Vector2(W, H)
 	_font = ThemeDB.fallback_font
-	_ecg.resize(150)
-	_ecg.fill(0.0)
 	for t: Array in TRACKS:
 		var path: String = MUSIC_DIR + t[0] + ".wav"
 		if ResourceLoader.exists(path):
@@ -323,9 +317,6 @@ func _thread(contact: String) -> Array[Dictionary]:
 
 # ----------------------------------------------------------------------------- время
 func _process(delta: float) -> void:
-	var k := Game.hp / Game.MAX_HP
-	var tired := player != null and is_instance_valid(player) and player.exhausted
-	_bpm = lerpf(_bpm, 68.0 + (1.0 - k) * 70.0 + (22.0 if tired else 0.0), delta)
 	if not active:
 		return
 	match screen:
@@ -333,33 +324,7 @@ func _process(delta: float) -> void:
 			_game.step(delta)
 		Screen.WEB:
 			_web_t += delta
-		Screen.HEALTH:
-			_ecg_step(delta)
 	queue_redraw()                                   # часы, мигание, прогресс песни
-
-
-## Бегущая кардиограмма: один удар на 60/_bpm секунд.
-func _ecg_step(delta: float) -> void:
-	_ecg_t += delta
-	var period := 60.0 / _bpm
-	var steps := int(delta * 90.0) + 1
-	for i in steps:
-		var p := fmod(_ecg_t + float(i) / 90.0, period) / period
-		var v := 0.0
-		if p < 0.04:
-			v = -2.0
-		elif p < 0.08:
-			v = 0.0
-		elif p < 0.10:
-			v = -16.0
-		elif p < 0.12:
-			v = 13.0
-		elif p < 0.14:
-			v = -3.0
-		elif p > 0.30 and p < 0.40:
-			v = -4.0
-		_ecg.remove_at(0)
-		_ecg.append(v)
 
 
 # ----------------------------------------------------------------------------- отрисовка
@@ -430,8 +395,6 @@ func _draw() -> void:
 		Screen.GAME: _draw_game()
 		Screen.WEB: _draw_web()
 		Screen.SETTINGS: _draw_settings()
-		Screen.HEALTH: _draw_health()
-		Screen.STEPS: _draw_steps()
 	var dim := (5 - int(cfg["bright"])) * 0.13       # яркость экрана
 	if dim > 0.0:
 		draw_rect(Rect2(0, 0, W, H), Color(0, 0, 0, dim))
@@ -685,47 +648,3 @@ func _draw_settings() -> void:
 				draw_rect(Rect2(W - 82 + s * bw, y + 12, bw - 2, 12), C_ACCENT if s < int(v) else Color("18303a"))
 	_text("Nokia X2-01", Vector2(0, H - BAR - 10), 12, C_DIM, HORIZONTAL_ALIGNMENT_CENTER, W)
 	_soft("Изменить" if cfg[SETTINGS[_row][1]] is bool else "Влево/вправо", "Назад")
-
-
-func _draw_health() -> void:
-	_status("Самочувствие")
-	var k := Game.hp / Game.MAX_HP
-	var col := C_OK if k > 0.6 else (C_WARN if k > 0.3 else C_BAD)
-	var word := "НОРМА" if k > 0.6 else ("РАНЕН" if k > 0.3 else "ПРИ СМЕРТИ")
-	# пиксельный человечек: цвет — состояние, красные пятна — чем хуже, тем больше
-	var o := Vector2(30, 48)
-	var px := 7.0
-	var body := [Rect2(7, 0, 5, 5), Rect2(5, 6, 9, 13), Rect2(2, 7, 3, 11), Rect2(14, 7, 3, 11), Rect2(5, 19, 4, 18), Rect2(10, 19, 4, 18)]
-	var wounds := [Rect2(10, 22, 4, 6), Rect2(5, 9, 4, 3), Rect2(2, 12, 3, 4), Rect2(8, 1, 3, 3), Rect2(5, 28, 4, 5)]
-	for r: Rect2 in body:
-		draw_rect(Rect2(o + r.position * px * 0.5, r.size * px * 0.5), col)
-	var n := int(roundf((1.0 - k) * wounds.size()))
-	for i in n:
-		var r: Rect2 = wounds[i]
-		draw_rect(Rect2(o + r.position * px * 0.5, r.size * px * 0.5), C_BAD.darkened(0.25))
-	var x := 120.0
-	_text("Состояние:", Vector2(x, 58), 16, C_LCD)
-	_text(word, Vector2(x, 82), 21, col)
-	_text("Пульс: %d" % int(_bpm), Vector2(x, 110), 17, C_LCD)
-	var g := Rect2(x, 120, W - x - 12, 64)
-	draw_rect(g, Color("071312"))
-	draw_rect(g, Color("18303a"), false, 1.0)
-	var pts := PackedVector2Array()
-	for i in _ecg.size():
-		pts.append(Vector2(g.position.x + i * g.size.x / (_ecg.size() - 1), g.get_center().y + _ecg[i] * 1.6))
-	draw_polyline(pts, C_OK, 2.0)
-	_soft("", "Назад")
-
-
-func _draw_steps() -> void:
-	_status("Шагомер")
-	var t := int(Game.stats["time"])
-	@warning_ignore("integer_division")          # целые минуты
-	var rows := [["Шагов", str(Game.stats.get("steps", 0))], ["В пути", "%d:%02d" % [t / 60, t % 60]],
-		["Офников уложено", str(Game.stats["kills"])], ["Смертей", str(Game.stats["deaths"])]]
-	for i in rows.size():
-		var y := BAR + 8 + i * 44.0
-		_text(rows[i][0], Vector2(14, y + 24), 18, C_TEXT)
-		_text(rows[i][1], Vector2(0, y + 24), 20, C_ACCENT, HORIZONTAL_ALIGNMENT_RIGHT, W - 14)
-		draw_line(Vector2(10, y + 36), Vector2(W - 10, y + 36), Color("18303a"))
-	_soft("", "Назад")

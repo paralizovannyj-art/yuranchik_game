@@ -69,7 +69,6 @@ func _build_screen() -> void:
 	_screen_vp.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	add_child(_screen_vp)
 	screen = PhoneScreen.new()
-	screen.player = player
 	_screen_vp.add_child(screen)
 	var pr := PhonePrint.new()
 	pr.layout = LAYOUT.data

@@ -1,5 +1,5 @@
-## Иконки экрана телефона (рисуются кодом, без картинок): музыка, сообщения, игры, интернет, настройки,
-## самочувствие, шагомер. Рисуются в квадрате 32×32 вокруг центра, s — масштаб.
+## Иконки экрана телефона (рисуются кодом, без картинок): музыка, сообщения, игры, интернет, настройки.
+## Рисуются в квадрате 32×32 вокруг центра, s — масштаб.
 class_name PhoneIcons
 
 
@@ -11,8 +11,6 @@ static func draw(ci: CanvasItem, kind: String, c: Vector2, s := 1.0) -> void:
 		"games": _games(ci)
 		"web": _web(ci)
 		"settings": _settings(ci)
-		"health": _health(ci)
-		"steps": _steps(ci)
 	ci.draw_set_transform(Vector2.ZERO)
 
 
@@ -88,22 +86,3 @@ static func _settings(ci: CanvasItem) -> void:
 	ci.draw_circle(Vector2.ZERO, 11.0, col)
 	ci.draw_arc(Vector2.ZERO, 9.0, PI, PI * 1.6, 8, Color(1, 1, 1, 0.4), 2.0)
 	ci.draw_circle(Vector2.ZERO, 5.0, Color("2b3036"))
-
-
-## Сердце с кардиограммой.
-static func _health(ci: CanvasItem) -> void:
-	var red := Color("d9483c")
-	ci.draw_circle(Vector2(-7, -5), 9.0, red)
-	ci.draw_circle(Vector2(7, -5), 9.0, red)
-	ci.draw_colored_polygon(PackedVector2Array([Vector2(-16, -2), Vector2(16, -2), Vector2(0, 15)]), red)
-	ci.draw_polyline(PackedVector2Array([Vector2(-13, -2), Vector2(-5, -2), Vector2(-2, -9), Vector2(2, 5),
-		Vector2(5, -2), Vector2(13, -2)]), Color.WHITE, 2.0)
-
-
-## Следы.
-static func _steps(ci: CanvasItem) -> void:
-	var col := Color("9fd0c8")
-	ci.draw_style_box(_box(col, 4), Rect2(-13, -15, 9, 17))
-	ci.draw_style_box(_box(col, 4), Rect2(3, -3, 9, 17))
-	ci.draw_rect(Rect2(-12, 4, 7, 4), col)
-	ci.draw_rect(Rect2(4, -9, 7, 4), col)
