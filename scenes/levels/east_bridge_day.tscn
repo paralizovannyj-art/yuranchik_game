@@ -159,7 +159,7 @@ size = Vector2(9, 6)
 script = ExtResource("lvl")
 ambience_db = -3.0
 bake_navigation = false
-flashlight_energy = 3.0
+flashlight_energy = 10.0
 near_sight_energy = 0.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]

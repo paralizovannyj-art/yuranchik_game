@@ -77,7 +77,7 @@ environment = ExtResource("env_night")
 [node name="Moon" type="DirectionalLight3D" parent="." unique_id=98314682]
 transform = Transform3D(0.894, -0.293, 0.338, 0, 0.756, 0.655, -0.447, -0.586, 0.676, 0, 60, 0)
 light_color = Color(0.5, 0.65, 0.95, 1)
-light_energy = 0.05
+light_energy = 0.02
 shadow_enabled = true
 directional_shadow_max_distance = 80.0
 
@@ -152,17 +152,17 @@ transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0.2, 3, -20.95)
 [node name="GarageLight" type="OmniLight3D" parent="Quest/GarageYur"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 1.95, -0.4)
 light_color = Color(1, 0.8, 0.55, 1)
-light_energy = 1.7
+light_energy = 2.784
 shadow_enabled = true
-omni_range = 6.5
-omni_attenuation = 1.4
+omni_range = 10.4
+omni_attenuation = 2.0
 
 [node name="Bulb" type="OmniLight3D" parent="Quest/GarageYur"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 2.75, 3.5)
 light_color = Color(1, 0.78, 0.5, 1)
-light_energy = 0.6
-omni_range = 4.5
-omni_attenuation = 1.8
+light_energy = 0.657
+omni_range = 7.2
+omni_attenuation = 2.0
 script = ExtResource("flicker")
 flicker_chance = 0.5
 

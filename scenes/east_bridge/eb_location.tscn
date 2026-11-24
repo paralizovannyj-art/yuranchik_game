@@ -41,7 +41,7 @@ sparkle = true
 halo_size = 0.9
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, -90)
 color = Color(0.62, 0.95, 0.7, 1)
-energy = 7
+energy = 19.1
 head_offset = Vector3(1.4, 3.72, 0)
 
 [node name="BridgeLamp2" parent="Lights" instance=ExtResource("sl")]
@@ -51,7 +51,7 @@ sparkle = true
 halo_size = 0.9
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, -78)
 color = Color(0.62, 0.95, 0.7, 1)
-energy = 7
+energy = 19.1
 head_offset = Vector3(1.4, 3.72, 0)
 
 [node name="BridgeLamp3" parent="Lights" instance=ExtResource("sl")]
@@ -61,7 +61,7 @@ sparkle = true
 halo_size = 0.9
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, -66)
 color = Color(0.62, 0.95, 0.7, 1)
-energy = 7
+energy = 19.1
 head_offset = Vector3(1.4, 3.72, 0)
 
 [node name="BridgeLamp4" parent="Lights" instance=ExtResource("sl")]
@@ -71,7 +71,7 @@ sparkle = true
 halo_size = 0.9
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, -54)
 color = Color(0.62, 0.95, 0.7, 1)
-energy = 7
+energy = 19.1
 head_offset = Vector3(1.4, 3.72, 0)
 flicker = true
 
@@ -82,7 +82,7 @@ sparkle = true
 halo_size = 0.9
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, -42)
 color = Color(0.62, 0.95, 0.7, 1)
-energy = 7
+energy = 19.1
 head_offset = Vector3(1.4, 3.72, 0)
 
 [node name="BridgeLamp6" parent="Lights" instance=ExtResource("sl")]
@@ -92,7 +92,7 @@ sparkle = true
 halo_size = 0.9
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, -30)
 color = Color(0.62, 0.95, 0.7, 1)
-energy = 7
+energy = 19.1
 head_offset = Vector3(1.4, 3.72, 0)
 
 [node name="BridgeLamp7" parent="Lights" instance=ExtResource("sl")]
@@ -102,7 +102,7 @@ sparkle = true
 halo_size = 0.9
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, -18)
 color = Color(0.62, 0.95, 0.7, 1)
-energy = 7
+energy = 19.1
 head_offset = Vector3(1.4, 3.72, 0)
 
 [node name="BridgeLamp8" parent="Lights" instance=ExtResource("sl")]
@@ -112,7 +112,7 @@ sparkle = true
 halo_size = 0.9
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, -6)
 color = Color(0.62, 0.95, 0.7, 1)
-energy = 7
+energy = 19.1
 head_offset = Vector3(1.4, 3.72, 0)
 
 [node name="BridgeLamp9" parent="Lights" instance=ExtResource("sl")]
@@ -122,7 +122,7 @@ sparkle = true
 halo_size = 0.9
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, 6)
 color = Color(0.62, 0.95, 0.7, 1)
-energy = 7
+energy = 19.1
 head_offset = Vector3(1.4, 3.72, 0)
 
 [node name="BridgeLamp10" parent="Lights" instance=ExtResource("sl")]
@@ -132,7 +132,7 @@ sparkle = true
 halo_size = 0.9
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, 18)
 color = Color(0.62, 0.95, 0.7, 1)
-energy = 7
+energy = 19.1
 head_offset = Vector3(1.4, 3.72, 0)
 
 [node name="BridgeLamp11" parent="Lights" instance=ExtResource("sl")]
@@ -142,7 +142,7 @@ sparkle = true
 halo_size = 0.9
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, 30)
 color = Color(0.62, 0.95, 0.7, 1)
-energy = 7
+energy = 19.1
 head_offset = Vector3(1.4, 3.72, 0)
 
 [node name="BridgeLamp12" parent="Lights" instance=ExtResource("sl")]
@@ -152,7 +152,7 @@ sparkle = true
 halo_size = 0.9
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, 42)
 color = Color(0.62, 0.95, 0.7, 1)
-energy = 7
+energy = 19.1
 head_offset = Vector3(1.4, 3.72, 0)
 
 [node name="BridgeLamp13" parent="Lights" instance=ExtResource("sl")]
@@ -162,7 +162,7 @@ sparkle = true
 halo_size = 0.9
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, 54)
 color = Color(0.62, 0.95, 0.7, 1)
-energy = 7
+energy = 19.1
 head_offset = Vector3(1.4, 3.72, 0)
 
 [node name="BridgeLamp14" parent="Lights" instance=ExtResource("sl")]
@@ -172,7 +172,7 @@ sparkle = true
 halo_size = 0.9
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 7.52, 66)
 color = Color(1, 0.52, 0.18, 1)
-energy = 7
+energy = 19.1
 head_offset = Vector3(1.4, 3.72, 0)
 
 [node name="BridgeLamp15" parent="Lights" instance=ExtResource("sl")]
@@ -182,7 +182,7 @@ sparkle = true
 halo_size = 0.9
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.45, 6.274, -92.28)
 color = Color(0.62, 0.95, 0.7, 1)
-energy = 7
+energy = 19.1
 head_offset = Vector3(0, 3.72, -1.4)
 
 [node name="BridgeLamp16" parent="Lights" instance=ExtResource("sl")]
@@ -192,7 +192,7 @@ sparkle = true
 halo_size = 0.9
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.05, 3.922, -92.28)
 color = Color(0.62, 0.95, 0.7, 1)
-energy = 7
+energy = 19.1
 head_offset = Vector3(0, 3.72, -1.4)
 
 [node name="BridgeLamp17" parent="Lights" instance=ExtResource("sl")]
@@ -202,7 +202,7 @@ sparkle = true
 halo_size = 0.9
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -46.95, 1.402, -92.28)
 color = Color(0.62, 0.95, 0.7, 1)
-energy = 7
+energy = 19.1
 head_offset = Vector3(0, 3.72, -1.4)
 
 [node name="Floodlight1" parent="Lights" instance=ExtResource("sl")]

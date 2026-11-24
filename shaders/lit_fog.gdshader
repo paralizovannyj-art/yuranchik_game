@@ -40,11 +40,8 @@ void fragment() {
 #else
 	bool is_sky = depth <= 0.00001;      // Forward+: обратный Z, небо на дальней плоскости = 0
 #endif
-	if (is_sky) {
-		ALBEDO = mix(c, fog_color, sky_fog);
-		return;
-	}
 	float lum = dot(c, vec3(0.2126, 0.7152, 0.0722));
 	float lit = smoothstep(light_lo, light_hi, lum);
-	ALBEDO = mix(c, fog_color, fog * (1.0 - lit));
+	float amount = is_sky ? sky_fog : fog * (1.0 - lit);
+	ALBEDO = mix(c, fog_color, amount);
 }

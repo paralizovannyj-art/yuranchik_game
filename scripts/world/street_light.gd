@@ -8,7 +8,7 @@ extends Node3D
 	set(v):
 		color = v
 		_apply()
-@export var energy := 22.0                           ## яркость конуса: тусклое пятно под фонарём, вокруг — темнота
+@export var energy := 60.0                           ## яркость конуса: тусклое пятно под фонарём, вокруг — темнота
 @export var flicker := false:                        ## мигает (старая лампа)
 	set(v):
 		flicker = v

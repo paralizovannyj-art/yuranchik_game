@@ -34,8 +34,8 @@ var _matte_done := {}
 
 ## Туман-«стена» (Environment.fog_mode = Depth) в режиме «Обычная» заменяется туманом, который не трогает свет:
 ## shaders/lit_fog.gdshader — тёмное уходит в туман, освещённое и светящееся остаётся (правило автора,
-## cry-of-fear-author.md Э3). Берёт begin / end / цвет из окружения. В режиме «Слабый ПК» остаётся туман движка:
-## на OpenGL шейдер с глубиной и экраном не проверялся.
+## cry-of-fear-author.md Э3). Берёт begin / end / цвет из окружения. В обоих режимах (на OpenGL проверено 2026-11-24:
+## без него туман движка прятал горящие окна домов).
 const LIT_FOG_SHADER := "res://shaders/lit_fog.gdshader"
 
 ## Внутреннее разрешение 3D — 720 строк при любом окне (1280×720 в 16:9). Интерфейс живёт в сетке 1280×720
@@ -112,6 +112,7 @@ func _on_node_added(node: Node) -> void:
 		(node as Light3D).shadow_enabled = false     # light_budget.gd запоминает это и тоже не включит тень
 	elif node is WorldEnvironment:
 		_fix_environment.call_deferred(node)
+		_add_lit_fog.call_deferred(node)              # после _fix_environment: горящие окна и фонари видно издалека и тут
 	elif node is Decal:
 		_replace_decal.call_deferred(node)
 

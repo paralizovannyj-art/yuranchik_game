@@ -125,7 +125,7 @@ func _use_pc(p: Player) -> void:
 	var tw := create_tween().set_parallel()
 	if _screen:
 		tw.tween_property(_screen, "emission_energy_multiplier", 0.9, 1.2)
-	tw.tween_property(monitor_light, "light_energy", 0.5, 1.2)
+	tw.tween_property(monitor_light, "light_energy", 0.53, 1.2)
 	Game.set_objective("Дома")
 	await after(1.5)
 	Game.say("Загудел. Старичок ещё живой.")

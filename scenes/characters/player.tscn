@@ -92,12 +92,12 @@ far = 1200.0
 [node name="Flashlight" type="SpotLight3D" parent="CamPivot/Camera" unique_id=1677952294]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.18, -0.22, -0.05)
 light_color = Color(1, 0.93, 0.8, 1)
-light_energy = 8.0
+light_energy = 26.787
 light_volumetric_fog_energy = 0.6
 shadow_enabled = true
 shadow_caster_mask = 4294443007
-spot_range = 18.0
-spot_attenuation = 0.9
+spot_range = 28.8
+spot_attenuation = 2.0
 spot_angle = 20.0
 spot_angle_attenuation = 0.15
 
