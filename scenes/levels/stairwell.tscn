@@ -447,7 +447,9 @@ omni_range = 3.0
 [node name="WindowDay" type="OmniLight3D" parent="Lights" unique_id=1225608182]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -8.945, 10, 5.18)
 light_color = Color(0.6, 0.66, 0.8, 1)
-light_energy = 0.25
+light_energy = 0.35
+omni_range = 2.5
+omni_attenuation = 2.0
 
 [node name="Items" type="Node3D" parent="." unique_id=395394839]
 

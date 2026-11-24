@@ -7,6 +7,7 @@ extends Level
 
 @export var sergey_scene: PackedScene
 @export var sergey_delay := 10.0        ## через сколько секунд после входа Сергей заходит в подъезд
+@export var apt_ambient := 0.02         ## общий заполняющий свет в квартире: почти ноль — где нет лампы, там темно
 
 @onready var apt_use: Interactable = $AptDoorUse
 @onready var apt_trigger: Area3D = $AptTrigger
@@ -71,6 +72,7 @@ func _on_apartment(body: Node3D) -> void:
 		return
 	_ended = true
 	_set_warm()
+	_set_apartment_dark(1.2)
 	if _door:
 		create_tween().tween_property(_door, "rotation:y", 0.0, 0.22)
 	await after(0.22)
@@ -92,6 +94,7 @@ func _on_apartment(body: Node3D) -> void:
 func _start_in_room() -> void:
 	_ended = true
 	_set_warm()
+	_set_apartment_dark(0.0)
 	var at := Vector3(-7.95, 8.45, 3.88)           # комната повёрнута на 90° (конец коридора, build_apartment.py)
 	var yaw := -0.45 + PI / 2                     # лицом к столу с компом
 	player.global_position = at
@@ -241,3 +244,17 @@ func _set_warm() -> void:
 	if b:
 		b.set("warm", true)
 		b.emitting = false
+
+
+## Квартира — хоррор: общий заполняющий свет (ambient) почти гаснет, подсветка коридора (AptHall) выключена.
+## Видно только там, где есть свет: люстра, монитор, лунный отсвет у окна, фонарик.
+## Окружение — копия: подъезд в следующий раз начнётся со своей обычной яркостью.
+func _set_apartment_dark(fade: float) -> void:
+	var we := $WorldEnvironment as WorldEnvironment
+	if we.environment:
+		we.environment = we.environment.duplicate() as Environment
+		if fade > 0.0:
+			create_tween().tween_property(we.environment, "ambient_light_energy", apt_ambient, fade)
+		else:
+			we.environment.ambient_light_energy = apt_ambient
+	$Lights/AptHall.visible = false
