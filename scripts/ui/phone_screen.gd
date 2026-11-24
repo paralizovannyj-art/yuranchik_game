@@ -438,12 +438,9 @@ func _draw() -> void:
 
 
 func _draw_home() -> void:
-	# сам снимок из задачи: батарея, Bluetooth, E, дата, значки ярлыков и Go to / Menu / Names уже на нём;
-	# сверху рисуется только то, что меняется: сеть, часы, оператор, события, значок Настроек и выделение
+	# сам снимок из задачи: значок сети, батарея, Bluetooth, E, дата, значки ярлыков и Go to / Menu / Names уже на нём;
+	# сверху рисуется только то, что меняется: часы, оператор, события, значок Настроек и выделение
 	draw_texture_rect(WALLPAPER, Rect2(0, 0, W, H), false)
-	for i in 4:                                  # палки сети на месте значка антенны
-		var h := 4.0 + i * 3.0
-		draw_rect(Rect2(3 + i * 4.5, 17 - h, 3, h), Color("3a3a3a") if i < signal_bars else Color(0.2, 0.2, 0.2, 0.25))
 	draw_string(_font, Vector2(170, 18), OPERATOR, HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color("262626"))
 	# часы слева, как на фото: тёмные цифры на светлом небе
 	draw_string(_font, Vector2(1, 68), Game.clock_text(), HORIZONTAL_ALIGNMENT_LEFT, -1, 27, Color(1, 1, 1, 0.55))
