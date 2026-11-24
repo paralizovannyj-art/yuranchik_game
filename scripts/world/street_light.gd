@@ -79,6 +79,17 @@ func _enter_tree() -> void:
 
 func _ready() -> void:
 	_apply()
+	if flicker and not Engine.is_editor_hint():
+		_split_glass.call_deferred()
+
+
+## Мигающий фонарь: стекло плафона на модели столба гаснет вместе со светом (у слитых моделей моста
+## стёкла всех фонарей — одна поверхность; GlowSplit отделяет стекло этого фонаря).
+func _split_glass() -> void:
+	var scene := get_tree().current_scene
+	if scene == null or spot == null:
+		return
+	spot.set("glow_materials", GlowSplit.split_near(scene, spot.global_position, 0.9))
 
 
 func _apply() -> void:

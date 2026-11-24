@@ -41,6 +41,7 @@ func _start() -> void:
 	_setup_screen()
 	_setup_room_light()
 	_sconce_off()
+	_split_bulb_glass()
 	if Game.flags.get("start_in_room", false):  # отладка (F9 / пункт меню): сразу в комнате
 		Game.flags.erase("start_in_room")
 		_start_in_room()
@@ -235,6 +236,15 @@ func _flicker_loop() -> void:
 				return
 			_set_bulbs(1.0)
 			await after(randf_range(0.04, 0.12))
+
+
+## Стекло мигающей лампочки 1-го этажа (Bulb1) слито в одну поверхность LampGlass с двумя другими лампами подъезда.
+## Отделяем его треугольники в свою поверхность со своим материалом и отдаём его мигалке: в жизни при провале
+## тускнеет и сама колба, а не только освещённое ею.
+func _split_bulb_glass() -> void:
+	var bulb := get_node_or_null("Lights/Bulb1") as Light3D
+	if bulb:
+		bulb.set("glow_materials", GlowSplit.split_near($Stairwell, bulb.global_position, 0.6))
 
 
 ## Бра в коридоре квартиры не горит (свет AptHall выключен — в коридоре темно): плафон тоже тёмный,

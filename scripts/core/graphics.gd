@@ -11,7 +11,8 @@
 ##   складывается с остальным светом уже после перевода в sRGB — любая тень пересвечивает картинку
 ##   (ночной снег на полигоне становится в 1.6 раза ярче). Заодно тени — самое дорогое для слабых видеокарт;
 ## - объёмного тумана нет: вместо него добавляем его плотность к обычному туману (он тоже тёмный и глотает даль);
-## - декалей нет: тень-пятно под Хьюгой заменяется плоским полупрозрачным квадратом.
+## - декалей нет: тень-пятно под Хьюгой заменяется плоским полупрозрачным квадратом;
+## - отражённого света (VoxelGI) нет: лампы внутри его объёма получают мягкую заливку bounce_light.gd.
 extends Node
 
 const CFG := "user://graphics.cfg"
@@ -37,6 +38,7 @@ var _matte_done := {}
 ## cry-of-fear-author.md Э3). Берёт begin / end / цвет из окружения. В обоих режимах (на OpenGL проверено 2026-11-24:
 ## без него туман движка прятал горящие окна домов).
 const LIT_FOG_SHADER := "res://shaders/lit_fog.gdshader"
+const BOUNCE_SCRIPT := preload("res://scripts/world/bounce_light.gd")
 
 ## Внутреннее разрешение 3D — 720 строк при любом окне (1280×720 в 16:9). Интерфейс живёт в сетке 1280×720
 ## (display/window/stretch/mode = canvas_items) и рисуется в разрешении окна, а 3D уменьшается через
@@ -115,22 +117,52 @@ func _on_node_added(node: Node) -> void:
 		_add_lit_fog.call_deferred(node)              # после _fix_environment: горящие окна и фонари видно издалека и тут
 	elif node is Decal:
 		_replace_decal.call_deferred(node)
+	elif node is VoxelGI:
+		_replace_voxel_gi.call_deferred(node)
 
 
 func _fix_environment(we: WorldEnvironment) -> void:
 	if not is_instance_valid(we) or we.environment == null:
 		return
 	var env := we.environment
-	if not env.volumetric_fog_enabled:
+	if not env.volumetric_fog_enabled and not env.ssil_enabled:
 		return
 	# окружение общее (assets/environments/*.tres) и живёт в кэше — правим один раз, на копии
 	env = env.duplicate()
+	env.ssil_enabled = false                       # SSIL есть только в Forward+; отражённый свет здесь — Bounce-лампы
+	if not env.volumetric_fog_enabled:
+		we.environment = env
+		return
 	env.volumetric_fog_enabled = false
 	# где тумана движка нет (подъезд: воздух в помещении чистый, лёгкая пыль только в объёмном),
 	# не включаем его — тёмный экспоненциальный туман съел бы лампы и окна
 	if env.fog_enabled:
 		env.fog_density += env.volumetric_fog_density * VOL_FOG_TO_FOG
 	we.environment = env
+
+
+## VoxelGI → заливка-заменитель у каждой лампы (Omni/Spot) внутри его объёма, кроме фонарика и света игрока.
+func _replace_voxel_gi(gi: VoxelGI) -> void:
+	if not is_instance_valid(gi) or not gi.is_inside_tree():
+		return
+	var box := AABB(gi.global_position - gi.size * 0.5, gi.size)
+	var host := gi.owner if gi.owner else gi.get_parent()
+	var player := get_tree().get_first_node_in_group("player")
+	for l: Node in host.find_children("*", "Light3D", true, false):
+		if l is DirectionalLight3D or l.get_script() == BOUNCE_SCRIPT or l.has_node("Bounce") or (player and player.is_ancestor_of(l)):
+			continue
+		if not box.has_point((l as Light3D).global_position):
+			continue
+		var b := OmniLight3D.new()
+		b.name = "Bounce"
+		b.set_script(BOUNCE_SCRIPT)
+		b.light_specular = 0.0
+		b.light_volumetric_fog_energy = 0.0
+		b.omni_attenuation = 0.5                                    # отражённый свет почти ровный по комнате
+		var r: float = l.get("omni_range") if l is OmniLight3D else l.get("spot_range")
+		b.omni_range = minf(r, 6.0)                                 # не дальше комнаты: без теней свет прошёл бы сквозь стены
+		l.add_child(b)
+	gi.queue_free()
 
 
 ## Декаль-«пятно» → плоский квадрат с той же текстурой, лежащий на поверхности под ней.

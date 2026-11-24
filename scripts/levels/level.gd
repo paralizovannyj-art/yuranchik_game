@@ -105,6 +105,7 @@ func set_near_sight(energy: float, fade := 0.0) -> void:
 		l.light_color = Color(0.6, 0.66, 0.8)
 		l.light_specular = 0.0
 		l.light_volumetric_fog_energy = 0.0          # глаза не источник: воздух вокруг головы не светится
+		l.light_bake_mode = Light3D.BAKE_DISABLED     # и не отражается от стен (отражённый свет VoxelGI/SSIL)
 		l.light_cull_mask &= ~(Player.BODY_LAYER | Phone.LAYER)   # руки и телефон в 0.3 м иначе сияли бы в темноте
 		l.omni_attenuation = 1.5
 		l.light_energy = 0.0

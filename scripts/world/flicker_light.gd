@@ -9,17 +9,17 @@ extends Light3D
 ## опционально: светящийся материал плафона (emission), гаснущий вместе со светом.
 ## Материал должен быть своим у этой лампы (duplicate), иначе погаснут все плафоны с ним.
 @export var glow_material: BaseMaterial3D
+## то же для нескольких материалов (стекло, отделённое GlowSplit от слитого меша); можно назначить после старта
+var glow_materials: Array[BaseMaterial3D] = []
 
 var _base_energy := 1.0
 var _burst := 0.0
 var _last_f := -1.0
-var _glow_material_base := 0.0
+var _glow_base := {}                              ## материал → его яркость свечения без провала
 
 
 func _ready() -> void:
 	_base_energy = light_energy
-	if glow_material:
-		_glow_material_base = glow_material.emission_energy_multiplier
 
 
 func _process(delta: float) -> void:
@@ -30,6 +30,11 @@ func _process(delta: float) -> void:
 		_burst -= delta
 		f = min_factor if randf() < 0.5 else randf_range(0.4, 1.0)
 	light_energy = _base_energy * f
+	if _glow_base.size() != glow_materials.size() + int(glow_material != null):
+		for m in glow_materials + ([glow_material] if glow_material else []):
+			if m and not _glow_base.has(m):             # назначили позже — запомнить исходную яркость
+				_glow_base[m] = m.emission_energy_multiplier
+				_last_f = -1.0
 	if is_equal_approx(f, _last_f):
 		return
 	_last_f = f
@@ -38,5 +43,5 @@ func _process(delta: float) -> void:
 			glow_mesh.set_instance_shader_parameter("glow", f)   # lamp_sparkle.gdshader
 		else:
 			glow_mesh.transparency = 1.0 - f
-	if glow_material:
-		glow_material.emission_energy_multiplier = _glow_material_base * f
+	for m: BaseMaterial3D in _glow_base:
+		m.emission_energy_multiplier = _glow_base[m] * f
