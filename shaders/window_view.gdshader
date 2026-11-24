@@ -9,8 +9,8 @@ render_mode unshaded, fog_disabled, cull_back;
 #include "res://shaders/compat_srgb.gdshaderinc"
 
 uniform sampler2D tex : source_color, filter_linear_mipmap, repeat_enable;
-const float brightness = 0.36;     // ниже порога свечения (glow) подъезда, иначе окно засвечивает комнату
-const vec3 fog_color = vec3(0.126, 0.13, 0.137);  // линейный цвет (≈ sRGB 0.39), уже с учётом brightness
+const float brightness = 0.62;     // как пасмурный день на дневной карте моста (east_bridge_day): пелена ≈ sRGB 0.40 на экране
+const vec3 fog_color = vec3(0.215, 0.223, 0.235);   // линейный цвет пелены, подобран под небо дневной карты моста
 const float fog_density = 0.035;      // на 20 м видно ~половину, дом напротив (70 м) — едва различимый силуэт
 const float fog_start = 1.5;          // у самого стекла тумана нет
 const float low_fog = 4.0;            // каждый метр ниже глаз считается как столько метров тумана

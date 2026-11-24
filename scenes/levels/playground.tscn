@@ -31,7 +31,7 @@ environment = ExtResource("env_night")
 [node name="Moon" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.894, -0.293, 0.338, 0, 0.756, 0.655, -0.447, -0.586, 0.676, 0, 30, 0)
 light_color = Color(0.6, 0.7, 0.95, 1)
-light_energy = 0.1
+light_energy = 0.02
 shadow_enabled = true
 
 [node name="Ground" type="Node3D" parent="."]
@@ -120,17 +120,19 @@ title = "Хьюга"
 
 [node name="LightL" type="OmniLight3D" parent="Showcase"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 4, 2.5)
+omni_attenuation = 2.0
 light_color = Color(1, 0.86, 0.68, 1)
-light_energy = 2.6
+light_energy = 9.1
 shadow_enabled = true
-omni_range = 10.0
+omni_range = 16
 
 [node name="LightR" type="OmniLight3D" parent="Showcase"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 4, 2.5)
+omni_attenuation = 2.0
 light_color = Color(1, 0.86, 0.68, 1)
-light_energy = 2.6
+light_energy = 9.1
 shadow_enabled = true
-omni_range = 10.0
+omni_range = 16
 
 [node name="Sign" type="Label3D" parent="Showcase"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.6, -1)
@@ -195,9 +197,10 @@ item_id = "bottle"
 
 [node name="Light" type="OmniLight3D" parent="Items"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 3, 8.5)
+omni_attenuation = 2.0
 light_color = Color(1, 0.86, 0.68, 1)
-light_energy = 1.0
-omni_range = 6.0
+light_energy = 2.1
+omni_range = 9.6
 
 [node name="Arena" type="Node3D" parent="."]
 
@@ -210,10 +213,11 @@ outline_size = 12
 
 [node name="Light" type="OmniLight3D" parent="Arena"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7, -22)
+omni_attenuation = 2.0
 light_color = Color(0.85, 0.9, 1, 1)
-light_energy = 1.8
+light_energy = 10.8
 shadow_enabled = true
-omni_range = 22.0
+omni_range = 35.2
 
 [node name="Crate1" type="Node3D" parent="Arena"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, -18)
@@ -267,10 +271,11 @@ outline_size = 12
 
 [node name="Light" type="OmniLight3D" parent="Course"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 7, -1)
+omni_attenuation = 2.0
 light_color = Color(0.85, 0.9, 1, 1)
-light_energy = 1.8
+light_energy = 10.8
 shadow_enabled = true
-omni_range = 20.0
+omni_range = 32
 
 [node name="Step15" type="Node3D" parent="Course"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, 5)

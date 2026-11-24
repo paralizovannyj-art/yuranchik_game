@@ -2,7 +2,7 @@
 ## Девять точек (прихожая от входной двери и к выходу, коридор, комната от двери, диван с Хьюгой, стол с компом,
 ## дверь комнаты, окно, игровое кресло),
 ## в двух режимах: «lit» — свет в прихожей и люстра в комнате включены, «dark» — свет квартиры выключен,
-## светит только фонарик (как у игрока: угол 20°, резкий край).
+## светит только фонарик (как у игрока: яркое пятно 16° + рассеянный ореол 42°).
 ## Запуск (окно нужно — снимки берутся с экрана):
 ##   Godot.exe --path . --resolution 1280x720 --script res://tools/capture_apartment.gd -- <папка> [префикс]
 ##   «Слабый ПК»: добавить --rendering-driver opengl3 --rendering-method gl_compatibility
@@ -55,7 +55,8 @@ func _lights(lit: bool) -> void:
 		(L.get_node(n) as Light3D).visible = lit
 	var room := L.get_node("AptRoom") as OmniLight3D
 	room.visible = lit
-	room.light_energy = 1.3 if lit else 0.0
+	var room_e = level.get("_room_energy")            # люстра из инспектора (stairwell.gd запомнил до выключения)
+	room.light_energy = (float(room_e) if room_e != null else 3.5) if lit else 0.0
 	torch.visible = not lit
 
 
@@ -72,14 +73,22 @@ func _run() -> void:
 	level.add_child(cam)
 	torch = SpotLight3D.new()                      # как Flashlight в player.tscn
 	torch.light_color = Color(1, 0.93, 0.8)
-	torch.light_energy = 8.0
+	torch.light_energy = 26.8
 	torch.shadow_enabled = true
-	torch.spot_range = 18.0
-	torch.spot_attenuation = 0.9
-	torch.spot_angle = 20.0
-	torch.spot_angle_attenuation = 0.15
+	torch.spot_range = 28.8
+	torch.spot_attenuation = 2.0
+	torch.spot_angle = 16.0
+	torch.spot_angle_attenuation = 1.0
 	torch.position = Vector3(0.18, -0.22, -0.05)
 	cam.add_child(torch)
+	var spill := SpotLight3D.new()                 # рассеянный ореол, как Spill в player.tscn
+	spill.set_script(load("res://scripts/player/flashlight_spill.gd"))
+	spill.shadow_enabled = true
+	spill.spot_range = 28.8
+	spill.spot_attenuation = 2.0
+	spill.spot_angle = 42.0
+	spill.spot_angle_attenuation = 2.5
+	torch.add_child(spill)
 	await _wait(60)
 	for mode: String in ["lit", "dark"]:
 		_lights(mode == "lit")

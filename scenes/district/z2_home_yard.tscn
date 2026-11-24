@@ -54,15 +54,15 @@
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.75, 5.4, -63.6)
 light_color = Color(1, 0.75, 0.45, 1)
 light_energy = 1.0
-omni_range = 6.5
-omni_attenuation = 1.6
+omni_range = 10.4
+omni_attenuation = 2.0
 
 [node name="KioskLight" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 5, -52.8)
 light_color = Color(1, 0.75, 0.5, 1)
-light_energy = 0.7
-omni_range = 5
-omni_attenuation = 1.8
+light_energy = 0.783
+omni_range = 8
+omni_attenuation = 2.0
 
 [node name="Homebuilding_mdl" parent="." instance=ExtResource("m2")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 3, -71)

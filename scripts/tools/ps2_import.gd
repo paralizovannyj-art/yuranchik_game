@@ -58,8 +58,9 @@ func _fix(node: Node, root: Node, collide: bool, fog := true) -> void:
 			mat.emission = Color.WHITE
 			mat.emission_operator = BaseMaterial3D.EMISSION_OP_MULTIPLY
 			mat.emission_energy_multiplier = 1.8
-		else:
+		elif mat.emission == Color.BLACK:
 			mat.emission_enabled = false
+		# иначе — свечение задано цветом без текстуры (EbLampWhite у eb_catenary): плафон горит, как в жизни
 	if collide and not "nocol" in String(mi.name).to_lower():
 		var body := StaticBody3D.new()
 		body.name = "Collision"

@@ -72,23 +72,24 @@
 [ext_resource type="PackedScene" uid="uid://bnesos10o64a6" path="res://assets/models/yurchik_room/tablecloth.gltf" id="yr_tablecloth"]
 [ext_resource type="PackedScene" uid="uid://dt5hl2fwaucnw" path="res://assets/models/yurchik_room/wall_writing.gltf" id="yr_wall_writing"]
 
+[ext_resource type="VoxelGIData" path="res://assets/gi/stairwell_gi.res" id="gi_stair"]
+[ext_resource type="VoxelGIData" path="res://assets/gi/home_gi.res" id="gi_home"]
 [sub_resource type="Environment" id="env"]
 background_mode = 1
 ambient_light_source = 2
 ambient_light_color = Color(0.25, 0.3, 0.42, 1)
 ambient_light_sky_contribution = 0.0
-ambient_light_energy = 0.2
+ambient_light_energy = 0.03
 tonemap_mode = 2
 tonemap_white = 1.5
 glow_enabled = true
 glow_intensity = 0.5
 glow_strength = 0.9
 glow_hdr_threshold = 1.2
-fog_enabled = true
 fog_light_color = Color(0.012, 0.014, 0.018, 1)
-fog_density = 0.05
+fog_density = 0.02
 volumetric_fog_enabled = true
-volumetric_fog_density = 0.03
+volumetric_fog_density = 0.004
 volumetric_fog_albedo = Color(0.55, 0.56, 0.58, 1)
 volumetric_fog_anisotropy = 0.4
 volumetric_fog_length = 24.0
@@ -160,7 +161,8 @@ ambience_sound = "amb_room"
 ambience_db = -16.0
 step_sound = "step_floor"
 step_variants = 3
-flashlight_energy = 3.0
+near_sight_energy = 0.25
+near_sight_range = 3.2
 nav_agent_radius = 0.375
 nav_cell = 0.125
 
@@ -372,82 +374,105 @@ draw_pass_1 = SubResource("mesh_flake_out")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.725, 6, -0.66)
 size = Vector3(13.45, 14, 14.68)
 
+[node name="StairwellGI" type="VoxelGI" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1, 5.4, -3.5)
+subdiv = 1
+size = Vector3(6.8, 11.8, 7.6)
+data = ExtResource("gi_stair")
+
+[node name="HomeGI" type="VoxelGI" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.7, 9.75, 1.75)
+subdiv = 1
+size = Vector3(8, 3.4, 8.6)
+data = ExtResource("gi_home")
+
 [node name="Lights" type="Node3D" parent="." unique_id=761837974]
 
 [node name="Bulb1" type="OmniLight3D" parent="Lights" unique_id=1761647443]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, -1.3)
 light_color = Color(1, 0.8, 0.55, 1)
-light_energy = 1.5
+light_energy = 1.0
 light_volumetric_fog_energy = 0.7
 shadow_enabled = true
-omni_range = 7.0
-omni_attenuation = 1.3
+omni_range = 11.2
+omni_attenuation = 2.0
 script = ExtResource("flicker")
 flicker_chance = 0.35
 
 [node name="Bulb2" type="OmniLight3D" parent="Lights" unique_id=503565627]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.2, -1.3)
 light_color = Color(1, 0.78, 0.5, 1)
-light_energy = 0.9
+light_energy = 0.6
 shadow_enabled = true
-omni_range = 6.0
-omni_attenuation = 1.3
+omni_range = 9.6
+omni_attenuation = 2.0
 
 [node name="Bulb4" type="OmniLight3D" parent="Lights" unique_id=568336771]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10.6, -1.3)
 light_color = Color(1, 0.8, 0.55, 1)
-light_energy = 1.5
+light_energy = 1.0
 light_volumetric_fog_energy = 0.7
 shadow_enabled = true
-omni_range = 7.0
-omni_attenuation = 1.3
+omni_range = 11.2
+omni_attenuation = 2.0
 
 [node name="Window1" type="OmniLight3D" parent="Lights" unique_id=318398069]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.9, -6.4)
+omni_range = 8
+omni_attenuation = 2.0
 light_color = Color(0.8, 0.55, 0.38, 1)
-light_energy = 0.45
-shadow_enabled = true
+light_energy = 0.08
+shadow_enabled = false
 
 [node name="Window2" type="OmniLight3D" parent="Lights" unique_id=1008051306]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.7, -6.4)
+omni_range = 8
+omni_attenuation = 2.0
 light_color = Color(0.8, 0.55, 0.38, 1)
-light_energy = 0.45
-shadow_enabled = true
+light_energy = 0.08
+shadow_enabled = false
 
 [node name="Window3" type="OmniLight3D" parent="Lights" unique_id=1446138996]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.5, -6.4)
+omni_range = 8
+omni_attenuation = 2.0
 light_color = Color(0.8, 0.55, 0.38, 1)
-light_energy = 0.45
-shadow_enabled = true
+light_energy = 0.08
+shadow_enabled = false
 
 [node name="AptRoom" type="OmniLight3D" parent="Lights" unique_id=1846523846]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -8.925, 10.6, 3.59)
 light_color = Color(1, 0.76, 0.5, 1)
-light_energy = 1.3
+light_energy = 3.5
 shadow_enabled = true
-omni_range = 6.0
-omni_attenuation = 1.5
+omni_range = 9.6
+omni_attenuation = 2.0
 
 [node name="AptHall" type="OmniLight3D" parent="Lights" unique_id=1719521486]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.48, 10.55, -1.25)
+visible = false
 light_color = Color(1, 0.72, 0.42, 1)
-light_energy = 0.55
+light_energy = 0.677
 shadow_bias = 0.02
 shadow_normal_bias = 0.2
-omni_range = 4.8
-omni_attenuation = 1.6
+omni_range = 7.68
+omni_attenuation = 2.0
 
 [node name="Monitor" type="OmniLight3D" parent="Lights" unique_id=119520343]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -9.8, 9.45, 2.2)
+omni_attenuation = 2.0
 light_color = Color(0.55, 0.68, 1, 1)
-light_energy = 0.0
+light_energy = 0
 shadow_enabled = true
-omni_range = 3.0
+omni_range = 4.8
+visible = false
 
 [node name="WindowDay" type="OmniLight3D" parent="Lights" unique_id=1225608182]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -8.945, 10, 5.18)
 light_color = Color(0.6, 0.66, 0.8, 1)
-light_energy = 0.25
+light_energy = 0.4
+omni_range = 5.0
+omni_attenuation = 2.0
 
 [node name="Items" type="Node3D" parent="." unique_id=395394839]
 
@@ -470,54 +495,54 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.75, 9.4, -1.25)
 script = ExtResource("inter")
 prompt = "Открыть квартиру 47"
 radius = 1.7
-aim_meshes = PackedStringArray("AptDoor", "EntryDoorIn_nocol")
 need_item = "key_home"
 locked_text = "Заперто. Нужны ключи от дома."
+aim_meshes = PackedStringArray("AptDoor", "EntryDoorIn_nocol")
 
 [node name="DoubleDoorUse" type="Node3D" parent="." unique_id=438560511]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.95, 9.4, -0.42)
 script = ExtResource("inter")
 prompt = "Открыть дверь"
 radius = 1.3
-aim_meshes = PackedStringArray("DoubleDoor_nocol")
 need_item = "locked"
 locked_text = "Не сейчас."
+aim_meshes = PackedStringArray("DoubleDoor_nocol")
 
 [node name="WcDoorUse" type="Node3D" parent="." unique_id=938991847]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.65, 9.4, -0.42)
 script = ExtResource("inter")
 prompt = "Открыть дверь"
 radius = 1.3
-aim_meshes = PackedStringArray("DoorWc_nocol")
 need_item = "locked"
 locked_text = "Не сейчас."
+aim_meshes = PackedStringArray("DoorWc_nocol")
 
 [node name="WhiteDoorAUse" type="Node3D" parent="." unique_id=1983642485]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.43, 9.4, -1.552)
 script = ExtResource("inter")
 prompt = "Открыть дверь"
 radius = 1.3
-aim_meshes = PackedStringArray("DoorWhiteA_nocol")
 need_item = "locked"
 locked_text = "Не сейчас."
+aim_meshes = PackedStringArray("DoorWhiteA_nocol")
 
 [node name="WhiteDoorBUse" type="Node3D" parent="." unique_id=637212807]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.43, 9.4, 0.85)
 script = ExtResource("inter")
 prompt = "Открыть дверь"
 radius = 1.3
-aim_meshes = PackedStringArray("DoorWhiteB_nocol")
 need_item = "locked"
 locked_text = "Не сейчас."
+aim_meshes = PackedStringArray("DoorWhiteB_nocol")
 
 [node name="PCUse" type="Node3D" parent="." unique_id=2072950525]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -10.2, 9.45, 2.2)
 script = ExtResource("inter")
 prompt = "Включить компьютер"
 radius = 1.9
-aim_meshes = PackedStringArray("Monitor", "PcTower")
 enabled = false
 one_shot = true
+aim_meshes = PackedStringArray("Monitor", "PcTower")
 
 [node name="LightSwitchUse" type="Node3D" parent="." unique_id=1196206228]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -8.6, 9.95, 1.58)
