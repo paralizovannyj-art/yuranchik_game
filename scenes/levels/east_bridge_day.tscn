@@ -160,6 +160,7 @@ script = ExtResource("lvl")
 ambience_db = -3.0
 bake_navigation = false
 flashlight_energy = 3.0
+near_sight_energy = 0.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("env")

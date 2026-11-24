@@ -77,7 +77,7 @@ environment = ExtResource("env_night")
 [node name="Moon" type="DirectionalLight3D" parent="." unique_id=98314682]
 transform = Transform3D(0.894, -0.293, 0.338, 0, 0.756, 0.655, -0.447, -0.586, 0.676, 0, 60, 0)
 light_color = Color(0.5, 0.65, 0.95, 1)
-light_energy = 0.1
+light_energy = 0.05
 shadow_enabled = true
 directional_shadow_max_distance = 80.0
 
