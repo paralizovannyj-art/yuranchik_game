@@ -2,7 +2,7 @@
 ## Девять точек (прихожая от входной двери и к выходу, коридор, комната от двери, диван с Хьюгой, стол с компом,
 ## дверь комнаты, окно, игровое кресло),
 ## в двух режимах: «lit» — свет в прихожей и люстра в комнате включены, «dark» — свет квартиры выключен,
-## светит только фонарик (как у игрока: угол 20°, резкий край).
+## светит только фонарик (как у игрока: яркое пятно 16° + рассеянный ореол 42°).
 ## Запуск (окно нужно — снимки берутся с экрана):
 ##   Godot.exe --path . --resolution 1280x720 --script res://tools/capture_apartment.gd -- <папка> [префикс]
 ##   «Слабый ПК»: добавить --rendering-driver opengl3 --rendering-method gl_compatibility
@@ -72,12 +72,12 @@ func _run() -> void:
 	level.add_child(cam)
 	torch = SpotLight3D.new()                      # как Flashlight в player.tscn
 	torch.light_color = Color(1, 0.93, 0.8)
-	torch.light_energy = 8.0
+	torch.light_energy = 26.8
 	torch.shadow_enabled = true
-	torch.spot_range = 18.0
-	torch.spot_attenuation = 0.9
-	torch.spot_angle = 20.0
-	torch.spot_angle_attenuation = 0.15
+	torch.spot_range = 28.8
+	torch.spot_attenuation = 2.0
+	torch.spot_angle = 16.0
+	torch.spot_angle_attenuation = 1.0
 	torch.position = Vector3(0.18, -0.22, -0.05)
 	cam.add_child(torch)
 	await _wait(60)

@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://l6yy2wslyolu"]
 
 [ext_resource type="Script" uid="uid://biu7nmbtfy7hv" path="res://scripts/player/player.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/player/flashlight_spill.gd" id="spill"]
 [ext_resource type="Script" uid="uid://ckgje07njha0j" path="res://scripts/player/yurchik_anim.gd" id="2"]
 [ext_resource type="PackedScene" uid="uid://4f8gmarv2h0" path="res://assets/models/yurchik.gltf" id="3"]
 [ext_resource type="Script" uid="uid://cw16t6nceymo5" path="res://scenes/characters/breath_particles.gd" id="4_dyp2m"]
@@ -98,8 +99,20 @@ shadow_enabled = true
 shadow_caster_mask = 4294443007
 spot_range = 28.8
 spot_attenuation = 2.0
-spot_angle = 20.0
-spot_angle_attenuation = 0.15
+spot_angle = 16.0
+spot_angle_attenuation = 1.0
+
+[node name="Spill" type="SpotLight3D" parent="CamPivot/Camera/Flashlight"]
+light_color = Color(1, 0.93, 0.8, 1)
+light_energy = 5.893
+light_volumetric_fog_energy = 0.3
+shadow_enabled = true
+shadow_caster_mask = 4294443007
+spot_range = 28.8
+spot_attenuation = 2.0
+spot_angle = 42.0
+spot_angle_attenuation = 2.5
+script = ExtResource("spill")
 
 [node name="BreathParticles" type="GPUParticles3D" parent="CamPivot/Camera" unique_id=2071320922]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.062128425, -0.17409149)
