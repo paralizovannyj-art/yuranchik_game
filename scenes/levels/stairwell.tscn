@@ -148,6 +148,14 @@ particles_anim_loop = false
 material = SubResource("mat_flake_out")
 size = Vector2(0.06, 0.06)
 
+[sub_resource type="StandardMaterial3D" id="mat_hall_key"]
+albedo_color = Color(0.86, 0.83, 0.74, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="mesh_hall_key"]
+material = SubResource("mat_hall_key")
+size = Vector3(0.008, 0.05, 0.034)
+
 [sub_resource type="BoxShape3D" id="door_box"]
 size = Vector3(0.04, 2.035, 0.85)
 
@@ -222,7 +230,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.305, 9.02, -0.6225176)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.247, 9.02, -0.47442997)
 
 [node name="Sconce" parent="Apartment" unique_id=33747500 instance=ExtResource("ap_sconce")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.315, 10.61, -1.25)
+transform = Transform3D(1, 0, 0, 0, -1, 0, 0, 0, -1, -3.315, 10.75, -1.25)
 
 [node name="SwitchEntry" parent="Apartment" unique_id=638137159 instance=ExtResource("ap_switch_entry")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.206, 9.8, -0.64)
@@ -449,7 +457,7 @@ omni_range = 9.6
 omni_attenuation = 2.0
 
 [node name="AptHall" type="OmniLight3D" parent="Lights" unique_id=1719521486]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.48, 10.55, -1.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.35, 10.72, -1.25)
 visible = false
 light_color = Color(1, 0.72, 0.42, 1)
 light_energy = 0.677
@@ -550,6 +558,17 @@ script = ExtResource("inter")
 prompt = "Включить свет"
 radius = 1.4
 aim_meshes = PackedStringArray("LightSwitch_nocol")
+
+[node name="HallSwitchUse" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.212, 9.84, -0.64)
+script = ExtResource("inter")
+prompt = "Включить свет"
+radius = 1.4
+aim_meshes = PackedStringArray("SwitchEntry_nocol", "HallSwitchKey")
+
+[node name="HallSwitchKey" type="MeshInstance3D" parent="HallSwitchUse"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.004, 0, 0)
+mesh = SubResource("mesh_hall_key")
 
 [node name="RoomDoor" type="Node3D" parent="." unique_id=1538550053]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -7.97, 9.3, 1.48)
