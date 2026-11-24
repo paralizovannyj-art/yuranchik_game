@@ -15,6 +15,13 @@ uniform float cloud_speed : hint_range(0.0, 0.1) = 0.004;
 // С другой стороны (поле, сёла) зарево слабее в glow_back раз.
 uniform vec2 glow_dir = vec2(0.0, 0.0);
 uniform float glow_back : hint_range(0.0, 1.0) = 0.25;
+// Луна — там, откуда светит DirectionalLight «Moon» (LIGHT0). Видна всегда: сквозь облака — размытым пятном.
+// Реальный угловой радиус 0.25°; чуть больше, чтобы читалась в 720 строк (луна у горизонта и так кажется крупнее).
+uniform vec3 moon_color : source_color = vec3(0.86, 0.88, 0.95);
+uniform float moon_radius_deg : hint_range(0.1, 3.0) = 1.0;
+uniform float moon_energy : hint_range(0.0, 8.0) = 1.6;
+uniform float moon_halo : hint_range(0.0, 2.0) = 0.35;     // ореол в снежной дымке
+uniform float moon_cloud_dim : hint_range(0.0, 1.0) = 0.6; // насколько облако гасит диск
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -61,7 +68,18 @@ void sky() {
 		c = smoothstep(0.42, 0.85, c) * cloud_amount;
 		// облака подсвечены заревом снизу: ярче у горизонта
 		vec3 cloud_col = mix(mid_c * 1.6, horizon_c * 0.9, g);
-		col = mix(col, cloud_col, c * (1.0 - smoothstep(0.6, 1.0, y)));
+		float cover = c * (1.0 - smoothstep(0.6, 1.0, y));
+		// луна: диск + ореол, облако приглушает диск и размывает его в пятно
+		if (LIGHT0_ENABLED) {
+			vec3 mc = compat_lin(moon_color);
+			float cosd = dot(EYEDIR, normalize(LIGHT0_DIRECTION));
+			float ang = degrees(acos(clamp(cosd, -1.0, 1.0)));
+			float disk = 1.0 - smoothstep(moon_radius_deg * 0.85, moon_radius_deg, ang);
+			float halo = exp(-ang / (moon_radius_deg * 6.0)) * moon_halo;
+			col += mc * moon_energy * disk * (1.0 - cover * moon_cloud_dim);
+			col += mc * halo * (0.4 + cover);
+		}
+		col = mix(col, cloud_col, cover * 0.85);
 		COLOR = compat_enc(col);
 	}
 }

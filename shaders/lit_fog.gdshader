@@ -16,6 +16,9 @@ uniform float fog_end = 22.0;           // м: дальше — полный т�
 // яркость пикселя (линейная), ниже которой туман полный и выше которой его нет совсем
 uniform float light_lo = 0.03;
 uniform float light_hi = 0.18;
+// небо (пиксели без геометрии) туман не прячет: зарево города и луну видно всегда, как в жизни;
+// только лёгкая снежная дымка
+uniform float sky_fog : hint_range(0.0, 1.0) = 0.2;
 
 void vertex() {
 	POSITION = vec4(VERTEX.xy, 0.5, 1.0);
@@ -32,6 +35,15 @@ void fragment() {
 	vec4 view = INV_PROJECTION_MATRIX * vec4(ndc, 1.0);
 	float dist = length(view.xyz / view.w);
 	float fog = clamp((dist - fog_begin) / max(fog_end - fog_begin, 0.001), 0.0, 1.0);
+#if CURRENT_RENDERER == RENDERER_COMPATIBILITY
+	bool is_sky = depth >= 0.99999;
+#else
+	bool is_sky = depth <= 0.00001;      // Forward+: обратный Z, небо на дальней плоскости = 0
+#endif
+	if (is_sky) {
+		ALBEDO = mix(c, fog_color, sky_fog);
+		return;
+	}
 	float lum = dot(c, vec3(0.2126, 0.7152, 0.0722));
 	float lit = smoothstep(light_lo, light_hi, lum);
 	ALBEDO = mix(c, fog_color, fog * (1.0 - lit));
