@@ -666,7 +666,6 @@ func _draw_web() -> void:
 	var field := Rect2(30, 118, W - 60, 22)
 	draw_style_box(_box(Color.WHITE, 3, Color("b0bac4"), 1), field)
 	_text("нет соединения с интернетом", Vector2(0, 168), 16, Color("c0392b"), HORIZONTAL_ALIGNMENT_CENTER, W)
-	_text("Проверьте настройки или баланс", Vector2(0, 188), 12, Color("6a7680"), HORIZONTAL_ALIGNMENT_CENTER, W)
 	_soft("Повторить", "Назад")
 
 
