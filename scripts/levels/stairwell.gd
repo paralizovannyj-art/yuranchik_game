@@ -7,7 +7,8 @@ extends Level
 
 @export var sergey_scene: PackedScene
 @export var sergey_delay := 10.0        ## через сколько секунд после входа Сергей заходит в подъезд
-@export var apt_ambient := 0.02         ## общий заполняющий свет в квартире: почти ноль — где нет лампы, там темно
+@export var apt_ambient := 0.16         ## общий свет в квартире: ночь как на улице — темно, но силуэты видно
+@export var apt_ambient_color := Color(0.22, 0.3, 0.52)   ## синий ночной, как в night_exterior.tres
 
 @onready var apt_use: Interactable = $AptDoorUse
 @onready var apt_trigger: Area3D = $AptTrigger
@@ -246,15 +247,18 @@ func _set_warm() -> void:
 		b.emitting = false
 
 
-## Квартира — хоррор: общий заполняющий свет (ambient) почти гаснет, подсветка коридора (AptHall) выключена.
-## Видно только там, где есть свет: люстра, монитор, лунный отсвет у окна, фонарик.
+## Квартира ночью — как улица: общий свет (ambient) тусклый и синий, подсветка коридора (AptHall) выключена.
+## Без лампы темно, но силуэты видно; ярко только у люстры, монитора, окна и в пятне фонарика.
 ## Окружение — копия: подъезд в следующий раз начнётся со своей обычной яркостью.
 func _set_apartment_dark(fade: float) -> void:
 	var we := $WorldEnvironment as WorldEnvironment
 	if we.environment:
 		we.environment = we.environment.duplicate() as Environment
 		if fade > 0.0:
-			create_tween().tween_property(we.environment, "ambient_light_energy", apt_ambient, fade)
+			var tw := create_tween().set_parallel()
+			tw.tween_property(we.environment, "ambient_light_energy", apt_ambient, fade)
+			tw.tween_property(we.environment, "ambient_light_color", apt_ambient_color, fade)
 		else:
 			we.environment.ambient_light_energy = apt_ambient
+			we.environment.ambient_light_color = apt_ambient_color
 	$Lights/AptHall.visible = false
