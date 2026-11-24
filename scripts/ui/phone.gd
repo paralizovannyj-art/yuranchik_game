@@ -19,9 +19,6 @@ const LAYER := 1 << 18
 const OPEN_ROT := Vector3(deg_to_rad(12.0), deg_to_rad(0.0), deg_to_rad(0.0))   ## стоит ровно: только верх чуть от камеры, чтобы экран смотрел в лицо
 const CLOSED_ROT := Vector3(deg_to_rad(55.0), deg_to_rad(-8.0), deg_to_rad(-20.0))
 const ANIM := 0.28
-## Экран — слабый источник света вокруг Юрчика (правило автора «свет только от фонарика / телефона», cry-of-fear-author.md С2)
-const LIGHT_ENERGY := 0.8
-const LIGHT_RANGE := 3.0
 const HAND_LIGHT_ENERGY := 0.021                 ## руку в упор — как было (0.3 × 0.07), иначе пальцы пересвечены
 const SERGEY_NEAR := 14.0                        ## ближе — одна палка сети
 const SERGEY_FAR := 45.0                         ## дальше — все четыре
@@ -32,7 +29,6 @@ var player: Player
 
 var _screen_vp: SubViewport
 var _print_vp: SubViewport
-var _light: OmniLight3D
 var _hand_light: OmniLight3D
 ## Держит телефон правая рука самого Юрчика (кости его модели) — scripts/player/phone_arm.gd.
 var arm: PhoneArm
@@ -69,7 +65,6 @@ func _build_screen() -> void:
 	_screen_vp.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	add_child(_screen_vp)
 	screen = PhoneScreen.new()
-	screen.player = player
 	_screen_vp.add_child(screen)
 	var pr := PhonePrint.new()
 	pr.layout = LAYOUT.data
@@ -109,15 +104,7 @@ func _build_model() -> void:
 				"PhScreen": mi.set_surface_override_material(i, sm)
 				"PhPrint": mi.set_surface_override_material(i, pm)
 				"PhBackPrint": mi.set_surface_override_material(i, bm)
-	# экран подсвечивает голубым всё вокруг на пару метров (снег, стены) — в темноте им можно светить
-	_light = OmniLight3D.new()
-	_light.light_color = Color("9fd0c8")
-	_light.light_energy = 0.0
-	_light.omni_range = LIGHT_RANGE
-	_light.omni_attenuation = 2.0
-	_light.position = Vector3(0, 0.025, 0.03)
-	_light.light_cull_mask = ~(LAYER | Player.BODY_LAYER)   # светит на мир вокруг, но не на сам телефон и руку
-	add_child(_light)
+	# экран мир вокруг не освещает (голубой круг света на снегу и стенах убран по просьбе), светит только на руку
 	# руку в упор подсвечивает отдельный слабый свет экрана, иначе пальцы у экрана пересвечены
 	# (фонарик руку с телефоном тоже не освещает — см. open())
 	_hand_light = OmniLight3D.new()
@@ -145,7 +132,7 @@ func open() -> void:
 		player.flashlight.light_cull_mask &= ~Player.BODY_LAYER   # в упор пересвечивает руку
 	Game.sfx("ui_open", null, -12.0, 0.1)
 	_blur(true)
-	_animate(OPEN_POS, OPEN_ROT, LIGHT_ENERGY)
+	_animate(OPEN_POS, OPEN_ROT, true)
 
 
 func close() -> void:
@@ -157,7 +144,7 @@ func close() -> void:
 		player.phone_up = false
 	Game.sfx("ui_open", null, -14.0, 0.1)
 	_blur(false)
-	_animate(CLOSED_POS, CLOSED_ROT, 0.0)
+	_animate(CLOSED_POS, CLOSED_ROT, false)
 	_tween.tween_callback(func() -> void:
 		visible = false
 		_screen_vp.render_target_update_mode = SubViewport.UPDATE_DISABLED
@@ -166,16 +153,15 @@ func close() -> void:
 			player.flashlight.light_cull_mask |= Player.BODY_LAYER)
 
 
-func _animate(pos: Vector3, rot: Vector3, light: float) -> void:
+func _animate(pos: Vector3, rot: Vector3, up: bool) -> void:
 	if _tween:
 		_tween.kill()
 	_tween = create_tween().set_parallel().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	_tween.tween_property(self, "position", pos, ANIM)
 	_tween.tween_property(self, "rotation", rot, ANIM)
-	_tween.tween_property(_light, "light_energy", light, ANIM)
-	_tween.tween_property(_hand_light, "light_energy", HAND_LIGHT_ENERGY if light > 0.0 else 0.0, ANIM)
+	_tween.tween_property(_hand_light, "light_energy", HAND_LIGHT_ENERGY if up else 0.0, ANIM)
 	if arm:
-		_tween.tween_property(arm, "weight", 1.0 if light > 0.0 else 0.0, ANIM)
+		_tween.tween_property(arm, "weight", 1.0 if up else 0.0, ANIM)
 	_tween.chain()
 
 
