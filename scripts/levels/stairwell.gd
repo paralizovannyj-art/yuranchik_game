@@ -3,6 +3,8 @@
 ## включает старый комп. Если за ним шёл Сергей (старый двор) — тот начинает ломиться в дверь.
 ## В комнате свет сначала выключен: выключатель у проёма (LightSwitchUse) щёлкает клавишей, старая лампочка
 ## моргает, прежде чем разгореться, и потом изредка «проседает».
+## В коридоре у входной двери — бра плафоном вверх (над дверью) и выключатель справа от двери (HallSwitchUse).
+## Оба выключателя — одна модель assets/models/props/wall_switch.gltf (tools/blender/build_wall_switch.py).
 extends Level
 
 @export var sergey_scene: PackedScene
@@ -14,6 +16,8 @@ extends Level
 @onready var monitor_light: OmniLight3D = $Lights/Monitor
 @onready var light_use: Interactable = $LightSwitchUse
 @onready var room_light: OmniLight3D = $Lights/AptRoom
+@onready var hall_use: Interactable = $HallSwitchUse
+@onready var hall_light: OmniLight3D = $Lights/AptHall
 
 var _door: Node3D
 var _sergey: Enemy
@@ -26,6 +30,11 @@ var _bulb_glow := 1.0                     ## свечение плафонов �
 var _bulbs: StandardMaterial3D            ## материал плафонов люстры (копия, чтобы гасить только их)
 var _switch_key: Node3D                   ## клавиша выключателя (качается)
 var _flickered := false                   ## первое включение — всегда с морганием и репликой
+var _hall_key: Node3D                    ## клавиша выключателя в прихожей
+var _hall_on := false                     ## бра в коридоре
+var _hall_energy := 0.677                 ## яркость бра из инспектора (AptHall)
+var _sconce_mats: Array[StandardMaterial3D] = []   ## светящиеся материалы плафона бра (копии)
+var _sconce_glow: Array[float] = []
 
 
 func _start() -> void:
@@ -40,7 +49,7 @@ func _start() -> void:
 	pc_use.interacted.connect(_use_pc)
 	_setup_screen()
 	_setup_room_light()
-	_sconce_off()
+	_setup_hall_light()
 	_split_bulb_glass()
 	if Game.flags.get("start_in_room", false):  # отладка (F9 / пункт меню): сразу в комнате
 		Game.flags.erase("start_in_room")
@@ -148,7 +157,7 @@ func _setup_room_light() -> void:
 	_room_energy = room_light.light_energy
 	room_light.light_energy = 0.0
 	room_light.visible = false
-	_switch_key = $YurchikRoom.find_child("LightSwitchKey_nocol", true, false) as Node3D
+	_switch_key = light_use.find_child("WallSwitchKey_nocol", true, false) as Node3D
 	var lamp := $YurchikRoom.find_child("Chandelier_nocol", true, false) as MeshInstance3D
 	if lamp and lamp.mesh:
 		for i in lamp.mesh.get_surface_count():
@@ -247,18 +256,51 @@ func _split_bulb_glass() -> void:
 		bulb.set("glow_materials", GlowSplit.split_near($Stairwell, bulb.global_position, 0.6))
 
 
-## Бра в коридоре квартиры не горит (свет AptHall выключен — в коридоре темно): плафон тоже тёмный,
-## иначе светящаяся лампа висит в темноте и ничего не освещает. Материал — копия, чтобы не погасить другие.
-func _sconce_off() -> void:
+## Бра в коридоре квартиры: при старте не горит (в коридоре темно), плафон тоже тёмный — иначе светящаяся лампа
+## висит в темноте и ничего не освещает. Материалы плафона — копии, чтобы не гасить другие лампы.
+## Включается выключателем справа от входной двери.
+func _setup_hall_light() -> void:
+	_hall_energy = hall_light.light_energy
 	var sc := $Apartment.find_child("Sconce_nocol", true, false) as MeshInstance3D
-	if sc == null or sc.mesh == null:
-		return
-	for i in sc.mesh.get_surface_count():
-		var m := sc.mesh.surface_get_material(i) as StandardMaterial3D
-		if m and m.emission_enabled:
-			var off := m.duplicate() as StandardMaterial3D
-			off.emission_energy_multiplier = 0.0
-			sc.set_surface_override_material(i, off)
+	if sc and sc.mesh:
+		for i in sc.mesh.get_surface_count():
+			var m := sc.mesh.surface_get_material(i) as StandardMaterial3D
+			if m and m.emission_enabled:
+				var c := m.duplicate() as StandardMaterial3D
+				_sconce_mats.append(c)
+				_sconce_glow.append(c.emission_energy_multiplier)
+				sc.set_surface_override_material(i, c)
+	_set_hall(0.0)
+	hall_light.visible = false
+	_hall_key = hall_use.find_child("WallSwitchKey_nocol", true, false) as Node3D
+	if _hall_key:
+		_hall_key.rotation.z = deg_to_rad(8.0)
+	hall_use.prompt = "Включить свет"
+	hall_use.interacted.connect(_toggle_hall)
+
+
+## Яркость бра: 0 — выключено, 1 — как в инспекторе.
+func _set_hall(f: float) -> void:
+	hall_light.light_energy = _hall_energy * f
+	for i in _sconce_mats.size():
+		_sconce_mats[i].emission_energy_multiplier = _sconce_glow[i] * f
+
+
+func _toggle_hall(p: Player) -> void:
+	_hall_on = not _hall_on
+	hall_use.prompt = "Выключить свет" if _hall_on else "Включить свет"
+	p.busy(0.35, "Interact")
+	await after(0.12)
+	Game.sfx("light_switch", hall_use.global_position, -2.0, 0.05)
+	if _hall_key:
+		create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT).tween_property(_hall_key, "rotation:z", deg_to_rad(-8.0 if _hall_on else 8.0), 0.09)
+	if _hall_on:
+		hall_light.visible = true
+	var tw := create_tween()
+	tw.tween_method(_set_hall, 0.0 if _hall_on else 1.0, 1.0 if _hall_on else 0.0, 0.15 if _hall_on else 0.18)
+	await tw.finished
+	if not _hall_on:
+		hall_light.visible = false
 
 
 ## Дома тепло: изо рта больше не идёт пар (в подъезде — холодно, там он есть).

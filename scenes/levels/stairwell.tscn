@@ -20,7 +20,7 @@
 [ext_resource type="PackedScene" uid="uid://dmje3jfemf7c5" path="res://assets/models/apartment/sconce.gltf" id="ap_sconce"]
 [ext_resource type="PackedScene" uid="uid://e558runhjvcu" path="res://assets/models/apartment/shelf.gltf" id="ap_shelf"]
 [ext_resource type="PackedScene" uid="uid://d025q0d62ofkw" path="res://assets/models/apartment/switch_corridor.gltf" id="ap_switch_corridor"]
-[ext_resource type="PackedScene" uid="uid://cvyyxms5b72p3" path="res://assets/models/apartment/switch_entry.gltf" id="ap_switch_entry"]
+[ext_resource type="PackedScene" uid="uid://dsber4ub5phi3" path="res://assets/models/props/wall_switch.gltf" id="wall_switch"]
 [ext_resource type="PackedScene" uid="uid://dt8tspj47w6r6" path="res://assets/models/apartment/vacuum.gltf" id="ap_vacuum"]
 [ext_resource type="PackedScene" uid="uid://rybtt27tsa2p" path="res://assets/models/apartment/vase_flowers.gltf" id="ap_vase_flowers"]
 [ext_resource type="PackedScene" uid="uid://bxpfnca54y5a4" path="res://assets/models/apartment/wardrobe.gltf" id="ap_wardrobe"]
@@ -53,7 +53,6 @@
 [ext_resource type="PackedScene" uid="uid://di1iy1nqslqfr" path="res://assets/models/yurchik_room/floor_clothes.gltf" id="yr_floor_clothes"]
 [ext_resource type="PackedScene" uid="uid://dmfar33gfx3so" path="res://assets/models/yurchik_room/icon_frame.gltf" id="yr_icon_frame"]
 [ext_resource type="PackedScene" uid="uid://deycsnd0rkvie" path="res://assets/models/yurchik_room/keyboard.gltf" id="yr_keyboard"]
-[ext_resource type="PackedScene" uid="uid://cqqyfp3hg4u7c" path="res://assets/models/yurchik_room/light_switch.gltf" id="yr_light_switch"]
 [ext_resource type="PackedScene" uid="uid://c4ep38a420ekk" path="res://assets/models/yurchik_room/monitor.gltf" id="yr_monitor"]
 [ext_resource type="PackedScene" uid="uid://bftcoop2bnrtc" path="res://assets/models/yurchik_room/mouse.gltf" id="yr_mouse"]
 [ext_resource type="PackedScene" uid="uid://dll7yx3mv8o8v" path="res://assets/models/yurchik_room/mousepad.gltf" id="yr_mousepad"]
@@ -222,10 +221,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.305, 9.02, -0.6225176)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.247, 9.02, -0.47442997)
 
 [node name="Sconce" parent="Apartment" unique_id=33747500 instance=ExtResource("ap_sconce")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.315, 10.61, -1.25)
-
-[node name="SwitchEntry" parent="Apartment" unique_id=638137159 instance=ExtResource("ap_switch_entry")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.206, 9.8, -0.64)
+transform = Transform3D(1, 0, 0, 0, -1, 0, 0, 0, -1, -3.315, 10.75, -1.25)
 
 [node name="SwitchCorridor" parent="Apartment" unique_id=1151412878 instance=ExtResource("ap_switch_corridor")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.444, 9.8, 0.2)
@@ -341,9 +337,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.437, 8.413, -3.008)
 [node name="WallWriting" parent="YurchikRoom" unique_id=1507397714 instance=ExtResource("yr_wall_writing")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.325, 9.28, -2.91)
 
-[node name="LightSwitch" parent="YurchikRoom" unique_id=781452663 instance=ExtResource("yr_light_switch")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.333, 9.872, -2.1)
-
 [node name="Hyuga" parent="YurchikRoom" unique_id=1349220817 instance=ExtResource("hyuga")]
 transform = Transform3D(0.5, 0, -0.8660254, 0, 1, 0, 0.8660254, 0, 0.5, -8, 8.85, -2.15)
 script = ExtResource("hyuga_sleep")
@@ -449,7 +442,7 @@ omni_range = 9.6
 omni_attenuation = 2.0
 
 [node name="AptHall" type="OmniLight3D" parent="Lights" unique_id=1719521486]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.48, 10.55, -1.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.35, 10.72, -1.25)
 visible = false
 light_color = Color(1, 0.72, 0.42, 1)
 light_energy = 0.677
@@ -545,11 +538,21 @@ one_shot = true
 aim_meshes = PackedStringArray("Monitor", "PcTower")
 
 [node name="LightSwitchUse" type="Node3D" parent="." unique_id=1196206228]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -8.6, 9.95, 1.58)
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -8.6, 9.95, 1.5)
 script = ExtResource("inter")
 prompt = "Включить свет"
 radius = 1.4
-aim_meshes = PackedStringArray("LightSwitch_nocol")
+
+[node name="Switch" parent="LightSwitchUse" instance=ExtResource("wall_switch")]
+
+[node name="HallSwitchUse" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.212, 9.84, -0.64)
+script = ExtResource("inter")
+prompt = "Включить свет"
+radius = 1.4
+
+[node name="Switch" parent="HallSwitchUse" instance=ExtResource("wall_switch")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.012, 0, 0)
 
 [node name="RoomDoor" type="Node3D" parent="." unique_id=1538550053]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -7.97, 9.3, 1.48)
