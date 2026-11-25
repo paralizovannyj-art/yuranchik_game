@@ -39,7 +39,7 @@ R = np.random.default_rng(2011)
 # --- размеры (м) ---
 SEAT_Z = 0.465                 # середина подушки сиденья; верх ~0.52, валики ~0.57
 HINGE = Vector((0.0, -0.235, 0.47))   # нижний край спинки
-TILT = 12.0                    # наклон спинки назад, градусы
+TILT = 12.0                    # наклон спинки назад, градусы (поворот +X: верх уходит к −Y, за спину)
 BACK_H = 0.90                  # высота спинки вдоль наклона
 BACK_U = 0.30                  # полуширина, на которую растянута текстура спинки
 SEAT_U, SEAT_Y0, SEAT_Y1 = 0.20, -0.26, 0.28   # область текстуры сиденья
@@ -273,7 +273,7 @@ def chair(M):
     BK, GR, PL, BKP, ST = M["black"], M["green"], M["plastic"], M["back"], M["seat"]
 
     # ---------------- спинка: строим в своих координатах (x — вбок, y — вперёд, z — вверх вдоль спинки) ----------------
-    XB = Matrix.Translation(HINGE) @ Matrix.Rotation(math.radians(-TILT), 4, 'X')
+    XB = Matrix.Translation(HINGE) @ Matrix.Rotation(math.radians(TILT), 4, 'X')
     back_uv = lambda p: (p.x / (2 * BACK_U) + 0.5, p.z / BACK_H)
     # середина: v, полуширина, полутолщина, вынос вперёд (поясница выпирает)
     mid = [(0.00, 0.14, 0.02, 0.000), (0.03, 0.165, 0.045, 0.005), (0.18, 0.17, 0.052, 0.025), (0.30, 0.165, 0.058, 0.038),
@@ -374,7 +374,7 @@ def collision():
             mb.poly([corners[i] for i in idx], [(0, 0)] * 4, m)
 
     box((0, 0.01, 0.47), 0.28, 0.275, 0.075)
-    rb = Matrix.Rotation(math.radians(-TILT), 3, 'X')
+    rb = Matrix.Rotation(math.radians(TILT), 3, 'X')
     box(HINGE + rb @ Vector((0, 0.0, 0.46)), 0.29, 0.07, 0.46, rb)
     box((0, 0, 0.22), 0.04, 0.04, 0.16)
     for k in range(5):
