@@ -120,10 +120,8 @@ func _create(url: String) -> void:
 		_fail("Не удаётся открыть страницу.")
 		return
 	browser.call("set_zoom_level", log(_k) / log(1.2))
-	browser.connect("on_page_start_loading", func(_b: Node) -> void: _set_loading(true))
-	browser.connect("on_page_loaded", func(_code: int, _b: Node) -> void:
-		_set_loading(false)
-		browser.call("set_zoom_level", log(_k) / log(1.2)))
+	browser.connect("on_page_start_loading", func(_b: Node) -> void: _on_start())
+	browser.connect("on_page_loaded", func(_code: int, _b: Node) -> void: _on_loaded())
 	browser.connect("on_page_failed_loading", func(code: int, msg: String, _b: Node) -> void:
 		_set_loading(false)
 		if code != -3:                   # -3 — загрузку прервали сами (новый адрес), это не ошибка
@@ -131,7 +129,42 @@ func _create(url: String) -> void:
 	browser.connect("on_cursor_changed", func(shape: int, _b: Node) -> void:
 		mouse_default_cursor_shape = shape as Control.CursorShape)
 	_set_loading(true)
+	_mask(true)
 	_fit()
+
+
+## Страницы Google подменяются на вёрстку 2011 (Google2011). Пока новая страница грузится, на экране
+## остаётся снимок старой — современный Google не мелькает.
+func _on_start() -> void:
+	_set_loading(true)
+	if Google2011.is_google(browser.call("get_url")):
+		_mask(true)
+
+
+func _on_loaded() -> void:
+	_set_loading(false)
+	browser.call("set_zoom_level", log(_k) / log(1.2))
+	if Google2011.is_google(browser.call("get_url")):
+		browser.call("execute_javascript", Google2011.script())
+		get_tree().create_timer(0.25).timeout.connect(_mask.bind(false))
+	else:
+		_mask(false)
+
+
+var _masked := false
+
+func _mask(on: bool) -> void:
+	if on == _masked or browser == null or not is_instance_valid(browser):
+		return
+	_masked = on
+	if on:
+		var live := browser.call("get_texture") as Texture2D
+		var img := live.get_image() if live else null
+		view.texture = ImageTexture.create_from_image(img) if img and not img.is_empty() else null
+		get_tree().create_timer(8.0).timeout.connect(_mask.bind(false))   # на всякий случай не висеть вечно
+	else:
+		view.texture = browser.call("get_texture")
+	queue_redraw()
 
 
 func _fail(msg: String) -> void:
@@ -173,6 +206,8 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
+	if _masked and view.texture == null:
+		draw_rect(Rect2(Vector2.ZERO, size), Color.WHITE)
 	if failed == "":
 		return
 	draw_rect(Rect2(Vector2.ZERO, size), Color.WHITE)
