@@ -10,12 +10,14 @@ extends Node3D
 signal powered_on          ## комп включился (первый раз, когда Юрчик сел)
 signal sat_down            ## сел и смотрит в монитор
 signal stood_up            ## встал с кресла
+signal powered_off         ## Windows завершила работу, экран погас
 
 @export var use: Interactable                        ## «Сесть за компьютер» (кресло, стол, монитор, системник)
 @export var screen_mesh := "PCScreen_nocol"          ## плоскость экрана в модели монитора (UV 0..1 на весь экран)
 @export var desktop_scene: PackedScene               ## что показывает комп (рабочий стол)
 @export var screen_size := Vector2i(1280, 1024)      ## разрешение экрана компа (матрица 5:4, 17")
-@export var view_fov := 40.0                          ## угол обзора, когда смотришь в монитор
+@export var ui_size := Vector2(1024, 820)            ## Windows на 125 %: в этих «логических» пикселях живёт рабочий стол
+@export var view_fov := 34.0                          ## угол обзора, когда смотришь в монитор (экран почти во весь кадр)
 @export var cursor_speed := 1.0                       ## скорость курсора относительно мыши
 @export_group("Время, с")
 @export var walk_in := 0.45                           ## подойти к креслу и развернуться к столу
@@ -29,12 +31,14 @@ var powered := false
 var seated := false            ## в кресле (в том числе пока садится и встаёт)
 var active := false            ## смотрит в монитор, мышь — курсор компа
 var viewport: SubViewport
-var cursor := Vector2.ZERO     ## курсор в пикселях экрана компа
+var cursor := Vector2.ZERO     ## курсор в логических пикселях рабочего стола (ui_size)
 var _player: Player
 var _mat: ShaderMaterial
 var _desktop: Control
 var _pointer: Control
 var _busy := false
+var _speaker_pos := Vector3.ZERO   ## откуда звучит Windows (колонки у монитора)
+var _keys_pos := Vector3.ZERO      ## клавиатура и мышь
 
 
 func _ready() -> void:
@@ -52,20 +56,32 @@ func _build_screen() -> void:
 	viewport.transparent_bg = false
 	viewport.gui_embed_subwindows = true
 	viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED   # пока комп выключен
+	viewport.size_2d_override = Vector2i(ui_size)                      # всё 2D растягивается на весь экран
+	viewport.size_2d_override_stretch = true
+	viewport.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_LINEAR
 	add_child(viewport)
+	_pointer = PcCursor.new()
+	_pointer.name = "Cursor"
 	if desktop_scene:
 		_desktop = desktop_scene.instantiate() as Control
 		viewport.add_child(_desktop)
-	_pointer = PcCursor.new()
-	_pointer.name = "Cursor"
+		if "cursor" in _desktop:
+			_desktop.set("cursor", _pointer)
+		if _desktop.has_signal("sound"):
+			_desktop.connect("sound", _on_pc_sound)
+		if _desktop.has_signal("shut_down"):
+			_desktop.connect("shut_down", power_off)
 	viewport.add_child(_pointer)
-	cursor = Vector2(screen_size) * 0.5
+	cursor = ui_size * 0.5
 	_pointer.position = cursor
 	var root: Node = owner if owner else get_parent()
 	var mi := root.find_child(screen_mesh, true, false) as MeshInstance3D
 	if mi == null:
 		push_warning("pc_seat: нет экрана %s" % screen_mesh)
 		return
+	_speaker_pos = mi.global_position
+	var kb := root.find_child("Keyboard_nocol", true, false) as Node3D
+	_keys_pos = kb.global_position if kb else _speaker_pos
 	_mat = ShaderMaterial.new()
 	_mat.shader = preload("res://shaders/pc_screen.gdshader")
 	_mat.set_shader_parameter("screen_tex", viewport.get_texture())
@@ -81,7 +97,27 @@ func power_on(dur := 1.2) -> void:
 	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	if _mat:
 		create_tween().tween_method(func(v: float) -> void: _mat.set_shader_parameter("power", v), 0.0, 1.0, dur)
+	if _desktop and _desktop.has_method("boot"):
+		_desktop.call("boot")
 	powered_on.emit()
+
+
+## Windows выключилась: экран гаснет, в следующий раз Юрчик снова нажмёт кнопку.
+func power_off(dur := 0.6) -> void:
+	if not powered:
+		return
+	powered = false
+	if _mat:
+		var tw := create_tween()
+		tw.tween_method(func(v: float) -> void: _mat.set_shader_parameter("power", v), 1.0, 0.0, dur)
+		tw.tween_callback(func() -> void:
+			if not powered:
+				viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED)
+	powered_off.emit()
+
+
+func _on_pc_sound(sound_name: String) -> void:
+	Game.sfx("win7_" + sound_name, _speaker_pos, -7.0, 0.0)
 
 
 ## Сесть: подойти, сесть (клип), включить комп, если выключен, и уставиться в монитор.
@@ -113,6 +149,7 @@ func sit(p: Player) -> void:
 		await get_tree().create_timer(0.6).timeout
 	p.seat_view = screen_view.global_transform
 	p.seat_view_fov = view_fov
+	Graphics.screen_focus = true                     # чёткая картинка, пока смотрит в монитор
 	tw = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tw.tween_property(p, "seat_view_blend", 1.0, zoom_in)
 	await tw.finished
@@ -131,6 +168,7 @@ func stand() -> void:
 	var tw := create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tw.tween_property(p, "seat_view_blend", 0.0, zoom_out)
 	await tw.finished
+	Graphics.screen_focus = false
 	p.look_at_angles(p.cam_yaw, -0.1)
 	var clip_len: float = p.model.call("seat_length")
 	Game.sfx("chair_sit", global_position, -6.0, 0.05)
@@ -155,15 +193,16 @@ func _input(event: InputEvent) -> void:
 	if not active:
 		return
 	if event is InputEventMouseMotion:
-		var rel: Vector2 = event.relative * cursor_speed * float(screen_size.y) / 720.0
-		cursor = (cursor + rel).clamp(Vector2.ZERO, Vector2(screen_size) - Vector2.ONE)
+		var rel: Vector2 = event.relative * cursor_speed * ui_size.y / 720.0
+		cursor = (cursor + rel).clamp(Vector2.ZERO, ui_size - Vector2.ONE)
 		_pointer.position = cursor
 		var mm := InputEventMouseMotion.new()
 		mm.position = cursor
 		mm.global_position = cursor
 		mm.relative = rel
+		mm.velocity = rel * 60.0
 		mm.button_mask = event.button_mask
-		viewport.push_input(mm)
+		viewport.push_input(mm, true)
 	elif event is InputEventMouseButton:
 		var mb := InputEventMouseButton.new()
 		mb.position = cursor
@@ -173,6 +212,15 @@ func _input(event: InputEvent) -> void:
 		mb.double_click = event.double_click
 		mb.button_mask = event.button_mask
 		mb.factor = event.factor
-		viewport.push_input(mb)
+		if event.pressed and event.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT]:
+			Game.sfx("pc_mouse", _keys_pos, -20.0, 0.1)
+		viewport.push_input(mb, true)
 	elif event is InputEventKey:
-		viewport.push_input(event)
+		if event.pressed and not event.echo:
+			Game.sfx("pc_key_%d" % randi_range(1, 3), _keys_pos, -18.0, 0.08)
+		viewport.push_input(event, true)
+
+
+func _exit_tree() -> void:
+	if seated:
+		Graphics.screen_focus = false

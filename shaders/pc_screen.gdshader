@@ -13,8 +13,8 @@ uniform float power : hint_range(0.0, 1.0) = 0.0;
 uniform float energy = 1.1;                       // яркость горящего экрана
 uniform vec3 glass : source_color = vec3(0.025, 0.027, 0.03);   // выключенный экран — тёмно-серое стекло
 uniform float glare = 0.012;                      // неподвижный отблеск по диагонали
-uniform float noise = 0.045;                      // зерно
-uniform float lines = 0.05;                       // строки
+uniform float noise = 0.025;                      // зерно
+uniform float lines = 0.03;                       // строки
 uniform float line_count = 300.0;
 
 float hash(vec2 p) {
