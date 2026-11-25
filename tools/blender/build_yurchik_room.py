@@ -30,7 +30,7 @@
 # Объекты внутри файла предмета (см. Items): <Предмет> — жёсткое (Godot делает коллизию по сетке),
 # <Предмет>_nocol — мелочь без коллизии, <Предмет>Soft_nocol — мягкое с гладким затенением,
 # <Предмет>Col-colonly — невидимые ящики-коллизии мягкого. Особые имена, которые ищет игра (stairwell.gd):
-# PCScreen_nocol — экран монитора (игра его «включает»), LightSwitchKey_nocol — клавиша выключателя,
+# PCScreen_nocol — экран монитора (игра его «включает»),
 # Chandelier_nocol — люстра (плафоны гаснут и загораются). EastWriting_nocol — прозрачная наклейка с надписями.
 # Мягкие формы — soft() (скруглённый ящик с буграми) и drape() (ткань, наброшенная на прямоугольник, со свесами).
 import bpy, os, sys, math, json
@@ -233,11 +233,11 @@ def tex_east():
     arr = _white_wall(w, h, w / (Y1 - Y0), h / H, ER)
     ux = lambda y: int((Y1 - y) / (Y1 - Y0) * w)
     vy = lambda z: int((1 - z / H) * h)
-    sx, sy = ux(2.10) - 6, vy(1.55) - 7                         # выключатель (y ≈ 2.07 м, h ≈ 1.5 м)
-    arr[sy - 3:sy + 17, sx - 3:sx + 15] *= 0.85                 # залапано вокруг
-    arr[sy - 1:sy + 15, sx - 1:sx + 13] *= 0.6
-    arr[sy:sy + 14, sx:sx + 12] = C(0.80, 0.78, 0.70)
-    arr[sy + 2:sy + 12, sx + 3:sx + 9] = C(0.70, 0.68, 0.60)
+    # выключатель — отдельная модель (build_wall_switch.py, рамка 86×86 мм, центр y = 2.10 м, h = 1.55 м);
+    # на стене только залапанное пятно вокруг рамки
+    sx, sy = ux(2.10), vy(1.55)
+    arr[sy - 7:sy + 8, sx - 12:sx + 12] *= 0.93
+    arr[sy - 5:sy + 6, sx - 9:sx + 9] *= 0.92
     ox, oy = ux(2.24) - 5, vy(0.36) - 5                         # розетка под выключателем
     arr[oy - 1:oy + 11, ox - 1:ox + 11] *= 0.6
     arr[oy:oy + 10, ox:ox + 10] = C(0.78, 0.76, 0.68)
@@ -1148,16 +1148,8 @@ def room(M):
         sc.box((xa, sy1 - 0.95, Z), (xb, sy1, Z + 0.68), CF)
     sc.box((sx0, by0 + 0.10, Z), (sx1, sy1 - 0.26, Z + 0.44), CF)                                          # кровать с пледом
 
-    # --- выключатель света у проёма (поверх нарисованного на стене): рамка и отдельная клавиша —
-    #     игра качает клавишу (stairwell.gd: _toggle_light), ось — у поверхности рамки ---
-    SWY, SWZ = 2.10, Z + 1.55
-    abox(I("light_switch"), (X1 - 0.012, SWY - 0.04, SWZ - 0.078), (X1, SWY + 0.04, SWZ + 0.078), at, WH, skip=('+X',))
-    kb = B()
-    abox(kb, (-0.014, -0.025, -0.045), (0.0, 0.025, 0.045), at, WH, skip=('+X',))
-    abox(kb, (-0.0145, -0.012, 0.028), (-0.0135, 0.012, 0.032), at, BL, faces=None, skip=('+X',))   # риска сверху
-    key = kb.build("LightSwitchKey_nocol", coll)
-    key.location = (X1 - 0.012, SWY, SWZ)
-    I.extra("light_switch", key)
+    # выключатель света у проёма (y = 2.10, h = 1.55 м) — общая модель build_wall_switch.py, в stairwell.tscn
+    # она дочерняя у LightSwitchUse
 
     layout = export_items(I, coll)
     return {"items": len(layout), "layout": layout}
@@ -1197,4 +1189,5 @@ def main():
     return res
 
 
-main()
+if __name__ == "__main__":
+    main()

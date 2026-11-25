@@ -4,6 +4,7 @@
 ## В комнате свет сначала выключен: выключатель у проёма (LightSwitchUse) щёлкает клавишей, старая лампочка
 ## моргает, прежде чем разгореться, и потом изредка «проседает».
 ## В коридоре у входной двери — бра плафоном вверх (над дверью) и выключатель справа от двери (HallSwitchUse).
+## Оба выключателя — одна модель assets/models/props/wall_switch.gltf (tools/blender/build_wall_switch.py).
 extends Level
 
 @export var sergey_scene: PackedScene
@@ -17,7 +18,6 @@ extends Level
 @onready var room_light: OmniLight3D = $Lights/AptRoom
 @onready var hall_use: Interactable = $HallSwitchUse
 @onready var hall_light: OmniLight3D = $Lights/AptHall
-@onready var hall_key: Node3D = $HallSwitchUse/HallSwitchKey
 
 var _door: Node3D
 var _sergey: Enemy
@@ -30,6 +30,7 @@ var _bulb_glow := 1.0                     ## свечение плафонов �
 var _bulbs: StandardMaterial3D            ## материал плафонов люстры (копия, чтобы гасить только их)
 var _switch_key: Node3D                   ## клавиша выключателя (качается)
 var _flickered := false                   ## первое включение — всегда с морганием и репликой
+var _hall_key: Node3D                    ## клавиша выключателя в прихожей
 var _hall_on := false                     ## бра в коридоре
 var _hall_energy := 0.677                 ## яркость бра из инспектора (AptHall)
 var _sconce_mats: Array[StandardMaterial3D] = []   ## светящиеся материалы плафона бра (копии)
@@ -156,7 +157,7 @@ func _setup_room_light() -> void:
 	_room_energy = room_light.light_energy
 	room_light.light_energy = 0.0
 	room_light.visible = false
-	_switch_key = $YurchikRoom.find_child("LightSwitchKey_nocol", true, false) as Node3D
+	_switch_key = light_use.find_child("WallSwitchKey_nocol", true, false) as Node3D
 	var lamp := $YurchikRoom.find_child("Chandelier_nocol", true, false) as MeshInstance3D
 	if lamp and lamp.mesh:
 		for i in lamp.mesh.get_surface_count():
@@ -271,7 +272,9 @@ func _setup_hall_light() -> void:
 				sc.set_surface_override_material(i, c)
 	_set_hall(0.0)
 	hall_light.visible = false
-	hall_key.rotation.z = deg_to_rad(8.0)
+	_hall_key = hall_use.find_child("WallSwitchKey_nocol", true, false) as Node3D
+	if _hall_key:
+		_hall_key.rotation.z = deg_to_rad(8.0)
 	hall_use.prompt = "Включить свет"
 	hall_use.interacted.connect(_toggle_hall)
 
@@ -289,7 +292,8 @@ func _toggle_hall(p: Player) -> void:
 	p.busy(0.35, "Interact")
 	await after(0.12)
 	Game.sfx("light_switch", hall_use.global_position, -2.0, 0.05)
-	create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT) 		.tween_property(hall_key, "rotation:z", deg_to_rad(-8.0 if _hall_on else 8.0), 0.09)
+	if _hall_key:
+		create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT).tween_property(_hall_key, "rotation:z", deg_to_rad(-8.0 if _hall_on else 8.0), 0.09)
 	if _hall_on:
 		hall_light.visible = true
 	var tw := create_tween()
