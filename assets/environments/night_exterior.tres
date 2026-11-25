@@ -14,6 +14,12 @@ shader_parameter/cloud_amount = 0.65
 shader_parameter/cloud_speed = 0.004
 shader_parameter/glow_dir = Vector2(0, 0)
 shader_parameter/glow_back = 0.25
+shader_parameter/moon_color = Color(0.86, 0.88, 0.95, 1)
+shader_parameter/moon_radius_deg = 0.4
+shader_parameter/moon_halo_deg = 6.0
+shader_parameter/moon_energy = 1.6
+shader_parameter/moon_halo = 0.35
+shader_parameter/moon_cloud_dim = 0.6
 
 [sub_resource type="Sky" id="sky_res"]
 sky_material = SubResource("sky_mat")
@@ -28,9 +34,8 @@ ambient_light_color = Color(0.22, 0.3, 0.52, 1)
 ambient_light_sky_contribution = 0.0
 ambient_light_energy = 0.03
 tonemap_mode = 2
-ssil_enabled = true
-ssil_radius = 5.0
 tonemap_white = 1.5
+ssil_enabled = true
 glow_enabled = true
 glow_intensity = 0.45
 glow_strength = 0.9
