@@ -1,5 +1,5 @@
 ## Курсор мыши на экране компа Юрчика, как в Windows 7: белая стрелка с чёрной обводкой,
-## над текстом — «I-образный» курсор, когда программа запускается — стрелка с крутящимся кольцом.
+## над текстом — «I-образный» курсор, над ссылкой — рука с пальцем, когда программа запускается — стрелка с крутящимся кольцом.
 ## Рисуется поверх рабочего стола внутри SubViewport (pc_seat.gd двигает его за мышью).
 class_name PcCursor
 extends Control
@@ -7,10 +7,16 @@ extends Control
 ## контур стрелки в пикселях (остриё — в 0,0)
 const ARROW := [Vector2(0, 0), Vector2(0, 17), Vector2(4, 13), Vector2(7, 20), Vector2(9.5, 19),
 		Vector2(6.5, 12.2), Vector2(12, 12.2)]
+## рука-«ссылка» (кончик указательного пальца — в 0,0)
+const HAND := [Vector2(-2, 1.5), Vector2(-1, 0), Vector2(1, 0), Vector2(2, 1.5), Vector2(2, 7), Vector2(3, 6),
+		Vector2(5, 6), Vector2(6, 7.5), Vector2(7, 7), Vector2(9, 7), Vector2(10, 8.5), Vector2(11, 8),
+		Vector2(12.5, 9.5), Vector2(12.5, 14), Vector2(11, 17.5), Vector2(9.5, 20), Vector2(-0.5, 20),
+		Vector2(-2.5, 17), Vector2(-6.5, 12.5), Vector2(-7, 10.5), Vector2(-5.5, 9.5), Vector2(-2, 12)]
 @export var scale_px := 1.2
 
 var busy := false
 var _ibeam := false
+var _hand := false
 var _spin := 0.0
 var _was_busy := false
 
@@ -23,15 +29,19 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	var ib := false
+	var hand := false
 	var vp := get_viewport()
 	if vp and vp.has_method("gui_get_hovered_control"):
 		var c: Control = vp.call("gui_get_hovered_control")
 		if c and c.is_visible_in_tree():
-			ib = c.get_cursor_shape(c.get_local_mouse_position()) == Control.CURSOR_IBEAM
+			var shape := c.get_cursor_shape(c.get_local_mouse_position())
+			ib = shape == Control.CURSOR_IBEAM
+			hand = shape == Control.CURSOR_POINTING_HAND
 	if busy:
 		_spin += delta * 6.0
-	if ib != _ibeam or busy or busy != _was_busy:
+	if ib != _ibeam or hand != _hand or busy or busy != _was_busy:
 		_ibeam = ib
+		_hand = hand
 		_was_busy = busy
 		queue_redraw()
 
@@ -43,6 +53,16 @@ func _draw() -> void:
 			draw_line(Vector2(0, -8) * s, Vector2(0, 8) * s, w[1], w[0])
 			draw_line(Vector2(-3, -8) * s, Vector2(3, -8) * s, w[1], w[0])
 			draw_line(Vector2(-3, 8) * s, Vector2(3, 8) * s, w[1], w[0])
+		return
+	if _hand and not busy:
+		var hp := PackedVector2Array()
+		for p: Vector2 in HAND:
+			hp.append(p * scale_px)
+		draw_colored_polygon(hp, Color.WHITE)
+		hp.append(hp[0])
+		draw_polyline(hp, Color.BLACK, 1.0, true)
+		for x: float in [3.5, 7.0, 10.5]:   # щёлочки между пальцами
+			draw_line(Vector2(x, 11) * scale_px, Vector2(x, 14) * scale_px, Color.BLACK, 1.0)
 		return
 	var pts := PackedVector2Array()
 	for p: Vector2 in ARROW:
