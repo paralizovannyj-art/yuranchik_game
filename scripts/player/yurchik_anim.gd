@@ -11,6 +11,8 @@
 extends Node3D
 
 const GMOD_LIB := "res://assets/animations/gmod/yurchik_gmod.glb"
+## посадка в кресло (SitDown — tools/blender/build_sit_down.py); вставание — тот же клип задом наперёд
+const SIT_LIB := "res://assets/animations/sit/yurchik_sit.glb"
 ## зацикленные клипы библиотеки (флаг loop в assets/animations/gmod/clips.json)
 const GMOD_LOOPS := ["Idle", "Walk", "WalkBack", "WalkLeft", "WalkRight", "Run", "RunBack", "RunLeft", "RunRight",
 		"CrouchIdle", "CrouchWalk", "CrouchWalkBack", "CrouchWalkLeft", "CrouchWalkRight", "IdleAngry", "IdleScared",
@@ -79,6 +81,8 @@ var step_phase := 0.0                ## читает камера для пок�
 var jump_windup := -1.0
 var jump_v0 := 0.0
 var land_eta := 9.0
+## ставит pc_seat.gd: секунда клипа SitDown (0 — стоит перед креслом, конец — сидит); < 0 — не в кресле
+var seat_time := -1.0
 
 const UPPER := ["Spine", "Head", "UpperArmL", "ForearmL", "HandL", "UpperArmR", "ForearmR", "HandR"]
 
@@ -102,6 +106,7 @@ var _air_time := 0.0
 var _air := 0.0
 var _squat := 0.0
 var _reach := 0.0
+var _seat := 0.0
 
 
 func _ready() -> void:
@@ -121,6 +126,10 @@ func _ready() -> void:
 	var all := AnimationLibrary.new()
 	for n: StringName in lib.get_animation_list():
 		all.add_animation(n, lib.get_animation(n))
+	var sit_lib := load(SIT_LIB) as AnimationLibrary
+	if sit_lib:
+		for n: StringName in sit_lib.get_animation_list():
+			all.add_animation(n, sit_lib.get_animation(n))
 	var own := root.find_children("*", "AnimationPlayer", false, false)
 	if own.is_empty():
 		_anim = AnimationPlayer.new()
@@ -153,6 +162,7 @@ func _ready() -> void:
 		for key: String in ["jump", "reach", "squat"]:
 			_tree.set("parameters/%s%s_ts/scale" % [pre, key], 0.0)
 		_tree.set("parameters/%sreach_seek/seek_request" % pre, 0.0)
+	_tree.set("parameters/seat_ts/scale", 0.0)
 
 	var sk := find_children("*", "Skeleton3D", true, false)
 	if sk.size() > 0:
@@ -309,7 +319,17 @@ func _build_tree() -> AnimationNodeBlendTree:
 		bt.connect_node(key, 1, key + "_ts")
 	bt.connect_node("act_upper", 0, "attack")
 	bt.connect_node("act_full", 0, "act_upper")
-	bt.connect_node("output", 0, "act_full")
+
+	# посадка в кресло: кадр клипа SitDown задаёт seat_time (pc_seat.gd ведёт его вперёд — садится,
+	# назад — встаёт), всё тело. Вес ветки — _seat (плавно), чтобы на краях не было рывка.
+	if _anim.has_animation("SitDown"):
+		_seek_clip(bt, "seat", "SitDown")
+		bt.add_node("seat", AnimationNodeBlend2.new())
+		bt.connect_node("seat", 0, "act_full")
+		bt.connect_node("seat", 1, "seat_ts")
+		bt.connect_node("output", 0, "seat")
+	else:
+		bt.connect_node("output", 0, "act_full")
 	return bt
 
 
@@ -411,7 +431,20 @@ func update_anim(delta: float, speed: float, _sprint: float, state: int, yaw_rat
 		_lean_mod.spine = Vector3(_lean.x + br, 0.0, _lean.y)
 		_lean_mod.hips_yaw = _hips
 
+	# кресло: клип стоит на кадре seat_time; вес быстро набирается в начале и уходит, когда встал
+	_seat = move_toward(_seat, 1.0 if seat_time >= 0.0 else 0.0, delta * 6.0)
+	_tree.set("parameters/seat/blend_amount", _seat)
+	if seat_time >= 0.0:
+		_tree.set("parameters/seat_seek/seek_request", seat_time)
+
 	_tree.advance(delta)
+
+
+## Длина клипа посадки, с (0 — клипа нет).
+func seat_length() -> float:
+	if _anim and _anim.has_animation("SitDown"):
+		return _anim.get_animation("SitDown").length
+	return 0.0
 
 
 func _update_crouch_air(delta: float, speed: float, crouching: bool, air: bool, vy: float) -> void:

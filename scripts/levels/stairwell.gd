@@ -1,6 +1,7 @@
 ## Подъезд. Подняться на четвёртый этаж в квартиру 47, пока по лестнице идёт Сергей.
 ## Финал демо — дома: Юрчик заходит к себе в комнату (модель по фото — tools/blender/build_yurchik_room.py),
-## включает старый комп. Если за ним шёл Сергей (старый двор) — тот начинает ломиться в дверь.
+## садится за старый комп (PcSeat — scripts/world/pc_seat.gd) и включает его. Если за ним шёл Сергей
+## (старый двор) — тот начинает ломиться в дверь. Концовки нет: дальше Юрчик свободно ходит и может снова сесть.
 ## В комнате свет сначала выключен: выключатель у проёма (LightSwitchUse) щёлкает клавишей, старая лампочка
 ## моргает, прежде чем разгореться, и потом изредка «проседает».
 ## В коридоре у входной двери — бра плафоном вверх (над дверью) и выключатель справа от двери (HallSwitchUse).
@@ -12,8 +13,9 @@ extends Level
 
 @onready var apt_use: Interactable = $AptDoorUse
 @onready var apt_trigger: Area3D = $AptTrigger
-@onready var pc_use: Interactable = $PCUse
-@onready var monitor_light: OmniLight3D = $Lights/Monitor
+@onready var pc_use: Interactable = $PCUse          ## «Сесть за компьютер» — его слушает PcSeat
+@onready var pc_seat: PcSeat = $PcSeat
+@onready var monitor_light: SpotLight3D = $Lights/Monitor     ## экран светит только вперёд — на лицо и стол
 @onready var light_use: Interactable = $LightSwitchUse
 @onready var room_light: OmniLight3D = $Lights/AptRoom
 @onready var hall_use: Interactable = $HallSwitchUse
@@ -22,7 +24,6 @@ extends Level
 var _door: Node3D
 var _sergey: Enemy
 var _ended := false
-var _screen: StandardMaterial3D           ## материал экрана монитора: яркость свечения = «включён»
 var _light_on := false                    ## люстра в комнате
 var _light_busy := false                  ## идёт щелчок/моргание — второй раз не нажать
 var _room_energy := 1.3                   ## яркость люстры из инспектора (AptRoom)
@@ -46,8 +47,7 @@ func _start() -> void:
 		inside.reparent(_door, true)
 	apt_use.interacted.connect(_open_apartment)
 	apt_trigger.body_entered.connect(_on_apartment)
-	pc_use.interacted.connect(_use_pc)
-	_setup_screen()
+	pc_seat.powered_on.connect(_on_pc_powered)
 	_setup_room_light()
 	_setup_hall_light()
 	_split_bulb_glass()
@@ -116,28 +116,10 @@ func _start_in_room() -> void:
 	pc_use.enabled = true
 
 
-## Экран монитора выключен, пока Юрчик не включит комп.
-func _setup_screen() -> void:
-	var mi := $YurchikRoom.find_child("PCScreen_nocol", true, false) as MeshInstance3D
-	if mi == null or mi.mesh == null:
-		return
-	var m := mi.mesh.surface_get_material(0) as StandardMaterial3D
-	if m == null:
-		return
-	_screen = m.duplicate() as StandardMaterial3D
-	_screen.emission_energy_multiplier = 0.0
-	mi.set_surface_override_material(0, _screen)
-
-
-func _use_pc(p: Player) -> void:
-	p.busy(1.0, "Interact")
-	Game.sfx("click", pc_use.global_position)
-	await after(0.6)
-	var tw := create_tween().set_parallel()
-	if _screen:
-		tw.tween_property(_screen, "emission_energy_multiplier", 0.9, 1.2)
+## Комп включился (Юрчик сел и нажал кнопку): экран светит на лицо и стол.
+func _on_pc_powered() -> void:
 	monitor_light.visible = true                  # пока экран выключен, источник скрыт (не занимает лимит OpenGL)
-	tw.tween_property(monitor_light, "light_energy", 0.3, 1.2)   # ЭЛТ-экран ≈ 10 кд — втрое слабее лампочки 40 Вт
+	create_tween().tween_property(monitor_light, "light_energy", 0.3, 1.2)   # ЭЛТ-экран ≈ 10 кд — втрое слабее лампочки 40 Вт
 	Game.set_objective("Дома")
 	await after(1.5)
 	Game.say("Загудел. Старичок ещё живой.")
