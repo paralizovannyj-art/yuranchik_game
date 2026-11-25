@@ -1,6 +1,6 @@
 ## Google Chrome образца 2011 года на Windows 7: вкладки прямо на стекле заголовка, под ними панель
 ## с «Назад», «Вперёд», «Обновить», адресной строкой (омнибоксом), звёздочкой и гаечным ключом.
-## Страница — page (Control): пока там «Новая вкладка»; настоящий браузер (gdcef) подключается сюда же.
+## Страница — page (Control): настоящий браузер W7Web (Chromium через gdcef), стартует с Google.
 class_name W7Chrome
 extends Control
 
@@ -23,6 +23,8 @@ var can_forward := false
 var loading := false
 var _hover := ""
 var _ntp: Control
+var web: W7Web
+var _spin := 0.0
 
 
 func setup(p_desktop: Control) -> W7Chrome:
@@ -49,6 +51,9 @@ func _ready() -> void:
 	_ntp.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_ntp.draw.connect(_draw_ntp)
 	page.add_child(_ntp)
+	web = W7Web.new().setup(self)
+	web.name = "Web"
+	page.add_child(web)
 	omnibox = LineEdit.new()
 	var flat := StyleBoxEmpty.new()
 	flat.content_margin_left = 4
@@ -62,7 +67,13 @@ func _ready() -> void:
 	add_child(omnibox)
 	resized.connect(_layout)
 	_layout()
-	omnibox.call_deferred("grab_focus")
+	web.open.call_deferred(W7Web.HOME)
+
+
+func _process(delta: float) -> void:
+	if loading:
+		_spin += delta * 7.0
+		queue_redraw()
 
 
 func _layout() -> void:
@@ -129,7 +140,15 @@ func _draw() -> void:
 	draw_polygon(poly, cols)
 	var line := poly.duplicate()
 	draw_polyline(line, Color(0, 0, 0, 0.5), 1.0, true)
-	draw_string(W7.FONT, Vector2(tr.position.x + 22, tr.position.y + 17), tab_title, HORIZONTAL_ALIGNMENT_LEFT, tr.size.x - 60, 12, Color.BLACK)
+	# значок вкладки: пока грузится — крутящийся кружок, потом значок Chrome
+	var fc := Vector2(tr.position.x + 22, tr.position.y + 13)
+	if loading:
+		draw_arc(fc, 6.0, _spin, _spin + 4.2, 16, Color("3c78d8"), 2.0, true)
+	else:
+		var fi := W7.icon("chrome", 16)
+		if fi:
+			draw_texture_rect(fi, Rect2(fc - Vector2(8, 8), Vector2(16, 16)), false)
+	draw_string(W7.FONT, Vector2(tr.position.x + 34, tr.position.y + 17), tab_title, HORIZONTAL_ALIGNMENT_LEFT, tr.size.x - 70, 12, Color.BLACK)
 	var cx := _btn("close_tab")
 	if _hover == "close_tab":
 		draw_circle(cx.get_center(), 7, Color("c75050"))
