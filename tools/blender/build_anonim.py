@@ -394,11 +394,11 @@ def build_hood(mb, T):
     back = Vector((0, 1, 0.08)).normalized()
     # подвёрнутый край (толстая двойная ткань ~3 см): внутрь проёма и назад — чернота начинается в глубине
     lip = mb.ring([p + (C - p) * 0.10 + back * 0.034 for p in P], [dict(mb.w[i]) for i in loop])
-    loft(mb, [loop, lip], "hood_rim", "hood_rim", inside=C + back * 0.2)
+    loft(mb, [loop, lip], "hood_rim", "hood_rim", inside=C + back * 2.0)      # лицом вперёд-внутрь проёма
     # «провал»: чёрная чаша вглубь капюшона (отдельный материал AnonimVoid, без запекания)
     deep = mb.ring([p + (C - p) * 0.50 + back * 0.095 for p in P], [dict(mb.w[i]) for i in loop])
     vp = mb.vert(C + back * 0.135, {"Head": 1.0})
-    fis = loft(mb, [lip, deep], "void", "void", mat=1, bake=False, pole=vp, inside=C + back * 0.3)
+    fis = loft(mb, [lip, deep], "void", "void", mat=1, bake=False, pole=vp, inside=C + back * 2.0)
     mb.flat_uv(fis)
     return rings
 
@@ -545,6 +545,386 @@ def make_void_material():
 
 
 # =====================================================================================
+#  Текстура: проекция тёрнэраунда по нормали + запечённые тени (свет как в играх PS2)
+# =====================================================================================
+# рука референса (левая рука персонажа = справа на виде спереди), точки оси для каждого кольца рукава SLEEVE:
+# плечо 205 px → локоть ~288 px → напуск → резинка манжеты 352..384 px; полуширина рукава ~30 px
+REF_ARM = [(342, 205), (350, 235), (362, 262), (375, 288), (388, 310), (400, 328), (408, 342), (414, 352), (430, 384)]
+REF_ARM_HW = 29.0
+FACE_HOLE = [((205, 322), (68, 182)), ((700, 775), (60, 182))]      # чёрный провал на виде спереди и сбоку: не ткань
+# кисти референса (у нас они в кармане): спереди, сзади (зеркально) и сбоку — вырезаются и заливаются тканью вокруг
+HANDS = [((60, 116), (372, 434)), ((404, 462), (372, 434)), ((944, 1002), (372, 434)), ((1290, 1348), (372, 434)),
+         ((682, 760), (374, 432))]
+FABRIC_K = 1.12                                  # худи на тёрнэраунде светлее, чем после PS2-контраста — подтягиваем
+
+
+def prep_refs():
+    turn = load_rgb(REF_TURN)
+    H, W = turn.shape[:2]
+    bg = np.median(np.concatenate([turn[:, 0:30], turn[:, 540:580], turn[:, 880:920], turn[:, 1340:]], axis=1), axis=1)
+    fg = np.abs(turn - bg[:, None, :]).max(axis=2) > 0.07
+    fg = Y["erode"](fg, 2)                                          # без контурной обводки
+    lum = turn.mean(axis=2)
+    hole = np.zeros_like(fg)
+    for (x0, x1), (y0, y1) in FACE_HOLE:
+        hole[y0:y1, x0:x1] = lum[y0:y1, x0:x1] < 0.115
+    for (x0, x1), (y0, y1) in HANDS:
+        hole[y0:y1, x0:x1] = True
+    hole = Y["dilate"](hole, 2)
+    lines = Y["dilate"](lum < 0.07, 1)                              # чёрные контуры рисунка — не ткань
+    valid = fg & ~hole & ~lines
+    return {"turn": Y["fill_invalid"](turn, valid, 60)}
+
+
+def sample(img, px, py):
+    return Y["sample"](img, px, py)
+
+
+def project_turn(refs, P, N, front=1.0, back=1.0, side=0.0):
+    """Цвет с тёрнэраунда: смешиваем виды спереди / сзади / сбоку по нормали."""
+    side = np.broadcast_to(np.asarray(side, np.float32), (len(P),))
+    wf = np.clip(-N[:, 1], 0, 1) ** 2 * front + 0.02 * front
+    wb = np.clip(N[:, 1], 0, 1) ** 2 * back + 0.02 * back
+    ws = np.abs(N[:, 0]) ** 2 * side
+    pz = T_GY - P[:, 2] / T_S
+    img = refs["turn"]
+    c = (sample(img, T_CXF + P[:, 0] / T_S, pz) * wf[:, None] + sample(img, T_CXB - P[:, 0] / T_S, pz) * wb[:, None]
+         + sample(img, T_CXS - P[:, 1] / T_S, pz) * ws[:, None])
+    return c / (wf + wb + ws + 1e-6)[:, None]
+
+
+def sleeve_axis():
+    return [Vector(c) for c, *_ in SLEEVE]
+
+
+def arm_param(P):
+    """Для точек левого рукава: номер кольца (дробный) по оси и боковое смещение / радиус."""
+    cs = sleeve_axis()
+    Q = P.copy(); Q[:, 0] = np.abs(Q[:, 0])
+    best_d = np.full(len(Q), 1e9, np.float32); best_s = np.zeros(len(Q), np.float32); best_l = np.zeros(len(Q), np.float32)
+    for k in range(len(cs) - 1):
+        a = np.array(cs[k], np.float32); b = np.array(cs[k + 1], np.float32); ab = b - a
+        t = np.clip(((Q - a) @ ab) / (ab @ ab), 0, 1)
+        foot = a + t[:, None] * ab
+        d = np.linalg.norm(Q - foot, axis=1)
+        tan = ab / np.linalg.norm(ab)
+        lat_dir = np.cross(tan, np.array((0, 1, 0), np.float32))       # поперёк руки на виде спереди
+        lat_dir = lat_dir / (np.linalg.norm(lat_dir) + 1e-9)
+        if lat_dir[0] < 0:
+            lat_dir = -lat_dir
+        r = lerp(SLEEVE[k][1], SLEEVE[k + 1][1], 0.5)
+        m = d < best_d
+        best_d[m] = d[m]; best_s[m] = (k + t)[m]; best_l[m] = (((Q - foot) @ lat_dir) / r)[m]
+    return best_s, np.clip(best_l, -1.2, 1.2)
+
+
+def project_sleeve(refs, P, N):
+    """Рукав модели (согнут, рука в кармане) ← рука референса (A-поза): по оси руки и поперёк неё."""
+    s, lat = arm_param(P)
+    k0 = np.clip(np.floor(s).astype(int), 0, len(REF_ARM) - 2); t = s - k0
+    ra = np.array(REF_ARM, np.float32)
+    c = ra[k0] * (1 - t)[:, None] + ra[k0 + 1] * t[:, None]
+    d = ra[k0 + 1] - ra[k0]; d = d / np.linalg.norm(d, axis=1, keepdims=True)
+    perp = np.stack([d[:, 1], -d[:, 0]], axis=1)                       # поперёк руки референса, наружу (+x)
+    perp *= np.where(perp[:, :1] < 0, -1.0, 1.0)
+    px = c[:, 0] + perp[:, 0] * lat * REF_ARM_HW; py = c[:, 1] + perp[:, 1] * lat * REF_ARM_HW
+    img = refs["turn"]
+    sx = np.where(P[:, 0] > 0, 1.0, -1.0)
+    wf = np.clip(-N[:, 1], 0, 1) ** 2 + 0.05
+    wb = np.clip(N[:, 1], 0, 1) ** 2 + 0.05
+    cf = sample(img, px, py)
+    cb = sample(img, 2 * T_CXB - (px - T_CXF + T_CXB), py)             # та же рука на виде сзади (зеркально)
+    c = (cf * wf[:, None] + cb * wb[:, None]) / (wf + wb)[:, None]
+    m = c.mean(axis=0, keepdims=True)
+    c = m + (c - m) * 0.8                                               # складки чуть мягче (на рисунке — жёстче)
+    # верх рукава: на референсе плечо сливается с торсом (полосы контуров) — берём ткань плеча проекцией
+    k = nsmooth((1.6 - s) / 1.2)
+    return mix(c, project_turn(refs, P, N, side=0.3), k)
+
+
+def arm_ao(P, k=0.32, reach=0.045):
+    """Тень от рукавов на худи (рука прижата к боку и к животу)."""
+    cs = [np.array(c, np.float32) for c in sleeve_axis()]
+    best = np.full(len(P), 1e9, np.float32)
+    for sx in (1, -1):
+        for k_ in range(len(cs) - 1):
+            a = cs[k_] * (sx, 1, 1); b = cs[k_ + 1] * (sx, 1, 1); ab = b - a
+            t = np.clip(((P - a) @ ab) / (ab @ ab), 0, 1)
+            d = np.linalg.norm(P - (a + t[:, None] * ab), axis=1) - SLEEVE[k_][1]
+            best = np.minimum(best, d)
+    return (1 - k * np.exp(-(np.clip(best, 0, None) / reach) ** 2))[:, None]
+
+
+def grime(P, seed, amt=0.18, sc=30.0):
+    """Грязные пятна и потёртости поверх проекции (крупные пятна + мелкая зернистость ткани)."""
+    big = fbm(P[:, 0] * sc + P[:, 1] * 7, P[:, 2] * sc, seed)
+    fine = vnoise(P[:, 0] * 900 + P[:, 1] * 300, P[:, 2] * 900, seed + 5)
+    return (1 - amt * nsmooth((big - 0.55) / 0.2) + 0.08 * (fine - 0.5))[:, None]
+
+
+def make_painter(refs):
+    def paint(tag, refs_, P, N, LUV):
+        n = len(P); alpha = np.ones(n, np.float32)
+        u, v = LUV[:, 0], LUV[:, 1]
+        if tag in ("hoodie", "rib"):
+            c = project_turn(refs, P, N, side=0.30) * FABRIC_K
+            c = c * arm_ao(P) * grime(P, 11, 0.10)
+            c = c * (1 - 0.25 * nsmooth((1.50 - P[:, 2]) / 0.03) * nsmooth((P[:, 2] - 1.40) / 0.05)
+                     * np.clip(-N[:, 1], 0, 1))[:, None]                     # тень от капюшона на груди
+        elif tag == "sleeve":
+            c = project_sleeve(refs, P, N) * grime(P, 13, 0.08) * FABRIC_K
+            sx = np.where(P[:, 0] > 0, 1.0, -1.0)
+            c = c * (1 - 0.30 * np.clip(-N[:, 0] * sx - 0.2, 0, 1))[:, None]     # внутренняя сторона — к телу, в тени
+        elif tag == "glove":
+            knit = 0.8 + 0.35 * (np.floor(u * 30) % 2)
+            c = col((0.075, 0.072, 0.074))[None, :] * knit[:, None] * toplight(N, 0.6)
+        elif tag == "pocket":
+            c = project_turn(refs, P, N, back=0.0, side=0.15) * grime(P, 17, 0.08) * FABRIC_K
+            edge = np.minimum(u, 1 - u)
+            c = c * (1 - 0.35 * nsmooth((0.10 - edge) / 0.10))[:, None]           # у входов кармана — тень
+            c = c * toplight(N, 0.80)
+        elif tag == "mouth":
+            c = np.tile(col((0.025, 0.025, 0.026)), (n, 1))
+        elif tag == "hood":
+            c = project_turn(refs, P, N, front=0.6, back=1.0, side=0.8) * grime(P, 19, 0.08) * FABRIC_K
+        elif tag == "hood_rim":
+            c = project_turn(refs, P, N, front=0.0, back=1.0, side=0.8) * 0.9
+            c = c * (1 - 0.85 * nsmooth(v / 0.95) ** 0.8)[:, None]               # подворот уходит в темноту провала
+        elif tag == "jeans":
+            c = project_turn(refs, P, N, side=0.5)
+            c = c * (0.50 + 0.50 * np.clip((0.83 - P[:, 2]) / 0.08, 0, 1))[:, None]     # тень под худи
+        elif tag == "boot":
+            c = project_turn(refs, P, N, side=1.0)
+        elif tag == "sole":
+            c = project_turn(refs, P, N, side=1.0) * 0.85
+            c = np.where((N[:, 2] < -0.5)[:, None], col((0.04, 0.04, 0.04)), c)
+        else:
+            c = np.tile(col((0.02, 0.02, 0.022)), (n, 1))
+        return np.clip(c, 0, 1), alpha
+
+    return paint
+
+
+# =====================================================================================
+#  Скелет, анимации, экспорт
+# =====================================================================================
+ARM_BONES = ["UpperArmL", "ForearmL", "HandL", "UpperArmR", "ForearmR", "HandR"]
+IDLE_LEN = 12.0                                   # Idle тянется до 12 с: дыхание + редкие «прислушивания» головой
+WALK_SLOW = 1.30                                  # Walk медленнее исходного в 1.3 раза: тяжёлый шаг
+HEAD_DOWN = {"Walk": 0.12, "Run": 0.10}           # капюшон чуть опущен (рад, кивок вперёд)
+SPINE_SLOUCH = {"Idle": 0.03, "Walk": 0.05, "Run": 0.05}
+
+
+def retarget_safe(sc, arm, clips):
+    sc.render.fps = R["FPS"]; sc.render.fps_base = 1.0
+    dad = arm.animation_data or arm.animation_data_create()
+    for tr in list(dad.nla_tracks):
+        dad.nla_tracks.remove(tr)
+    dad.action = None
+    MAP, NO_ALIGN = R["MAP"], R["NO_ALIGN"]
+    order = [b.name for b in arm.data.bones if b.name in MAP]
+    dw = arm.matrix_world
+    dst_rest = {n: (dw @ arm.data.bones[n].matrix_local) for n in MAP}
+    stats = {}
+    for key, path in E["SRCS"].items():
+        cl = [c for c in clips if c[1] == key]
+        if not cl:
+            continue
+        ensure_ctx(sc)
+        before = {blk: set(getattr(bpy.data, blk)) for blk in ("objects", "meshes", "armatures", "materials", "images", "actions")}
+        bpy.ops.import_scene.gltf(filepath=path)
+        imported = [o for o in bpy.data.objects if o not in before["objects"]]
+        src = [o for o in imported if o.type == 'ARMATURE'][0]
+        src_actions = {a.name: a for a in bpy.data.actions if a not in before["actions"]}
+        sad = src.animation_data or src.animation_data_create()
+        for tr in list(sad.nla_tracks):
+            sad.nla_tracks.remove(tr)
+        sw = src.matrix_world
+        src_rest = {n: (sw @ src.data.bones[n].matrix_local) for n in MAP.values()}
+
+        def bdir(m):
+            return (m.to_3x3() @ Vector((0, 1, 0))).normalized()
+
+        q0 = {n: (Quaternion() if n in NO_ALIGN else
+                  R["rot_between"](bdir(dst_rest[n]), bdir(src_rest[s]))) for n, s in MAP.items()}
+        hip_scale = arm.data.bones["Pelvis"].head_local.z / src.data.bones["pelvis"].head_local.z
+        for name, _, sname, reverse, *rest in cl:
+            sac = src_actions.get(sname) or next(a for n, a in src_actions.items() if n.split(".")[0] == sname)
+            stats[name] = R["bake_clip"](sc, src, arm, sac, name, reverse, q0, src_rest, dst_rest, hip_scale, order,
+                                         rest[0] if rest else None)
+        for o in imported:
+            bpy.data.objects.remove(o, do_unlink=True)
+        for a in src_actions.values():
+            bpy.data.actions.remove(a)
+        for blk in ("meshes", "armatures", "materials", "images"):
+            coll = getattr(bpy.data, blk)
+            for d in list(coll):
+                if d not in before[blk] and d.users == 0:
+                    coll.remove(d)
+    sc.frame_set(0)
+    return stats
+
+
+def read_clip(sc, arm, ac):
+    """Значения костей по кадрам: {кость: [Quaternion]}, положение таза — [Vector]."""
+    dad = arm.animation_data
+    dad.action = ac
+    f0, f1 = [int(round(x)) for x in ac.frame_range]
+    rot = {pb.name: [] for pb in arm.pose.bones}; loc = []
+    for f in range(f0, f1 + 1):
+        sc.frame_set(f)
+        for pb in arm.pose.bones:
+            rot[pb.name].append(pb.rotation_quaternion.copy())
+        loc.append(arm.pose.bones["Pelvis"].location.copy())
+    dad.action = None
+    return rot, loc
+
+
+def write_clip(sc, arm, name, rot, loc):
+    """Новое действие NAME_<name> и NLA-дорожка <name> (имя анимации в glTF / Godot)."""
+    dad = arm.animation_data
+    ac = bpy.data.actions.new(NAME + "_" + name)
+    ac.use_fake_user = True
+    dad.action = ac
+    n = len(loc)
+    for i in range(n):
+        for pb in arm.pose.bones:
+            pb.rotation_quaternion = rot[pb.name][i]
+            pb.keyframe_insert("rotation_quaternion", frame=i, group=pb.name)
+        pb = arm.pose.bones["Pelvis"]
+        pb.location = loc[i]
+        pb.keyframe_insert("location", frame=i, group="Pelvis")
+    tr = dad.nla_tracks.new()
+    tr.name = name
+    tr.mute = True
+    st = tr.strips.new(name, 0, ac)
+    st.name = name
+    dad.action = None
+    return ac
+
+
+def ease(t):
+    t = clamp(t, 0.0, 1.0)
+    return t * t * (3 - 2 * t)
+
+
+def head_events(t):
+    """«Прислушивается»: медленный неестественный наклон головы и короткое подёргивание (рад: кивок, поворот, наклон)."""
+    # 3.0..7.0 с — медленный наклон к плечу (9°) с лёгким поворотом, держит, возвращает
+    a = ease((t - 3.0) / 1.6) * (1 - ease((t - 5.6) / 1.4))
+    roll = math.radians(9.0) * a; yaw = math.radians(4.0) * a; pitch = math.radians(-2.0) * a
+    # 8.4 с — короткое подёргивание (как будто что-то услышал), потом медленно назад
+    b = ease((t - 8.4) / 0.12) * (1 - ease((t - 9.2) / 1.1))
+    yaw += math.radians(-6.0) * b; roll += math.radians(-2.5) * b
+    return pitch, yaw, roll
+
+
+def q_xyz(pitch=0.0, yaw=0.0, roll=0.0):
+    """Поворот в осях кости: X — кивок (+ вперёд), Y — вдоль кости (поворот головы), Z — наклон к плечу."""
+    return (Quaternion((1, 0, 0), pitch) @ Quaternion((0, 1, 0), yaw) @ Quaternion((0, 0, 1), roll))
+
+
+def shape_clips(sc, arm):
+    """Руки всегда в кармане (поза покоя во всех клипах), Idle — «аура», Walk — медленный и тяжёлый."""
+    dad = arm.animation_data
+    fps = R["FPS"]
+    out = {}
+    for tr in list(dad.nla_tracks):
+        name = tr.name; ac = tr.strips[0].action
+        rot, loc = read_clip(sc, arm, ac)
+        n = len(loc)
+        if name == "Idle":                               # тянем петлю до IDLE_LEN и гасим покачивание корпуса
+            m = int(IDLE_LEN * fps) + 1
+            idx = [i % (n - 1) for i in range(m)]
+            rot = {b: [qs[i] for i in idx] for b, qs in rot.items()}; loc = [loc[i] for i in idx]
+            for b in ("Spine", "Head"):
+                rot[b] = [Quaternion().slerp(q, 0.35) for q in rot[b]]
+            n = m
+        elif name in ("Walk", "Run"):
+            k = WALK_SLOW if name == "Walk" else 1.0
+            m = int(round((n - 1) * k)) + 1
+            new_rot = {b: [] for b in rot}; new_loc = []
+            for g in range(m):
+                s = g / k; i0 = min(int(math.floor(s)), n - 2); t = s - i0
+                for b, qs in rot.items():
+                    new_rot[b].append(qs[i0].slerp(qs[i0 + 1], t))
+                new_loc.append(loc[i0].lerp(loc[i0 + 1], t))
+            rot, loc, n = new_rot, new_loc, m
+        for i in range(n):
+            t = i / fps
+            for b in ARM_BONES:
+                rot[b][i] = Quaternion()                 # кисти в кармане: никаких махов руками
+            sp = SPINE_SLOUCH.get(name, 0.0)
+            hp = HEAD_DOWN.get(name, 0.0)
+            if name == "Idle":
+                br = math.sin(2 * math.pi * t / (IDLE_LEN / 3.0))      # медленное дыхание: 3 вдоха за петлю
+                sp += -0.010 * br
+                hp += 0.010 * br
+                p, y, r = head_events(t)
+                rot["Head"][i] = rot["Head"][i] @ q_xyz(hp + p, y, r)
+            else:
+                rot["Head"][i] = rot["Head"][i] @ q_xyz(hp)
+            rot["Spine"][i] = rot["Spine"][i] @ q_xyz(sp)
+        dad.nla_tracks.remove(tr)
+        bpy.data.actions.remove(ac)
+        write_clip(sc, arm, name, rot, loc)
+        out[name] = {"frames": n, "len_s": round((n - 1) / fps, 2)}
+    sc.frame_set(0)
+    return out
+
+
+def arm_drift(sc, arm):
+    """Проверка: кисть (конец кости Hand) относительно Spine не двигается ни в одном клипе."""
+    dad = arm.animation_data
+    res = {}
+    for tr in dad.nla_tracks:
+        ac = tr.strips[0].action
+        dad.action = ac
+        f0, f1 = [int(x) for x in ac.frame_range]
+        ref = None; worst = 0.0
+        for f in range(f0, f1 + 1, 3):
+            sc.frame_set(f)
+            sp = arm.pose.bones["Spine"].matrix
+            v = [sp.inverted() @ arm.pose.bones["Hand" + s].tail for s in ("L", "R")]
+            if ref is None:
+                ref = v
+            worst = max(worst, max((a - b).length for a, b in zip(v, ref)))
+        res[tr.name] = round(worst, 5)
+    dad.action = None
+    sc.frame_set(0)
+    return res
+
+
+def foot_check(sc, arm):
+    out = {}
+    dad = arm.animation_data
+    for tr in dad.nla_tracks:
+        ac = tr.strips[0].action
+        dad.action = ac
+        f0, f1 = [int(x) for x in ac.frame_range]
+        lo = 9.0
+        for f in range(f0, f1 + 1, 2):
+            sc.frame_set(f)
+            for s in ("L", "R"):
+                pb = arm.pose.bones["Foot" + s]
+                lo = min(lo, (arm.matrix_world @ pb.tail).z, (arm.matrix_world @ pb.head).z)
+        out[tr.name] = round(lo, 3)
+    dad.action = None
+    sc.frame_set(0)
+    return out
+
+
+def export_gltf(sc, arm, body):
+    ensure_ctx(sc, [arm, body], arm)
+    bpy.ops.export_scene.gltf(
+        filepath=os.path.join(ROOT, "assets", "models", "anonim.gltf"), use_selection=True, use_active_scene=True,
+        export_format='GLTF_SEPARATE', export_keep_originals=True, export_apply=False, export_skins=True,
+        export_animations=True, export_animation_mode='NLA_TRACKS', export_force_sampling=True,
+        export_frame_step=1, export_optimize_animation_size=True, export_anim_single_armature=True,
+        export_def_bones=False, export_reset_pose_bones=True, export_bake_animation=False)
+
+
+# =====================================================================================
 #  Сравнение с Юрчиком и превью
 # =====================================================================================
 def add_yurchik(sc):
@@ -685,6 +1065,28 @@ def main():
     sys.path.insert(0, HERE); import ps2_budget
     info["budget"] = ps2_budget.check(NAME, info["tris"], "character")
     add_yurchik(sc)
+    if STAGE in ("tex", "full"):
+        refs = prep_refs()
+        Y["paint"] = make_painter(refs)
+        rgba, Tb = Y["bake_atlas"](mb, {0: (body.data, fsel)}, refs)
+        import ps2_style
+        importlib.reload(ps2_style)
+        img = Y["save_atlas"](rgba, "anonim")
+        Y["make_material"](NAME + "Mat", img, False)
+        info["atlas_fill"] = round(float((Tb >= 0).mean()), 3)
+    if STAGE == "full":
+        Y["BONES"] = make_bones()
+        ensure_ctx(sc)
+        arm = E["rig"](body, used, mb, NAME)
+        info["retarget"] = retarget_safe(sc, arm, CLIPS)
+        info["clips"] = shape_clips(sc, arm)
+        info["hand_drift_m"] = arm_drift(sc, arm)
+        info["foot_min_z"] = foot_check(sc, arm)
+        export_gltf(sc, arm, body)
+        for pb in arm.pose.bones:
+            pb.location = (0, 0, 0); pb.rotation_quaternion = (1, 0, 0, 0); pb.scale = (1, 1, 1)
+        ensure_ctx(sc)
+        bpy.ops.wm.save_as_mainfile(filepath=os.path.join(HERE, "anonim.blend"), copy=True)
     info["previews"] = preview(sc, STAGE)
     return info
 

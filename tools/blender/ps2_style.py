@@ -286,6 +286,7 @@ TEXTURES = {
     # персонажи и предметы
     "yur3_atlas": "char", "sergey": "char", "enemy_a": "char", "enemy_b": "char", "enemy_c": "char", "monkey": "fur", "hyuga": "fur",
     "items": "item",
+    "anonim": "char",
     # «Восточный ж/д мост» (YUR-7, east_bridge_textures.py); eb_mesh и плафоны фонарей — без обработки
     "eb_ballast": "snowfloor", "eb_trackbed": "snowfloor", "eb_deck": "snowfloor", "eb_platform": "snowfloor",
     "eb_platform_edge": "wall", "eb_white": "metal", "eb_booth": "metal", "eb_cabinet": "metal",

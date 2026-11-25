@@ -3,12 +3,13 @@
 ## - если в модели есть цвета вершин (запечённый AO), они умножают текстуру;
 ## - для окружения добавляет статические коллизии (персонажам и предметам — нет);
 ## - узлы с «nocol» в имени остаются без коллизии (ступени, перила — по ним ходят через невидимые пандусы);
+## - «провал» под капюшоном Анонима (материал *Void): чистый чёрный — без света, теней, тумана и бликов;
 ## - вид из окна (window_view.gltf): без коллизии, материалы заменяются шейдером shaders/window_view.gdshader —
 ##   свет запечён в текстуры свечения, свой туман метели; лампы, фонарик и туман подъезда на него не действуют.
 @tool
 extends EditorScenePostImport
 
-const NO_COLLISION := ["yurchik.gltf", "character", "enemy", "sergey", "monkey", "hyuga", "item_", "window_view"]   # yurchik_room/*.gltf — предметы комнаты, им коллизия нужна
+const NO_COLLISION := ["yurchik.gltf", "character", "enemy", "sergey", "monkey", "hyuga", "anonim", "item_", "window_view"]   # yurchik_room/*.gltf — предметы комнаты, им коллизия нужна
 const NO_FOG := ["window_view"]
 const NO_SPECULAR := ["RwGlass"]   # стекло окна в комнате: без блика от лампы (иначе на стекле горит «звезда»)
 const VIEW_SHADER := "res://shaders/window_view.gdshader"
@@ -46,6 +47,9 @@ func _fix(node: Node, root: Node, collide: bool, fog := true) -> void:
 			mat.vertex_color_use_as_albedo = true   # AO, запечённый в цвета вершин, умножает текстуру (разбор DemiDevi); glTF-импорт ставит это не всем материалам
 		if mat.resource_name in NO_SPECULAR:
 			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+		if mat.resource_name.ends_with("Void"):
+			_void(mat)
+			continue
 		if not fog:
 			var sm := ShaderMaterial.new()
 			sm.resource_name = mat.resource_name
@@ -70,3 +74,17 @@ func _fix(node: Node, root: Node, collide: bool, fog := true) -> void:
 		mi.add_child(body)
 		body.owner = root
 		cs.owner = root
+
+
+## «Провал» под капюшоном: абсолютная чернота при любом свете — фонарик, фонари, туман и тени её не трогают.
+func _void(mat: StandardMaterial3D) -> void:
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color.BLACK
+	mat.albedo_texture = null
+	mat.vertex_color_use_as_albedo = false
+	mat.disable_fog = true
+	mat.disable_receive_shadows = true
+	mat.disable_ambient_light = true
+	mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+	mat.emission_enabled = false
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED

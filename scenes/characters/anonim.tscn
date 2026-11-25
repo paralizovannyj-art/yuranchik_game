@@ -1,0 +1,9 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/npc/anonim.gd" id="script"]
+[ext_resource type="PackedScene" path="res://assets/models/anonim.gltf" id="model"]
+
+[node name="Anonim" type="Node3D"]
+script = ExtResource("script")
+
+[node name="Model" parent="." instance=ExtResource("model")]
