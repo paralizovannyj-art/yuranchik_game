@@ -120,6 +120,10 @@ func _create(url: String) -> void:
 		_fail("Не удаётся открыть страницу.")
 		return
 	browser.call("set_zoom_level", log(_k) / log(1.2))
+	# звук страницы — не в колонки игрока, а в колонки на столе Юрчика (PcSpeakers)
+	var sp: Node = chrome.desktop.get("speakers") if chrome.desktop else null
+	if sp and sp.has_method("browser_playback") and sp.call("browser_playback"):
+		browser.call("set_audio_stream", sp.call("browser_playback"))
 	browser.connect("on_page_start_loading", func(_b: Node) -> void: _on_start())
 	browser.connect("on_page_loaded", func(_code: int, _b: Node) -> void: _on_loaded())
 	browser.connect("on_page_failed_loading", func(code: int, msg: String, _b: Node) -> void:
@@ -131,6 +135,7 @@ func _create(url: String) -> void:
 	_set_loading(true)
 	_mask(true)
 	_fit()
+	queue_redraw()
 
 
 ## Страницы Google подменяются на вёрстку 2011 (Google2011). Пока новая страница грузится, на экране
@@ -206,8 +211,8 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
-	if _masked and view.texture == null:
-		draw_rect(Rect2(Vector2.ZERO, size), Color.WHITE)
+	if browser or _masked:
+		draw_rect(Rect2(Vector2.ZERO, size), Color.WHITE)   # у страницы без своего фона — белый, как в Chrome
 	if failed == "":
 		return
 	draw_rect(Rect2(Vector2.ZERO, size), Color.WHITE)

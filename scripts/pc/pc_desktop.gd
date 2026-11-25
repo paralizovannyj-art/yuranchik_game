@@ -13,6 +13,7 @@ const WALLPAPER: Texture2D = preload("res://assets/pc/win7/wallpaper.jpg")
 const CELL := Vector2(76, 86)      ## клетка значка на рабочем столе
 
 var fs := W7Fs.new()
+var speakers: Node                 ## колонки компа (PcSpeakers, ставит pc_seat)
 var cursor: Control                ## PcCursor (его создаёт pc_seat)
 var booted := false
 var _icons: Control
