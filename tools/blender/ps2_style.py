@@ -284,7 +284,7 @@ TEXTURES = {
     "apt_doors": "sign", "mailboxes": "metal", "pod_window": "atlas", "radiator": "metal",
     "wallpaper": "hero", "carpet": "fabric", "fabric": "fabric", "tv": "atlas",
     # персонажи и предметы
-    "yur3_atlas": "char", "sergey": "char", "enemy_a": "char", "enemy_b": "char", "enemy_c": "char", "monkey": "fur", "hyuga": "fur",
+    "yur3_atlas": "char", "sergey": "char", "margo": "char", "enemy_a": "char", "enemy_b": "char", "enemy_c": "char", "monkey": "fur", "hyuga": "fur",
     "items": "item",
     "anonim": "char",
     # «Восточный ж/д мост» (YUR-7, east_bridge_textures.py); eb_mesh и плафоны фонарей — без обработки

@@ -15,6 +15,7 @@
 [ext_resource type="PackedScene" path="res://assets/models/sergey.gltf" id="m_sergey"]
 [ext_resource type="PackedScene" path="res://assets/models/monkey.gltf" id="m_monkey"]
 [ext_resource type="PackedScene" path="res://assets/models/hyuga.gltf" id="m_hyuga"]
+[ext_resource type="PackedScene" path="res://assets/models/margo.gltf" id="m_margo"]
 [ext_resource type="PackedScene" path="res://scenes/characters/anonim.tscn" id="m_anonim"]
 [ext_resource type="Texture2D" path="res://assets/textures/enemy_a.png" id="tex_a"]
 [ext_resource type="Texture2D" path="res://assets/textures/enemy_b.png" id="tex_b"]
@@ -118,6 +119,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 0, 0)
 script = ExtResource("show")
 model = ExtResource("m_hyuga")
 title = "Хьюга"
+
+[node name="Margo" type="Node3D" parent="Showcase"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 0, 0)
+script = ExtResource("show")
+model = ExtResource("m_margo")
+title = "Марго"
 
 [node name="Anonim" type="Node3D" parent="Showcase"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.5, 0, 0)
