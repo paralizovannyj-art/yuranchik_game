@@ -36,6 +36,7 @@ var _hall_on := false                     ## бра в коридоре
 var _hall_energy := 0.677                 ## яркость бра из инспектора (AptHall)
 var _sconce_mats: Array[StandardMaterial3D] = []   ## светящиеся материалы плафона бра (копии)
 var _sconce_glow: Array[float] = []
+var _pc_was_on := false                  ## комп уже включали (реплика и Сергей — только в первый раз)
 
 
 func _start() -> void:
@@ -48,6 +49,7 @@ func _start() -> void:
 	apt_use.interacted.connect(_open_apartment)
 	apt_trigger.body_entered.connect(_on_apartment)
 	pc_seat.powered_on.connect(_on_pc_powered)
+	pc_seat.powered_off.connect(_on_pc_off)
 	_setup_room_light()
 	_setup_hall_light()
 	_split_bulb_glass()
@@ -117,9 +119,18 @@ func _start_in_room() -> void:
 
 
 ## Комп включился (Юрчик сел и нажал кнопку): экран светит на лицо и стол.
+func _on_pc_off() -> void:
+	var tw := create_tween()
+	tw.tween_property(monitor_light, "light_energy", 0.0, 0.6)
+	tw.tween_callback(func() -> void: monitor_light.visible = false)
+
+
 func _on_pc_powered() -> void:
 	monitor_light.visible = true                  # пока экран выключен, источник скрыт (не занимает лимит OpenGL)
 	create_tween().tween_property(monitor_light, "light_energy", 0.3, 1.2)   # ЭЛТ-экран ≈ 10 кд — втрое слабее лампочки 40 Вт
+	if _pc_was_on:                                # включили снова после «Завершения работы» — только свет
+		return
+	_pc_was_on = true
 	Game.set_objective("Дома")
 	await after(1.5)
 	Game.say("Загудел. Старичок ещё живой.")
