@@ -519,19 +519,35 @@ def props():
     lathe(pb, -3.80, 1.96, [(0.10, Z), (0.16, Z + 0.08), (0.14, Z + 0.22), (0.06, Z + 0.30), (0.03, Z + 0.36)],
           PR("white"), segs=6, cap=True)
 
-    # --- чёрная тумбочка в коридоре (с коллизией) ---
-    N0, N1, NY0, NY1 = HX0 + 0.01, HX0 + 0.35, -0.86, -0.32
+    # --- чёрная тумба в коридоре (с коллизией), по фото: старая низкая тумба под телевизор вдоль стены —
+    #     толстая столешница со скруглёнными углами и напуском; у ближнего к прихожей края (+y) под ней глухой
+    #     короб до пола на коротких ножках, дальний край (−y) открыт и стоит на двух точёных ножках ---
+    N0, N1, NY0, NY1 = HX0 + 0.01, HX0 + 0.43, 0.25, 1.05      # 0.42 x 0.80 м (в stairwell.tscn центр y ≈ 0.65)
+    TOP, TT, RR = Z + 0.62, 0.035, 0.06                        # верх, толщина столешницы, радиус углов
     ns = I("nightstand")
     lq = PR("lacquer")
-    for (xa, ya) in ((N0 + 0.01, NY0 + 0.01), (N1 - 0.04, NY0 + 0.01), (N0 + 0.01, NY1 - 0.04), (N1 - 0.04, NY1 - 0.04)):
-        cube(ns, (xa, ya, Z), (xa + 0.03, ya + 0.03, Z + 0.22), lq)
-    cube(ns, (N0 + 0.01, NY0 + 0.01, Z + 0.07), (N1 - 0.01, NY1 - 0.01, Z + 0.09), lq)    # нижняя полочка
-    cube(ns, (N0, NY0, Z + 0.22), (N1, NY1, Z + 0.58), lq, skip=())
-    cube(ns, (N0, NY0 - 0.015, Z + 0.58), (N1 + 0.02, NY1 + 0.015, Z + 0.62), lq, skip=())
+    ring = []                                                  # контур столешницы против часовой (вид сверху)
+    for (cx_, cy_, a0) in ((N1 - RR, NY0 + RR, -90), (N1 - RR, NY1 - RR, 0), (N0 + RR, NY1 - RR, 90), (N0 + RR, NY0 + RR, 180)):
+        for k in range(4):
+            a = math.radians(a0 + 30 * k)
+            ring.append((cx_ + RR * math.cos(a), cy_ + RR * math.sin(a)))
+    lu0, lv0, lu1, lv1 = RA("lacquer")
+    tuv = lambda x_, y_: (lu0 + (y_ - NY0) / (NY1 - NY0) * (lu1 - lu0), lv0 + (x_ - N0) / (N1 - N0) * (lv1 - lv0))
+    ns.poly([Vector((x_, y_, TOP)) for (x_, y_) in ring], [tuv(x_, y_) for (x_, y_) in ring], M["props"])
+    ns.poly([Vector((x_, y_, TOP - TT)) for (x_, y_) in ring[::-1]], [tuv(x_, y_) for (x_, y_) in ring[::-1]], M["props"])
+    for (p, q) in zip(ring, ring[1:] + ring[:1]):                                       # кромка
+        ns.poly([Vector((p[0], p[1], TOP - TT)), Vector((q[0], q[1], TOP - TT)), Vector((q[0], q[1], TOP)), Vector((p[0], p[1], TOP))],
+                [(lu0, lv0), (lu1, lv0), (lu1, lv0 + (lv1 - lv0) * 0.25), (lu0, lv0 + (lv1 - lv0) * 0.25)], M["props"])
+    BX0, BX1, BY0, BY1 = N0 + 0.02, N1 - 0.03, NY1 - 0.40, NY1 - 0.03                    # глухой короб, утоплен под столешницу
+    cube(ns, (BX0, BY0, Z + 0.035), (BX1, BY1, TOP - TT), lq, skip=('+Z',))
+    for (lx_, ly_) in ((N1 - 0.06, NY0 + 0.06), (N0 + 0.05, NY0 + 0.06)):              # точёные ножки дальнего края
+        lathe(ns, lx_, ly_, [(0.016, Z), (0.022, Z + 0.06), (0.016, Z + 0.14), (0.020, Z + 0.30), (0.026, Z + 0.42),
+                             (0.018, Z + 0.50), (0.024, Z + 0.53), (0.024, TOP - TT)], lq, segs=6)
     nsd = I("nightstand", nocol=True)
-    nsd.box((N1, NY0 + 0.03, Z + 0.25), (N1 + 0.003, NY1 - 0.03, Z + 0.55), {'+X': PR("black")})     # щель дверцы
-    cyl(nsd, (N1, NY1 - 0.07, Z + 0.47), (N1 + 0.025, NY1 - 0.07, Z + 0.47), 0.01, 0.012, PR("brass"), segs=5, caps=True)
-    TOP = Z + 0.62
+    for (fx, fy) in ((BX0 + 0.01, BY0 + 0.01), (BX1 - 0.04, BY0 + 0.01), (BX0 + 0.01, BY1 - 0.04), (BX1 - 0.04, BY1 - 0.04)):
+        cube(nsd, (fx, fy, Z), (fx + 0.03, fy + 0.03, Z + 0.035), PR("metal"))        # короткие ножки короба
+    for (lx_, ly_) in ((N1 - 0.06, NY0 + 0.06), (N0 + 0.05, NY0 + 0.06)):              # светлое потёртое кольцо под столешницей
+        cyl(nsd, (lx_, ly_, Z + 0.505), (lx_, ly_, Z + 0.525), 0.025, 0.025, PR("brass"), segs=6)
     # --- на тумбочке: ваза с сухоцветами, кружка, пульт ---
     vs = I("vase_flowers", nocol=True)
     vx, vy = N0 + 0.12, NY1 - 0.08
@@ -546,7 +562,7 @@ def props():
     mx_, my_ = N0 + 0.20, NY1 - 0.24
     lathe(mg, mx_, my_, [(0.04, TOP), (0.042, TOP + 0.10)], PR("mug"), segs=8, cap=True)
     mg.box((mx_ + 0.04, my_ - 0.006, TOP + 0.025), (mx_ + 0.065, my_ + 0.006, TOP + 0.08), {k: PR("white") for k in ALL})
-    cube(mg, (N0 + 0.12, NY0 + 0.06, TOP), (N0 + 0.17, NY0 + 0.24, TOP + 0.018), PR("black"))   # пульт
+    cube(mg, (N0 + 0.12, my_ - 0.24, TOP), (N0 + 0.17, my_ - 0.06, TOP + 0.018), PR("black"))   # пульт (как раньше — рядом с кружкой)
 
     # --- бра над входной дверью и выключатели ---
     sc = I("sconce", nocol=True)

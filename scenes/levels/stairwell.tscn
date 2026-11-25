@@ -212,7 +212,7 @@ transform = Transform3D(0.9999538, 0.0011757821, 0.009534376, -0.00013273502, 0.
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.7092743, 8.397, -1.8128457)
 
 [node name="Nightstand" parent="Apartment" unique_id=1745761698 instance=ExtResource("ap_nightstand")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.249524, 8.398921, -0.63467246)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.23, 8.4, -0.65)
 
 [node name="VaseFlowers" parent="Apartment" unique_id=1558732250 instance=ExtResource("ap_vase_flowers")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.305, 9.02, -0.6225176)

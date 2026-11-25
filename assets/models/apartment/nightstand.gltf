@@ -3,11 +3,8 @@
 		"generator":"Khronos glTF Blender I/O v5.2.41",
 		"version":"2.0"
 	},
-	"scene":1,
+	"scene":0,
 	"scenes":[
-		{
-			"name":"Apartment"
-		},
 		{
 			"name":"ApartmentProps",
 			"nodes":[
@@ -89,119 +86,119 @@
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":148,
+			"count":452,
 			"max":[
-				0.1770000457763672,
+				0.20999908447265625,
 				0.6200008392333984,
-				0.2850000262260437
+				0.3999999761581421
 			],
 			"min":[
-				-0.1829996109008789,
+				-0.21000003814697266,
 				0,
-				-0.2849999666213989
+				-0.3999999761581421
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":148,
+			"count":452,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":148,
+			"count":452,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
 			"componentType":5123,
-			"count":222,
+			"count":714,
 			"type":"SCALAR"
 		},
 		{
 			"bufferView":4,
 			"componentType":5126,
-			"count":29,
+			"count":128,
 			"max":[
-				0.18200016021728516,
-				0.5500001907348633,
-				0.24000000953674316
+				0.17164993286132812,
+				0.5250005722045898,
+				0.3649999797344208
 			],
 			"min":[
-				0.1569995880126953,
-				0.25,
-				-0.23999997973442078
+				-0.18165111541748047,
+				0,
+				-0.36000001430511475
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":5,
 			"componentType":5126,
-			"count":29,
+			"count":128,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":6,
 			"componentType":5126,
-			"count":29,
+			"count":128,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":7,
 			"componentType":5123,
-			"count":45,
+			"count":192,
 			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":1776,
+			"byteLength":5424,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":1776,
-			"byteOffset":1776,
+			"byteLength":5424,
+			"byteOffset":5424,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":1184,
-			"byteOffset":3552,
+			"byteLength":3616,
+			"byteOffset":10848,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":444,
-			"byteOffset":4736,
+			"byteLength":1428,
+			"byteOffset":14464,
 			"target":34963
 		},
 		{
 			"buffer":0,
-			"byteLength":348,
-			"byteOffset":5180,
+			"byteLength":1536,
+			"byteOffset":15892,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":348,
-			"byteOffset":5528,
+			"byteLength":1536,
+			"byteOffset":17428,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":232,
-			"byteOffset":5876,
+			"byteLength":1024,
+			"byteOffset":18964,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":90,
-			"byteOffset":6108,
+			"byteLength":384,
+			"byteOffset":19988,
 			"target":34963
 		}
 	],
@@ -213,7 +210,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":6200,
+			"byteLength":20372,
 			"uri":"nightstand.bin"
 		}
 	]
