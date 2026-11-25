@@ -298,37 +298,37 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.44, 8.443, -2.623)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.75, 8.887, -3.43)
 
 [node name="Desk" parent="YurchikRoom" unique_id=1097502940 instance=ExtResource("yr_desk")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.91, 8.4, -3.57)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.923, 8.4, -3.57)
 
 [node name="Mousepad" parent="YurchikRoom" unique_id=360581687 instance=ExtResource("yr_mousepad")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.05, 9.14, -3.44)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.93, 9.14, -3.444)
 
 [node name="Monitor" parent="YurchikRoom" unique_id=1382153814 instance=ExtResource("yr_monitor")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.02, 9.14, -3.68)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.02, 9.14, -3.71)
 
 [node name="PcTower" parent="YurchikRoom" unique_id=511200729 instance=ExtResource("yr_pc_tower")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.46, 9.14, -3.575)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.545, 8.4, -3.57)
 
 [node name="SpeakerLeft" parent="YurchikRoom" unique_id=580554420 instance=ExtResource("yr_speaker_left")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.42, 9.14, -3.705)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.33, 9.14, -3.705)
 
 [node name="SpeakerRight" parent="YurchikRoom" unique_id=1873440371 instance=ExtResource("yr_speaker_right")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.67, 9.14, -3.705)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.71, 9.14, -3.705)
 
 [node name="Keyboard" parent="YurchikRoom" unique_id=305903137 instance=ExtResource("yr_keyboard")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.02, 9.143, -3.4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.02, 9.089, -3.611)
 
 [node name="Mouse" parent="YurchikRoom" unique_id=1496222325 instance=ExtResource("yr_mouse")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.712, 9.14, -3.501)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.816, 9.089, -3.623)
 
 [node name="Mug" parent="YurchikRoom" unique_id=694435928 instance=ExtResource("yr_mug")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.36, 9.14, -3.52)
 
 [node name="DeskBottleTall" parent="YurchikRoom" unique_id=1731299009 instance=ExtResource("yr_desk_bottle_tall")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.319572, 9.14, -3.74)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.43, 9.14, -3.8)
 
 [node name="DeskBottleShort" parent="YurchikRoom" unique_id=937213482 instance=ExtResource("yr_desk_bottle_short")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.22, 9.14, -3.78)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.43, 9.14, -3.7)
 
 [node name="Bowl" parent="YurchikRoom" unique_id=1578976067 instance=ExtResource("yr_bowl")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.285, 9.14, -3.361)

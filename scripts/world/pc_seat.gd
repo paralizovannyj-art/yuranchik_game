@@ -15,6 +15,8 @@ signal powered_off         ## Windows завершила работу, экра�
 @export var use: Interactable                        ## «Сесть за компьютер» (кресло, стол, монитор, системник)
 @export var screen_mesh := "PCScreen_nocol"          ## плоскость экрана в модели монитора (UV 0..1 на весь экран)
 @export var speaker_nodes: PackedStringArray = ["SpeakerLeft", "SpeakerRight"]   ## колонки на столе (левая, правая)
+@export var glow_meshes: PackedStringArray = ["PcTowerGlow_nocol", "MonitorLed_nocol"]   ## светятся, только пока комп включён: окно и кнопка системника, диод монитора
+@export var reach_pitch := -0.85                      ## куда смотрит, нажимая кнопку питания (системник на полу под столом)
 @export var desktop_scene: PackedScene               ## что показывает комп (рабочий стол)
 @export var screen_size := Vector2i(1280, 1024)      ## разрешение экрана компа (матрица 5:4, 17")
 @export var ui_size := Vector2(1024, 820)            ## Windows на 125 %: в этих «логических» пикселях живёт рабочий стол
@@ -41,6 +43,7 @@ var _busy := false
 var _speaker_pos := Vector3.ZERO   ## откуда звучит Windows (колонки у монитора)
 var _keys_pos := Vector3.ZERO      ## клавиатура и мышь
 var speakers: PcSpeakers           ## весь звук компа — из колонок на столе
+var _glow: Array[Node3D] = []      ## подсветка системника и диод монитора
 
 
 func _ready() -> void:
@@ -77,6 +80,11 @@ func _build_screen() -> void:
 	cursor = ui_size * 0.5
 	_pointer.position = cursor
 	var root: Node = owner if owner else get_parent()
+	for gname: String in glow_meshes:
+		var gn := root.find_child(gname, true, false) as Node3D
+		if gn:
+			gn.visible = false
+			_glow.append(gn)
 	var mi := root.find_child(screen_mesh, true, false) as MeshInstance3D
 	if mi == null:
 		push_warning("pc_seat: нет экрана %s" % screen_mesh)
@@ -105,6 +113,7 @@ func power_on(dur := 1.2) -> void:
 	if powered:
 		return
 	powered = true
+	_set_glow(true)
 	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	if _mat:
 		create_tween().tween_method(func(v: float) -> void: _mat.set_shader_parameter("power", v), 0.0, 1.0, dur)
@@ -118,6 +127,7 @@ func power_off(dur := 0.6) -> void:
 	if not powered:
 		return
 	powered = false
+	_set_glow(false)
 	if _mat:
 		var tw := create_tween()
 		tw.tween_method(func(v: float) -> void: _mat.set_shader_parameter("power", v), 1.0, 0.0, dur)
@@ -125,6 +135,11 @@ func power_off(dur := 0.6) -> void:
 			if not powered:
 				viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED)
 	powered_off.emit()
+
+
+func _set_glow(on: bool) -> void:
+	for gn: Node3D in _glow:
+		gn.visible = on
 
 
 func _on_pc_sound(sound_name: String) -> void:
@@ -168,7 +183,7 @@ func sit(p: Player) -> void:
 	tw.tween_method(func(t: float) -> void: p.model.set("seat_time", t), 0.0, clip_len, clip_len)
 	await tw.finished
 	if not powered:
-		p.look_at_angles(yaw, -0.45)                 # тянется к кнопке на системнике
+		p.look_at_angles(yaw, reach_pitch)           # тянется к кнопке на системнике под столом
 		await get_tree().create_timer(0.35).timeout
 		Game.sfx("click", global_position)
 		power_on()

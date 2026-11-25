@@ -6,7 +6,7 @@
 	"scene":0,
 	"scenes":[
 		{
-			"name":"Scene",
+			"name":"YurchikDesk",
 			"nodes":[
 				0
 			]
@@ -21,13 +21,13 @@
 	"materials":[
 		{
 			"doubleSided":true,
-			"name":"YrAtlas",
+			"name":"YdAtlas",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
 					"index":0
 				},
 				"metallicFactor":0,
-				"roughnessFactor":0.699999988079071
+				"roughnessFactor":0.6499999761581421
 			}
 		}
 	],
@@ -56,69 +56,69 @@
 	"images":[
 		{
 			"mimeType":"image/png",
-			"name":"yr_atlas",
-			"uri":"../../textures/yr_atlas.png"
+			"name":"yd_atlas.png",
+			"uri":"../../textures/yd_atlas.png"
 		}
 	],
 	"accessors":[
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":144,
+			"count":2824,
 			"max":[
-				0.570000171661377,
+				0.5829997062683105,
 				0.7400007247924805,
 				0.309999942779541
 			],
 			"min":[
-				-0.570000171661377,
-				9.5367431640625e-07,
-				-0.309999942779541
+				-0.5830001831054688,
+				0,
+				-0.3100001811981201
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":144,
+			"count":2824,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":144,
+			"count":2824,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
 			"componentType":5123,
-			"count":216,
+			"count":3972,
 			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":1728,
+			"byteLength":33888,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":1728,
-			"byteOffset":1728,
+			"byteLength":33888,
+			"byteOffset":33888,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":1152,
-			"byteOffset":3456,
+			"byteLength":22592,
+			"byteOffset":67776,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":432,
-			"byteOffset":4608,
+			"byteLength":7944,
+			"byteOffset":90368,
 			"target":34963
 		}
 	],
@@ -130,7 +130,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":5040,
+			"byteLength":98312,
 			"uri":"desk.bin"
 		}
 	]

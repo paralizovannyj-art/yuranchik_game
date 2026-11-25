@@ -6,7 +6,7 @@
 	"scene":0,
 	"scenes":[
 		{
-			"name":"Scene",
+			"name":"YurchikDesk",
 			"nodes":[
 				0
 			]
@@ -21,13 +21,13 @@
 	"materials":[
 		{
 			"doubleSided":true,
-			"name":"YrAtlas",
+			"name":"YdAtlas",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
 					"index":0
 				},
 				"metallicFactor":0,
-				"roughnessFactor":0.699999988079071
+				"roughnessFactor":0.6499999761581421
 			}
 		}
 	],
@@ -56,8 +56,8 @@
 	"images":[
 		{
 			"mimeType":"image/png",
-			"name":"yr_atlas",
-			"uri":"../../textures/yr_atlas.png"
+			"name":"yd_atlas.png",
+			"uri":"../../textures/yd_atlas.png"
 		}
 	],
 	"accessors":[
@@ -66,14 +66,14 @@
 			"componentType":5126,
 			"count":24,
 			"max":[
-				0.3899998664855957,
-				0.0030002593994140625,
-				0.16000008583068848
+				0.37999963760375977,
+				0.0029993057250976562,
+				0.16899991035461426
 			],
 			"min":[
-				-0.3899998664855957,
+				-0.38000011444091797,
 				0,
-				-0.16000008583068848
+				-0.16899991035461426
 			],
 			"type":"VEC3"
 		},
