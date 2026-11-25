@@ -148,8 +148,7 @@ func _use_pc(p: Player) -> void:
 		await after(2.2)
 		Game.sfx("door_bang", apt_use.global_position, 6.0, 0.0)
 		player.shake(0.8)
-	await after(2.5)
-	hud.show_ending()
+	# Концовки нет: после компа игра продолжается, Юрчик свободно ходит.
 
 
 ## Свет в комнате: при старте выключен — люстра не светит, плафоны тёмные, клавиша внизу.
