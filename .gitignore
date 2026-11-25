@@ -21,3 +21,6 @@ __pycache__/
 
 # Исходники анимаций GMod для tools/blender/retarget_gmod_yurchik.py (клонируются отдельно)
 /tools/blender/gmod-animations/
+
+# Браузер gdcef (Chromium, ~360 МБ): в git не кладём, лежит только локально
+/cef_artifacts/

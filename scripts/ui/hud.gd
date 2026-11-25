@@ -160,7 +160,7 @@ func _process(delta: float) -> void:
 	if phone.is_open and (player.is_dead() or not player.control):
 		phone.close()
 	var playing := not paused and not player.is_dead() and _menu_kind == ""
-	var free := playing and not phone.is_open
+	var free := playing and not phone.is_open and not player.seated   # за компом прицела нет — там курсор
 	_cross.alpha = move_toward(_cross.alpha, ((0.35 if player.move_speed > player.walk_speed * 1.3 else 1.0) if free else 0.0), delta * 5.0)
 	_cross.step(delta, player.focus != null, player.is_aiming())
 	# сердцебиение при малом здоровье, тяжёлое дыхание, когда выдохся
@@ -179,6 +179,8 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if player and is_instance_valid(player) and player.seated and _menu_kind == "":
+		return                                   # за компом клавиши — компу, Esc — встать (pc_seat.gd)
 	if phone and phone.is_open:
 		_phone_input(event)
 		return

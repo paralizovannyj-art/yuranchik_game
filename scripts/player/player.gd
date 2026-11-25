@@ -102,6 +102,13 @@ var control := true                    ## false — игрок не управл
 var focus: Interactable                ## на что сейчас можно нажать E
 var noclip := false                    ## (отладка) летит сквозь стены — V
 var phone_up := false                  ## телефон в руке (phone.gd): только шаг, без ударов, бега и бросков
+## Сидит в кресле (pc_seat.gd): не ходит, капсула выключена, позу ведёт клип посадки. Камера — из головы,
+## а при seat_view_blend > 0 плавно уходит к seat_view (вид на монитор) с углом обзора seat_view_fov.
+var seated := false
+var seat_view := Transform3D.IDENTITY
+var seat_view_blend := 0.0
+var seat_view_fov := 40.0
+var _flash_before_seat := false
 
 var _yaw_target := 0.0
 var _pitch_target := -0.12
@@ -310,6 +317,9 @@ func _physics_process(delta: float) -> void:
 	if noclip:
 		_fly(delta)
 		return
+	if seated:
+		_seated_process(delta)
+		return
 
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back") if control else Vector2.ZERO
 	var want_run := control and not phone_up and Input.is_action_pressed("run") and input.y < -0.3
@@ -427,6 +437,42 @@ func _physics_process(delta: float) -> void:
 	model.update_anim(delta, signed, _sprint_blend, _anim_state(), _yaw_rate, accel, move_angle,
 			crouching, not is_on_floor(), velocity.y)
 	_footsteps()
+	_update_camera(delta)
+
+
+# ----------------------------------------------------------------------------- кресло
+## Сесть (true) / встать (false). Положение и поворот на это время задаёт pc_seat.gd.
+func set_seated(on: bool) -> void:
+	seated = on
+	control = not on
+	collision.disabled = on
+	velocity = Vector3.ZERO
+	move_speed = 0.0
+	focus = null
+	if on:
+		state = State.NORMAL
+		_crouch_toggle = false
+		if crouching:
+			_set_crouch(false)
+		_flash_before_seat = flashlight.visible       # фонарик в лоб монитору — блик на весь экран; гасим
+		flashlight.visible = false
+	else:
+		seat_view_blend = 0.0
+		model.set("seat_time", -1.0)
+		flashlight.visible = _flash_before_seat
+
+
+## Повернуть взгляд (рад) — кресло разворачивает Юрчика к монитору.
+func look_at_angles(yaw: float, pitch: float) -> void:
+	_yaw_target = yaw
+	_pitch_target = clampf(pitch, pitch_min, pitch_max)
+
+
+func _seated_process(delta: float) -> void:
+	rotation.y = cam_yaw
+	_yaw_rate = 0.0
+	_prev_yaw = rotation.y
+	model.update_anim(delta, 0.0, 0.0, 0, 0.0, 0.0)
 	_update_camera(delta)
 
 
@@ -901,7 +947,7 @@ func _update_camera(delta: float) -> void:
 	camera.h_offset = 0.0
 	camera.v_offset = 0.0
 	var desired := _cam_pos + Basis(Vector3.UP, cam_yaw) * (bob + lean) + shake_off
-	var actual := _clip_camera(desired, delta)
+	var actual := desired if seated else _clip_camera(desired, delta)   # в кресле камера у спинки — не упираемся
 	cam_pivot.global_position = actual
 	# Камеру прижало к стене — тело отступает вместе с ней (по горизонтали): иначе наклонённый
 	# корпус (присед, бег) оказывается впереди камеры и она смотрит изнутри плеч и рук.
@@ -910,6 +956,11 @@ func _update_camera(delta: float) -> void:
 	push.y = 0.0
 	push = push.limit_length(cam_body_push_max)
 	model.position = _model_base + global_basis.inverse() * push
+	# сидит за компом — камера уходит от глаз к виду на монитор (seat_view), угол обзора сужается
+	if seat_view_blend > 0.0:
+		var e := smoothstep(0.0, 1.0, seat_view_blend)
+		cam_pivot.global_transform = cam_pivot.global_transform.interpolate_with(seat_view, e)
+		camera.fov = lerpf(camera.fov, seat_view_fov, e)
 
 
 ## Камера не проходит сквозь стены. Капсула в стену не заходит, а камера вынесена из неё
