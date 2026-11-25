@@ -17,7 +17,7 @@ signal powered_off         ## Windows завершила работу, экра�
 @export var desktop_scene: PackedScene               ## что показывает комп (рабочий стол)
 @export var screen_size := Vector2i(1280, 1024)      ## разрешение экрана компа (матрица 5:4, 17")
 @export var ui_size := Vector2(1024, 820)            ## Windows на 125 %: в этих «логических» пикселях живёт рабочий стол
-@export var view_fov := 40.0                          ## угол обзора, когда смотришь в монитор
+@export var view_fov := 34.0                          ## угол обзора, когда смотришь в монитор (экран почти во весь кадр)
 @export var cursor_speed := 1.0                       ## скорость курсора относительно мыши
 @export_group("Время, с")
 @export var walk_in := 0.45                           ## подойти к креслу и развернуться к столу
@@ -149,6 +149,7 @@ func sit(p: Player) -> void:
 		await get_tree().create_timer(0.6).timeout
 	p.seat_view = screen_view.global_transform
 	p.seat_view_fov = view_fov
+	Graphics.screen_focus = true                     # чёткая картинка, пока смотрит в монитор
 	tw = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tw.tween_property(p, "seat_view_blend", 1.0, zoom_in)
 	await tw.finished
@@ -167,6 +168,7 @@ func stand() -> void:
 	var tw := create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tw.tween_property(p, "seat_view_blend", 0.0, zoom_out)
 	await tw.finished
+	Graphics.screen_focus = false
 	p.look_at_angles(p.cam_yaw, -0.1)
 	var clip_len: float = p.model.call("seat_length")
 	Game.sfx("chair_sit", global_position, -6.0, 0.05)
@@ -217,3 +219,8 @@ func _input(event: InputEvent) -> void:
 		if event.pressed and not event.echo:
 			Game.sfx("pc_key_%d" % randi_range(1, 3), _keys_pos, -18.0, 0.08)
 		viewport.push_input(event, true)
+
+
+func _exit_tree() -> void:
+	if seated:
+		Graphics.screen_focus = false

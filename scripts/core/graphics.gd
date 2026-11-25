@@ -67,10 +67,25 @@ func _sweep(n: Node) -> void:
 		_sweep(c)
 
 
+## Юрчик смотрит в монитор компа: 3D рисуется в полном разрешении окна, а PS2-мыло слабее — иначе текст
+## Windows (экран 1280×1024 в кадре 720 строк) превращается в кашу. Ставит pc_seat.gd, когда садится/встаёт.
+var screen_focus := false:
+	set(v):
+		screen_focus = v
+		_fit_3d_resolution()
+const SCREEN_FOCUS_BLUR := 0.3
+var _post_blur := -1.0
+
+
 func _fit_3d_resolution() -> void:
 	var root := get_tree().root
 	root.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
-	root.scaling_3d_scale = clampf(RENDER_HEIGHT / maxf(root.size.y, 1.0), 0.25, 1.0)
+	root.scaling_3d_scale = 1.0 if screen_focus else clampf(RENDER_HEIGHT / maxf(root.size.y, 1.0), 0.25, 1.0)
+	var post := load(PS2_POST) as ShaderMaterial
+	if post:
+		if _post_blur < 0.0:
+			_post_blur = post.get_shader_parameter("blur_px")
+		post.set_shader_parameter("blur_px", SCREEN_FOCUS_BLUR if screen_focus else _post_blur)
 
 
 ## Режим, выбранный в меню (может не совпадать с текущим до перезапуска).
