@@ -14,6 +14,7 @@ signal powered_off         ## Windows завершила работу, экра�
 
 @export var use: Interactable                        ## «Сесть за компьютер» (кресло, стол, монитор, системник)
 @export var screen_mesh := "PCScreen_nocol"          ## плоскость экрана в модели монитора (UV 0..1 на весь экран)
+@export var speaker_nodes: PackedStringArray = ["SpeakerLeft", "SpeakerRight"]   ## колонки на столе (левая, правая)
 @export var desktop_scene: PackedScene               ## что показывает комп (рабочий стол)
 @export var screen_size := Vector2i(1280, 1024)      ## разрешение экрана компа (матрица 5:4, 17")
 @export var ui_size := Vector2(1024, 820)            ## Windows на 125 %: в этих «логических» пикселях живёт рабочий стол
@@ -39,6 +40,7 @@ var _pointer: Control
 var _busy := false
 var _speaker_pos := Vector3.ZERO   ## откуда звучит Windows (колонки у монитора)
 var _keys_pos := Vector3.ZERO      ## клавиатура и мышь
+var speakers: PcSpeakers           ## весь звук компа — из колонок на столе
 
 
 func _ready() -> void:
@@ -82,6 +84,15 @@ func _build_screen() -> void:
 	_speaker_pos = mi.global_position
 	var kb := root.find_child("Keyboard_nocol", true, false) as Node3D
 	_keys_pos = kb.global_position if kb else _speaker_pos
+	var sl := root.find_child(speaker_nodes[0], true, false) as Node3D
+	var sr := root.find_child(speaker_nodes[1], true, false) as Node3D
+	speakers = PcSpeakers.new()
+	speakers.name = "Speakers"
+	add_child(speakers)
+	speakers.setup(_center(sl) if sl else _speaker_pos + Vector3.LEFT * 0.35,
+			_center(sr) if sr else _speaker_pos + Vector3.RIGHT * 0.35)
+	if _desktop and "speakers" in _desktop:
+		_desktop.set("speakers", speakers)
 	_mat = ShaderMaterial.new()
 	_mat.shader = preload("res://shaders/pc_screen.gdshader")
 	_mat.set_shader_parameter("screen_tex", viewport.get_texture())
@@ -117,7 +128,22 @@ func power_off(dur := 0.6) -> void:
 
 
 func _on_pc_sound(sound_name: String) -> void:
-	Game.sfx("win7_" + sound_name, _speaker_pos, -7.0, 0.0)
+	if speakers:
+		speakers.play(Game.stream("win7_" + sound_name), -3.0)
+	else:
+		Game.sfx("win7_" + sound_name, _speaker_pos, -7.0, 0.0)
+
+
+## Середина модели (где динамик), а не её начало координат на столе.
+static func _center(n: Node3D) -> Vector3:
+	var box := AABB()
+	var first := true
+	for m: Node in n.find_children("*", "MeshInstance3D", true, false):
+		var mi := m as MeshInstance3D
+		var b := mi.global_transform * mi.get_aabb()
+		box = b if first else box.merge(b)
+		first = false
+	return n.global_position if first else box.get_center()
 
 
 ## Сесть: подойти, сесть (клип), включить комп, если выключен, и уставиться в монитор.
