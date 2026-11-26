@@ -2,7 +2,7 @@
 # Рабочее место Юрчика v2: игровой стол, монитор, системник ПОД столом, клавиатура, мышь, колонки, коврик.
 # По фото стола (docs/references/apartment/ee0800e3-….jpg): чёрный «игровой» стол со срезанными передними углами
 # и Y-образными стальными ножками, во весь перёд — большой коврик с красным драконом, системник стоит на полу
-# под правым краем стола (боковое окно смотрит к креслу и светится, пока комп включён).
+# под правым краем стола — обычный чёрный корпус 2011 года, без окна и подсветки (горят только диоды).
 # Компьютер — 2010–2011 год (Windows 7): монитор ASUS 19" 5:4 (экран игры 1280x1024 — pc_seat.gd),
 # клавиатура со стандартной раскладкой 104 клавиши (латиница + кириллица), мышь, колонки 2.0.
 #
@@ -13,6 +13,7 @@
 #      (строит всё в своей сцене YurchikDesk, остальные сцены не трогает)
 # Результат: assets/models/yurchik_room/{desk,mousepad,monitor,pc_tower,keyboard,mouse,speaker_left,speaker_right}.gltf
 # и их позиции в assets/models/yurchik_room/layout.json (дописываются к позициям остальной комнаты).
+# В сцене предметы потом можно двигать руками — layout.json хранит только позиции из сборки.
 # В stairwell.tscn эти предметы — дочерние узлы YurchikRoom (позиции из layout.json).
 #
 # Имена, которые ищет игра: PCScreen_nocol — экран (pc_seat.gd рисует на нём Windows), Keyboard_nocol — откуда
@@ -275,25 +276,13 @@ def build_items(M):
         faces={'-Y': (at, UV("tower_f"))}, skip=('+Y',))
     for (fx, fy) in ((tx0 + 0.03, ty0 + 0.05), (tx1 - 0.03, ty0 + 0.05), (tx0 + 0.03, ty1 - 0.05), (tx1 - 0.03, ty1 - 0.05)):
         cyl(tow, (fx, fy, Z), (fx, fy, tz0), 0.014, at, UV("cable"), segs=8)
-    # свечение: окно сбоку, кольцо кнопки питания, диод диска
+    # диоды питания (зелёный) и диска (оранжевый) — горят, только пока комп включён; места — как на куске tower_f
     g = part("pc_tower", "PcTowerGlow_nocol")
-    wx0, wy0, wx1, wy1 = L.A["tower_s"]
-    ww, wh = wx1 - wx0, wy1 - wy0
-    fx0, fx1, fy0, fy1 = 22 / ww, 1 - 22 / ww, 30 / wh, 1 - 18 / wh  # окно в куске атласа (доли, v снизу)
-    # FACES['-X'] = (2, 0, 4, 6): углы (y1,z0) (y0,z0) (y0,z1) (y1,z1) → u растёт от y1 к y0
-    yw0, yw1 = ty1 - (ty1 - ty0 - 0.012) * fx0, ty1 - (ty1 - ty0 - 0.012) * fx1
-    zw0, zw1 = tz0 + th * fy0, tz0 + th * fy1
-    gx = tx0 - 0.0008
-    gw0, gh0, gw1, gh1 = L.G["window"]
-    gfx0, gfy0 = 22 / (gw1 - gw0), 30 / (gh1 - gh0)
-    grect = sub(GUV("window"), gfx0, gfy0, 1 - 22 / (gw1 - gw0), 1 - 18 / (gh1 - gh0))
-    g.quad([(gx, yw0, zw0), (gx, yw1, zw0), (gx, yw1, zw1), (gx, yw0, zw1)], glow, grect)
-    pz = tz1 - 0.003 - (th - 0.006) * 112 / 276                  # кнопка питания: 112 px от верха куска tower_f
-    pcx, pr, fy_ = (tx0 + tx1) / 2, 0.023, ty0 - 0.0008
-    g.quad([(pcx - pr, fy_, pz - pr), (pcx + pr, fy_, pz - pr), (pcx + pr, fy_, pz + pr), (pcx - pr, fy_, pz + pr)], glow, GUV("power"))
-    hz, hr = pz - 0.032, 0.004
-    g.quad([(pcx + 0.025 - hr, fy_, hz - hr), (pcx + 0.025 + hr, fy_, hz - hr), (pcx + 0.025 + hr, fy_, hz + hr), (pcx + 0.025 - hr, fy_, hz + hr)],
-           glow, GUV("hdd"))
+    fy_, lr = ty0 - 0.0008, 0.0035
+    for (px, name) in ((54, "power"), (74, "hdd")):
+        lx = tx0 + 0.004 + (tw - 0.008) * px / 128
+        lz = tz1 - 0.003 - (th - 0.006) * 132 / 276
+        g.quad([(lx - lr, fy_, lz - lr), (lx + lr, fy_, lz - lr), (lx + lr, fy_, lz + lr), (lx - lr, fy_, lz + lr)], glow, GUV(name))
 
     # --- колонки 2.0 по бокам монитора ---
     for nm, x in (("speaker_left", MX - 0.31), ("speaker_right", MX + 0.31)):

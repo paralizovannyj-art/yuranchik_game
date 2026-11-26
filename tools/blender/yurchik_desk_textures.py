@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Текстуры рабочего места Юрчика v2 (стол, коврик, монитор, клавиатура, мышь, колонки, системник под столом).
+# Текстуры рабочего места Юрчика v2 (стол, коврик, монитор, клавиатура, мышь, колонки, обычный системник 2011 под столом).
 # Рисуется в обычном Python (numpy + Pillow — буквы на клавишах, логотипы), без Blender:
 #   python tools/blender/yurchik_desk_textures.py
 # Результат: assets/textures/yd_atlas.png (1024x1024) и yd_glow.png (свечение включённого компа).
@@ -281,96 +281,73 @@ def mon_back(w, h):
 
 
 def tower_front(w, h):
-    """Системник 2010 года: два отсека 5.25" (DVD и заглушка), сетка, кнопки питания и сброса, USB, аудио."""
+    """Обычный системник 2011 года (как у всех): чёрная пластиковая морда, DVD-привод, заглушка, кардридер,
+    круглая кнопка питания и сброс, два диода (питание — зелёный, диск — оранжевый), USB и аудио спереди,
+    внизу — щели воздухозаборника. Диоды горят отдельно (yd_glow), здесь — погасшие."""
     s = SS
     img = Image.new("RGB", (w * s, h * s), rgb255((0.08, 0.08, 0.085)))
     d = ImageDraw.Draw(img)
-    m = 8 * s
-    # верхняя планка с портами
-    d.rectangle((m, 6 * s, w * s - m, 22 * s), fill=rgb255((0.03, 0.03, 0.035)))
-    for i, x in enumerate((18, 34)):                              # USB
-        d.rectangle((x * s, 11 * s, (x + 12) * s, 16 * s), fill=rgb255((0.01, 0.01, 0.01)))
-        d.rectangle(((x + 1) * s, 11 * s, (x + 11) * s, 13 * s), fill=rgb255((0.55, 0.55, 0.58)))
-    for x, c in ((60, (0.25, 0.6, 0.2)), (72, (0.75, 0.35, 0.55))):   # наушники, микрофон
-        d.ellipse((x * s, 10 * s, (x + 7) * s, 17 * s), fill=rgb255(c))
-        d.ellipse(((x + 2) * s, 12 * s, (x + 5) * s, 15 * s), fill=rgb255((0.02, 0.02, 0.02)))
+    m = 9 * s
+    dark, bay, txt = rgb255((0.03, 0.03, 0.035)), rgb255((0.10, 0.10, 0.105)), rgb255((0.55, 0.55, 0.57))
     # DVD-привод
-    y = 30
-    d.rectangle((m, y * s, w * s - m, (y + 28) * s), fill=rgb255((0.08, 0.08, 0.09)))
-    d.line((m + 4 * s, (y + 12) * s, w * s - m - 4 * s, (y + 12) * s), fill=rgb255((0.02, 0.02, 0.02)), width=s)
-    d.text((m + 6 * s, (y + 20) * s), "DVD RW", font=font("arialbd.ttf", 4.5), fill=rgb255((0.6, 0.6, 0.62)), anchor="lm")
-    d.rectangle((w * s - m - 20 * s, (y + 17) * s, w * s - m - 6 * s, (y + 22) * s), fill=rgb255((0.15, 0.15, 0.17)))
-    d.rectangle((w * s - m - 28 * s, (y + 19) * s, w * s - m - 25 * s, (y + 21) * s), fill=rgb255((0.25, 0.2, 0.05)))
-    # заглушка второго отсека
-    y = 62
-    d.rectangle((m, y * s, w * s - m, (y + 28) * s), fill=rgb255((0.06, 0.06, 0.065)))
-    # сетка-решётка (ячейки ромбом)
-    y0, y1 = 96, h - 10
-    for yy in range(y0 * s, y1 * s, 4 * s):
-        for xx in range(m + (2 * s if (yy // (4 * s)) % 2 else 0), w * s - m, 4 * s):
-            d.ellipse((xx, yy, xx + 2.4 * s, yy + 2.4 * s), fill=rgb255((0.012, 0.012, 0.014)))
-    # кнопка питания (кольцо светится отдельно) и сброс, логотип
-    cx, cy = w * s / 2, 112 * s
-    d.ellipse((cx - 13 * s, cy - 13 * s, cx + 13 * s, cy + 13 * s), fill=rgb255((0.04, 0.04, 0.045)))
-    d.ellipse((cx - 11 * s, cy - 11 * s, cx + 11 * s, cy + 11 * s), fill=rgb255((0.30, 0.30, 0.33)))
-    d.ellipse((cx - 8.5 * s, cy - 8.5 * s, cx + 8.5 * s, cy + 8.5 * s), fill=rgb255((0.14, 0.14, 0.16)))
-    d.arc((cx - 4 * s, cy - 4 * s, cx + 4 * s, cy + 4 * s), -60, 240, fill=rgb255((0.5, 0.5, 0.52)), width=s)
-    d.line((cx, cy - 5 * s, cx, cy), fill=rgb255((0.5, 0.5, 0.52)), width=s)
-    d.ellipse((cx - 2 * s, cy + 18 * s, cx + 2 * s, cy + 22 * s), fill=rgb255((0.15, 0.15, 0.17)))   # сброс
-    d.text((cx, h * s - 22 * s), "ZALMAN", font=font("arialbd.ttf", 5), fill=rgb255((0.5, 0.5, 0.52)), anchor="mm")
+    y = 14
+    d.rectangle((m, y * s, w * s - m, (y + 26) * s), fill=bay)
+    d.line((m + 3 * s, (y + 11) * s, w * s - m - 3 * s, (y + 11) * s), fill=dark, width=s)          # щель лотка
+    d.text((m + 5 * s, (y + 19) * s), "DVD-RW", font=font("arialbd.ttf", 4.5), fill=txt, anchor="lm")
+    d.rectangle((w * s - m - 16 * s, (y + 16) * s, w * s - m - 5 * s, (y + 21) * s), fill=rgb255((0.16, 0.16, 0.17)))
+    # заглушка второго отсека 5.25" и отсек 3.5" с кардридером
+    y = 44
+    d.rectangle((m, y * s, w * s - m, (y + 26) * s), fill=rgb255((0.09, 0.09, 0.095)))
+    d.line((m, (y + 26) * s, w * s - m, (y + 26) * s), fill=dark, width=s)
+    y = 76
+    d.rectangle((m + 18 * s, y * s, w * s - m - 18 * s, (y + 14) * s), fill=bay)
+    d.rectangle((m + 26 * s, (y + 5) * s, w * s - m - 26 * s, (y + 8) * s), fill=dark)              # щель для карт
+    # кнопка питания, сброс, диоды
+    cx, cy = w * s / 2, 116 * s
+    d.ellipse((cx - 9 * s, cy - 9 * s, cx + 9 * s, cy + 9 * s), fill=rgb255((0.04, 0.04, 0.045)))
+    d.ellipse((cx - 7.5 * s, cy - 7.5 * s, cx + 7.5 * s, cy + 7.5 * s), fill=rgb255((0.15, 0.15, 0.16)))
+    d.arc((cx - 3.5 * s, cy - 3.5 * s, cx + 3.5 * s, cy + 3.5 * s), -60, 240, fill=txt, width=s)
+    d.line((cx, cy - 4.5 * s, cx, cy), fill=txt, width=s)
+    for lx, col in ((54, (0.08, 0.16, 0.08)), (74, (0.18, 0.11, 0.04))):                         # диоды (погасшие)
+        d.ellipse(((lx - 1.6) * s, (132 - 1.6) * s, (lx + 1.6) * s, (132 + 1.6) * s), fill=rgb255(col))
+    d.ellipse((cx - 2 * s, 139 * s, cx + 2 * s, 143 * s), fill=rgb255((0.05, 0.05, 0.055)))     # сброс
+    # USB и аудио
+    for x in (30, 46):
+        d.rectangle((x * s, 156 * s, (x + 12) * s, 161 * s), fill=rgb255((0.01, 0.01, 0.01)))
+        d.rectangle(((x + 1) * s, 156 * s, (x + 11) * s, 158 * s), fill=rgb255((0.50, 0.50, 0.53)))
+    for x, c in ((70, (0.25, 0.55, 0.2)), (82, (0.70, 0.35, 0.5))):
+        d.ellipse((x * s, 155 * s, (x + 7) * s, 162 * s), fill=rgb255(c))
+        d.ellipse(((x + 2) * s, 157 * s, (x + 5) * s, 160 * s), fill=rgb255((0.02, 0.02, 0.02)))
+    d.text((cx, 178 * s), "Codegen", font=font("arialbi.ttf", 6), fill=txt, anchor="mm")
+    # щели воздухозаборника внизу
+    for k in range(14):
+        yy = (192 + k * 5) * s
+        d.rounded_rectangle((m + 4 * s, yy, w * s - m - 4 * s, yy + 2 * s), s, fill=rgb255((0.015, 0.015, 0.018)))
     a = to_arr(down(img, w, h)) * grain(w, h, 0.08, 16)
     a[:, :2] *= 1.6; a[:2] *= 1.6
     a = specks(a, 30, (0.35, 0.33, 0.3), (1, 1), (0.2, 0.5))
     return a
 
 
-def tower_interior(w, h, lit):
-    """Сбоку — окно: материнка, видеокарта, кулер, память. lit=True — то же с синей подсветкой вентиляторов (yd_glow)."""
-    s = SS
-    k = 0.25 if not lit else 1.0
-    img = Image.new("RGB", (w * s, h * s), rgb255((0.04, 0.04, 0.045)) if not lit else (0, 0, 0))
-    d = ImageDraw.Draw(img)
-    wx0, wy0, wx1, wy1 = 22 * s, 18 * s, w * s - 22 * s, h * s - 30 * s       # окно
-    if not lit:
-        d.rectangle((wx0 - 3 * s, wy0 - 3 * s, wx1 + 3 * s, wy1 + 3 * s), fill=rgb255((0.02, 0.02, 0.02)))
-    def c(r, g, b):
-        return rgb255((r * k, g * k, b * k))
-    d.rectangle((wx0, wy0, wx1, wy1), fill=c(0.06, 0.07, 0.08))                # глубина корпуса
-    d.rectangle((wx0 + 30 * s, wy0 + 8 * s, wx1 - 10 * s, wy1 - 50 * s), fill=c(0.10, 0.16, 0.12))   # материнка
-    for i in range(4):                                                         # память
-        x = wx1 - 60 * s + i * 7 * s
-        d.rectangle((x, wy0 + 14 * s, x + 4 * s, wy0 + 70 * s), fill=c(0.25, 0.27, 0.32))
-    fx, fy, fr = wx0 + 95 * s, wy0 + 55 * s, 32 * s                            # кулер процессора
-    d.ellipse((fx - fr, fy - fr, fx + fr, fy + fr), fill=c(0.12, 0.12, 0.13))
-    for b in range(7):
-        a0 = b * 360 / 7
-        d.pieslice((fx - fr + 4 * s, fy - fr + 4 * s, fx + fr - 4 * s, fy + fr - 4 * s), a0, a0 + 28, fill=c(0.22, 0.22, 0.24))
-    d.ellipse((fx - 9 * s, fy - 9 * s, fx + 9 * s, fy + 9 * s), fill=c(0.3, 0.3, 0.32))
-    gy = wy1 - 70 * s                                                          # видеокарта
-    d.rectangle((wx0 + 30 * s, gy, wx1 - 20 * s, gy + 26 * s), fill=c(0.12, 0.12, 0.14))
-    d.rectangle((wx0 + 30 * s, gy + 22 * s, wx1 - 20 * s, gy + 26 * s), fill=c(0.6, 0.12, 0.10))
-    d.text((wx0 + 120 * s, gy + 11 * s), "GeForce GTX", font=font("arialbd.ttf", 6), fill=c(0.55, 0.85, 0.2), anchor="mm")
-    d.rectangle((wx0 + 4 * s, wy1 - 40 * s, wx1, wy1), fill=c(0.03, 0.03, 0.035))   # кожух блока питания
-    for (vx, vy, vr) in ((wx0 + 18 * s, wy0 + 40 * s, 22 * s), (fx, fy, fr)):  # кольца подсветки вентиляторов
-        if lit:
-            for gw in range(6, 0, -1):
-                col = (int(40 / gw), int(90 / gw), int(255 / gw ** 0.6))
-                d.ellipse((vx - vr - gw * s, vy - vr - gw * s, vx + vr + gw * s, vy + vr + gw * s), outline=col, width=2 * s)
-        else:
-            d.ellipse((vx - vr, vy - vr, vx + vr, vy + vr), outline=c(0.25, 0.25, 0.3), width=2 * s)
-    if lit:
-        img = Image.blend(img, img.filter(ImageFilter.GaussianBlur(10 * s)), 0.35)
-        d = ImageDraw.Draw(img)
-    a = to_arr(down(img, w, h))
-    if not lit:
-        # стекло окна: блик по диагонали, винты по углам панели
-        yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
-        inwin = (xx > 22) & (xx < w - 22) & (yy > 18) & (yy < h - 30)
-        a += (np.exp(-((xx + yy * 0.8 - w * 0.5) / 14) ** 2) * 0.05 * inwin)[..., None]
-        a *= grain(w, h, 0.06, 20)
-        for (x, y) in ((8, 8), (w - 10, 8), (8, h - 10), (w - 10, h - 10)):
-            a[y:y + 3, x:x + 3] = C(0.35, 0.35, 0.37)
-    return a
+def tower_side(w, h):
+    """Глухая стальная боковая стенка (к креслу): выштампованная решётка под вентилятор, рёбра жёсткости,
+    два барашковых винта у заднего края (слева в куске — задняя сторона корпуса), пыль."""
+    a = np.ones((h, w, 3), np.float32) * C(0.085, 0.085, 0.09) * grain(w, h, 0.07, 18)
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    cx, cy, r = w * 0.40, h * 0.40, h * 0.17
+    rr = np.hypot(xx - cx, yy - cy)
+    holes = (rr < r) & ((xx % 6) < 3) & ((yy % 6) < 3)
+    a[holes] = C(0.01, 0.01, 0.012)
+    a *= (1 - 0.35 * np.exp(-((rr - r - 3) / 1.5) ** 2))[..., None]   # выштамповка вокруг решётки
+    for ry in (0.12, 0.88):                                           # рёбра жёсткости
+        y0 = int(h * ry)
+        a[y0:y0 + 1] *= 1.5; a[y0 + 2:y0 + 3] *= 0.55
+    for sy in (0.2, 0.8):                                             # винты у заднего края
+        sx, syy = 7, int(h * sy)
+        a[(np.hypot(xx - sx, yy - syy) < 4)] = C(0.30, 0.30, 0.32)
+        a[(np.hypot(xx - sx, yy - syy) < 1.5)] = C(0.12, 0.12, 0.13)
+    a[:, :2] *= 1.5; a[:2] *= 1.5; a[-2:] *= 0.6
+    return specks(a, 70, (0.38, 0.36, 0.33), (1, 1), (0.2, 0.5))
 
 
 def tower_top(w, h):
@@ -470,7 +447,7 @@ def build():
     put("mon_back", mon_back(*sz("mon_back")))
     put("tower_f", tower_front(*sz("tower_f")))
     put("kb", keyboard(*sz("kb")))
-    put("tower_s", tower_interior(*sz("tower_s"), lit=False))
+    put("tower_s", tower_side(*sz("tower_s")))
     put("mouse", mouse(*sz("mouse")))
     put("tower_t", tower_top(*sz("tower_t")))
     put("stand", stand(*sz("stand")))
@@ -482,15 +459,10 @@ def build():
 
     gw, gh = L.GLOW
     g = np.zeros((gh, gw, 3), np.float32)
-    x0, y0, x1, y1 = L.G["window"]
-    g[y0:y1, x0:x1] = tower_interior(x1 - x0, y1 - y0, lit=True)
-    yy, xx = np.mgrid[0:64, 0:64].astype(np.float32)
-    rr = np.hypot(xx - 31.5, yy - 31.5)
-    ring = np.clip(1 - np.abs(rr - 24) / 4, 0, 1) + 0.25 * np.exp(-((rr - 24) / 8) ** 2)
+    yy, xx = np.mgrid[0:32, 0:32].astype(np.float32)
+    dot = np.exp(-(np.hypot(xx - 15.5, yy - 15.5) / 7) ** 2)[..., None]
     x0, y0, x1, y1 = L.G["power"]
-    btn = np.where(rr < 22, 0.14, np.where(rr < 27, 0.30, 0.05))[..., None] * C(1, 1, 1.1) * 0.15
-    g[y0:y1, x0:x1] = np.maximum(ring[..., None] * C(0.25, 0.55, 1.0), btn)
-    dot = np.exp(-(np.hypot(xx[:32, :32] - 15.5, yy[:32, :32] - 15.5) / 7) ** 2)[..., None]
+    g[y0:y1, x0:x1] = dot * C(0.3, 1.0, 0.35)                     # диод питания — зелёный
     x0, y0, x1, y1 = L.G["hdd"]
     g[y0:y1, x0:x1] = dot * C(1.0, 0.55, 0.1)
     x0, y0, x1, y1 = L.G["mon_led"]
