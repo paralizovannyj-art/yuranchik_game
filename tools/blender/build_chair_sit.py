@@ -8,7 +8,10 @@
 #   D  шагает вперёд вдоль кресла и разворачивается к нему спиной;
 #   E  садится (переход стойка → сидя, как в старом SitDown);
 #   F  поворачивается вместе с креслом к столу;
-#   G  вытягивает ноги, упирается пятками и подтягивается к столу.
+#   G  вытягивает ноги, упирается пятками и подтягивается к столу;
+#   H  кладёт руки на стол: левая — на WASD, правая — на мышку, корпус чуть вперёд.
+# Сидячие позы — свои (tools/blender/seat_poses.py), не GMod: ладони на бёдрах, пока садится и подъезжает,
+# у стола — клава и мышь. Ноги всё время, пока сидит, стоят на полу (IK).
 # Встаёт — тот же клип задом наперёд от конца до кадра «sit» (E): кресло остаётся отодвинутым и повёрнутым.
 # Если кресло уже отодвинуто, посадка начинается сразу с кадра «sit».
 #
@@ -22,8 +25,9 @@
 # Запуск — только в живом Blender через Blender MCP (правило проекта):
 #   exec(open(r"<проект>/tools/blender/build_chair_sit.py", encoding="utf-8").read(), {"__name__": "__main__"})
 # Скрипт строит всё в своей сцене ChairSit (другие сцены не трогает) и пишет
-# assets/animations/sit/yurchik_sit.glb (клип ChairSit) и assets/animations/sit/chair_sit.json.
-import bpy, os, math, json
+# assets/animations/sit/yurchik_sit.glb (клип ChairSit и клипы-позы у стола, см. EXTRA) и
+# assets/animations/sit/chair_sit.json.
+import bpy, os, sys, math, json, importlib
 from mathutils import Matrix, Vector, Quaternion
 
 ROOT = r"C:\Users\mrs\Documents\yuranchik_game"
@@ -35,7 +39,6 @@ OUT_JSON = os.path.join(OUT_DIR, "chair_sit.json")
 SCENE = "ChairSit"
 FPS = 30
 
-SIT_LIFT = 0.56      # м — подъём позы Sit: таз на подушке кресла (верх сиденья 0.52 — build_gaming_chair.py)
 SIT_BACK = 0.35      # м — таз уходит назад от места, где стоял (= от SitSpot до центра кресла у стола)
 
 # --- кресло (центр — газлифт; поворот a: 0 — сиденьем к столу, + — против часовой сверху, то есть влево) ---
@@ -58,8 +61,10 @@ SPIN_HAND_FOLLOW = 0.35                     # пока крутит кресло
 
 # --- кадры ---
 # grab — рука на спинке; pull — кресло поехало; spin — начал крутить; release — отпустил; sit — стоит перед
-# креслом, начинает садиться; seated — сел боком; swivel — повернулся к столу; end — у стола
-F_GRAB, F_PULL, F_SPIN, F_RELEASE, F_SIT, F_SEATED, F_SWIVEL, F_END = 14, 16, 36, 50, 86, 134, 162, 210
+# креслом, начинает садиться; seated — сел боком; swivel — повернулся к столу; lift — руки над краем стола;
+# desk — руки на клаве и мышке; end — конец клипа (поза desk)
+F_GRAB, F_PULL, F_SPIN, F_RELEASE, F_SIT, F_SEATED, F_SWIVEL = 14, 16, 36, 50, 86, 134, 162
+F_LIFT0, F_LIFT, F_DESK, F_END = 202, 216, 234, 240
 LEN = F_END
 F_FREE = 72          # рука совсем ушла со спинки (отпускает плавно, F_RELEASE–F_FREE)
 
@@ -444,6 +449,77 @@ def fix_hand(scene, arm, hand_rots):
             b.keyframe_insert("rotation_quaternion", frame=f)
 
 
+ARM_BONES = {"%s%s" % (n, side) for side in "LR" for n in ("UpperArm", "Forearm", "Hand")} | {
+    "%s%s%d" % (f, side, i) for side in "LR" for f in ("Index", "Middle", "Ring", "Pinky", "Thumb") for i in (1, 2, 3)}
+ARM_KEYS = [(0, 0.0), (6, 0.3), (14, 0.82), (22, 1.0)]   # (кадр от F_SIT, доля стойка → ладони на бёдрах)
+MONITOR = Vector((-0.02, -0.5, 1.03))   # середина экрана (пространство арматуры у стола)
+# клипы-позы для живых рук в Godot (yurchik_anim.gd): имя клипа → поза seat_poses.py
+EXTRA = {"DeskMouseC": "desk", "DeskMouseL": "mouse_l", "DeskMouseR": "mouse_r", "DeskMouseF": "mouse_f",
+         "DeskMouseB": "mouse_b", "DeskMouseFR": "mouse_fr", "DeskMouseFL": "mouse_fl", "DeskMouseBR": "mouse_br",
+         "DeskMouseBL": "mouse_bl", "DeskClick": "click", "DeskTapIndex": "tap_index", "DeskTapMiddle": "tap_middle",
+         "DeskTapRing": "tap_ring", "DeskTapThumb": "tap_thumb"}
+# PowerReach: цепочка поз и ключи (кадр, место на цепочке); на 3 — палец на кнопке
+P_CHAIN = ["desk", "power_lift", "power_mid", "power", "power_mid", "power_lift", "desk"]
+P_KEYS = [(0, 0.0), (10, 1.0), (24, 2.0), (36, 3.0), (46, 3.0), (58, 4.0), (70, 5.0), (82, 6.0)]
+P_PRESS = 38
+
+
+def pose_action(arm, name, frames):
+    """Действие с позами по кадрам (frames — список {кость: matrix_basis})."""
+    act = bpy.data.actions.new(name)
+    arm.animation_data.action = act
+    for f, pose in enumerate(frames):
+        for b in arm.pose.bones:
+            b.matrix_basis = pose[b.name]
+            b.keyframe_insert("location", frame=f)
+            b.keyframe_insert("rotation_quaternion", frame=f)
+            b.keyframe_insert("scale", frame=f)
+    arm.animation_data.action = None
+    return act
+
+
+def power_reach(arm, poses):
+    """Кадры клипа PowerReach (у стола → кнопка → у стола) и точки взгляда. Место на цепочке поз — монотонный
+    сплайн по P_KEYS (на промежуточных позах не останавливается), потом сглаживание (гаусс, σ 2.5 кадра)."""
+    import seat_poses
+    n = P_KEYS[-1][0] + 1
+    raw = []
+    for f in range(n):
+        p = mono(P_KEYS, f)
+        i = min(int(p), len(P_CHAIN) - 2)
+        a, b = poses[P_CHAIN[i]], poses[P_CHAIN[i + 1]]
+        raw.append({k: lerp_basis(a[k], b[k], p - i) for k in a})
+    pad = 8
+    seq = [raw[0]] * pad + raw + [raw[-1]] * pad
+    out = []
+    for f in range(n):
+        c = f + pad
+        res = {}
+        for k in raw[0]:
+            loc, q0, acc_q, acc_l, wsum = Vector(), None, Quaternion((0, 0, 0, 0)), Vector(), 0.0
+            for j in range(c - pad, c + pad + 1):
+                w = math.exp(-0.5 * ((j - c) / 2.5) ** 2)
+                l, q, _ = seq[j][k].decompose()
+                if q0 is None:
+                    q0 = q
+                if q.dot(q0) < 0.0:
+                    q = -q
+                acc_q = Quaternion((acc_q.w + q.w * w, acc_q.x + q.x * w, acc_q.y + q.y * w, acc_q.z + q.z * w))
+                acc_l += l * w
+                wsum += w
+            acc_q.normalize()
+            res[k] = Matrix.LocRotScale(acc_l / wsum, acc_q, Vector((1, 1, 1)))
+        out.append(res)
+    out[0], out[-1] = poses["desk"], poses["desk"]
+    # взгляд: монитор → кнопка → монитор (по месту на цепочке)
+    looks = []
+    for f in range(n):
+        p = mono(P_KEYS, f)
+        p = p if p <= 3.0 else 6.0 - p
+        looks.append(MONITOR.lerp(seat_poses.BUTTON + Vector((0, 0.03, 0.02)), smooth((p - 0.5) / 2.0)))
+    return out, looks
+
+
 def main():
     scene = bpy.data.scenes.get(SCENE)
     if scene is None:
@@ -467,16 +543,22 @@ def main():
             bpy.data.objects.remove(o, do_unlink=True)
     scene.render.fps = FPS
     idle = sample(arm, "Idle")
-    sit = sample(arm, "Sit")
     arm.animation_data.action = None
+    # свои сидячие позы (seat_poses.py): rest — ладони на бёдрах, lift — руки над краем стола,
+    # desk — клава и мышь; остальные — клипы-позы для Godot (EXTRA) и PowerReach
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals()
+                    else os.path.join(ROOT, "tools", "blender"))
+    import seat_poses
+    importlib.reload(seat_poses)
+    poses, pose_report = seat_poses.build(arm, idle)
+    sit = poses["rest"]
 
     pb = arm.pose.bones
     pelvis = pb["Pelvis"]
     p_rest = pelvis.bone.matrix_local
-    # таз в пространстве тела: стойка и сидя (поднят на подушку и сдвинут назад)
+    # таз в пространстве тела: стойка и сидя (поза rest уже на подушке, в пространстве «тела у стола»)
     P_idle = p_rest @ idle["Pelvis"]
     P_sit = p_rest @ sit["Pelvis"]
-    P_sit = Matrix.Translation((0.0, SIT_BACK, SIT_LIFT)) @ P_sit
     li, ri, _ = P_idle.decompose()
     ls, rs, _ = P_sit.decompose()
 
@@ -492,6 +574,8 @@ def main():
     pelvis.matrix = P_sit
     bpy.context.view_layer.update()
     foot_sit = {s: pb["Foot" + s].matrix.copy() for s in "LR"}
+    seat_poses.apply(arm, poses["desk"])
+    foot_desk = {s: pb["Foot" + s].matrix.copy() for s in "LR"}
 
     # --- цели IK ---
     def empty(name):
@@ -588,10 +672,21 @@ def main():
             if f > F_SEATED:
                 # подтягивается: корпус чуть вперёд, когда тянет ногами
                 bend += 7.0 * math.sin(math.pi * ramp(f, F_REACH0, F_PULL1))
+        # руки садятся раньше тела: ладони уже на бёдрах, пока таз опускается, — иначе висящие руки
+        # проходят сквозь подлокотники
+        t_arm = mono(ARM_KEYS, f - F_SIT) if f >= F_SIT else 0.0
         for b in pb:
-            b.matrix_basis = lerp_basis(idle[b.name], sit[b.name], t_fk)
+            b.matrix_basis = lerp_basis(idle[b.name], sit[b.name], t_arm if b.name in ARM_BONES else t_fk)
         loc = Vector((li.x + (ls.x - li.x) * t_fk, li.y + (ls.y - li.y) * back, li.z + (ls.z - li.z) * down))
         pelvis.matrix = B @ Matrix.LocRotScale(loc, ri.slerp(rs, t_fk), Vector((1, 1, 1)))
+        if f > F_LIFT0:
+            # руки на стол: сначала вверх перед собой (lift), потом вперёд на клаву и мышь (desk);
+            # корпус наклоняется к столу, таз чуть вперёд по подушке
+            w1, w2 = ramp(f, F_LIFT0, F_LIFT), ramp(f, F_LIFT - 4, F_DESK)
+            for b in pb:
+                b.matrix_basis = lerp_basis(lerp_basis(sit[b.name], poses["lift"][b.name], w1),
+                                            poses["desk"][b.name], w2)
+            pelvis.matrix = B @ (p_rest @ pelvis.matrix_basis)
         bpy.context.view_layer.update()
         if bend != 0.0:
             spine = pb["Spine"]
@@ -606,8 +701,8 @@ def main():
             b.keyframe_insert("scale", frame=f)
 
         # --- ноги ---
-        if f < F_SIT + 10:
-            leg_w = 1.0 - ramp(f, F_SIT, F_SIT + 10)
+        if f < F_SIT:
+            leg_w = 1.0
             for s in "LR":
                 place, lift = foot_place(s, f)
                 m = place @ foot_idle[s]
@@ -616,11 +711,28 @@ def main():
                 tg[s].matrix_world = m
                 fwd = place.to_3x3() @ Vector((0, -1, 0))
                 pole[s].matrix_world = Matrix.Translation(m.translation + fwd * 0.8 + Vector((0, 0, 0.5)))
-        elif f >= F_REACH0 - 4:
-            leg_w = ramp(f, F_REACH0 - 4, F_REACH0) * (1.0 - ramp(f, F_SETTLE1, F_END))
+        else:
+            # сидит: стопы на полу всё время (IK). К концу клипа IK уходит — остаётся поза desk, в ней стопы там же
+            leg_w = 1.0 - ramp(f, F_DESK, F_END)
             for s in "LR":
-                fwd_b = seat_body(f).to_3x3() @ Vector((0, -1, 0))
-                if f < F_PULL0:
+                Bs = B if f <= F_SEATED else seat_body(f)
+                fwd_b = Bs.to_3x3() @ Vector((0, -1, 0))
+                if f < F_REACH0 - 4:
+                    stand = foot_place(s, F_SIT)[0] @ foot_idle[s]
+                    seated = Bs @ foot_sit[s]
+                    if f < F_LAND - 4:
+                        m = stand                          # садится: стопы стоят, где стоял
+                    elif f < F_LAND + 14:
+                        # сел — переставляет ноги в посадку (чуть приподнимая)
+                        u = ramp(f, F_LAND - 4, F_LAND + 14)
+                        m = Matrix.Translation((0, 0, 0.02 * math.sin(math.pi * u) ** 2)) @ lerp_basis(stand, seated, u)
+                    elif f < F_SWIVEL:
+                        # крутится к столу вместе с креслом — ноги чуть над полом
+                        u = (f - (F_LAND + 14)) / float(F_SWIVEL - (F_LAND + 14))
+                        m = Matrix.Translation((0, 0, 0.03 * math.sin(math.pi * u) ** 2)) @ seated
+                    else:
+                        m = seated
+                elif f < F_PULL0:
                     # вытягивает ноги вперёд, пятки чуть над полом
                     u = ramp(f, F_REACH0, F_REACH1)
                     base = seat_body(f) @ foot_sit[s]
@@ -637,10 +749,16 @@ def main():
                     rest = seat_body(f) @ foot_sit[s]
                     m = lerp_basis(planted, rest, u)
                     m = Matrix.Translation((0, 0, 0.025 * math.sin(math.pi * u) ** 2)) @ m
+                if f > F_LIFT0:
+                    # у стола — стопы чуть дальше под стол (поза desk)
+                    u = ramp(f, F_LIFT0, F_DESK)
+                    m = Matrix.Translation((0, 0, 0.015 * math.sin(math.pi * u) ** 2)) @ lerp_basis(m, Bs @ foot_desk[s], u)
                 tg[s].matrix_world = m
-                pole[s].matrix_world = Matrix.Translation(m.translation + fwd_b * 0.8 + Vector((0, 0, 0.6)))
-        else:
-            leg_w = 0.0
+                out = 1.0 if s == "L" else -1.0
+                side = Bs.to_3x3() @ Vector((out, 0, 0))
+                k = ramp(f, F_SIT, F_SIT + 20)           # колени чуть врозь, как сидят (от стойки — плавно)
+                pole[s].matrix_world = Matrix.Translation(m.translation + fwd_b * 0.8 + side * 0.15 * k
+                                                          + Vector((0, 0, 0.5 + 0.1 * k)))
         for c in leg_cons:
             c.influence = leg_w
             c.keyframe_insert("influence", frame=f)
@@ -693,6 +811,7 @@ def main():
         if f >= F_SIT:
             base = base.lerp(head + fwd * 1.4 + Vector((0, 0, -0.75)), ramp(f, F_SIT, F_SIT + 12))
         base = base.lerp(head + fwd * 1.6 + Vector((0, 0, -0.35)), ramp(f, F_SEATED - 10, F_SEATED + 10))
+        base = base.lerp(B @ MONITOR, ramp(f, F_LIFT0, F_DESK))   # руки на столе — смотрит в монитор
         w_palm = ramp(f, 0, F_GRAB) * (1.0 - ramp(f, F_SPIN - 8, F_RELEASE + 2))
         look = base.lerp(cm @ GRAB_PALM, w_palm)
         looks.append(look)
@@ -732,13 +851,21 @@ def main():
     def M(d):
         return int(round(warp_out(d)))
 
-    # --- экспорт клипа ---
+    # --- клипы-позы у стола и PowerReach ---
+    extra = {name: pose_action(arm, name, [poses[key], poses[key]]) for name, key in EXTRA.items()}
+    power_frames, power_look = power_reach(arm, poses)
+    extra["PowerReach"] = pose_action(arm, "PowerReach", power_frames)
+
+    # --- экспорт клипов ---
     ad = arm.animation_data
     for tr in list(ad.nla_tracks):
         ad.nla_tracks.remove(tr)
-    tr = ad.nla_tracks.new()
-    tr.name = "ChairSit"
-    tr.strips.new("ChairSit", 0, act)
+    for name, a in [("ChairSit", act)] + list(extra.items()):
+        tr = ad.nla_tracks.new()
+        tr.name = name
+        st = tr.strips.new(name, 0, a)
+        if hasattr(st, "action_slot") and len(getattr(a, "slots", [])) and st.action_slot is None:
+            st.action_slot = a.slots[0]
     ad.action = None
     os.makedirs(OUT_DIR, exist_ok=True)
     bpy.ops.object.select_all(action='DESELECT')
@@ -763,13 +890,17 @@ def main():
         "fps": FPS, "frames": nout + 1,
         "marks": {k: M(v) for k, v in (("grab", F_GRAB), ("pull", F_PULL), ("spin", F_SPIN), ("release", F_RELEASE),
                                        ("sit", F_SIT), ("land", F_LAND), ("seated", F_SEATED), ("swivel", F_SWIVEL),
-                                       ("pull0", F_PULL0), ("pull1", F_PULL1), ("end", F_END))},
+                                       ("pull0", F_PULL0), ("pull1", F_PULL1), ("lift", F_LIFT0), ("desk", F_DESK),
+                                       ("end", F_END))},
         # где стоит перед тем, как сесть (кадр sit): точка в пространстве SitSpot и поворот, рад
         "stand": g((0.35, 0.65, 0.0)) + [round(math.radians(90.0), 4)],
         "start": g((FOOT_START[0], FOOT_START[1], 0.0)) + [0.0],
         # кресло: x, y, z, поворот (рад, вокруг Y; 0 — сиденьем к столу)
         "chair": [g((c[0], c[1], c[3])) + [round(math.radians(c[2]), 4)] for c in chairs],
         "look": [g(v) for v in sm],
+        # тянется к кнопке питания (клип PowerReach): кадр нажатия и куда смотрит камера
+        "power": {"frames": len(power_frames), "marks": {"press": P_PRESS, "end": len(power_frames) - 1},
+                  "look": [g(v) for v in power_look]},
     }
     with open(OUT_JSON, "w", encoding="utf-8") as fh:
         json.dump(data, fh, ensure_ascii=False, separators=(",", ":"))
