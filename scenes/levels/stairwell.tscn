@@ -39,6 +39,7 @@
 [ext_resource type="Material" path="res://assets/environments/ps2_post.tres" id="ps2_post"]
 [ext_resource type="PackedScene" uid="uid://jcujcrvodxj5" path="res://assets/models/room_door.gltf" id="rdoor"]
 [ext_resource type="PackedScene" uid="uid://dofehnsuy624m" path="res://assets/models/room_window.gltf" id="rwindow"]
+[ext_resource type="Script" path="res://scripts/world/room_window.gd" id="rwindow_use"]
 [ext_resource type="PackedScene" uid="uid://bg5dquyqdt2p4" path="res://scenes/characters/sergey.tscn" id="sergey"]
 [ext_resource type="PackedScene" uid="uid://c7ajfkmkpjxd" path="res://assets/models/window_view.gltf" id="view"]
 [ext_resource type="PackedScene" uid="uid://dsber4ub5phi3" path="res://assets/models/props/wall_switch.gltf" id="wall_switch"]
@@ -148,6 +149,44 @@ particles_anim_loop = false
 [sub_resource type="QuadMesh" id="mesh_flake_out"]
 material = SubResource("mat_flake_out")
 size = Vector2(0.06, 0.06)
+
+[sub_resource type="Curve" id="curve_snow_in_melt"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(0.6, 0.9), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="CurveTexture" id="tex_snow_in_melt"]
+curve = SubResource("curve_snow_in_melt")
+
+[sub_resource type="ParticleProcessMaterial" id="pm_snow_in"]
+emission_shape = 3
+emission_box_extents = Vector3(0.27, 0.6, 0.03)
+direction = Vector3(0, -0.15, -1)
+spread = 22.0
+initial_velocity_min = 0.5
+initial_velocity_max = 1.5
+gravity = Vector3(0, -0.7, -0.1)
+damping_min = 0.2
+damping_max = 0.6
+scale_min = 0.6
+scale_max = 1.2
+scale_curve = SubResource("tex_snow_in_melt")
+turbulence_enabled = true
+turbulence_noise_strength = 0.35
+turbulence_noise_scale = 1.5
+
+[sub_resource type="StandardMaterial3D" id="mat_flake_in"]
+transparency = 1
+albedo_color = Color(0.72, 0.74, 0.78, 1)
+albedo_texture = SubResource("tex_flake")
+roughness = 1.0
+billboard_mode = 3
+particles_anim_h_frames = 1
+particles_anim_v_frames = 1
+particles_anim_loop = false
+
+[sub_resource type="QuadMesh" id="mesh_flake_in"]
+material = SubResource("mat_flake_in")
+size = Vector2(0.025, 0.025)
 
 [sub_resource type="BoxShape3D" id="door_box"]
 size = Vector3(0.04, 2.035, 0.85)
@@ -356,6 +395,22 @@ cull_mask = 1047551
 
 [node name="RoomWindow" parent="." unique_id=1427705113 instance=ExtResource("rwindow")]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -8.26, 9.3, 5.68)
+
+[node name="RoomWindowUse" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.265, 10, 5.7)
+script = ExtResource("rwindow_use")
+window_path = NodePath("../RoomWindow")
+snow_path = NodePath("SnowIn")
+prompt = "Открыть окно"
+
+[node name="SnowIn" type="GPUParticles3D" parent="RoomWindowUse"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0.25)
+emitting = false
+amount = 70
+lifetime = 2.2
+visibility_aabb = AABB(-1.2, -2, -3.5, 2.4, 3, 4)
+process_material = SubResource("pm_snow_in")
+draw_pass_1 = SubResource("mesh_flake_in")
 
 [node name="WindowView" parent="." unique_id=998683274 instance=ExtResource("view")]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -6.5, 0, -4.82)
