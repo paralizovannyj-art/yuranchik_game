@@ -6,9 +6,10 @@
 	"scene":0,
 	"scenes":[
 		{
-			"name":"Scene",
+			"name":"DeskClutter",
 			"nodes":[
-				0
+				0,
+				1
 			]
 		}
 	],
@@ -16,18 +17,32 @@
 		{
 			"mesh":0,
 			"name":"DeskBottleTall_nocol"
+		},
+		{
+			"mesh":1,
+			"name":"DeskBottleTallGlass_nocol"
 		}
 	],
 	"materials":[
 		{
-			"doubleSided":true,
-			"name":"YrAtlas",
+			"name":"DcAtlas",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
 					"index":0
 				},
 				"metallicFactor":0,
-				"roughnessFactor":0.699999988079071
+				"roughnessFactor":0.3499999940395355
+			}
+		},
+		{
+			"alphaMode":"BLEND",
+			"name":"DcClear",
+			"pbrMetallicRoughness":{
+				"baseColorTexture":{
+					"index":1
+				},
+				"metallicFactor":0,
+				"roughnessFactor":0.15000000596046448
 			}
 		}
 	],
@@ -45,9 +60,27 @@
 					"material":0
 				}
 			]
+		},
+		{
+			"name":"DeskBottleTallGlass_nocol",
+			"primitives":[
+				{
+					"attributes":{
+						"POSITION":4,
+						"NORMAL":5,
+						"TEXCOORD_0":6
+					},
+					"indices":7,
+					"material":1
+				}
+			]
 		}
 	],
 	"textures":[
+		{
+			"sampler":0,
+			"source":0
+		},
 		{
 			"sampler":0,
 			"source":0
@@ -56,69 +89,127 @@
 	"images":[
 		{
 			"mimeType":"image/png",
-			"name":"yr_atlas",
-			"uri":"../../textures/yr_atlas.png"
+			"name":"dc_atlas.png",
+			"uri":"../../textures/dc_atlas.png"
 		}
 	],
 	"accessors":[
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":116,
+			"count":220,
 			"max":[
-				0.04500007629394531,
-				0.38000011444091797,
-				0.04500007629394531
+				0.04470000043511391,
+				0.3425000011920929,
+				0.04470000043511391
 			],
 			"min":[
-				-0.04500007629394531,
-				0,
-				-0.04500007629394531
+				-0.04470000043511391,
+				0.19599999487400055,
+				-0.04470000043511391
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":116,
+			"count":220,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":116,
+			"count":220,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
 			"componentType":5123,
-			"count":192,
+			"count":618,
+			"type":"SCALAR"
+		},
+		{
+			"bufferView":4,
+			"componentType":5126,
+			"count":322,
+			"max":[
+				0.04399999976158142,
+				0.3179999887943268,
+				0.04399999976158142
+			],
+			"min":[
+				-0.04399999976158142,
+				0,
+				-0.04399999976158142
+			],
+			"type":"VEC3"
+		},
+		{
+			"bufferView":5,
+			"componentType":5126,
+			"count":322,
+			"type":"VEC3"
+		},
+		{
+			"bufferView":6,
+			"componentType":5126,
+			"count":322,
+			"type":"VEC2"
+		},
+		{
+			"bufferView":7,
+			"componentType":5123,
+			"count":1584,
 			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":1392,
+			"byteLength":2640,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":1392,
-			"byteOffset":1392,
+			"byteLength":2640,
+			"byteOffset":2640,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":928,
-			"byteOffset":2784,
+			"byteLength":1760,
+			"byteOffset":5280,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":384,
-			"byteOffset":3712,
+			"byteLength":1236,
+			"byteOffset":7040,
+			"target":34963
+		},
+		{
+			"buffer":0,
+			"byteLength":3864,
+			"byteOffset":8276,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":3864,
+			"byteOffset":12140,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":2576,
+			"byteOffset":16004,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":3168,
+			"byteOffset":18580,
 			"target":34963
 		}
 	],
@@ -130,7 +221,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":4096,
+			"byteLength":21748,
 			"uri":"desk_bottle_tall.bin"
 		}
 	]
