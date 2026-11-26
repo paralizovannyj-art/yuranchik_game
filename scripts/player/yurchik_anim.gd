@@ -461,6 +461,18 @@ func snap_seat(on: bool) -> void:
 		# поза — сразу, в этом же кадре: иначе голова кадр стоит в старой позе на новом месте,
 		# и взгляд, посчитанный от неё (pc_seat.gd), дёргается на ~20°
 		_tree.advance(0.0)
+	_hide_until_skinned()
+
+
+## Кости уже в новой позе, но скиннинг меша скелет пересчитывает только в своём шаге обработки следующего
+## кадра (у него есть модификаторы — Lean, PhoneArm). Узел игрока при этом уже перенесён, и один кадр меш
+## рисуется на новом месте со старым скином: тело в стойке стоит прямо в кресле. Прячем тело на этот кадр.
+func _hide_until_skinned() -> void:
+	if not visible:
+		return
+	visible = false
+	await get_tree().process_frame     # в этом кадре скелет пересчитает скин до отрисовки
+	visible = true
 
 
 func _update_crouch_air(delta: float, speed: float, crouching: bool, air: bool, vy: float) -> void:
