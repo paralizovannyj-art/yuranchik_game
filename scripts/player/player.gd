@@ -147,6 +147,7 @@ var _sprinting := false
 var _run := 0.0                        ## 0 — шаг, 1 — полный бег
 var armed := false                     ## молоток в руке (false — убран в сумку или ещё не найден)
 var _hammer: Node3D
+var _phone_up := false
 var _swap_at := -1.0                   ## когда в BUSY убрать/достать молоток (по _timer); < 0 — не трогаем
 var _punch := false                    ## текущий удар — кулаком
 var _punch_alt := false                ## следующий удар кулаком — второй рукой (Punch2)
@@ -459,6 +460,10 @@ func set_seated(on: bool) -> void:
 	move_speed = 0.0
 	focus = null
 	seat_walk = 0.0
+	# молоток — в сумку, пока сидит: кресло берут пустой рукой, иначе молоток торчит из спинки и мелькает в кадре
+	if armed and _hammer:
+		Game.sfx("ui_open", null, -10.0, 0.12)       # шорох сумки
+	_show_hammer()
 	if on:
 		seat_yaw = rotation.y
 		state = State.NORMAL
@@ -831,8 +836,7 @@ func _setup_hammer() -> void:
 ## Зовётся при появлении героя (и уровнем — после того как он выдал вещи при запуске из редактора).
 func refresh_tools() -> void:
 	armed = Game.has_item("hammer")
-	if _hammer:
-		_hammer.visible = armed
+	_show_hammer()
 	flashlight.visible = Game.has_item("flashlight")
 
 
@@ -851,14 +855,19 @@ func _on_item_picked(id: String) -> void:
 
 ## Телефон в правой руке (phone.gd): пока он поднят, молотка в этой руке не видно.
 func phone_hand(up: bool) -> void:
+	_phone_up = up
+	_show_hammer()
+
+
+## Молоток виден, только если он в руке: не в сумке, рука не занята телефоном и не сидит за компом.
+func _show_hammer() -> void:
 	if _hammer:
-		_hammer.visible = armed and not up
+		_hammer.visible = armed and not _phone_up and not seated
 
 ## Достать (true) или убрать в сумку (false).
 func _place_hammer(in_hand: bool) -> void:
 	armed = in_hand
-	if _hammer:
-		_hammer.visible = in_hand
+	_show_hammer()
 	Game.sfx("ui_open", null, -10.0, 0.12)       # шорох сумки
 
 
