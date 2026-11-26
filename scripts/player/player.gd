@@ -104,7 +104,11 @@ var noclip := false                    ## (отладка) летит сквоз
 var phone_up := false                  ## телефон в руке (phone.gd): только шаг, без ударов, бега и бросков
 ## Сидит в кресле (pc_seat.gd): не ходит, капсула выключена, позу ведёт клип посадки. Камера — из головы,
 ## а при seat_view_blend > 0 плавно уходит к seat_view (вид на монитор) с углом обзора seat_view_fov.
+## Поворот тела на это время — seat_yaw (камера смотрит отдельно, её ведёт pc_seat.gd через look_at_angles),
+## seat_walk — скорость шага, пока pc_seat.gd подводит его к креслу (ноги шагают, а не скользят).
 var seated := false
+var seat_yaw := 0.0
+var seat_walk := 0.0
 var seat_view := Transform3D.IDENTITY
 var seat_view_blend := 0.0
 var seat_view_fov := 40.0
@@ -449,7 +453,9 @@ func set_seated(on: bool) -> void:
 	velocity = Vector3.ZERO
 	move_speed = 0.0
 	focus = null
+	seat_walk = 0.0
 	if on:
+		seat_yaw = rotation.y
 		state = State.NORMAL
 		_crouch_toggle = false
 		if crouching:
@@ -462,6 +468,14 @@ func set_seated(on: bool) -> void:
 		flashlight.visible = _flash_before_seat
 
 
+## Точка глаз от кости головы (без выноса камеры вперёд): отсюда pc_seat.gd считает, куда смотреть.
+## От самой камеры нельзя — при взгляде вниз она выносится вперёд, и угол убегает сам за собой.
+func eye_point() -> Vector3:
+	if _skel and _head_bone >= 0:
+		return _skel.global_transform * _skel.get_bone_global_pose(_head_bone).origin + Vector3.UP * 0.15
+	return camera.global_position
+
+
 ## Повернуть взгляд (рад) — кресло разворачивает Юрчика к монитору.
 func look_at_angles(yaw: float, pitch: float) -> void:
 	_yaw_target = yaw
@@ -469,10 +483,11 @@ func look_at_angles(yaw: float, pitch: float) -> void:
 
 
 func _seated_process(delta: float) -> void:
-	rotation.y = cam_yaw
+	rotation.y = seat_yaw
 	_yaw_rate = 0.0
 	_prev_yaw = rotation.y
-	model.update_anim(delta, 0.0, 0.0, 0, 0.0, 0.0)
+	move_speed = seat_walk
+	model.update_anim(delta, seat_walk, 0.0, 0, 0.0, 0.0)
 	_update_camera(delta)
 
 
@@ -934,6 +949,11 @@ func _update_camera(delta: float) -> void:
 		var head := _skel.global_transform * _skel.get_bone_global_pose(_head_bone).origin
 		# от начала модели, а не капсулы: модель сдвигается, когда камеру прижало к стене (см. ниже)
 		ahead = (head - model.global_position).dot(Basis(Vector3.UP, cam_yaw) * Vector3.FORWARD)
+		if seated:
+			# в кресле тело ведёт клип посадки (шаги, повороты, кресло едет) — камера идёт за головой целиком
+			_cam_pos.x = head.x
+			_cam_pos.z = head.z
+			ahead = 0.0
 	_head_lead = lerpf(_head_lead, ahead, 1.0 - exp(-12.0 * delta))
 	var down := clampf(-cam_pitch / 1.2, 0.0, 1.0)
 	var lean := Vector3(0.0, 0.0, -(_head_lead + maxf(head_forward, look_down_forward * down * down)))
