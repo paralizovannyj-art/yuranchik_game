@@ -114,6 +114,13 @@ var seat_view := Transform3D.IDENTITY
 var seat_view_blend := 0.0
 var seat_view_fov := 40.0
 var _flash_before_seat := false
+## Сидит и смотрит вокруг (pc_seat.gd, SEATED_LOOK): мышь и стик крутят голову в пределах от монитора,
+## прицел и E работают — но только на то, до чего дотянется рука (seat_reach по лучу от глаз).
+var seat_look := false
+var _seat_center := Vector2.ZERO       ## поворот и наклон взгляда на монитор — от них считаются пределы
+var _seat_yaw_limit := PI              ## рад — влево и вправо от монитора
+var _seat_pitch := Vector2(-1.2, 0.9)  ## рад — вниз и вверх
+var seat_reach := 1.1
 
 var _yaw_target := 0.0
 var _pitch_target := -0.12
@@ -283,12 +290,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		var s := mouse_sensitivity * (0.65 if state == State.AIM else 1.0)
-		_yaw_target -= event.relative.x * s
-		_pitch_target = clampf(_pitch_target - event.relative.y * s, pitch_min, pitch_max)
+		_turn(-event.relative.x * s, -event.relative.y * s)
 	if OS.is_debug_build() and event is InputEventKey and event.pressed and not event.echo \
 			and (event.physical_keycode == KEY_V or event.keycode == KEY_V) and state != State.DEAD:
 		set_noclip(not noclip)
 		get_viewport().set_input_as_handled()
+		return
+	if seated:
+		if seat_look and focus and event.is_action_pressed("interact"):
+			focus.interact(self)                 # в кресле: системник, монитор, что рядом на столе
 		return
 	if not control or state == State.DEAD or phone_up:
 		return
@@ -319,11 +329,16 @@ func _physics_process(delta: float) -> void:
 	_land = move_toward(_land, 0.0, delta * 3.0)
 	_recover = maxf(_recover - delta, 0.0)
 
-	var look := Input.get_vector("look_left", "look_right", "look_up", "look_down")
-	_yaw_target -= look.x * stick_sensitivity * delta
-	_pitch_target = clampf(_pitch_target - look.y * stick_sensitivity * 0.7 * delta, pitch_min, pitch_max)
+	if not seated or seat_look:               # в кресле взгляд ведёт pc_seat.gd — кроме осмотра
+		var look := Input.get_vector("look_left", "look_right", "look_up", "look_down")
+		_turn(-look.x * stick_sensitivity * delta, -look.y * stick_sensitivity * 0.7 * delta)
 	var ls := 1.0 - exp(-look_smoothing * delta)
-	cam_yaw = lerp_angle(cam_yaw, _yaw_target, ls)
+	if seated and seat_look:
+		# в кресле — через монитор, а не по короткой дуге: от упора к упору голова не крутится через спину
+		var co := angle_difference(_seat_center.x, cam_yaw)
+		cam_yaw = _seat_center.x + lerpf(co, angle_difference(_seat_center.x, _yaw_target), ls)
+	else:
+		cam_yaw = lerp_angle(cam_yaw, _yaw_target, ls)
 	cam_pitch = lerpf(cam_pitch, _pitch_target, ls)
 	if noclip:
 		_fly(delta)
@@ -474,9 +489,40 @@ func set_seated(on: bool) -> void:
 		_flash_before_seat = flashlight.visible       # фонарик в лоб монитору — блик на весь экран; гасим
 		flashlight.visible = false
 	else:
+		seat_look = false
 		seat_view_blend = 0.0
 		model.set("seat_time", -1.0)
 		flashlight.visible = _flash_before_seat
+
+
+## Сидя: смотреть вокруг (true) — голова крутится от center (поворот, наклон) не дальше yaw_limit вбок
+## и pitch_lo..pitch_hi по наклону; фокус — на то, что ближе reach. false — взгляд снова ведёт pc_seat.gd.
+func set_seat_look(on: bool, center := Vector2.ZERO, yaw_limit := PI, pitch_lo := -1.2, pitch_hi := 0.9,
+		reach := 1.1) -> void:
+	seat_look = on and seated
+	focus = null
+	if not seat_look:
+		return
+	_seat_center = center
+	_seat_yaw_limit = yaw_limit
+	_seat_pitch = Vector2(pitch_lo, pitch_hi)
+	seat_reach = reach
+	_turn(0.0, 0.0)
+
+
+## Повернуть взгляд мышью или стиком (рад). В кресле — не дальше пределов осмотра: сдвиг копится
+## от прошлой цели (она уже в пределах), поэтому резкий рывок мыши не перескакивает на другую сторону.
+func _turn(dyaw: float, dpitch: float) -> void:
+	var lo := pitch_min
+	var hi := pitch_max
+	if seated and seat_look:
+		var off := angle_difference(_seat_center.x, _yaw_target) + dyaw
+		_yaw_target = _seat_center.x + clampf(off, -_seat_yaw_limit, _seat_yaw_limit)
+		lo = maxf(_seat_pitch.x, pitch_min)
+		hi = minf(_seat_pitch.y, pitch_max)
+	else:
+		_yaw_target += dyaw
+	_pitch_target = clampf(_pitch_target + dpitch, lo, hi)
 
 
 ## Точка глаз от кости головы (без выноса камеры вперёд): отсюда pc_seat.gd считает, куда смотреть.
@@ -523,6 +569,10 @@ func _seated_process(delta: float) -> void:
 	move_speed = seat_walk
 	model.update_anim(delta, seat_walk, 0.0, 0, 0.0, 0.0)
 	_update_camera(delta)
+	if seat_look:
+		_update_focus()
+	else:
+		focus = null
 
 
 # ----------------------------------------------------------------------------- отладка: полёт (noclip)
@@ -883,7 +933,7 @@ func _toggle_hammer() -> void:
 
 ## Занять героя на время (отпирает дверь, подбирает вещь) — он останавливается и не атакует.
 func busy(duration: float, anim := "") -> void:
-	if state == State.DEAD:
+	if state == State.DEAD or seated:          # в кресле позу ведёт клип посадки — не встаём и не машем
 		return
 	if _swap_at >= 0.0:                    # не дотянулись до пояса — молоток перекладываем сразу
 		_swap_at = -1.0
@@ -897,7 +947,8 @@ func busy(duration: float, anim := "") -> void:
 # ----------------------------------------------------------------------------- взаимодействие
 func _update_focus() -> void:
 	focus = null
-	if not control or phone_up or not (state == State.NORMAL or state == State.AIM):
+	var sit_look := seated and seat_look
+	if not sit_look and (not control or phone_up or not (state == State.NORMAL or state == State.AIM)):
 		return
 	# фокус — только то, во что точно попадает луч взгляда (сама модель предмета, створка двери),
 	# в радиусе и не за стеной; если на луче несколько — ближайшее
@@ -908,13 +959,15 @@ func _update_focus() -> void:
 		var i := it as Interactable
 		if i == null or not i.enabled:
 			continue
-		if not i is Door:                             # у двери своя дальность (reach) — в aim_hit
+		if not i is Door and not sit_look:            # у двери своя дальность (reach) — в aim_hit
 			var to := i.global_position - global_position
 			var dy := absf(to.y - 0.9)
 			to.y = 0.0
 			if to.length() > i.radius or dy > 1.6:
 				continue
 		var t := i.aim_hit(eye, look)
+		if sit_look and t > seat_reach:               # в кресле — только то, до чего дотянется рука
+			continue
 		if t < 0.0 or t >= best or _aim_blocked(eye, look, t):
 			continue
 		best = t

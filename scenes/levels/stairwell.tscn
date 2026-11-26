@@ -537,9 +537,11 @@ radius = 1.9
 enabled = false
 aim_meshes = PackedStringArray("Monitor", "Monitor_nocol", "PcTower", "GamingChair_nocol", "Desk", "Keyboard_nocol")
 
-[node name="PcSeat" type="Node3D" parent="." unique_id=1280911482 node_paths=PackedStringArray("use", "chair")]
+[node name="PcSeat" type="Node3D" parent="." unique_id=1280911482 node_paths=PackedStringArray("use", "power_use", "monitor_use", "chair")]
 script = ExtResource("pc_seat")
 use = NodePath("../PCUse")
+power_use = NodePath("PowerUse")
+monitor_use = NodePath("MonitorUse")
 chair = NodePath("../GamingChair")
 desktop_scene = ExtResource("pc_desktop")
 
@@ -548,6 +550,20 @@ transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -9.65, 8.4, 2.15)
 
 [node name="ScreenView" type="Marker3D" parent="PcSeat" unique_id=280288805]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -9.6, 9.43, 2.128)
+
+[node name="PowerUse" type="Node3D" parent="PcSeat" unique_id=1731450276]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.79, 8.825, 1.725)
+script = ExtResource("inter")
+prompt = "Включить компьютер"
+enabled = false
+aim_size = Vector3(0.14, 0.85, 0.3)
+
+[node name="MonitorUse" type="Node3D" parent="PcSeat" unique_id=902615433]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.18, 9.42, 2.128)
+script = ExtResource("inter")
+prompt = "Работать"
+enabled = false
+aim_meshes = PackedStringArray("Monitor", "Monitor_nocol")
 
 [node name="LightSwitchUse" type="Node3D" parent="." unique_id=1196206228]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -8.6, 9.95, 1.5)

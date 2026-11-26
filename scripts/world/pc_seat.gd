@@ -3,23 +3,33 @@
 ## и садится, как в тесной комнате (клип ChairSit, tools/blender/build_chair_sit.py): берётся за спинку,
 ## откатывает кресло, разворачивает его к себе, садится боком, поворачивается к столу и подтягивается ногами.
 ## Кресло едет по пути из assets/animations/sit/chair_sit.json. Ещё раз E, пока садится, — быстрее.
-## В конце клипа кладёт левую руку на WASD, правую — на мышку. Если комп выключен — наклоняется и жмёт
-## кнопку питания на системнике под столом (клип PowerReach). Потом взгляд уезжает к монитору: экран почти
-## во весь кадр, но это всё ещё монитор в комнате — рамка, блик, шум.
-## Мышь двигает курсор внутри экрана, клики и клавиши уходят в «компьютер» (SubViewport с рабочим столом).
-## Руки при этом живые: правая с мышкой ездит по коврику за курсором (и мышка на столе вместе с ней),
+## Сев, Юрчик сам решает, что дальше (SEATED_LOOK): мышь крутит голову — влево-вправо до look_yaw_limit от
+## монитора, тело и кресло на месте; прицел и E работают, как стоя, но только на то, до чего дотянется рука.
+##   • системник (PowerUse, пока комп выключен) — наклоняется и жмёт кнопку питания (клип PowerReach),
+##     потом взгляд возвращается туда, куда смотрел;
+##   • монитор (MonitorUse, пока комп включён) — взгляд уезжает к монитору (MONITOR): экран почти
+##     во весь кадр, но это всё ещё монитор в комнате — рамка, блик, шум.
+## В MONITOR мышь двигает курсор внутри экрана, клики и клавиши уходят в «компьютер» (SubViewport с рабочим
+## столом). Руки при этом живые: правая с мышкой ездит по коврику за курсором (и мышка на столе вместе с ней),
 ## указательный кликает, пальцы левой жмут клавиши.
-## Esc (или B на геймпаде) — встать: клип задом наперёд до момента, где он встал. Кресло остаётся
+## Esc (или B на геймпаде) — шаг назад: из монитора — отъехать и снова смотреть вокруг, из осмотра — встать
+## (клип задом наперёд до момента, где он встал). Меню паузы в кресле не открывается. Кресло остаётся
 ## отодвинутым и повёрнутым, и в следующий раз Юрчик садится сразу, без откатывания.
 class_name PcSeat
 extends Node3D
 
-signal powered_on          ## комп включился (первый раз, когда Юрчик сел)
-signal sat_down            ## сел и смотрит в монитор
+signal powered_on          ## комп включился (Юрчик нажал кнопку на системнике)
+signal sat_down            ## сел в кресло (конец клипа посадки) — смотрит вокруг, не в монитор
+signal monitor_entered     ## взгляд доехал до монитора — мышь и клавиши у компа
+signal monitor_exited      ## отъехал от монитора — снова смотрит вокруг
 signal stood_up            ## встал с кресла
 signal powered_off         ## Windows завершила работу, экран погас
 
 @export var use: Interactable                        ## «Сесть за компьютер» (кресло, стол, монитор, системник)
+## сидя: «Включить компьютер», пока комп выключен. Системник целиком под столешницей — из кресла его почти
+## не видно, поэтому прицел у узла — брусок aim_size по передней кромке стола прямо над ним.
+@export var power_use: Interactable
+@export var monitor_use: Interactable                ## сидя: «Работать» (монитор), пока комп включён
 @export var chair: Node3D                            ## игровое кресло — едет вместе с клипом посадки
 @export_file("*.json") var chair_path := "res://assets/animations/sit/chair_sit.json"   ## путь кресла и взгляд
 @export var screen_mesh := "PCScreen_nocol"          ## плоскость экрана в модели монитора (UV 0..1 на весь экран)
@@ -39,20 +49,27 @@ signal powered_off         ## Windows завершила работу, экра�
 @export var hurry_rate := 2.2                         ## ещё раз «использовать», пока садится, — вот так быстрее
 @export var zoom_in := 1.0                            ## взгляд к монитору
 @export var zoom_out := 0.7
+@export_group("Осмотр в кресле")
+@export var look_yaw_limit := 100.0                   ## ° — насколько можно повернуть голову влево и вправо от монитора
+@export var look_pitch_min := -70.0                   ## ° — вниз (системник под столом)
+@export var look_pitch_max := 50.0                    ## ° — вверх
+@export var look_reach := 1.1                         ## м — до чего дотягивается рука со стула (по лучу взгляда от глаз)
+
+enum State { IDLE, WALKING, SITTING_DOWN, SEATED_LOOK, POWERING, ZOOMING_IN, MONITOR, ZOOMING_OUT, STANDING_UP }
 
 @onready var sit_spot: Marker3D = $SitSpot            ## «место у компа»: в нём стоит узел игрока, пока идёт клип (смотрит вдоль −Z)
 @onready var screen_view: Marker3D = $ScreenView      ## откуда камера смотрит в монитор
 
 var powered := false
+var state := State.IDLE
 var seated := false            ## в кресле (в том числе пока садится и встаёт)
-var active := false            ## смотрит в монитор, мышь — курсор компа
+var active := false            ## смотрит в монитор, мышь — курсор компа (State.MONITOR)
 var viewport: SubViewport
 var cursor := Vector2.ZERO     ## курсор в логических пикселях рабочего стола (ui_size)
 var _player: Player
 var _mat: ShaderMaterial
 var _desktop: Control
 var _pointer: Control
-var _busy := false
 var _speaker_pos := Vector3.ZERO   ## откуда звучит Windows (колонки у монитора)
 var _keys_pos := Vector3.ZERO      ## клавиатура и мышь
 var speakers: PcSpeakers           ## весь звук компа — из колонок на столе
@@ -72,6 +89,7 @@ var _keys_held := {}               ## физический код клавиши
 var _hurry := false
 var _settle := 1.0                 ## 0→1 в начале клипа: взгляд переходит от того, куда смотрел, к взгляду клипа
 var _settle_from := Vector2.ZERO
+var _look_center := Vector2.ZERO   ## углы взгляда на монитор с конца клипа посадки — середина осмотра
 const SETTLE_TIME := 0.35
 ## куда отходит, когда встал: за откаченное кресло, лицом в комнату (x, y, z, поворот; пространство SitSpot).
 ## Между креслом, столом и кроватью капсуле игрока места нет — там его выталкивало бы на кровать.
@@ -91,6 +109,11 @@ func _ready() -> void:
 	_place_chair(0.0)
 	if use:
 		use.interacted.connect(sit)
+	if power_use:
+		power_use.interacted.connect(_on_power_use)
+	if monitor_use:
+		monitor_use.interacted.connect(_on_monitor_use)
+	_update_uses()
 
 
 func _load_path() -> void:
@@ -244,7 +267,8 @@ func _walk_to(p: Player, spot_pt: Array, look_pt: Variant = null) -> void:
 
 
 ## Тянется к кнопке питания: клип PowerReach от начала до конца (поза у стола → кнопка → у стола), взгляд —
-## по его дорожке. На кадре press — щелчок и комп включается.
+## по его дорожке. На кадре press — щелчок и комп включается. Взгляд в начале плавно переходит от того,
+## куда смотрел игрок, к дорожке клипа, а в конце — обратно туда же.
 func _press_power(p: Player) -> void:
 	var length: float = p.model.call("power_length")
 	if length <= 0.0:
@@ -252,6 +276,7 @@ func _press_power(p: Player) -> void:
 		power_on()
 		return
 	var btn: Vector3 = _glow[0].global_position if not _glow.is_empty() else global_position
+	var back := Vector2(p.cam_yaw, p.cam_pitch)
 	var t := 0.0
 	var pressed := false
 	p.model.set("power_time", 0.0)
@@ -261,7 +286,8 @@ func _press_power(p: Player) -> void:
 		p.model.set("power_time", t)
 		if not _power_look.is_empty():
 			var a := _angles_to(p, sit_spot.global_transform * _v(_sample(_power_look, t)))
-			p.look_at_angles(a.x, a.y)
+			var w := _smoother(minf(t, length - t) / SETTLE_TIME)
+			p.look_at_angles(lerp_angle(back.x, a.x, w), lerpf(back.y, a.y, w))
 		if not pressed and t >= _power_press:
 			pressed = true
 			Game.sfx("click", btn)
@@ -374,6 +400,7 @@ func power_on(dur := 1.2) -> void:
 		return
 	powered = true
 	_set_glow(true)
+	_update_uses()
 	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	if _mat:
 		create_tween().tween_method(func(v: float) -> void: _mat.set_shader_parameter("power", v), 0.0, 1.0, dur)
@@ -388,6 +415,9 @@ func power_off(dur := 0.6) -> void:
 		return
 	powered = false
 	_set_glow(false)
+	if state == State.MONITOR:
+		exit_monitor()                               # Windows выключилась — отъезжает, системник снова под рукой
+	_update_uses()
 	if _mat:
 		var tw := create_tween()
 		tw.tween_method(func(v: float) -> void: _mat.set_shader_parameter("power", v), 1.0, 0.0, dur)
@@ -421,12 +451,41 @@ static func _center(n: Node3D) -> Vector3:
 	return n.global_position if first else box.get_center()
 
 
-## Сесть: подойти к креслу, клип посадки (кресло едет вместе с ним), включить комп, если выключен,
-## и уставиться в монитор.
+## В кресле, в переходе (подходит, садится, жмёт кнопку, едет к монитору и обратно, встаёт): ничего нового не начать.
+func _is_busy() -> bool:
+	return state != State.IDLE and state != State.SEATED_LOOK and state != State.MONITOR
+
+
+## Системник и монитор отзываются на прицел только в осмотре: системник — пока комп выключен, монитор — включён.
+func _update_uses() -> void:
+	if power_use:
+		power_use.enabled = state == State.SEATED_LOOK and not powered
+	if monitor_use:
+		monitor_use.enabled = state == State.SEATED_LOOK and powered
+
+
+## Сидит и смотрит вокруг: голова крутится от монитора, тело и кресло на месте.
+func _enter_look() -> void:
+	state = State.SEATED_LOOK
+	_hurry = false
+	_player.set_seat_look(true, _look_center, deg_to_rad(look_yaw_limit),
+			deg_to_rad(look_pitch_min), deg_to_rad(look_pitch_max), look_reach)
+	_update_uses()
+
+
+func _leave_look(next: State) -> void:
+	state = next
+	_hurry = false
+	_player.set_seat_look(false)
+	_update_uses()
+
+
+## Сесть: подойти к креслу и клип посадки (кресло едет вместе с ним). Дальше — осмотр (SEATED_LOOK):
+## комп сам не включается, и взгляд к монитору не уезжает.
 func sit(p: Player) -> void:
-	if seated or _busy or p.seated:
+	if state != State.IDLE or p.seated:
 		return
-	_busy = true
+	state = State.WALKING
 	seated = true
 	_hurry = false
 	_player = p
@@ -439,48 +498,91 @@ func sit(p: Player) -> void:
 	var first_look: Variant = _sample(_look_keys, from_t) if not _look_keys.is_empty() else null
 	await _walk_to(p, _stand if chair_out else _start, first_look)
 	# узел игрока — в SitSpot, тело — там же, где стояло: дальше всё движение ведёт клип
+	state = State.SITTING_DOWN
 	p.glide_camera()
 	p.global_position = spot.origin
 	p.seat_yaw = yaw
 	p.model.set("seat_time", from_t)
 	p.model.call("snap_seat", true)
-	await _play(from_t, p.model.call("seat_length"))
+	var length: float = p.model.call("seat_length")
+	await _play(from_t, length)
 	chair_out = false
-	if not powered:
-		await _press_power(p)                        # тянется к кнопке на системнике под столом
+	_reset_hands(p)
+	# середина осмотра — куда смотрит последний кадр клипа (на монитор)
+	_look_center = Vector2(p.cam_yaw, p.cam_pitch)
+	if not _look_keys.is_empty():
+		_look_center = _angles_to(p, sit_spot.global_transform * _v(_sample(_look_keys, length)))
+	_enter_look()
+	sat_down.emit()
+
+
+## E на системнике: тянется к кнопке питания, комп включается, взгляд возвращается туда, куда смотрел.
+func _on_power_use(_p: Player) -> void:
+	if state != State.SEATED_LOOK or powered:
+		return
+	_leave_look(State.POWERING)
+	await _press_power(_player)
+	_enter_look()
+
+
+## E на мониторе: работать за компом.
+func _on_monitor_use(_p: Player) -> void:
+	if state == State.SEATED_LOOK and powered:
+		enter_monitor()
+
+
+## Взгляд уезжает к монитору; когда доехал — мышь и клавиши уходят в комп.
+func enter_monitor() -> void:
+	if state != State.SEATED_LOOK:
+		return
+	var p := _player
+	_leave_look(State.ZOOMING_IN)
 	_reset_hands(p)
 	p.model.set("desk_live", true)                   # руки на клаве и мышке — живые
 	p.seat_view = screen_view.global_transform
 	p.seat_view_fov = view_fov
 	Graphics.screen_focus = true                     # чёткая картинка, пока смотрит в монитор
+	# глаза тоже поворачиваются к монитору: отъедет — и смотрит на него, а не туда, куда смотрел до
+	_ease_look(p, _look_center.x, _look_center.y, zoom_in)
 	var tw := _tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tw.tween_property(p, "seat_view_blend", 1.0, zoom_in)
 	await tw.finished
+	state = State.MONITOR
 	active = true
-	_busy = false
-	sat_down.emit()
+	monitor_entered.emit()
 
 
-## Встать: взгляд от монитора, клип задом наперёд до момента, где он стоит перед креслом.
-## Кресло остаётся откаченным и повёрнутым.
-func stand() -> void:
-	if not seated or _busy:
+## Отъехать от монитора: руки в покой, взгляд остаётся на мониторе, дальше — снова осмотр.
+func exit_monitor() -> void:
+	if state != State.MONITOR:
 		return
-	_busy = true
-	_hurry = false
-	active = false
 	var p := _player
+	state = State.ZOOMING_OUT
+	active = false
 	_reset_hands(p)
 	p.model.set("desk_live", false)                  # правая с мышкой плавно возвращается в середину коврика
 	var tw := _tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tw.tween_property(p, "seat_view_blend", 0.0, zoom_out)
-	# пока отъезжает от монитора, взгляд уже переходит туда, откуда начнётся клип (а не прыгает с системника)
-	if not _look_keys.is_empty():
-		var a := _angles_to(p, sit_spot.global_transform * _v(_sample(_look_keys, p.model.call("seat_length"))))
-		_ease_look(p, a.x, a.y, zoom_out)
 	await tw.finished
 	Graphics.screen_focus = false
-	await _play(p.model.call("seat_length"), _mark("sit"))
+	_enter_look()
+	monitor_exited.emit()
+
+
+## Встать (из осмотра): взгляд плавно переходит к первому кадру обратного клипа, клип задом наперёд
+## до момента, где он стоит перед креслом. Кресло остаётся откаченным и повёрнутым.
+func stand() -> void:
+	if state != State.SEATED_LOOK:
+		return
+	var p := _player
+	_leave_look(State.STANDING_UP)
+	_reset_hands(p)
+	p.model.set("desk_live", false)
+	var length: float = p.model.call("seat_length")
+	if not _look_keys.is_empty():
+		var a := _angles_to(p, sit_spot.global_transform * _v(_sample(_look_keys, length)))
+		await _ease_look(p, a.x, a.y, zoom_out)
+	await _play(length, _mark("sit"))
 	chair_out = true
 	# стоит перед креслом: узел игрока — туда же, где тело (клип кончился обычной стойкой)
 	var spot := sit_spot.global_transform
@@ -499,21 +601,38 @@ func stand() -> void:
 	p.glide_camera()                                 # из кресельного режима камеры в обычный — без скачка
 	p.set_seated(false)
 	seated = false
-	_busy = false
+	state = State.IDLE
 	if use:
 		use.enabled = true
 	stood_up.emit()
 
 
+## Esc / B — шаг назад.
+static func _is_back(event: InputEvent) -> bool:
+	return event.is_action_pressed("pause") or (event is InputEventJoypadButton and event.is_action_pressed("ui_cancel"))
+
+
 func _input(event: InputEvent) -> void:
-	if not seated:
+	if state == State.IDLE:
+		return
+	if state == State.SEATED_LOOK:
+		if _is_back(event):
+			get_viewport().set_input_as_handled()
+			stand()
+			return
+		# мышь (поворот головы) и E (системник, монитор) — игроку; остальное в кресле не нужно
+		if event is InputEventMouseMotion or event is InputEventMouseButton or event is InputEventJoypadMotion \
+				or event.is_action("interact"):
+			return
+		get_viewport().set_input_as_handled()
 		return
 	get_viewport().set_input_as_handled()            # пока сидит, ввод — только кресло и комп
-	if _busy and event.is_action_pressed("interact"):
-		_hurry = true                                # ещё раз E — садится/встаёт быстрее
+	if _is_busy():
+		if event.is_action_pressed("interact"):
+			_hurry = true                            # ещё раз E — садится/встаёт/жмёт кнопку быстрее
 		return
-	if event.is_action_pressed("pause") or (event is InputEventJoypadButton and event.is_action_pressed("ui_cancel")):
-		stand()
+	if _is_back(event):
+		exit_monitor()
 		return
 	if not active:
 		return
