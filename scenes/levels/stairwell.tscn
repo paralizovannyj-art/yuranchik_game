@@ -533,9 +533,10 @@ radius = 1.9
 enabled = false
 aim_meshes = PackedStringArray("Monitor", "Monitor_nocol", "PcTower", "GamingChair_nocol", "Desk", "Keyboard_nocol")
 
-[node name="PcSeat" type="Node3D" parent="." unique_id=1280911482 node_paths=PackedStringArray("use")]
+[node name="PcSeat" type="Node3D" parent="." unique_id=1280911482 node_paths=PackedStringArray("use", "chair")]
 script = ExtResource("pc_seat")
 use = NodePath("../PCUse")
+chair = NodePath("../GamingChair")
 desktop_scene = ExtResource("pc_desktop")
 
 [node name="SitSpot" type="Marker3D" parent="PcSeat" unique_id=546452494]
@@ -605,4 +606,4 @@ grow_vertical = 2
 mouse_filter = 2
 
 [node name="GamingChair" parent="." unique_id=1568008533 instance=ExtResource("14_x75pi")]
-transform = Transform3D(0.0055821757, 0, 0.99998456, 0, 1, 0, -0.99998456, 0, 0.0055821757, -9.324165, 8.4, 2.1265829)
+transform = Transform3D(0.069743335, 0, 0.997565, 0, 1, 0, -0.997565, 0, 0.069743335, -9.58, 8.4, 2.15)

@@ -104,7 +104,11 @@ var noclip := false                    ## (отладка) летит сквоз
 var phone_up := false                  ## телефон в руке (phone.gd): только шаг, без ударов, бега и бросков
 ## Сидит в кресле (pc_seat.gd): не ходит, капсула выключена, позу ведёт клип посадки. Камера — из головы,
 ## а при seat_view_blend > 0 плавно уходит к seat_view (вид на монитор) с углом обзора seat_view_fov.
+## Поворот тела на это время — seat_yaw (камера смотрит отдельно, её ведёт pc_seat.gd через look_at_angles),
+## seat_walk — скорость шага, пока pc_seat.gd подводит его к креслу (ноги шагают, а не скользят).
 var seated := false
+var seat_yaw := 0.0
+var seat_walk := 0.0
 var seat_view := Transform3D.IDENTITY
 var seat_view_blend := 0.0
 var seat_view_fov := 40.0
@@ -123,6 +127,11 @@ var _prev_speed := 0.0
 var _cam_pos := Vector3.ZERO
 var _cam_roll := 0.0
 var _head_lead := 0.0
+var _glide_from := Vector3.ZERO   ## glide_camera: откуда камера доезжает после переноса игрока
+var _glide_off := Vector3.ZERO
+var _glide_t := -1.0              ## < 0 — не доезжает; иначе секунды с начала
+var _glide_dur := 0.3
+var _glide_pending := false
 var _skel: Skeleton3D
 var _head_bone := -1
 var _stam_cd := 0.0
@@ -138,6 +147,7 @@ var _sprinting := false
 var _run := 0.0                        ## 0 — шаг, 1 — полный бег
 var armed := false                     ## молоток в руке (false — убран в сумку или ещё не найден)
 var _hammer: Node3D
+var _phone_up := false
 var _swap_at := -1.0                   ## когда в BUSY убрать/достать молоток (по _timer); < 0 — не трогаем
 var _punch := false                    ## текущий удар — кулаком
 var _punch_alt := false                ## следующий удар кулаком — второй рукой (Punch2)
@@ -449,7 +459,13 @@ func set_seated(on: bool) -> void:
 	velocity = Vector3.ZERO
 	move_speed = 0.0
 	focus = null
+	seat_walk = 0.0
+	# молоток — в сумку, пока сидит: кресло берут пустой рукой, иначе молоток торчит из спинки и мелькает в кадре
+	if armed and _hammer:
+		Game.sfx("ui_open", null, -10.0, 0.12)       # шорох сумки
+	_show_hammer()
 	if on:
+		seat_yaw = rotation.y
 		state = State.NORMAL
 		_crouch_toggle = false
 		if crouching:
@@ -462,6 +478,37 @@ func set_seated(on: bool) -> void:
 		flashlight.visible = _flash_before_seat
 
 
+## Точка глаз от кости головы (без выноса камеры вперёд): отсюда pc_seat.gd считает, куда смотреть.
+## От самой камеры нельзя — при взгляде вниз она выносится вперёд, и угол убегает сам за собой.
+func eye_point() -> Vector3:
+	if _skel and _head_bone >= 0:
+		return _skel.global_transform * _skel.get_bone_global_pose(_head_bone).origin + Vector3.UP * 0.15
+	return camera.global_position
+
+
+## Игрока сейчас перенесут (кресло: в начало клипа и обратно) — камера не прыгает, а за dur секунд
+## доезжает с того места, где была, до нового.
+func glide_camera(dur := 0.3) -> void:
+	_glide_from = cam_pivot.global_position
+	_glide_dur = dur
+	_glide_pending = true
+
+
+func _glide(actual: Vector3, delta: float) -> Vector3:
+	if _glide_pending:
+		_glide_pending = false
+		_glide_off = _glide_from - actual
+		_glide_t = 0.0
+	if _glide_t < 0.0:
+		return Vector3.ZERO
+	_glide_t += delta
+	var u := clampf(_glide_t / _glide_dur, 0.0, 1.0)
+	if u >= 1.0:
+		_glide_t = -1.0
+		return Vector3.ZERO
+	return _glide_off * (1.0 - u * u * u * (u * (u * 6.0 - 15.0) + 10.0))
+
+
 ## Повернуть взгляд (рад) — кресло разворачивает Юрчика к монитору.
 func look_at_angles(yaw: float, pitch: float) -> void:
 	_yaw_target = yaw
@@ -469,10 +516,11 @@ func look_at_angles(yaw: float, pitch: float) -> void:
 
 
 func _seated_process(delta: float) -> void:
-	rotation.y = cam_yaw
+	rotation.y = seat_yaw
 	_yaw_rate = 0.0
 	_prev_yaw = rotation.y
-	model.update_anim(delta, 0.0, 0.0, 0, 0.0, 0.0)
+	move_speed = seat_walk
+	model.update_anim(delta, seat_walk, 0.0, 0, 0.0, 0.0)
 	_update_camera(delta)
 
 
@@ -788,8 +836,7 @@ func _setup_hammer() -> void:
 ## Зовётся при появлении героя (и уровнем — после того как он выдал вещи при запуске из редактора).
 func refresh_tools() -> void:
 	armed = Game.has_item("hammer")
-	if _hammer:
-		_hammer.visible = armed
+	_show_hammer()
 	flashlight.visible = Game.has_item("flashlight")
 
 
@@ -808,14 +855,19 @@ func _on_item_picked(id: String) -> void:
 
 ## Телефон в правой руке (phone.gd): пока он поднят, молотка в этой руке не видно.
 func phone_hand(up: bool) -> void:
+	_phone_up = up
+	_show_hammer()
+
+
+## Молоток виден, только если он в руке: не в сумке, рука не занята телефоном и не сидит за компом.
+func _show_hammer() -> void:
 	if _hammer:
-		_hammer.visible = armed and not up
+		_hammer.visible = armed and not _phone_up and not seated
 
 ## Достать (true) или убрать в сумку (false).
 func _place_hammer(in_hand: bool) -> void:
 	armed = in_hand
-	if _hammer:
-		_hammer.visible = in_hand
+	_show_hammer()
 	Game.sfx("ui_open", null, -10.0, 0.12)       # шорох сумки
 
 
@@ -934,6 +986,11 @@ func _update_camera(delta: float) -> void:
 		var head := _skel.global_transform * _skel.get_bone_global_pose(_head_bone).origin
 		# от начала модели, а не капсулы: модель сдвигается, когда камеру прижало к стене (см. ниже)
 		ahead = (head - model.global_position).dot(Basis(Vector3.UP, cam_yaw) * Vector3.FORWARD)
+		if seated:
+			# в кресле тело ведёт клип посадки (шаги, повороты, кресло едет) — камера идёт за головой целиком
+			_cam_pos.x = head.x
+			_cam_pos.z = head.z
+			ahead = 0.0
 	_head_lead = lerpf(_head_lead, ahead, 1.0 - exp(-12.0 * delta))
 	var down := clampf(-cam_pitch / 1.2, 0.0, 1.0)
 	var lean := Vector3(0.0, 0.0, -(_head_lead + maxf(head_forward, look_down_forward * down * down)))
@@ -956,6 +1013,7 @@ func _update_camera(delta: float) -> void:
 	push.y = 0.0
 	push = push.limit_length(cam_body_push_max)
 	model.position = _model_base + global_basis.inverse() * push
+	cam_pivot.global_position += _glide(actual, delta)
 	# сидит за компом — камера уходит от глаз к виду на монитор (seat_view), угол обзора сужается
 	if seat_view_blend > 0.0:
 		var e := smoothstep(0.0, 1.0, seat_view_blend)
