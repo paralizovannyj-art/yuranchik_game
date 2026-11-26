@@ -6,9 +6,10 @@
 	"scene":0,
 	"scenes":[
 		{
-			"name":"Scene",
+			"name":"YurchikDesk",
 			"nodes":[
-				0
+				0,
+				1
 			]
 		}
 	],
@@ -16,18 +17,22 @@
 		{
 			"mesh":0,
 			"name":"Keyboard_nocol"
+		},
+		{
+			"mesh":1,
+			"name":"KeyboardCable_nocol"
 		}
 	],
 	"materials":[
 		{
 			"doubleSided":true,
-			"name":"YrAtlas",
+			"name":"YdAtlas",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
 					"index":0
 				},
 				"metallicFactor":0,
-				"roughnessFactor":0.699999988079071
+				"roughnessFactor":0.6499999761581421
 			}
 		}
 	],
@@ -45,6 +50,20 @@
 					"material":0
 				}
 			]
+		},
+		{
+			"name":"KeyboardCable_nocol",
+			"primitives":[
+				{
+					"attributes":{
+						"POSITION":4,
+						"NORMAL":5,
+						"TEXCOORD_0":6
+					},
+					"indices":7,
+					"material":0
+				}
+			]
 		}
 	],
 	"textures":[
@@ -56,69 +75,127 @@
 	"images":[
 		{
 			"mimeType":"image/png",
-			"name":"yr_atlas",
-			"uri":"../../textures/yr_atlas.png"
+			"name":"yd_atlas.png",
+			"uri":"../../textures/yd_atlas.png"
 		}
 	],
 	"accessors":[
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":24,
+			"count":2104,
 			"max":[
-				0.23000001907348633,
-				0.02200031280517578,
-				0.07999992370605469
+				0.2259998321533203,
+				0.08108329772949219,
+				0.28100013732910156
 			],
 			"min":[
-				-0.23000001907348633,
-				9.5367431640625e-07,
-				-0.07999992370605469
+				-0.2259998321533203,
+				0.053999900817871094,
+				0.125
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":24,
+			"count":2104,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":24,
+			"count":2104,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
 			"componentType":5123,
-			"count":36,
+			"count":3156,
+			"type":"SCALAR"
+		},
+		{
+			"bufferView":4,
+			"componentType":5126,
+			"count":64,
+			"max":[
+				-0.0475001335144043,
+				0.06646060943603516,
+				0.12547516822814941
+			],
+			"min":[
+				-0.13245296478271484,
+				-0.00048732757568359375,
+				-0.2810089588165283
+			],
+			"type":"VEC3"
+		},
+		{
+			"bufferView":5,
+			"componentType":5126,
+			"count":64,
+			"type":"VEC3"
+		},
+		{
+			"bufferView":6,
+			"componentType":5126,
+			"count":64,
+			"type":"VEC2"
+		},
+		{
+			"bufferView":7,
+			"componentType":5123,
+			"count":96,
 			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":288,
+			"byteLength":25248,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":288,
-			"byteOffset":288,
+			"byteLength":25248,
+			"byteOffset":25248,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":16832,
+			"byteOffset":50496,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":6312,
+			"byteOffset":67328,
+			"target":34963
+		},
+		{
+			"buffer":0,
+			"byteLength":768,
+			"byteOffset":73640,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":768,
+			"byteOffset":74408,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":512,
+			"byteOffset":75176,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":192,
-			"byteOffset":576,
-			"target":34962
-		},
-		{
-			"buffer":0,
-			"byteLength":72,
-			"byteOffset":768,
+			"byteOffset":75688,
 			"target":34963
 		}
 	],
@@ -130,7 +207,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":840,
+			"byteLength":75880,
 			"uri":"keyboard.bin"
 		}
 	]

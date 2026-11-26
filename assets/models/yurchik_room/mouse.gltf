@@ -6,9 +6,10 @@
 	"scene":0,
 	"scenes":[
 		{
-			"name":"Scene",
+			"name":"YurchikDesk",
 			"nodes":[
-				0
+				0,
+				1
 			]
 		}
 	],
@@ -16,18 +17,22 @@
 		{
 			"mesh":0,
 			"name":"Mouse_nocol"
+		},
+		{
+			"mesh":1,
+			"name":"MouseCable_nocol"
 		}
 	],
 	"materials":[
 		{
 			"doubleSided":true,
-			"name":"YrAtlas",
+			"name":"YdAtlas",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
 					"index":0
 				},
 				"metallicFactor":0,
-				"roughnessFactor":0.699999988079071
+				"roughnessFactor":0.6499999761581421
 			}
 		}
 	],
@@ -45,6 +50,20 @@
 					"material":0
 				}
 			]
+		},
+		{
+			"name":"MouseCable_nocol",
+			"primitives":[
+				{
+					"attributes":{
+						"POSITION":4,
+						"NORMAL":5,
+						"TEXCOORD_0":6
+					},
+					"indices":7,
+					"material":0
+				}
+			]
 		}
 	],
 	"textures":[
@@ -56,69 +75,127 @@
 	"images":[
 		{
 			"mimeType":"image/png",
-			"name":"yr_atlas",
-			"uri":"../../textures/yr_atlas.png"
+			"name":"yd_atlas.png",
+			"uri":"../../textures/yd_atlas.png"
 		}
 	],
 	"accessors":[
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":36,
+			"count":185,
 			"max":[
-				0.06035280227661133,
-				0.03299999237060547,
-				0.15977883338928223
+				0.1560368537902832,
+				0.08994197845458984,
+				0.2693910598754883
 			],
 			"min":[
-				-0.06043052673339844,
-				2.384185791015625e-05,
-				-0.16010212898254395
+				0.09305286407470703,
+				0.053999900817871094,
+				0.1567211151123047
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":36,
+			"count":185,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":36,
+			"count":185,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
 			"componentType":5123,
-			"count":54,
+			"count":954,
+			"type":"SCALAR"
+		},
+		{
+			"bufferView":4,
+			"componentType":5126,
+			"count":64,
+			"max":[
+				0.1359720230102539,
+				0.06219482421875,
+				0.15785431861877441
+			],
+			"min":[
+				-0.1561756134033203,
+				-0.000308990478515625,
+				-0.2687680721282959
+			],
+			"type":"VEC3"
+		},
+		{
+			"bufferView":5,
+			"componentType":5126,
+			"count":64,
+			"type":"VEC3"
+		},
+		{
+			"bufferView":6,
+			"componentType":5126,
+			"count":64,
+			"type":"VEC2"
+		},
+		{
+			"bufferView":7,
+			"componentType":5123,
+			"count":96,
 			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":432,
+			"byteLength":2220,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":432,
-			"byteOffset":432,
+			"byteLength":2220,
+			"byteOffset":2220,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":288,
-			"byteOffset":864,
+			"byteLength":1480,
+			"byteOffset":4440,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":108,
-			"byteOffset":1152,
+			"byteLength":1908,
+			"byteOffset":5920,
+			"target":34963
+		},
+		{
+			"buffer":0,
+			"byteLength":768,
+			"byteOffset":7828,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":768,
+			"byteOffset":8596,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":512,
+			"byteOffset":9364,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":192,
+			"byteOffset":9876,
 			"target":34963
 		}
 	],
@@ -130,7 +207,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":1260,
+			"byteLength":10068,
 			"uri":"mouse.bin"
 		}
 	]

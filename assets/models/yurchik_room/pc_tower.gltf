@@ -6,9 +6,10 @@
 	"scene":0,
 	"scenes":[
 		{
-			"name":"Scene",
+			"name":"YurchikDesk",
 			"nodes":[
-				0
+				0,
+				1
 			]
 		}
 	],
@@ -16,18 +17,41 @@
 		{
 			"mesh":0,
 			"name":"PcTower"
+		},
+		{
+			"mesh":1,
+			"name":"PcTowerGlow_nocol"
 		}
 	],
 	"materials":[
 		{
 			"doubleSided":true,
-			"name":"YrAtlas",
+			"name":"YdAtlas",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
 					"index":0
 				},
 				"metallicFactor":0,
-				"roughnessFactor":0.699999988079071
+				"roughnessFactor":0.6499999761581421
+			}
+		},
+		{
+			"doubleSided":true,
+			"emissiveFactor":[
+				1,
+				1,
+				1
+			],
+			"emissiveTexture":{
+				"index":1
+			},
+			"name":"YdGlow",
+			"pbrMetallicRoughness":{
+				"baseColorTexture":{
+					"index":2
+				},
+				"metallicFactor":0,
+				"roughnessFactor":0.5
 			}
 		}
 	],
@@ -45,80 +69,165 @@
 					"material":0
 				}
 			]
+		},
+		{
+			"name":"PcTowerGlow_nocol",
+			"primitives":[
+				{
+					"attributes":{
+						"POSITION":4,
+						"NORMAL":5,
+						"TEXCOORD_0":6
+					},
+					"indices":7,
+					"material":1
+				}
+			]
 		}
 	],
 	"textures":[
 		{
 			"sampler":0,
 			"source":0
+		},
+		{
+			"sampler":0,
+			"source":1
+		},
+		{
+			"sampler":0,
+			"source":1
 		}
 	],
 	"images":[
 		{
 			"mimeType":"image/png",
-			"name":"yr_atlas",
-			"uri":"../../textures/yr_atlas.png"
+			"name":"yd_atlas.png",
+			"uri":"../../textures/yd_atlas.png"
+		},
+		{
+			"mimeType":"image/png",
+			"name":"yd_glow.png",
+			"uri":"../../textures/yd_glow.png"
 		}
 	],
 	"accessors":[
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":24,
+			"count":928,
 			"max":[
-				0.09499979019165039,
-				0.42999935150146484,
-				0.2349998950958252
+				0.09999990463256836,
+				0.44500064849853516,
+				0.2200000286102295
 			],
 			"min":[
-				-0.09499979019165039,
-				-9.5367431640625e-07,
-				-0.2349998950958252
+				-0.09999990463256836,
+				0,
+				-0.2200000286102295
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":24,
+			"count":928,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":24,
+			"count":928,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
 			"componentType":5123,
-			"count":36,
+			"count":1326,
+			"type":"SCALAR"
+		},
+		{
+			"bufferView":4,
+			"componentType":5126,
+			"count":8,
+			"max":[
+				0.01849985122680664,
+				0.24271774291992188,
+				0.22079992294311523
+			],
+			"min":[
+				-0.01849985122680664,
+				0.2357177734375,
+				0.22079992294311523
+			],
+			"type":"VEC3"
+		},
+		{
+			"bufferView":5,
+			"componentType":5126,
+			"count":8,
+			"type":"VEC3"
+		},
+		{
+			"bufferView":6,
+			"componentType":5126,
+			"count":8,
+			"type":"VEC2"
+		},
+		{
+			"bufferView":7,
+			"componentType":5123,
+			"count":12,
 			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":288,
+			"byteLength":11136,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":288,
-			"byteOffset":288,
+			"byteLength":11136,
+			"byteOffset":11136,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":192,
-			"byteOffset":576,
+			"byteLength":7424,
+			"byteOffset":22272,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":72,
-			"byteOffset":768,
+			"byteLength":2652,
+			"byteOffset":29696,
+			"target":34963
+		},
+		{
+			"buffer":0,
+			"byteLength":96,
+			"byteOffset":32348,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":96,
+			"byteOffset":32444,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":64,
+			"byteOffset":32540,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":24,
+			"byteOffset":32604,
 			"target":34963
 		}
 	],
@@ -130,7 +239,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":840,
+			"byteLength":32628,
 			"uri":"pc_tower.bin"
 		}
 	]
