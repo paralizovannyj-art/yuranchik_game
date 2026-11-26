@@ -9,7 +9,8 @@
 #   blender -b --factory-startup --python tools/blender/build_room_window.py
 # или через Blender MCP: exec(open(r"<путь>\tools\blender\build_room_window.py", encoding="utf-8").read())
 #   (скрипт строит всё в своей сцене RoomWindow и не трогает остальные сцены).
-# Результат: assets/textures/rw_*.png, assets/models/room_window.gltf (объект RoomWindow — с коллизией при импорте).
+# Результат: assets/textures/rw_*.png, assets/models/room_window.gltf: RoomWindow (рама, с коллизией при импорте),
+#   RoomWindowSash_nocol (створка, пивот на оси петель) и в ней RoomWindowHandle_nocol (ручка, пивот на шейке).
 # В Godot (stairwell.tscn → RoomWindow) стоит в точке (X0, WY0, WZ0) комнаты = (-10.5, 9.3, -1.76) без поворота.
 #
 # Начало координат — левый нижний угол проёма на плоскости стены со стороны комнаты (как в build_yurchik_room.py:
@@ -17,7 +18,7 @@
 # рама стоит на глубине 0.15–0.22 м, подоконник выступает в комнату (+X) на 0.2 м.
 import bpy, os, sys, math
 import numpy as np
-from mathutils import Vector
+from mathutils import Vector, Matrix
 
 HERE = os.path.dirname(os.path.abspath(__file__)) if "__file__" in dir() else r"C:\Users\mrs\Documents\yuranchik_game\tools\blender"
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
@@ -206,8 +207,17 @@ def frame(b, M):
         bx(b, (XF0 - 0.002, y, 0.012), (XF0, y + 0.03, 0.022), M["seal"], skip=('+X',))
 
 
-def sash(b, M):
-    """Правая поворотная створка: своя рама, заходит на коробку на LAP и выступает в комнату."""
+# Ось петель створки (на ней — серые колпачки) и ось ручки: от них считаются пивоты отдельных объектов.
+SASH_Y0, SASH_Y1 = IY + IW / 2 - LAP, W - FW + LAP
+HINGE = (XS1 - 0.004, SASH_Y1 + 0.004)                     # x, y вертикальной оси петель
+HANDLE_AXIS = (XS1, SASH_Y0 + SW / 2, HANDLE_Z + 0.012)      # центр шейки ручки на лицевой плоскости створки
+
+
+def sash(b, M, bh=None, bf=None):
+    """Правая поворотная створка: своя рама, заходит на коробку на LAP и выступает в комнату.
+    b — сама створка, bh — ручка (отдельный объект, крутится), bf — то, что остаётся на коробке (накладки петель,
+    тёмная щель вокруг створки). Без bh/bf всё идёт в b."""
+    bh, bf = bh or b, bf or b
     P = M["pvc"]
     y0, y1 = IY + IW / 2 - LAP, W - FW + LAP
     z0, z1 = FW - LAP, H - FW + LAP
@@ -221,12 +231,14 @@ def sash(b, M):
     S = M["seal"]
     for (ya, yb, za, zb) in ((y0 - g, y0, z0 - g, z1 + g), (y1, y1 + g, z0 - g, z1 + g),
                              (y0, y1, z0 - g, z0), (y0, y1, z1, z1 + g)):
-        quad_x(b, XF1 + 0.0005, ya, yb, za, zb, S, uv=(0, 0, 1, 1))
+        quad_x(bf, XF1 + 0.0005, ya, yb, za, zb, S, uv=(0, 0, 1, 1))
     # ручка — на левой стойке створки, опущена вниз (закрыто)
     F = M["fit"]
     hy = y0 + SW / 2
-    bx(b, (XS1, hy - 0.016, HANDLE_Z - 0.045), (XS1 + 0.011, hy + 0.016, HANDLE_Z + 0.045), F, s=0.1)      # розетка
-    b.cyl((XS1 + 0.011, hy, HANDLE_Z + 0.012), (XS1 + 0.030, hy, HANDLE_Z + 0.012), 0.012, 0.011, F, segs=8, caps=True)  # шейка
+    b0 = b
+    b = bh
+    bx(b0, (XS1, hy - 0.016, HANDLE_Z - 0.045), (XS1 + 0.011, hy + 0.016, HANDLE_Z + 0.045), F, s=0.1)      # розетка
+    b.cyl((XS1 + 0.002, hy, HANDLE_Z + 0.012), (XS1 + 0.030, hy, HANDLE_Z + 0.012), 0.012, 0.011, F, segs=8, caps=True)  # шейка
     # рычаг: от шейки вниз, слегка расширяется к концу и отогнут к стеклу
     lz0, lz1 = HANDLE_Z + 0.028, HANDLE_Z - 0.125
     pts_top = [(XS1 + 0.020, hy - 0.012), (XS1 + 0.042, hy - 0.012), (XS1 + 0.042, hy + 0.012), (XS1 + 0.020, hy + 0.012)]
@@ -240,8 +252,8 @@ def sash(b, M):
     b.poly(bot, [(0.2, 0.5)] * 4, F)
     # петли справа: серые колпачки на стыке створки и коробки + белые накладки
     for (za, zb) in ((z1 - 0.13, z1 - 0.03), (z0 + 0.03, z0 + 0.12)):
-        b.cyl((XS1 - 0.004, y1 + 0.004, za), (XS1 - 0.004, y1 + 0.004, zb), 0.010, 0.010, F, segs=8, caps=True, su=0.1)
-        bx(b, (XF1, y1 - 0.002, za + 0.01), (XS1 - 0.002, y1 + 0.016, zb - 0.01), F, s=0.1)
+        b0.cyl((XS1 - 0.004, y1 + 0.004, za), (XS1 - 0.004, y1 + 0.004, zb), 0.010, 0.010, F, segs=8, caps=True, su=0.1)
+        bx(bf, (XF1, y1 - 0.002, za + 0.01), (XS1 - 0.002, y1 + 0.016, zb - 0.01), F, s=0.1)
 
 
 def reveals(b, M):
@@ -332,22 +344,32 @@ def main():
     M = {"pvc": mat("RwPvc", "rw_pvc", rough=0.45), "seal": mat("RwSeal", "rw_seal", rough=0.8),
          "fit": mat("RwFit", "rw_fit", rough=0.4), "reveal": mat("RwReveal", "rw_reveal", rough=0.95),
          "glass": mat_alpha("RwGlass", "rw_glass")}
-    b = B()
+    b, bs, bh = B(), B(), B()
     frame(b, M)
-    sash(b, M)
+    sash(bs, M, bh, b)
     reveals(b, M)
     sill(b, M)
     ob = b.build("RoomWindow", sc.collection)
-    for poly in ob.data.polygons:
-        poly.use_smooth = False
+    # створка и ручка — отдельные объекты с пивотом на своей оси (в Godot открываются скриптом room_window.gd);
+    # «_nocol» — без автоколлизии при импорте (у створки коллизию-ящик ставит скрипт)
+    so = bs.build("RoomWindowSash_nocol", sc.collection)
+    ho = bh.build("RoomWindowHandle_nocol", sc.collection)
+    sp = Vector((HINGE[0], HINGE[1], 0.0))
+    hp = Vector(HANDLE_AXIS)
+    so.data.transform(Matrix.Translation(-sp)); so.location = sp
+    ho.data.transform(Matrix.Translation(-hp)); ho.location = hp - sp
+    ho.parent = so
+    for o in (ob, so, ho):
+        for poly in o.data.polygons:
+            poly.use_smooth = False
     if bpy.context.window:
         preview(sc)
     for o in sc.objects:
-        o.select_set(o == ob)
+        o.select_set(o in (ob, so, ho))
     bpy.context.view_layer.objects.active = ob if bpy.context.view_layer.objects.get(ob.name) else None
     bpy.ops.export_scene.gltf(filepath=os.path.join(OUT, "room_window.gltf"), use_selection=True, use_active_scene=True, export_keep_originals=True,
                               export_format='GLTF_SEPARATE', export_apply=True, export_yup=True)
-    return {"polys": len(ob.data.polygons), "verts": len(ob.data.vertices)}
+    return {"polys": len(ob.data.polygons), "sash": len(so.data.polygons), "handle": len(ho.data.polygons)}
 
 
 RESULT = main()
