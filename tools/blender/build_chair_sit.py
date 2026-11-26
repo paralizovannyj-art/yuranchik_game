@@ -62,9 +62,11 @@ SPIN_HAND_FOLLOW = 0.35                     # пока крутит кресло
 # --- кадры ---
 # grab — рука на спинке; pull — кресло поехало; spin — начал крутить; release — отпустил; sit — стоит перед
 # креслом, начинает садиться; seated — сел боком; swivel — повернулся к столу; lift — руки над краем стола;
+# hover — кисти зависли над клавой и мышью;
 # desk — руки на клаве и мышке; end — конец клипа (поза desk)
 F_GRAB, F_PULL, F_SPIN, F_RELEASE, F_SIT, F_SEATED, F_SWIVEL = 14, 16, 36, 50, 86, 134, 162
 F_LIFT0, F_LIFT, F_DESK, F_END = 202, 216, 234, 240
+F_HOVER = 228        # кисти зависли над клавой и мышью (дальше — ложатся на них)
 LEN = F_END
 F_FREE = 72          # рука совсем ушла со спинки (отпускает плавно, F_RELEASE–F_FREE)
 
@@ -459,8 +461,12 @@ EXTRA = {"DeskMouseC": "desk", "DeskMouseL": "mouse_l", "DeskMouseR": "mouse_r",
          "DeskMouseBL": "mouse_bl", "DeskClick": "click", "DeskTapIndex": "tap_index", "DeskTapMiddle": "tap_middle",
          "DeskTapRing": "tap_ring", "DeskTapThumb": "tap_thumb"}
 # PowerReach: цепочка поз и ключи (кадр, место на цепочке); на 3 — палец на кнопке
-P_CHAIN = ["desk", "power_lift", "power_mid", "power", "power_mid", "power_lift", "desk"]
-P_KEYS = [(0, 0.0), (10, 1.0), (24, 2.0), (36, 3.0), (46, 3.0), (58, 4.0), (70, 5.0), (82, 6.0)]
+# (hover_r — правая приподнялась над мышью, power_back — кисть выше края стола, пальцы ещё вперёд: туда и обратно
+# рука идёт через них, иначе пальцы на переходах проходят сквозь мышь и столешницу)
+P_CHAIN = ["desk", "hover_r", "power_back", "power_lift", "power_mid", "power", "power_mid", "power_back", "hover_r",
+           "desk"]
+P_KEYS = [(0, 0.0), (5, 1.0), (10, 2.0), (16, 3.0), (26, 4.0), (36, 5.0), (46, 5.0), (58, 6.0), (70, 7.0), (77, 8.0),
+          (82, 9.0)]
 P_PRESS = 38
 
 
@@ -515,7 +521,8 @@ def power_reach(arm, poses):
     looks = []
     for f in range(n):
         p = mono(P_KEYS, f)
-        p = p if p <= 3.0 else 6.0 - p
+        p = p if p <= 5.0 else 10.0 - p
+        p = max(0.0, p - 2.0)            # hover_r и power_back — ещё смотрит в монитор; кнопка — на 3
         looks.append(MONITOR.lerp(seat_poses.BUTTON + Vector((0, 0.03, 0.02)), smooth((p - 0.5) / 2.0)))
     return out, looks
 
@@ -680,12 +687,13 @@ def main():
         loc = Vector((li.x + (ls.x - li.x) * t_fk, li.y + (ls.y - li.y) * back, li.z + (ls.z - li.z) * down))
         pelvis.matrix = B @ Matrix.LocRotScale(loc, ri.slerp(rs, t_fk), Vector((1, 1, 1)))
         if f > F_LIFT0:
-            # руки на стол: сначала вверх перед собой (lift), потом вперёд на клаву и мышь (desk);
-            # корпус наклоняется к столу, таз чуть вперёд по подушке
-            w1, w2 = ramp(f, F_LIFT0, F_LIFT), ramp(f, F_LIFT - 4, F_DESK)
+            # руки на стол: сначала вверх перед собой (lift), потом вперёд, зависли над клавой и мышью (hover),
+            # и ложатся на них (desk); корпус наклоняется к столу, таз чуть вперёд по подушке
+            w1, w2 = ramp(f, F_LIFT0, F_LIFT), ramp(f, F_LIFT, F_HOVER)   # вперёд — когда пальцы уже над столом
+            w3 = ramp(f, F_HOVER - 4, F_DESK)
             for b in pb:
-                b.matrix_basis = lerp_basis(lerp_basis(sit[b.name], poses["lift"][b.name], w1),
-                                            poses["desk"][b.name], w2)
+                b.matrix_basis = lerp_basis(lerp_basis(lerp_basis(sit[b.name], poses["lift"][b.name], w1),
+                                                       poses["hover"][b.name], w2), poses["desk"][b.name], w3)
             pelvis.matrix = B @ (p_rest @ pelvis.matrix_basis)
         bpy.context.view_layer.update()
         if bend != 0.0:
