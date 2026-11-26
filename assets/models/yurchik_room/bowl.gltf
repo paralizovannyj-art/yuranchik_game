@@ -6,9 +6,10 @@
 	"scene":0,
 	"scenes":[
 		{
-			"name":"Scene",
+			"name":"DeskClutter",
 			"nodes":[
-				0
+				0,
+				1
 			]
 		}
 	],
@@ -16,18 +17,32 @@
 		{
 			"mesh":0,
 			"name":"Bowl_nocol"
+		},
+		{
+			"mesh":1,
+			"name":"BowlSpoon_nocol"
 		}
 	],
 	"materials":[
 		{
-			"doubleSided":true,
-			"name":"YrAtlas",
+			"name":"DcAtlas",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
 					"index":0
 				},
 				"metallicFactor":0,
-				"roughnessFactor":0.699999988079071
+				"roughnessFactor":0.3499999940395355
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"DcSteel",
+			"pbrMetallicRoughness":{
+				"baseColorTexture":{
+					"index":1
+				},
+				"metallicFactor":0,
+				"roughnessFactor":0.25
 			}
 		}
 	],
@@ -45,9 +60,27 @@
 					"material":0
 				}
 			]
+		},
+		{
+			"name":"BowlSpoon_nocol",
+			"primitives":[
+				{
+					"attributes":{
+						"POSITION":4,
+						"NORMAL":5,
+						"TEXCOORD_0":6
+					},
+					"indices":7,
+					"material":1
+				}
+			]
 		}
 	],
 	"textures":[
+		{
+			"sampler":0,
+			"source":0
+		},
 		{
 			"sampler":0,
 			"source":0
@@ -56,69 +89,127 @@
 	"images":[
 		{
 			"mimeType":"image/png",
-			"name":"yr_atlas",
-			"uri":"../../textures/yr_atlas.png"
+			"name":"dc_atlas.png",
+			"uri":"../../textures/dc_atlas.png"
 		}
 	],
 	"accessors":[
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":120,
+			"count":539,
 			"max":[
-				0.09529399871826172,
-				0.09864425659179688,
-				0.08100008964538574
+				0.049000002443790436,
+				0.05999999865889549,
+				0.0430000014603138
 			],
 			"min":[
-				-0.0950002670288086,
+				-0.0989999994635582,
 				0,
-				-0.08072590827941895
+				-0.10500000417232513
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":120,
+			"count":539,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":120,
+			"count":539,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
 			"componentType":5123,
-			"count":204,
+			"count":2052,
+			"type":"SCALAR"
+		},
+		{
+			"bufferView":4,
+			"componentType":5126,
+			"count":39,
+			"max":[
+				0.04552852734923363,
+				0.09265664219856262,
+				0.08328519016504288
+			],
+			"min":[
+				-0.056527279317379,
+				0.017391197383403778,
+				-0.053060997277498245
+			],
+			"type":"VEC3"
+		},
+		{
+			"bufferView":5,
+			"componentType":5126,
+			"count":39,
+			"type":"VEC3"
+		},
+		{
+			"bufferView":6,
+			"componentType":5126,
+			"count":39,
+			"type":"VEC2"
+		},
+		{
+			"bufferView":7,
+			"componentType":5123,
+			"count":150,
 			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":1440,
+			"byteLength":6468,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":1440,
-			"byteOffset":1440,
+			"byteLength":6468,
+			"byteOffset":6468,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":960,
-			"byteOffset":2880,
+			"byteLength":4312,
+			"byteOffset":12936,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":408,
-			"byteOffset":3840,
+			"byteLength":4104,
+			"byteOffset":17248,
+			"target":34963
+		},
+		{
+			"buffer":0,
+			"byteLength":468,
+			"byteOffset":21352,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":468,
+			"byteOffset":21820,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":312,
+			"byteOffset":22288,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":300,
+			"byteOffset":22600,
 			"target":34963
 		}
 	],
@@ -130,7 +221,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":4248,
+			"byteLength":22900,
 			"uri":"bowl.bin"
 		}
 	]

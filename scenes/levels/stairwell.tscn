@@ -310,10 +310,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.947625, 9.14, -3.71)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.545, 8.4, -3.57)
 
 [node name="SpeakerLeft" parent="YurchikRoom" unique_id=580554420 instance=ExtResource("yr_speaker_left")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.272887, 9.14, -3.705)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.312233, 9.14, -3.705)
 
 [node name="SpeakerRight" parent="YurchikRoom" unique_id=1873440371 instance=ExtResource("yr_speaker_right")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.6132684, 9.14, -3.705)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.566553, 9.14, -3.705)
 
 [node name="Keyboard" parent="YurchikRoom" unique_id=305903137 instance=ExtResource("yr_keyboard")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.0025415, 9.089, -3.611)
@@ -322,16 +322,16 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.0025415, 9.089, -3.611)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.816, 9.089, -3.623)
 
 [node name="Mug" parent="YurchikRoom" unique_id=694435928 instance=ExtResource("yr_mug")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.36, 9.14, -3.52)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.36, 9.14, -3.374095)
 
 [node name="DeskBottleTall" parent="YurchikRoom" unique_id=1731299009 instance=ExtResource("yr_desk_bottle_tall")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.43, 9.14, -3.8)
+transform = Transform3D(0.8949003, 0, 0.4462661, 0, 1, 0, -0.4462661, 0, 0.8949003, -7.2035646, 9.14, -3.7532883)
 
 [node name="DeskBottleShort" parent="YurchikRoom" unique_id=937213482 instance=ExtResource("yr_desk_bottle_short")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.43, 9.14, -3.7)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.43, 9.14, -3.4377222)
 
 [node name="Bowl" parent="YurchikRoom" unique_id=1578976067 instance=ExtResource("yr_bowl")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.363931, 9.14, -3.361)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.363931, 9.126367, -3.5239792)
 
 [node name="DeskCables" parent="YurchikRoom" unique_id=991081321 instance=ExtResource("yr_desk_cables")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.437, 8.413, -3.008)

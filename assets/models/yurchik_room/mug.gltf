@@ -6,7 +6,7 @@
 	"scene":0,
 	"scenes":[
 		{
-			"name":"Scene",
+			"name":"DeskClutter",
 			"nodes":[
 				0
 			]
@@ -20,14 +20,13 @@
 	],
 	"materials":[
 		{
-			"doubleSided":true,
-			"name":"YrAtlas",
+			"name":"DcAtlas",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
 					"index":0
 				},
 				"metallicFactor":0,
-				"roughnessFactor":0.699999988079071
+				"roughnessFactor":0.3499999940395355
 			}
 		}
 	],
@@ -56,69 +55,69 @@
 	"images":[
 		{
 			"mimeType":"image/png",
-			"name":"yr_atlas",
-			"uri":"../../textures/yr_atlas.png"
+			"name":"dc_atlas.png",
+			"uri":"../../textures/dc_atlas.png"
 		}
 	],
 	"accessors":[
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":48,
+			"count":532,
 			"max":[
-				0.04199981689453125,
-				0.09999942779541016,
-				0.04200005531311035
+				0.04176991805434227,
+				0.09799999743700027,
+				0.05943659693002701
 			],
 			"min":[
-				-0.04199981689453125,
+				-0.04176991805434227,
 				0,
-				-0.04200005531311035
+				-0.04176991805434227
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":48,
+			"count":532,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":48,
+			"count":532,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
 			"componentType":5123,
-			"count":84,
+			"count":1338,
 			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":576,
+			"byteLength":6384,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":576,
-			"byteOffset":576,
+			"byteLength":6384,
+			"byteOffset":6384,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":384,
-			"byteOffset":1152,
+			"byteLength":4256,
+			"byteOffset":12768,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":168,
-			"byteOffset":1536,
+			"byteLength":2676,
+			"byteOffset":17024,
 			"target":34963
 		}
 	],
@@ -130,7 +129,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":1704,
+			"byteLength":19700,
 			"uri":"mug.bin"
 		}
 	]
