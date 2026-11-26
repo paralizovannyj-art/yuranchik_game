@@ -101,6 +101,7 @@ var exhausted := false
 var control := true                    ## false — игрок не управляет (катсцена, меню)
 var focus: Interactable                ## на что сейчас можно нажать E
 var noclip := false                    ## (отладка) летит сквозь стены — V
+var can_run := true                    ## уровень может запретить бег (пролог в квартире — Level.allow_run)
 var phone_up := false                  ## телефон в руке (phone.gd): только шаг, без ударов, бега и бросков
 ## Сидит в кресле (pc_seat.gd): не ходит, капсула выключена, позу ведёт клип посадки. Камера — из головы,
 ## а при seat_view_blend > 0 плавно уходит к seat_view (вид на монитор) с углом обзора seat_view_fov.
@@ -332,7 +333,7 @@ func _physics_process(delta: float) -> void:
 		return
 
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back") if control else Vector2.ZERO
-	var want_run := control and not phone_up and Input.is_action_pressed("run") and input.y < -0.3
+	var want_run := control and can_run and not phone_up and Input.is_action_pressed("run") and input.y < -0.3
 	if want_run:
 		_crouch_toggle = false                  # побежал — встаёт
 	_update_crouch(delta)

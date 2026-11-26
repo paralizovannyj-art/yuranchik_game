@@ -12,6 +12,7 @@ const C_ACCENT := Color(1.0, 0.62, 0.25)
 
 var player: Player
 var inventory: InventoryUI
+var bag_enabled := true                  ## уровень может запретить сумку (пролог в квартире — Level.allow_bag)
 var phone: Phone
 
 var _root: Control
@@ -279,6 +280,8 @@ func fade_out(duration := 1.0, color := Color.BLACK, alpha := 1.0) -> Tween:
 
 # ----------------------------------------------------------------------------- инвентарь и меню
 func open_inventory() -> void:
+	if not bag_enabled:
+		return
 	get_tree().paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	Game.sfx("ui_open", null, -4.0)

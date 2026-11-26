@@ -16,6 +16,10 @@ extends Node3D
 @export var near_sight_energy := 0.2   ## яркость «привыкших глаз»: слабый свет вокруг Юрчика (0 — выключен)
 @export var near_sight_range := 4.0    ## на сколько метров видно в темноте без фонарика (в помещениях меньше)
 @export var tools_on_direct_start := true   ## запуск уровня из редактора (F6) — сразу с молотком и фонариком
+## Пролог (квартира Юрчика): без бега, без сумки, без молотка и фонарика — Юрчик просто дома.
+@export var allow_run := true          ## можно ли бежать (Shift)
+@export var allow_bag := true          ## можно ли открыть сумку (I)
+@export var no_tools := false          ## забрать молоток и фонарик при входе (появляется с пустыми руками)
 @export_group("Навигация врагов")
 @export var bake_navigation := true     ## строить ли сетку при запуске (для большого района без врагов — выключено)
 @export var nav_agent_radius := 0.5     ## насколько далеко враги обходят стены
@@ -35,7 +39,15 @@ func _ready() -> void:
 		player.step_sound = step_sound
 		player.step_variants = step_variants
 		player.flashlight.light_energy = flashlight_energy
-	if not Game.in_game and tools_on_direct_start:   # уровень запущен напрямую из редактора (F6), а не из меню
+		player.can_run = allow_run
+	hud.bag_enabled = allow_bag
+	if no_tools:
+		for id: String in ["hammer", "flashlight"]:
+			while Game.has_item(id):
+				Game.remove_item(id)
+		if player:
+			player.refresh_tools()
+	elif not Game.in_game and tools_on_direct_start:   # уровень запущен напрямую из редактора (F6), а не из меню
 		Game.give_tools()
 		if player:
 			player.refresh_tools()
