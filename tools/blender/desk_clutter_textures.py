@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Текстуры мелочи на столе Юрчика: бутылки воды «Моршинська» 1,5 л и «Миргородська» 0,5 л, красная кружка Nescafé
+# Текстуры мелочи на столе Юрчика: бутылки воды «Моршинська» 1,5 л и «Миргородська» 0,5 л, белая кружка «MAYSKIY» с сердцем
 # с чаем, белая миска с синей каймой, остатками борща и ложкой.
 # Рисуется в обычном Python (numpy + Pillow), без Blender:
 #   python tools/blender/desk_clutter_textures.py
@@ -29,10 +29,10 @@ A = {
     "cap_g": (320, 216, 384, 248), "cap_b": (384, 216, 448, 248),
     "capt_g": (320, 248, 352, 280), "capt_b": (352, 248, 384, 280),
     "ring": (448, 216, 512, 248),          # кольцо горлышка (белое)
-    "mug_out": (0, 352, 256, 440),         # кружка снаружи: красная, NESCAFÉ
+    "mug_out": (0, 352, 256, 440),         # кружка снаружи: белая «MAYSKIY» с сердцем
     "mug_in": (256, 352, 320, 416),        # кружка внутри: белая эмаль с налётом чая
     "tea": (320, 352, 384, 416),           # чай сверху
-    "handle": (384, 352, 416, 384),        # ручка кружки (красная)
+    "handle": (384, 352, 416, 384),        # ручка кружки (белая)
     "bowl_out": (0, 448, 256, 512),        # миска снаружи: белая, синяя кайма у края
     "bowl_in": (256, 448, 320, 512),       # миска внутри: белая, разводы борща
     "soup": (320, 448, 384, 512),          # остатки борща на дне
@@ -156,24 +156,44 @@ def cap_top(w, h, col):
     return np.concatenate([np.clip(arr, 0, 1), np.ones((h, w, 1), np.float32)], -1)
 
 
+def heart_pts(cx, cy, r, n=60):
+    """Сердечко (классическая кривая) с центром (cx, cy) и «радиусом» r."""
+    pts = []
+    for k in range(n):
+        t = 2 * np.pi * k / n
+        x = 16 * np.sin(t) ** 3
+        y = 13 * np.cos(t) - 5 * np.cos(2 * t) - 2 * np.cos(3 * t) - np.cos(4 * t)
+        pts.append((cx + x / 17 * r, cy - y / 17 * r))
+    return pts
+
+
 def mug_out(w, h, rng):
-    """Красная кружка Nescafé: красная эмаль, белый логотип два раза по кругу, светлый блик."""
-    im, d = label_img(w, h, (0.78, 0.06, 0.08))
+    """Белая кружка «MAYSKIY» (с фото): красное название, под ним красное сердце-контур с надписью от руки;
+    рисунок по бокам от ручки, кружка не новая — серый налёт и потёки чая от края."""
+    im, d = label_img(w, h, (0.92, 0.91, 0.88))
     W, H = w * SS, h * SS
+    red = (200, 40, 45, 255)
     for half in (0, 1):
-        x0 = half * W // 2
-        f = font("georgiab.ttf", H * 0.26)
-        tw = d.textlength("NESCAFÉ", font=f)
-        tx = x0 + W * 0.25 - tw / 2
-        d.text((tx, H * 0.30), "NESCAFÉ", font=f, fill=(255, 255, 255, 255))
-        d.line([tx, H * 0.66, tx + tw, H * 0.66], fill=(255, 255, 255, 255), width=int(H * 0.025))
+        cx = half * W // 2 + W * 0.25
+        f = font("arialbd.ttf", H * 0.15)
+        tw = d.textlength("MAYSKIY", font=f)
+        d.text((cx - tw / 2, H * 0.14), "MAYSKIY", font=f, fill=red)
+        d.line(heart_pts(cx, H * 0.60, H * 0.30) + heart_pts(cx, H * 0.60, H * 0.30)[:1], fill=red, width=int(H * 0.022))
+        fs = font("segoepr.ttf", H * 0.085)
+        for k, line in enumerate(("Твій", "улюблений", "чай")):
+            lw = d.textlength(line, font=fs)
+            d.text((cx - lw / 2, H * (0.46 + 0.09 * k)), line, font=fs, fill=red)
     arr = down(im, w, h)
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    drip = (noise(h, w, 9, rng) > 0.62) * np.clip(1 - yy / (h * 0.5), 0, 1)          # потёки от края
+    grime = 0.80 + 0.22 * noise(h, w, 6, rng)
+    arr[..., :3] *= grime[..., None]
+    arr[..., :3] = arr[..., :3] * (1 - drip[..., None] * 0.25) + C(0.55, 0.42, 0.28) * drip[..., None] * 0.25
     u = np.arange(w, dtype=np.float32) / w
     hl = sum(np.exp(-((u - c) / 0.03) ** 2) for c in (0.05, 0.55))
-    arr[..., :3] += hl[None, :, None] * 0.25
-    arr[: h // 14, :, :3] = C(0.92, 0.90, 0.88)                              # белый ободок по краю
-    arr[..., :3] *= (0.92 + 0.1 * noise(h, w, 5, rng))[..., None]
-    return arr
+    arr[..., :3] += hl[None, :, None] * 0.12
+    arr[: h // 16, :, :3] *= 0.85                                                       # грязный ободок
+    return np.concatenate([np.clip(arr[..., :3], 0, 1), arr[..., 3:]], -1)
 
 
 def plain(w, h, col, rng, amp=0.08):
@@ -182,11 +202,16 @@ def plain(w, h, col, rng, amp=0.08):
 
 
 def mug_in(w, h, rng):
-    """Кружка изнутри (u — по кругу, v — от дна вверх): белая, ниже уровня чая — коричневый налёт."""
-    arr = plain(w, h, (0.90, 0.89, 0.86), rng, 0.04)
-    yy = np.arange(h, dtype=np.float32)[:, None] / h                         # 0 — верх картинки (край кружки)
-    stain = np.clip((yy - 0.25) / 0.08, 0, 1)
-    arr[..., :3] = arr[..., :3] * (1 - stain[..., None] * 0.55) + C(0.45, 0.25, 0.10) * stain[..., None] * 0.55
+    """Кружка изнутри (u — по кругу, v сверху — край): белая, в коричневых кольцах налёта от чая, ниже уровня —
+    сплошной налёт."""
+    arr = plain(w, h, (0.88, 0.86, 0.82), rng, 0.05)
+    yy = np.arange(h, dtype=np.float32)[:, None] / h + 0.04 * (noise(h, w, 4, rng) - 0.5)
+    stain = np.clip((yy - 0.55) / 0.10, 0, 1)
+    for c in (0.18, 0.30, 0.42):                                                     # кольца прошлых чаепитий
+        stain = np.maximum(stain, 0.55 * np.exp(-((yy - c) / 0.018) ** 2))
+    stain *= 0.7 + 0.5 * noise(h, w, 7, rng)
+    arr[..., :3] = arr[..., :3] * (1 - stain[..., None] * 0.6) + C(0.42, 0.24, 0.10) * stain[..., None] * 0.6
+    arr[..., :3] = np.clip(arr[..., :3], 0, 1)
     return arr
 
 
@@ -265,7 +290,7 @@ def main():
     put("mug_out", mug_out(*wh("mug_out"), rng))
     put("mug_in", mug_in(*wh("mug_in"), rng))
     put("tea", tea(*wh("tea"), rng))
-    put("handle", plain(*wh("handle"), (0.74, 0.06, 0.08), rng, 0.06))
+    put("handle", plain(*wh("handle"), (0.86, 0.85, 0.81), rng, 0.10))
     put("bowl_out", bowl_out(*wh("bowl_out"), rng))
     put("bowl_in", bowl_in(*wh("bowl_in"), rng))
     put("soup", soup(*wh("soup"), rng))

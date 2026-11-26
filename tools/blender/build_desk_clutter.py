@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Мелочь на столе Юрчика v2: бутылки воды «Моршинська» 1,5 л и «Миргородська» 0,5 л, красная кружка Nescafé
+# Мелочь на столе Юрчика v2: бутылки воды «Моршинська» 1,5 л и «Миргородська» 0,5 л, белая кружка «MAYSKIY»
 # с чаем, белая миска с синей каймой, остатками борща и ложкой. Заменяет восьмигранные цилиндры из
 # build_yurchik_room.py (там эти предметы больше не строятся).
 #
@@ -37,9 +37,11 @@ ANCHOR = {
 }
 
 
-def UV(name):
+def UV(name, pad=2.0):
+    """Кусок атласа в UV; pad — отступ в пикселях внутрь, чтобы фильтрация и мипмапы не цепляли соседние куски
+    (иначе на шве миски проступают синие и красные точки)."""
     x0, y0, x1, y1 = T.A[name]
-    return (x0 / SZ, 1 - y1 / SZ, x1 / SZ, 1 - y0 / SZ)
+    return ((x0 + pad) / SZ, 1 - (y1 - pad) / SZ, (x1 - pad) / SZ, 1 - (y0 + pad) / SZ)
 
 
 # =====================================================================================
@@ -183,15 +185,16 @@ def bottles(M):
 
 
 def mug(M):
-    """Красная кружка Nescafé 300 мл: Ø 8,4 см, высота 9,8 см, внутри чай; ручка повёрнута к дивану."""
+    """Белая кружка «MAYSKIY» (с фото) 300 мл: Ø 8,4 см, высота 9,8 см, чай допит до половины, внутри налёт;
+    ручка повёрнута к дивану."""
     b = Mesh()
     a0 = math.radians(-60)                                              # направление ручки
     R, H = 0.042, 0.098
     lathe(b, [(0.0, 0.0015), (0.033, 0.0015), (0.036, 0.0), (0.039, 0.004), (0.041, 0.014), (R, H - 0.004)],
           M["atlas"], UV("mug_out"), 20, a0=a0)
     lathe(b, [(R, H - 0.004), (R, H), (0.0385, H)], M["atlas"], UV("mug_in"), 20, a0=a0)                    # ободок
-    lathe(b, [(0.0375, 0.070), (0.0385, H)], M["atlas"], UV("mug_in"), 20, a0=a0, flip=True)                # стенка изнутри
-    disc(b, 0.0375, 0.070, M["atlas"], UV("tea"), 20)                                                        # чай
+    lathe(b, [(0.0365, 0.048), (0.0385, H)], M["atlas"], UV("mug_in"), 20, a0=a0, flip=True)                # стенка изнутри
+    disc(b, 0.0365, 0.048, M["atlas"], UV("tea"), 20)                                                        # чай
     # ручка: «С» из 9 точек, сечение 6 x 9 мм
     path = []
     for k in range(9):
@@ -218,15 +221,36 @@ def bowl(M):
     inner = [(0.074, 0.059), (0.070, 0.060), (0.067, 0.049), (0.058, 0.033), (0.045, 0.021), (0.030, 0.014), (0.0, 0.012)]
     lathe(b, outer, M["atlas"], UV("bowl_out"), 24)       # v: край — сверху картинки
     lathe(b, inner, M["atlas"], (lambda u: (u[0], u[3], u[2], u[1]))(UV("bowl_in")), 24)
+    # лужица борща: тонкий слой, лежит по дну миски (края приподняты вслед за стенкой, сквозь неё не протыкают)
+    def inner_z(r):
+        pr = inner[::-1]                                              # от центра к краю
+        for (r0, z0), (r1, z1) in zip(pr, pr[1:]):
+            if r <= r1:
+                return z0 + (z1 - z0) * (r - r0) / (r1 - r0)
+        return pr[-1][1]
+    su = UV("soup", pad=4)
     wob = lambda a: 1.0 + 0.10 * math.sin(3 * a + 1) + 0.06 * math.sin(7 * a)
-    disc(b, 0.034, 0.0165, M["atlas"], UV("soup"), 16, wob=wob)                                   # лужица борща
+    n, R0 = 20, 0.029
+    suv = lambda x, y: (su[0] + (su[2] - su[0]) * (0.5 + x / (2.4 * R0)), su[1] + (su[3] - su[1]) * (0.5 + y / (2.4 * R0)))
+    ring = []
+    for i in range(n):
+        a = 2 * math.pi * i / n
+        rr = R0 * wob(a)
+        ring.append((rr * math.cos(a), rr * math.sin(a), inner_z(rr) + 0.0012))
+    mid = [(x * 0.5, y * 0.5, inner_z(math.hypot(x, y) * 0.5) + 0.0035) for (x, y, _) in ring]
+    cz = (0.0, 0.0, inner_z(0.0) + 0.0040)
+    for i in range(n):
+        j = (i + 1) % n
+        b.poly([ring[i], ring[j], mid[j], mid[i]], [suv(*ring[i][:2]), suv(*ring[j][:2]), suv(*mid[j][:2]), suv(*mid[i][:2])], M["atlas"])
+        b.poly([mid[i], mid[j], cz], [suv(*mid[i][:2]), suv(*mid[j][:2]), suv(0, 0)], M["atlas"])
     # ложка: черпало (эллипс с углублением) + ручка, изгиб вверх у шейки
     st = UV("steel")
     n = 14
     rim = [(0.026 * math.cos(2 * math.pi * i / n), 0.017 * math.sin(2 * math.pi * i / n), 0.0) for i in range(n)]
     mid = [(x * 0.55, y * 0.55, -0.0035) for (x, y, _) in rim]
     cen = (0.0, 0.0, -0.005)
-    suv = lambda p: (st[0] + (st[2] - st[0]) * (0.5 + p[0] / 0.06), st[1] + (st[3] - st[1]) * (0.5 + p[1] / 0.04))
+    cl = lambda t: min(0.9, max(0.1, t))                               # не вылезать из куска «steel» (рядом — борщ)
+    suv = lambda p: (st[0] + (st[2] - st[0]) * cl(0.5 + p[0] / 0.06), st[1] + (st[3] - st[1]) * cl(0.5 + p[1] / 0.04))
     for i in range(n):
         j = (i + 1) % n
         sp.poly([rim[i], rim[j], mid[j], mid[i]], [suv(rim[i]), suv(rim[j]), suv(mid[j]), suv(mid[i])], M["steel"])
@@ -236,7 +260,8 @@ def bowl(M):
     for k in range(len(hp) - 1):
         (x0, _, z0), (x1, _, z1), w0, w1 = hp[k], hp[k + 1], hw[k], hw[k + 1]
         q = [(x0, -w0, z0), (x1, -w1, z1), (x1, w1, z1), (x0, w0, z0)]
-        sp.poly(q, [suv((p[0] - 0.09, p[1] * 3, 0)) for p in q], M["steel"])
+        sp.poly(q, [(st[0] + (st[2] - st[0]) * (0.3 + 0.4 * (p[1] / w + 1) / 2), st[1] + (st[3] - st[1]) * (0.1 + 0.8 * p[0] / 0.15))
+                    for p, w in zip(q, (w0, w1, w1, w0))], M["steel"])
     # укладка: черпало на борще, ручка через край миски
     pitch = math.atan2(0.062 - 0.027, 0.088)
     xf = (Matrix.Translation(off + Vector((-0.012, 0.0, 0.027))) @ Matrix.Rotation(math.radians(-55), 4, 'Z')
