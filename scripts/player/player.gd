@@ -127,6 +127,11 @@ var _prev_speed := 0.0
 var _cam_pos := Vector3.ZERO
 var _cam_roll := 0.0
 var _head_lead := 0.0
+var _glide_from := Vector3.ZERO   ## glide_camera: откуда камера доезжает после переноса игрока
+var _glide_off := Vector3.ZERO
+var _glide_t := -1.0              ## < 0 — не доезжает; иначе секунды с начала
+var _glide_dur := 0.3
+var _glide_pending := false
 var _skel: Skeleton3D
 var _head_bone := -1
 var _stam_cd := 0.0
@@ -474,6 +479,29 @@ func eye_point() -> Vector3:
 	if _skel and _head_bone >= 0:
 		return _skel.global_transform * _skel.get_bone_global_pose(_head_bone).origin + Vector3.UP * 0.15
 	return camera.global_position
+
+
+## Игрока сейчас перенесут (кресло: в начало клипа и обратно) — камера не прыгает, а за dur секунд
+## доезжает с того места, где была, до нового.
+func glide_camera(dur := 0.3) -> void:
+	_glide_from = cam_pivot.global_position
+	_glide_dur = dur
+	_glide_pending = true
+
+
+func _glide(actual: Vector3, delta: float) -> Vector3:
+	if _glide_pending:
+		_glide_pending = false
+		_glide_off = _glide_from - actual
+		_glide_t = 0.0
+	if _glide_t < 0.0:
+		return Vector3.ZERO
+	_glide_t += delta
+	var u := clampf(_glide_t / _glide_dur, 0.0, 1.0)
+	if u >= 1.0:
+		_glide_t = -1.0
+		return Vector3.ZERO
+	return _glide_off * (1.0 - u * u * u * (u * (u * 6.0 - 15.0) + 10.0))
 
 
 ## Повернуть взгляд (рад) — кресло разворачивает Юрчика к монитору.
@@ -976,6 +1004,7 @@ func _update_camera(delta: float) -> void:
 	push.y = 0.0
 	push = push.limit_length(cam_body_push_max)
 	model.position = _model_base + global_basis.inverse() * push
+	cam_pivot.global_position += _glide(actual, delta)
 	# сидит за компом — камера уходит от глаз к виду на монитор (seat_view), угол обзора сужается
 	if seat_view_blend > 0.0:
 		var e := smoothstep(0.0, 1.0, seat_view_blend)

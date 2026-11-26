@@ -61,6 +61,7 @@ SPIN_HAND_FOLLOW = 0.35                     # пока крутит кресло
 # креслом, начинает садиться; seated — сел боком; swivel — повернулся к столу; end — у стола
 F_GRAB, F_PULL, F_SPIN, F_RELEASE, F_SIT, F_SEATED, F_SWIVEL, F_END = 14, 16, 36, 50, 86, 134, 162, 210
 LEN = F_END
+F_FREE = 72          # рука совсем ушла со спинки (отпускает плавно, F_RELEASE–F_FREE)
 
 
 def sample(arm, action):
@@ -140,8 +141,8 @@ BODY_KEYS = [
     (F_RELEASE, (0.35, 1.38, -14.0)),
     (57, (0.35, 1.29, 2.0)),
     (67, (0.36, 1.00, 42.0)),
-    (77, (0.355, 0.74, 80.0)),
-    (84, (0.35, 0.65, 90.0)),
+    (77, (0.355, 0.735, 80.0)),
+    (85, (0.35, 0.65, 90.0)),          # подходит и останавливается мягко, прямо перед посадкой
 ]
 # шаги: стопа (L/R), кадр отрыва, кадр постановки, куда (место тела, под которое встаёт стопа)
 STEPS = {
@@ -166,9 +167,9 @@ CHAIR_KEYS = [
 SIT_KEYS = [
     (0, 0.00, 0.00, 0.00, 0.0),
     (10, 0.18, 0.10, 0.05, 14.0),
-    (22, 0.55, 0.48, 0.45, 32.0),
-    (32, 0.92, 0.97, 0.90, 22.0),
-    (38, 1.00, 1.03, 1.00, 8.0),
+    (22, 0.55, 0.46, 0.45, 30.0),
+    (31, 0.90, 0.86, 0.88, 22.0),
+    (39, 0.99, 0.985, 0.99, 10.0),
     (48, 1.00, 1.00, 1.00, 0.0),
 ]
 F_LAND = F_SIT + 36        # таз опустился на подушку — кресло проседает
@@ -176,6 +177,99 @@ F_LAND = F_SIT + 36        # таз опустился на подушку — �
 F_REACH0, F_REACH1, F_PULL0, F_PULL1, F_SETTLE1 = 164, 173, 174, 196, 206
 SOFT_LEG = (0.965, 0.025)                   # доли длины ноги: с какого расстояния бедро–щиколотка нога «мягчеет» и запас до прямой
 HEEL_REACH = 0.13          # м — насколько вытягивает ноги вперёд, прежде чем упереться пятками
+
+
+# Растяжение времени (после запекания): (с кадра, по кадр, во сколько раз медленнее). Переходы плавные (±WARP_EDGE),
+# поэтому скорость нигде не скачет. Все кадры выше — «кадры замысла»; в клипе и JSON — уже растянутые.
+WARP = [(-8, 16, 1.4), (44, 72, 1.3), (172, 198, 1.25)]
+WARP_EDGE = 5.0
+
+
+def warp_rate(d):
+    r = 1.0
+    for a, b, k in WARP:
+        r += (k - 1.0) * ramp(d, a - WARP_EDGE, a + WARP_EDGE) * (1.0 - ramp(d, b - WARP_EDGE, b + WARP_EDGE))
+    return r
+
+
+_WARP_STEP = 0.01
+
+
+def _warp_table():
+    o, t = 0.0, [0.0]
+    n = int(LEN / _WARP_STEP)
+    for i in range(n):
+        d = i * _WARP_STEP
+        o += 0.5 * (warp_rate(d) + warp_rate(d + _WARP_STEP)) * _WARP_STEP
+        t.append(o)
+    return t
+
+
+def warp_out(d):
+    """Кадр замысла → кадр клипа."""
+    t = _warp_table() if "_WT" not in globals() else globals()["_WT"]
+    globals()["_WT"] = t
+    x = min(max(d / _WARP_STEP, 0.0), len(t) - 1.0)
+    i = min(int(x), len(t) - 2)
+    return t[i] + (t[i + 1] - t[i]) * (x - i)
+
+
+def warp_frames():
+    """Для каждого кадра клипа — кадр замысла (дробный)."""
+    t = _warp_table()
+    globals()["_WT"] = t
+    total = t[-1]
+    nout = int(round(total))
+    res, j = [], 0
+    for o in range(nout + 1):
+        target = o * total / nout
+        while j < len(t) - 2 and t[j + 1] < target:
+            j += 1
+        u = (target - t[j]) / (t[j + 1] - t[j]) if t[j + 1] > t[j] else 0.0
+        res.append(min((j + u) * _WARP_STEP, float(LEN)))
+    return res
+
+
+def lerp_seq(seq, d):
+    i = min(int(d), len(seq) - 2)
+    u = d - i
+    a, b = seq[i], seq[i + 1]
+    if isinstance(a, Vector):
+        return a.lerp(b, u)
+    return tuple(a[c] + (b[c] - a[c]) * u for c in range(len(a)))
+
+
+def _fcurves(obj):
+    ad = obj.animation_data
+    act = ad.action
+    try:
+        from bpy_extras.anim_utils import action_get_channelbag_for_slot
+        cb = action_get_channelbag_for_slot(act, ad.action_slot)
+        return list(cb.fcurves) if cb else []
+    except Exception:
+        return list(act.fcurves)
+
+
+def retime(scene, objs):
+    """Пересэмплирует ключи объектов по растяжению времени; возвращает кадры замысла для кадров клипа."""
+    dmap = warp_frames()
+    n = len(dmap)
+    for obj in objs:
+        if not obj.animation_data or not obj.animation_data.action:
+            continue
+        for fc in _fcurves(obj):
+            vals = [fc.evaluate(d) for d in dmap]
+            fc.keyframe_points.clear()
+            fc.keyframe_points.add(n)
+            co = []
+            for o, v in enumerate(vals):
+                co += [float(o), v]
+            fc.keyframe_points.foreach_set("co", co)
+            for kp in fc.keyframe_points:
+                kp.interpolation = 'LINEAR'
+            fc.update()
+    scene.frame_start, scene.frame_end = 0, n - 1
+    return dmap
 
 
 def chair_at(f):
@@ -187,7 +281,7 @@ def chair_at(f):
     else:
         u = ramp(f, F_PULL0, F_PULL1)
         x, y, a = 0.0, C_OUT[1] + (C_FINAL[1] - C_OUT[1]) * u, 0.0
-    dz = -0.018 * math.sin(math.pi * min(max((f - F_LAND + 4) / 14.0, 0.0), 1.0))
+    dz = -0.018 * math.sin(math.pi * min(max((f - F_LAND + 4) / 16.0, 0.0), 1.0)) ** 2   # проседает под ним без толчка
     return x, y, a, dz
 
 
@@ -213,10 +307,10 @@ def foot_place(foot, f):
 
 
 def hand_weight(f):
-    """Насколько правая рука на спинке: тянется (кадры 1–F_GRAB), держит, отпускает (F_RELEASE–64)."""
-    if f >= 64:
+    """Насколько правая рука на спинке: тянется (кадры 1–F_GRAB), держит, отпускает (F_RELEASE–F_FREE)."""
+    if f >= F_FREE:
         return 0.0
-    return ramp(f, 1, F_GRAB) * (1.0 - ramp(f, F_RELEASE, 64))
+    return ramp(f, 1, F_GRAB) * (1.0 - ramp(f, F_RELEASE, F_FREE))
 
 
 def fix_hand(scene, arm, hand_rots):
@@ -556,7 +650,7 @@ def main():
             pole[s].keyframe_insert("location", frame=f)
 
         # --- правая рука на спинке ---
-        if f < 64:
+        if f < F_FREE:
             hand_w = hand_weight(f)
             fh = min(f, F_RELEASE)
             ch_now = chairs[fh]
@@ -564,14 +658,21 @@ def main():
             a_spin = chair_at(F_SPIN)[2]
             a_hand = ch_now[2] if fh <= F_SPIN else a_spin + SPIN_HAND_FOLLOW * (ch_now[2] - a_spin)
             hm = hand_on_chair(chair_mat(*ch_now), chair_mat(ch_now[0], ch_now[1], a_hand, ch_now[3]))
-            if f > F_RELEASE:   # отпустил — рука уходит от того места
-                hm = Matrix.Translation(B.to_3x3() @ Vector((0.0, 0.10, 0.06)) * ramp(f, F_RELEASE, 64)) @ hm
+            if f > F_RELEASE:
+                # отпустил: цель руки плавно переезжает со спинки туда, где рука висит сама (поза без IK).
+                # Иначе тело уже развернулось, точка на спинке оказывается за спиной, и IK переворачивает локоть
+                for c in hand_cons:
+                    c.influence = 0.0
+                bpy.context.view_layer.update()
+                fk = arm.matrix_world @ pb["HandR"].matrix
+                hm = lerp_basis(hm, fk, ramp(f, F_RELEASE, F_FREE - 6))
             hand_t.matrix_world = hm
             hand_rots[f] = hm.to_3x3()
             bodyrot = B.to_3x3()
             sh = B @ shoulder_r
             # локоть — наружу от плеча и чуть вниз-назад (рука сверху на спинке): так запястье гнётся меньше
-            elbow.matrix_world = Matrix.Translation(sh + bodyrot @ Vector((-0.8, 0.2, -0.15)))
+            pole_v = Vector((-0.8, 0.2, -0.15)).lerp(Vector((-0.25, 0.8, -0.2)), ramp(f, F_RELEASE, F_FREE - 6))
+            elbow.matrix_world = Matrix.Translation(sh + bodyrot @ pole_v)   # отпустил — локоть назад, как у висящей руки
         else:
             hand_w = 0.0
         for c in hand_cons:
@@ -584,20 +685,24 @@ def main():
         # --- куда смотрит камера ---
         fwd = B.to_3x3() @ Vector((0, -1, 0))
         head = B @ Vector((0, 0, 1.6 if f < F_SIT + 10 else 1.2))
-        if f < F_RELEASE + 4:
-            look = (cm @ GRAB_PALM).lerp(B @ Vector((0, -1.5, 1.2)), 1.0 - ramp(f, 0, F_GRAB))
-        elif f < F_SEATED:
-            look = head + fwd * 1.4 + Vector((0, 0, -0.75))
-        else:
-            look = head + fwd * 1.6 + Vector((0, 0, -0.35))
+        # взгляд перетекает без переключений: прямо → на руку на спинке → вперёд по телу → в монитор.
+        # Раньше на отпускании он резко перескакивал с руки (−43° влево) на корпус, который уже шёл вправо
+        early = B @ Vector((0, -1.5, 1.2))
+        walk = (B @ Vector((0, 0, 1.6))) + fwd * 1.4 + Vector((0, 0, -0.75))
+        base = early.lerp(walk, ramp(f, F_SPIN - 6, F_RELEASE + 12))
+        if f >= F_SIT:
+            base = base.lerp(head + fwd * 1.4 + Vector((0, 0, -0.75)), ramp(f, F_SIT, F_SIT + 12))
+        base = base.lerp(head + fwd * 1.6 + Vector((0, 0, -0.35)), ramp(f, F_SEATED - 10, F_SEATED + 10))
+        w_palm = ramp(f, 0, F_GRAB) * (1.0 - ramp(f, F_SPIN - 8, F_RELEASE + 2))
+        look = base.lerp(cm @ GRAB_PALM, w_palm)
         looks.append(look)
 
-    # взгляд сглажен (окно 11 кадров) — без рывков на сменах фаз
+    # взгляд сглажен (гаусс, σ ≈ 5 кадров) — без рывков на сменах фаз
     sm = []
     for i in range(len(looks)):
         acc, n = Vector(), 0
-        for j in range(max(0, i - 9), min(len(looks), i + 10)):
-            w = math.exp(-((j - i) / 5.0) ** 2)
+        for j in range(max(0, i - 14), min(len(looks), i + 15)):
+            w = math.exp(-((j - i) / 7.0) ** 2)
             acc += looks[j] * w
             n += w
         sm.append(acc / n)
@@ -617,6 +722,15 @@ def main():
     act.name = "ChairSit"
     bpy.data.actions.remove(act_fk)
     fix_hand(scene, arm, hand_rots)
+
+    # --- растяжение времени: быстрые места (рука тянется к спинке, отпускает и разворот) медленнее ---
+    dmap = retime(scene, [arm, chair])
+    nout = len(dmap) - 1
+    chairs = [lerp_seq(chairs, d) for d in dmap]
+    sm = [lerp_seq(sm, d) for d in dmap]
+
+    def M(d):
+        return int(round(warp_out(d)))
 
     # --- экспорт клипа ---
     ad = arm.animation_data
@@ -646,9 +760,10 @@ def main():
     def g(v):
         return [round(-v[0], 4), round(v[2], 4), round(v[1], 4)]
     data = {
-        "fps": FPS, "frames": LEN + 1,
-        "marks": {"grab": F_GRAB, "pull": F_PULL, "spin": F_SPIN, "release": F_RELEASE, "sit": F_SIT, "land": F_LAND, "seated": F_SEATED,
-                  "swivel": F_SWIVEL, "pull0": F_PULL0, "pull1": F_PULL1, "end": F_END},
+        "fps": FPS, "frames": nout + 1,
+        "marks": {k: M(v) for k, v in (("grab", F_GRAB), ("pull", F_PULL), ("spin", F_SPIN), ("release", F_RELEASE),
+                                       ("sit", F_SIT), ("land", F_LAND), ("seated", F_SEATED), ("swivel", F_SWIVEL),
+                                       ("pull0", F_PULL0), ("pull1", F_PULL1), ("end", F_END))},
         # где стоит перед тем, как сесть (кадр sit): точка в пространстве SitSpot и поворот, рад
         "stand": g((0.35, 0.65, 0.0)) + [round(math.radians(90.0), 4)],
         "start": g((FOOT_START[0], FOOT_START[1], 0.0)) + [0.0],
@@ -659,7 +774,7 @@ def main():
     with open(OUT_JSON, "w", encoding="utf-8") as fh:
         json.dump(data, fh, ensure_ascii=False, separators=(",", ":"))
     scene.frame_set(0)
-    return {"glb": OUT, "json": OUT_JSON, "frames": LEN + 1}
+    return {"glb": OUT, "json": OUT_JSON, "frames": nout + 1}
 
 
 if __name__ == "__main__":

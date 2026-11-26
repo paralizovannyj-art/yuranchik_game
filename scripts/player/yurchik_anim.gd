@@ -458,6 +458,9 @@ func snap_seat(on: bool) -> void:
 		_tree.set("parameters/seat/blend_amount", _seat)
 		if on and seat_time >= 0.0:
 			_tree.set("parameters/seat_seek/seek_request", seat_time)
+		# поза — сразу, в этом же кадре: иначе голова кадр стоит в старой позе на новом месте,
+		# и взгляд, посчитанный от неё (pc_seat.gd), дёргается на ~20°
+		_tree.advance(0.0)
 
 
 func _update_crouch_air(delta: float, speed: float, crouching: bool, air: bool, vy: float) -> void:

@@ -30,6 +30,7 @@ signal powered_off         ## Windows завершила работу, экра�
 @export var cursor_speed := 1.0                       ## скорость курсора относительно мыши
 @export_group("Время, с")
 @export var walk_speed := 1.3                         ## м/с — подходит к креслу
+@export var turn_speed := 110.0                       ## °/с — разворачивается тело и взгляд (в среднем; пик ~2×)
 @export var clip_rate := 1.0                          ## скорость клипа посадки
 @export var hurry_rate := 2.2                         ## ещё раз «использовать», пока садится, — вот так быстрее
 @export var zoom_in := 1.0                            ## взгляд к монитору
@@ -60,6 +61,9 @@ var _look_keys: Array = []         ## покадрово точка, куда с
 var _start := [0.0, 0.0, 0.0, 0.0] ## где встаёт за креслом в начале клипа: x, y, z, поворот
 var _stand := [0.0, 0.0, 0.0, 0.0] ## где стоит перед креслом на кадре sit (встал / садится в откаченное)
 var _hurry := false
+var _settle := 1.0                 ## 0→1 в начале клипа: взгляд переходит от того, куда смотрел, к взгляду клипа
+var _settle_from := Vector2.ZERO
+const SETTLE_TIME := 0.35
 ## куда отходит, когда встал: за откаченное кресло, лицом в комнату (x, y, z, поворот; пространство SitSpot).
 ## Между креслом, столом и кроватью капсуле игрока места нет — там его выталкивало бы на кровать.
 const EXIT_SPOT := [-0.2, 0.0, 1.4, PI]
@@ -128,8 +132,37 @@ func _place_chair(t: float) -> void:
 
 ## Повернуть взгляд игрока на точку в мире.
 func _look_at(p: Player, at: Vector3) -> void:
+	var a := _angles_to(p, at)
+	p.look_at_angles(a.x, a.y)
+
+
+## Углы взгляда (поворот, наклон) из глаз игрока на точку в мире.
+static func _angles_to(p: Player, at: Vector3) -> Vector2:
 	var d := at - p.eye_point()
-	p.look_at_angles(atan2(-d.x, -d.z), atan2(d.y, Vector2(d.x, d.z).length()))
+	return Vector2(atan2(-d.x, -d.z), atan2(d.y, Vector2(d.x, d.z).length()))
+
+
+## Твин в такте физики: камера игрока считается там же, поэтому при просадке кадров шаги не рвутся.
+func _tween() -> Tween:
+	return create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+
+
+## Плавный шаг 0→1: скорость и ускорение на концах — ноль (без толчка на старте и в конце).
+static func _smoother(x: float) -> float:
+	x = clampf(x, 0.0, 1.0)
+	return x * x * x * (x * (x * 6.0 - 15.0) + 10.0)
+
+
+## Плавно перевести взгляд на углы (рад) за dur секунд. Сглаживание камеры у игрока почти мгновенное,
+## поэтому резкая смена цели — это рывок; ведём цель сами.
+func _ease_look(p: Player, yaw: float, pitch: float, dur: float) -> void:
+	var y0 := p.cam_yaw
+	var p0 := p.cam_pitch
+	var tw := _tween()
+	tw.tween_method(func(u: float) -> void:
+		var e := _smoother(u)
+		p.look_at_angles(lerp_angle(y0, yaw, e), lerpf(p0, pitch, e)), 0.0, 1.0, dur)
+	await tw.finished
 
 
 ## Кадр клипа: поза (seat_time), кресло и взгляд камеры.
@@ -137,17 +170,26 @@ func _apply(t: float) -> void:
 	_player.model.set("seat_time", t)
 	_place_chair(t)
 	if not _look_keys.is_empty():
-		_look_at(_player, sit_spot.global_transform * _v(_sample(_look_keys, t)))
+		var a := _angles_to(_player, sit_spot.global_transform * _v(_sample(_look_keys, t)))
+		if _settle < 1.0:
+			var e := _smoother(_settle)
+			a = Vector2(lerp_angle(_settle_from.x, a.x, e), lerpf(_settle_from.y, a.y, e))
+		_player.look_at_angles(a.x, a.y)
 
 
 ## Проиграть клип посадки от t0 до t1 (t1 < t0 — назад, встаёт). Звуки — на кадрах из CUES.
+## Идёт в такте физики, как и камера с телом игрока.
 func _play(t0: float, t1: float) -> void:
 	var t := t0
 	var dir := signf(t1 - t0)
+	_settle = 0.0
+	_settle_from = Vector2(_player.cam_yaw, _player.cam_pitch)
 	_apply(t)
 	while (t1 - t) * dir > 0.0:
-		await get_tree().process_frame
-		var nt := t + get_process_delta_time() * (hurry_rate if _hurry else clip_rate) * dir
+		await get_tree().physics_frame
+		var dt := get_physics_process_delta_time()
+		_settle = minf(_settle + dt / SETTLE_TIME, 1.0)
+		var nt := t + dt * (hurry_rate if _hurry else clip_rate) * dir
 		nt = minf(nt, t1) if dir > 0.0 else maxf(nt, t1)
 		for cue: Array in CUES:
 			var ct := _mark(cue[0]) + float(cue[1]) / _fps
@@ -158,9 +200,9 @@ func _play(t0: float, t1: float) -> void:
 		_apply(t)
 
 
-## Подойти шагом в точку (пространство SitSpot) и повернуться: ноги шагают, камера смотрит на кресло
-## (at_chair) или вперёд, куда идёт.
-func _walk_to(p: Player, spot_pt: Array, at_chair := true) -> void:
+## Подойти шагом в точку (пространство SitSpot) и повернуться: ноги шагают, взгляд плавно переходит
+## на look_pt (точка в пространстве SitSpot — туда, куда смотрит первый кадр клипа) или вперёд, куда идёт.
+func _walk_to(p: Player, spot_pt: Array, look_pt: Variant = null) -> void:
 	var spot := sit_spot.global_transform
 	var target := spot * _v(spot_pt)
 	target.y = spot.origin.y
@@ -168,19 +210,22 @@ func _walk_to(p: Player, spot_pt: Array, at_chair := true) -> void:
 	var from := p.global_position
 	var yaw0 := p.seat_yaw
 	var dist := Vector2(target.x - from.x, target.z - from.z).length()
-	var dur := clampf(dist / walk_speed, 0.3, 2.0)
-	var aim := chair.global_position + Vector3.UP * 0.9 if chair else spot.origin
-	var tw := create_tween()
+	# сколько идти — и по расстоянию, и по развороту: на 180° на месте за полсекунды взгляд крутится рывком
+	var cam0 := Vector2(p.cam_yaw, p.cam_pitch)
+	var aim_end := _angles_to(p, spot * _v(look_pt)) if look_pt != null else Vector2(yaw, -0.1)
+	var turn := maxf(absf(angle_difference(yaw0, yaw)), absf(angle_difference(cam0.x, aim_end.x)))
+	var dur := clampf(maxf(dist / walk_speed, turn / deg_to_rad(turn_speed)), 0.5, 3.0)
+	var tw := _tween()
 	tw.tween_method(func(u: float) -> void:
-		var e := smoothstep(0.0, 1.0, u)
+		var e := _smoother(u)
 		p.global_position = from.lerp(target, e)
-		p.seat_yaw = lerp_angle(yaw0, yaw, smoothstep(0.0, 1.0, minf(u * 1.4, 1.0)))
+		p.seat_yaw = lerp_angle(yaw0, yaw, _smoother(minf(u * 1.15, 1.0)))
 		# скорость шага — по скорости на кривой (разгон и остановка), чтобы ноги не скользили
-		p.seat_walk = dist / dur * 6.0 * u * (1.0 - u)
-		if at_chair:
-			_look_at(p, aim)
-		else:
-			p.look_at_angles(p.seat_yaw, -0.15), 0.0, 1.0, dur)
+		p.seat_walk = dist / dur * 30.0 * u * u * (1.0 - u) * (1.0 - u)
+		# взгляд — от того, куда смотрел, к цели; цель доходит к концу шага, ровно в первый кадр клипа
+		var aim := _angles_to(p, spot * _v(look_pt)) if look_pt != null else Vector2(p.seat_yaw, -0.1)
+		var k := _smoother(minf(u * 1.15, 1.0))
+		p.look_at_angles(lerp_angle(cam0.x, aim.x, k), lerpf(cam0.y, aim.y, k)), 0.0, 1.0, dur)
 	await tw.finished
 	p.seat_walk = 0.0
 	await get_tree().create_timer(0.15).timeout     # ноги дошагали в стойку — дальше клип с той же стойки
@@ -310,8 +355,10 @@ func sit(p: Player) -> void:
 	var spot := sit_spot.global_transform
 	var yaw := spot.basis.get_euler().y
 	var from_t := _mark("sit") if chair_out else 0.0
-	await _walk_to(p, _stand if chair_out else _start)
+	var first_look: Variant = _sample(_look_keys, from_t) if not _look_keys.is_empty() else null
+	await _walk_to(p, _stand if chair_out else _start, first_look)
 	# узел игрока — в SitSpot, тело — там же, где стояло: дальше всё движение ведёт клип
+	p.glide_camera()
 	p.global_position = spot.origin
 	p.seat_yaw = yaw
 	p.model.set("seat_time", from_t)
@@ -319,15 +366,14 @@ func sit(p: Player) -> void:
 	await _play(from_t, p.model.call("seat_length"))
 	chair_out = false
 	if not powered:
-		p.look_at_angles(yaw, reach_pitch)           # тянется к кнопке на системнике под столом
-		await get_tree().create_timer(0.35).timeout
+		await _ease_look(p, yaw, reach_pitch, 0.5)   # тянется к кнопке на системнике под столом
 		Game.sfx("click", global_position)
 		power_on()
 		await get_tree().create_timer(0.6).timeout
 	p.seat_view = screen_view.global_transform
 	p.seat_view_fov = view_fov
 	Graphics.screen_focus = true                     # чёткая картинка, пока смотрит в монитор
-	var tw := create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	var tw := _tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tw.tween_property(p, "seat_view_blend", 1.0, zoom_in)
 	await tw.finished
 	active = true
@@ -344,8 +390,12 @@ func stand() -> void:
 	_hurry = false
 	active = false
 	var p := _player
-	var tw := create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	var tw := _tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tw.tween_property(p, "seat_view_blend", 0.0, zoom_out)
+	# пока отъезжает от монитора, взгляд уже переходит туда, откуда начнётся клип (а не прыгает с системника)
+	if not _look_keys.is_empty():
+		var a := _angles_to(p, sit_spot.global_transform * _v(_sample(_look_keys, p.model.call("seat_length"))))
+		_ease_look(p, a.x, a.y, zoom_out)
 	await tw.finished
 	Graphics.screen_focus = false
 	await _play(p.model.call("seat_length"), _mark("sit"))
@@ -354,15 +404,17 @@ func stand() -> void:
 	var spot := sit_spot.global_transform
 	var pos := spot * _v(_stand)
 	pos.y = spot.origin.y
+	p.glide_camera()
 	p.model.set("seat_time", -1.0)
 	p.model.call("snap_seat", false)
 	p.global_position = pos
 	p.seat_yaw = spot.basis.get_euler().y + float(_stand[3])
 	# поворачивается к комнате и отходит за кресло — дальше обычная ходьба
-	await _walk_to(p, EXIT_SPOT, false)
+	await _walk_to(p, EXIT_SPOT)
 	var yaw := spot.basis.get_euler().y + float(EXIT_SPOT[3])
 	p.cam_yaw = yaw
 	p.look_at_angles(yaw, -0.1)
+	p.glide_camera()                                 # из кресельного режима камеры в обычный — без скачка
 	p.set_seated(false)
 	seated = false
 	_busy = false
