@@ -24,7 +24,7 @@
 # Скрипт строит всё в своей сцене ChairSit (другие сцены не трогает) и пишет
 # assets/animations/sit/yurchik_sit.glb (клип ChairSit) и assets/animations/sit/chair_sit.json.
 import bpy, os, math, json
-from mathutils import Matrix, Vector
+from mathutils import Matrix, Vector, Quaternion
 
 ROOT = r"C:\Users\mrs\Documents\yuranchik_game"
 SRC = os.path.join(ROOT, "assets", "animations", "gmod", "yurchik_gmod.glb")
@@ -42,11 +42,24 @@ SIT_BACK = 0.35      # м — таз уходит назад от места, г
 C_REST = (0.0, 0.07, -4.0)     # задвинуто под стол (подлокотники перед краем стола)
 C_OUT = (0.0, 0.65, 90.0)      # откачено и повёрнуто сиденьем влево (к дивану)
 C_FINAL = (0.0, SIT_BACK, 0.0)  # сидит у стола: центр кресла на SIT_BACK позади SitSpot
-GRAB = Vector((-0.25, -0.55, 1.37))    # запястье на левом верхнем углу спинки (координаты кресла: вперёд +Y)
-GRAB_FINGERS = Vector((0.0, 0.55, -0.85)).normalized()   # пальцы — через верх спинки вперёд-вниз
+# Ладонь лежит на верхнем крае спинки у левого угла (координаты кресла: вперёд +Y, верх спинки z ≈ 1.30–1.38).
+# Кисть: ладонь вниз на спинку, пальцы через верх вперёд и чуть вниз. Запястье — за краем, на ширину ладони
+# назад от точки хвата и на толщину кисти выше.
+GRAB_PALM = Vector((-0.24, -0.43, 1.36))   # середина ладони (на коже кресла)
+GRAB_FINGERS = Vector((0.0, 0.89, -0.45)).normalized()   # пальцы — свешиваются через верх вперёд-вниз
+GRAB_UP = Vector((0.0, 0.0, 1.0))           # тыльная сторона кисти — вверх
+PALM_LEN = 0.075                            # м — от запястья до середины ладони
+TWIST_FOREARM = 0.70                        # доля поворота ладони, которую берёт предплечье (остальное — запястье)
+ELBOW_POLE_ANGLE = 90.0                     # угол полюса IK руки: при −90 локоть задирался выше плеча
+WRIST_MAX = 60.0                            # градусы — сильнее запястье не сгибается (дальше кисть идёт за предплечьем)
+FOREARM_TWIST_MAX = 95.0                    # пронация предплечья не больше (живая рука ~90°)
+WRIST_TWIST_MAX = 30.0                      # кручение кисти относительно предплечья не больше: лишнее берёт предплечье
+SPIN_HAND_FOLLOW = 0.35                     # пока крутит кресло, кисть поворачивается только на эту долю поворота спинки
 
 # --- кадры ---
-F_GRAB, F_RELEASE, F_SIT, F_SEATED, F_SWIVEL, F_END = 10, 46, 74, 122, 146, 186
+# grab — рука на спинке; pull — кресло поехало; spin — начал крутить; release — отпустил; sit — стоит перед
+# креслом, начинает садиться; seated — сел боком; swivel — повернулся к столу; end — у стола
+F_GRAB, F_PULL, F_SPIN, F_RELEASE, F_SIT, F_SEATED, F_SWIVEL, F_END = 14, 16, 36, 50, 86, 134, 162, 210
 LEN = F_END
 
 
@@ -64,8 +77,9 @@ def lerp_basis(a, b, t):
 
 
 def smooth(x):
+    # smootherstep: скорость и ускорение на концах — ноль, фазы стыкуются без толчка
     x = min(max(x, 0.0), 1.0)
-    return x * x * (3.0 - 2.0 * x)
+    return x * x * x * (x * (x * 6.0 - 15.0) + 10.0)
 
 
 def ramp(f, f0, f1):
@@ -119,34 +133,34 @@ def chair_mat(x, y, a, dz=0.0):
 # ----------------------------------------------------------------------------- ключи движения
 # место тела (x, y, yaw) в фазах A–D (стоит/шагает)
 BODY_KEYS = [
-    (0, (0.36, 0.95, 0.0)),
-    (F_GRAB, (0.36, 0.95, 0.0)),
-    (21, (0.37, 1.08, 0.0)),
-    (32, (0.38, 1.25, 0.0)),
-    (F_RELEASE, (0.345, 1.32, -14.0)),
-    (52, (0.35, 1.24, 0.0)),
-    (60, (0.36, 0.94, 45.0)),
-    (68, (0.355, 0.70, 84.0)),
-    (72, (0.35, 0.65, 90.0)),
+    (0, (0.36, 1.02, 0.0)),
+    (13, (0.36, 1.02, 0.0)),          # вес назад чуть раньше, чем поедет кресло: таз трогается без рывка
+    (27, (0.37, 1.17, 0.0)),
+    (F_SPIN, (0.38, 1.32, 0.0)),
+    (F_RELEASE, (0.35, 1.38, -14.0)),
+    (57, (0.35, 1.29, 2.0)),
+    (67, (0.36, 1.00, 42.0)),
+    (77, (0.355, 0.74, 80.0)),
+    (84, (0.35, 0.65, 90.0)),
 ]
 # шаги: стопа (L/R), кадр отрыва, кадр постановки, куда (место тела, под которое встаёт стопа)
 STEPS = {
-    "L": [(20, 28, (0.38, 1.25, 0.0)), (38, 45, (0.35, 1.33, -12.0)), (49, 57, (0.36, 1.04, 30.0)), (60, 68, (0.355, 0.70, 84.0)),
-          (68, 73, (0.35, 0.65, 90.0))],
-    "R": [(12, 20, (0.37, 1.12, 0.0)), (26, 32, (0.38, 1.25, 0.0)), (33, 40, (0.34, 1.31, -14.0)),
-          (54, 62, (0.36, 0.86, 60.0)), (65, 72, (0.35, 0.65, 90.0))],
+    "L": [(24, 33, (0.38, 1.32, 0.0)), (42, 50, (0.35, 1.39, -12.0)), (53, 63, (0.36, 1.10, 25.0)),
+          (69, 79, (0.355, 0.73, 80.0))],
+    "R": [(16, 25, (0.37, 1.19, 0.0)), (31, 38, (0.38, 1.32, 0.0)), (38, 46, (0.34, 1.37, -14.0)),
+          (60, 70, (0.36, 0.90, 55.0)), (77, 86, (0.35, 0.65, 90.0))],
 }
-FOOT_START = (0.36, 0.95, 0.0)
+FOOT_START = (0.36, 1.02, 0.0)
 STEP_LIFT = 0.07
 
 # кресло (x, y, a)
 CHAIR_KEYS = [
     (0, C_REST),
-    (F_GRAB + 2, C_REST),
-    (32, (0.0, 0.42, 5.0)),
+    (F_PULL, C_REST),
+    (F_SPIN, (0.0, 0.42, 5.0)),
     (F_RELEASE, (0.0, 0.53, 38.0)),
-    (56, (0.0, 0.62, 74.0)),
-    (66, C_OUT),
+    (60, (0.0, 0.62, 74.0)),
+    (70, C_OUT),
 ]
 # ключи посадки (из старого SitDown): (кадр от F_SIT, доля поз стойка→сидя, вниз, назад, наклон корпуса °)
 SIT_KEYS = [
@@ -159,7 +173,8 @@ SIT_KEYS = [
 ]
 F_LAND = F_SIT + 36        # таз опустился на подушку — кресло проседает
 # подтягивание к столу (G)
-F_REACH0, F_REACH1, F_PULL0, F_PULL1, F_SETTLE1 = 148, 156, 157, 173, 182
+F_REACH0, F_REACH1, F_PULL0, F_PULL1, F_SETTLE1 = 164, 173, 174, 196, 206
+SOFT_LEG = (0.965, 0.025)                   # доли длины ноги: с какого расстояния бедро–щиколотка нога «мягчеет» и запас до прямой
 HEEL_REACH = 0.13          # м — насколько вытягивает ноги вперёд, прежде чем упереться пятками
 
 
@@ -192,9 +207,147 @@ def foot_place(foot, f):
             u = (f - lift) / float(land - lift)
             s = smooth(u)
             p = tuple(prev[i] + (to[i] - prev[i]) * s for i in range(3))
-            return body(*p), STEP_LIFT * math.sin(math.pi * u)
+            return body(*p), STEP_LIFT * math.sin(math.pi * u) ** 2
         prev = to
     return body(*prev), 0.0
+
+
+def hand_weight(f):
+    """Насколько правая рука на спинке: тянется (кадры 1–F_GRAB), держит, отпускает (F_RELEASE–64)."""
+    if f >= 64:
+        return 0.0
+    return ramp(f, 1, F_GRAB) * (1.0 - ramp(f, F_RELEASE, 64))
+
+
+def fix_hand(scene, arm, hand_rots):
+    """Кисть на спинке после запекания IK. IK ставит запястье в точку, но ладонь остаётся как у висящей руки —
+    ребром к спинке. Нужный поворот ладони вокруг оси предплечья делится: TWIST_FOREARM берёт предплечье
+    (пронация, как у живой руки), остальное — запястье; изгиб запястья не больше WRIST_MAX, кручение кисти
+    не больше WRIST_TWIST_MAX. Оборот считается от полного захвата и разворачивается по кадрам без перескока
+    через ±180°, потом умножается на вес захвата; кручение предплечья сглажено по времени."""
+    pb = arm.pose.bones
+    fore, hand = pb["ForearmR"], pb["HandR"]
+    frames = [f for f in sorted(hand_rots) if hand_weight(f) > 0.0]
+
+    def raw_twist(f):
+        scene.frame_set(f)
+        bpy.context.view_layer.update()
+        cur = hand.matrix.to_3x3()
+        axis = (fore.tail - fore.head).normalized()
+        delta = hand_rots[f].to_quaternion() @ cur.to_quaternion().inverted()
+        v = Vector((delta.x, delta.y, delta.z))
+        t = 2.0 * math.atan2(v.dot(axis), delta.w)
+        return (t + math.pi) % (2.0 * math.pi) - math.pi
+
+    # оборот ладони вокруг предплечья без перескоков: на полном захвате — в сторону пронации (−80…+280°),
+    # дальше и раньше по кадрам — ближайший к соседнему кадру оборот (иначе на подходе руки кисть щёлкает на 150°)
+    raw = {f: raw_twist(f) for f in frames}
+    full = {}
+    seed = min(frames, key=lambda f: abs(f - F_GRAB))
+    t = raw[seed]
+    if t < math.radians(-80.0):
+        t += 2.0 * math.pi
+    full[seed] = t
+    i0 = frames.index(seed)
+    for order in (frames[i0 + 1:], list(reversed(frames[:i0]))):
+        prev = full[seed]
+        for f in order:
+            t = raw[f]
+            t += 2.0 * math.pi * round((prev - t) / (2.0 * math.pi))
+            full[f] = t
+            prev = t
+
+    rest_rel = (fore.bone.matrix_local.inverted() @ hand.bone.matrix_local).to_quaternion()
+
+    def tilt(q, axis):
+        return math.degrees((q.to_matrix() @ Vector((0, 1, 0))).angle(axis))
+
+    goals = {}
+    for f in frames:
+        want = hand_rots[f].to_quaternion()
+        w = hand_weight(f)
+        scene.frame_set(f)
+        bpy.context.view_layer.update()
+        axis = (fore.tail - fore.head).normalized()
+        ang = max(min(full[f] * TWIST_FOREARM, math.radians(85.0)), math.radians(-60.0)) * w
+        piv = fore.head.copy()
+        fore.matrix = (Matrix.Translation(piv) @ Matrix.Rotation(ang, 4, axis) @ Matrix.Translation(-piv)) @ fore.matrix
+        bpy.context.view_layer.update()
+        cur = hand.matrix.to_quaternion()
+        axis = (fore.tail - fore.head).normalized()
+        # остаток до нужной ладони = изгиб (swing) × оборот вокруг предплечья (twist). Оборот берётся
+        # с развёрнутым углом full − ang, а не короткой дугой slerp: та при остатке около 180° на подходе
+        # руки меняет сторону, и кисть щёлкает на 150° за кадр
+        r = want @ cur.inverted()
+        rv = Vector((r.x, r.y, r.z))
+        tw_short = 2.0 * math.atan2(rv.dot(axis), r.w)
+        swing = r @ Quaternion(axis, tw_short).inverted()
+        rem = full[f] - ang
+        ident = Quaternion()
+
+        def goal(k):
+            return ident.slerp(swing, k) @ Quaternion(axis, rem * k) @ cur
+
+        # запястье не больше WRIST_MAX от линии предплечья: доля пути k ищется делением пополам —
+        # плавно меняется от кадра к кадру (ступенчатый поиск давал рывки)
+        k = w
+        if tilt(goal(k), axis) > WRIST_MAX:
+            lo, hi = 0.0, k
+            for _ in range(20):
+                mid = 0.5 * (lo + hi)
+                if tilt(goal(mid), axis) > WRIST_MAX:
+                    hi = mid
+                else:
+                    lo = mid
+            k = lo
+        gq = goal(k)
+        # кисть сама почти не крутится (кручение — это предплечье): лишнее сверх WRIST_TWIST_MAX
+        # доворачивает предплечье вокруг своей оси, кисть в мире остаётся там же
+        rel = rest_rel.inverted() @ (fore.matrix.to_quaternion().inverted() @ gq)
+        tw = 2.0 * math.atan2(rel.y, rel.w)
+        tw = (tw + math.pi) % (2.0 * math.pi) - math.pi
+        lim = math.radians(WRIST_TWIST_MAX)
+        extra = tw - max(min(tw, lim), -lim)
+        if abs(extra) > 1e-6:
+            fore.matrix = (Matrix.Translation(piv) @ Matrix.Rotation(extra, 4, axis) @ Matrix.Translation(-piv)) @ fore.matrix
+            bpy.context.view_layer.update()
+        m = gq.to_matrix().to_4x4()
+        m.translation = hand.head.copy()
+        hand.matrix = m
+        bpy.context.view_layer.update()
+        goals[f] = m.copy()
+        for b in (fore, hand):
+            b.keyframe_insert("location", frame=f)
+            b.keyframe_insert("rotation_quaternion", frame=f)
+
+    # кручение предплечья сглаживается по времени (σ 2 кадра) и не больше FOREARM_TWIST_MAX:
+    # на подходе руки поза IK сама подкручивает руку, и без этого предплечье на кадр уходит за 100°.
+    # Кисть в мире остаётся, где была
+    def split(q):
+        tw = Quaternion((q.w, 0.0, q.y, 0.0)).normalized()
+        a = 2.0 * math.atan2(tw.y, tw.w)
+        return q @ tw.inverted(), (a + math.pi) % (2.0 * math.pi) - math.pi
+
+    parts = {}
+    for f in frames:
+        scene.frame_set(f)
+        parts[f] = split(fore.rotation_quaternion.copy())
+    lim = math.radians(FOREARM_TWIST_MAX)
+    for f in frames:
+        num = den = 0.0
+        for g in range(f - 6, f + 7):
+            if g in parts:
+                wt = math.exp(-0.5 * ((g - f) / 2.0) ** 2)
+                num += wt * parts[g][1]; den += wt
+        a = max(min(num / den, lim), -lim)
+        scene.frame_set(f)
+        fore.rotation_quaternion = parts[f][0] @ Quaternion(Vector((0.0, 1.0, 0.0)), a)
+        bpy.context.view_layer.update()
+        hand.matrix = goals[f]
+        bpy.context.view_layer.update()
+        for b in (fore, hand):
+            b.keyframe_insert("location", frame=f)
+            b.keyframe_insert("rotation_quaternion", frame=f)
 
 
 def main():
@@ -264,30 +417,57 @@ def main():
         c2.target = tg[s]
         cons += [c, c2]
     ch = pb["ForearmR"].constraints.new('IK')
-    ch.target, ch.pole_target, ch.chain_count, ch.pole_angle = hand_t, elbow, 2, math.radians(-90)
-    ch2 = pb["HandR"].constraints.new('COPY_ROTATION')
-    ch2.target = hand_t
+    ch.target, ch.pole_target, ch.chain_count, ch.pole_angle = hand_t, elbow, 2, math.radians(ELBOW_POLE_ANGLE)
     leg_cons = [c for c in cons]
-    hand_cons = [ch, ch2]
+    leg_len = {s: pb["Thigh" + s].length + pb["Shin" + s].length for s in "LR"}
+    foot_len = pb["FootL"].length
 
-    # рука на спинке: ориентация кисти — от стойки, повернуть «пальцы» на нужное направление
-    hand_idle = None
-    for b in pb:
-        b.matrix_basis = idle[b.name]
-    bpy.context.view_layer.update()
-    hand_idle = pb["HandR"].matrix.copy()
+    def soft_leg(m, hip, L, fwd):
+        """Мягкий предел длины ноги: колено никогда не выпрямляется до упора. Иначе нога-опора, от которой
+        ушло тело, вытягивается в струну, и на отрыве колено щёлкает (5° → 24° за кадр). Лишнее
+        расстояние поднимает щиколотку к бедру (пятка отрывается), стопа наклоняется носком вниз."""
+        to = m.translation - hip
+        d = to.length
+        L0, band = SOFT_LEG[0] * L, SOFT_LEG[1] * L
+        if d <= L0:
+            return m
+        d2 = L0 + band * (1.0 - math.exp(-(d - L0) / band))
+        new = hip + to.normalized() * d2
+        rise = (new - m.translation).length
+        tilt = math.asin(min(rise / foot_len, 0.9))
+        side = Vector((0, 0, 1)).cross(fwd).normalized()
+        r = Matrix.Translation(new) @ Matrix.Rotation(tilt, 4, side) @ Matrix.Translation(-m.translation)
+        return r @ m
+    hand_cons = [ch]
 
-    def hand_on_chair(cm):
-        pos = cm @ GRAB
-        fingers = (cm.to_3x3() @ GRAB_FINGERS).normalized()
-        cur = (hand_idle.to_3x3() @ Vector((0, 1, 0))).normalized()
-        rot = cur.rotation_difference(fingers).to_matrix()
-        # ладонью вниз на спинку: доворот вокруг пальцев
-        roll = Matrix.Rotation(math.radians(80.0), 3, fingers)
-        m = (roll @ rot @ hand_idle.to_3x3()).to_4x4()
-        m.translation = pos
+    # Кисть на спинке. Оси кости кисти: Y — к пальцам; «тыл кисти» — та ось, что в покое смотрит наружу
+    # от бедра (для правой руки −X арматуры). По ним строим нужный поворот кисти в мире.
+    hb = pb["HandR"].bone.matrix_local.to_3x3()
+    back_local = (hb.inverted() @ Vector((-1.0, 0.0, 0.0))).normalized()
+    back_local = (back_local - Vector((0, 1, 0)) * back_local.y).normalized()
+
+    def hand_rot_on_chair(cm):
+        y = (cm.to_3x3() @ GRAB_FINGERS).normalized()
+        up = cm.to_3x3() @ GRAB_UP
+        b = (up - y * up.dot(y)).normalized()                   # тыл кисти — вверх, поперёк пальцев
+        # мировой базис (x, y=пальцы, z) такой, что локальная back_local уходит в b
+        lz = back_local
+        lx = Vector((0, 1, 0)).cross(lz).normalized()
+        wz = b
+        wx = y.cross(wz).normalized()
+        local = Matrix((lx, Vector((0, 1, 0)), lz)).transposed()
+        world = Matrix((wx, y, wz)).transposed()
+        return world @ local.inverted()
+
+    def hand_on_chair(cm, cm_rot):
+        rot = hand_rot_on_chair(cm_rot)
+        palm = cm @ GRAB_PALM
+        wrist = palm - (rot @ Vector((0, 1, 0))) * PALM_LEN + (rot @ back_local) * 0.02
+        m = rot.to_4x4()
+        m.translation = wrist
         return m
 
+    hand_rots = {}
     act_fk = bpy.data.actions.new("ChairSitFK")
     arm.animation_data.action = act_fk
     looks = []
@@ -306,18 +486,11 @@ def main():
             B = body(*mono3(BODY_KEYS, f))
             t_fk, down, back, bend = 0.0, 0.0, 0.0, 0.0
             # наклон к спинке, пока тянет и крутит кресло
-            bend = 10.0 * ramp(f, 0, F_GRAB) * (1.0 - ramp(f, F_RELEASE, 56))
+            bend = 10.0 * ramp(f, 0, F_GRAB) * (1.0 - ramp(f, F_RELEASE, 62))
         else:
             B = body(0.35, 0.65, 90.0) if f <= F_SEATED else seat_body(f)
             k = min(f - F_SIT, 48)
-            keys = SIT_KEYS
-            i = max(j for j in range(len(keys)) if keys[j][0] <= k)
-            if i == len(keys) - 1:
-                _, t_fk, down, back, bend = keys[-1]
-            else:
-                a, b2 = keys[i], keys[i + 1]
-                u = smooth((k - a[0]) / float(b2[0] - a[0]))
-                t_fk, down, back, bend = [a[j] + (b2[j] - a[j]) * u for j in range(1, 5)]
+            t_fk, down, back, bend = [mono([(kk[0], kk[j]) for kk in SIT_KEYS], k) for j in range(1, 5)]
             if f > F_SEATED:
                 # подтягивается: корпус чуть вперёд, когда тянет ногами
                 bend += 7.0 * math.sin(math.pi * ramp(f, F_REACH0, F_PULL1))
@@ -339,12 +512,13 @@ def main():
             b.keyframe_insert("scale", frame=f)
 
         # --- ноги ---
-        if f < F_SIT + 4:
-            leg_w = 1.0 - ramp(f, F_SIT, F_SIT + 4)
+        if f < F_SIT + 10:
+            leg_w = 1.0 - ramp(f, F_SIT, F_SIT + 10)
             for s in "LR":
                 place, lift = foot_place(s, f)
                 m = place @ foot_idle[s]
                 m = Matrix.Translation((0, 0, lift)) @ m
+                m = soft_leg(m, arm.matrix_world @ pb["Thigh" + s].head, leg_len[s], place.to_3x3() @ Vector((0, -1, 0)))
                 tg[s].matrix_world = m
                 fwd = place.to_3x3() @ Vector((0, -1, 0))
                 pole[s].matrix_world = Matrix.Translation(m.translation + fwd * 0.8 + Vector((0, 0, 0.5)))
@@ -356,7 +530,7 @@ def main():
                     # вытягивает ноги вперёд, пятки чуть над полом
                     u = ramp(f, F_REACH0, F_REACH1)
                     base = seat_body(f) @ foot_sit[s]
-                    m = Matrix.Translation(fwd_b * HEEL_REACH * u + Vector((0, 0, 0.03 * math.sin(math.pi * u)))) @ base
+                    m = Matrix.Translation(fwd_b * HEEL_REACH * u + Vector((0, 0, 0.03 * math.sin(math.pi * u) ** 2))) @ base
                 elif f < F_PULL1:
                     # пятки стоят, кресло едет к ним
                     base = seat_body(F_PULL0) @ foot_sit[s]
@@ -368,7 +542,7 @@ def main():
                     planted = Matrix.Translation(fwd_b * HEEL_REACH) @ planted
                     rest = seat_body(f) @ foot_sit[s]
                     m = lerp_basis(planted, rest, u)
-                    m = Matrix.Translation((0, 0, 0.025 * math.sin(math.pi * u))) @ m
+                    m = Matrix.Translation((0, 0, 0.025 * math.sin(math.pi * u) ** 2)) @ m
                 tg[s].matrix_world = m
                 pole[s].matrix_world = Matrix.Translation(m.translation + fwd_b * 0.8 + Vector((0, 0, 0.6)))
         else:
@@ -382,15 +556,22 @@ def main():
             pole[s].keyframe_insert("location", frame=f)
 
         # --- правая рука на спинке ---
-        if f < 60:
-            hand_w = ramp(f, 1, F_GRAB) * (1.0 - ramp(f, F_RELEASE, 58))
-            hm = hand_on_chair(chair_mat(*chairs[min(f, F_RELEASE)]))   # отпустил — рука уходит от того места
-            if f > F_RELEASE:
-                hm = Matrix.Translation(B.to_3x3() @ Vector((0.0, 0.10, 0.06)) * ramp(f, F_RELEASE, 58)) @ hm
+        if f < 64:
+            hand_w = hand_weight(f)
+            fh = min(f, F_RELEASE)
+            ch_now = chairs[fh]
+            # пока крутит кресло, кисть поворачивается не вся вместе со спинкой: ладонь едет по краю
+            a_spin = chair_at(F_SPIN)[2]
+            a_hand = ch_now[2] if fh <= F_SPIN else a_spin + SPIN_HAND_FOLLOW * (ch_now[2] - a_spin)
+            hm = hand_on_chair(chair_mat(*ch_now), chair_mat(ch_now[0], ch_now[1], a_hand, ch_now[3]))
+            if f > F_RELEASE:   # отпустил — рука уходит от того места
+                hm = Matrix.Translation(B.to_3x3() @ Vector((0.0, 0.10, 0.06)) * ramp(f, F_RELEASE, 64)) @ hm
             hand_t.matrix_world = hm
+            hand_rots[f] = hm.to_3x3()
             bodyrot = B.to_3x3()
             sh = B @ shoulder_r
-            elbow.matrix_world = Matrix.Translation(sh + bodyrot @ Vector((-0.5, 0.45, -0.35)))
+            # локоть — наружу от плеча и чуть вниз-назад (рука сверху на спинке): так запястье гнётся меньше
+            elbow.matrix_world = Matrix.Translation(sh + bodyrot @ Vector((-0.8, 0.2, -0.15)))
         else:
             hand_w = 0.0
         for c in hand_cons:
@@ -404,7 +585,7 @@ def main():
         fwd = B.to_3x3() @ Vector((0, -1, 0))
         head = B @ Vector((0, 0, 1.6 if f < F_SIT + 10 else 1.2))
         if f < F_RELEASE + 4:
-            look = (cm @ GRAB).lerp(B @ Vector((0, -1.5, 1.2)), 1.0 - ramp(f, 0, F_GRAB))
+            look = (cm @ GRAB_PALM).lerp(B @ Vector((0, -1.5, 1.2)), 1.0 - ramp(f, 0, F_GRAB))
         elif f < F_SEATED:
             look = head + fwd * 1.4 + Vector((0, 0, -0.75))
         else:
@@ -415,9 +596,10 @@ def main():
     sm = []
     for i in range(len(looks)):
         acc, n = Vector(), 0
-        for j in range(max(0, i - 5), min(len(looks), i + 6)):
-            acc += looks[j]
-            n += 1
+        for j in range(max(0, i - 9), min(len(looks), i + 10)):
+            w = math.exp(-((j - i) / 5.0) ** 2)
+            acc += looks[j] * w
+            n += w
         sm.append(acc / n)
 
     # --- запекание: IK → обычные ключи костей ---
@@ -434,6 +616,7 @@ def main():
     act = arm.animation_data.action
     act.name = "ChairSit"
     bpy.data.actions.remove(act_fk)
+    fix_hand(scene, arm, hand_rots)
 
     # --- экспорт клипа ---
     ad = arm.animation_data
@@ -464,7 +647,7 @@ def main():
         return [round(-v[0], 4), round(v[2], 4), round(v[1], 4)]
     data = {
         "fps": FPS, "frames": LEN + 1,
-        "marks": {"grab": F_GRAB, "release": F_RELEASE, "sit": F_SIT, "land": F_LAND, "seated": F_SEATED,
+        "marks": {"grab": F_GRAB, "pull": F_PULL, "spin": F_SPIN, "release": F_RELEASE, "sit": F_SIT, "land": F_LAND, "seated": F_SEATED,
                   "swivel": F_SWIVEL, "pull0": F_PULL0, "pull1": F_PULL1, "end": F_END},
         # где стоит перед тем, как сесть (кадр sit): точка в пространстве SitSpot и поворот, рад
         "stand": g((0.35, 0.65, 0.0)) + [round(math.radians(90.0), 4)],

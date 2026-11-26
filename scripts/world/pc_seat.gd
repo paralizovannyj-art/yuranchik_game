@@ -54,7 +54,7 @@ var speakers: PcSpeakers           ## весь звук компа — из ко
 var _glow: Array[Node3D] = []      ## подсветка системника и диод монитора
 var chair_out := false             ## кресло откачено от стола (Юрчик вставал) — садится без откатывания
 var _fps := 30.0
-var _marks := {}                   ## кадры клипа: grab, release, sit, land, seated, swivel, pull0, pull1, end
+var _marks := {}                   ## кадры клипа: grab, pull, spin, release, sit, land, seated, swivel, pull0, pull1, end
 var _chair_keys: Array = []        ## покадрово [x, y, z, поворот] кресла в пространстве SitSpot
 var _look_keys: Array = []         ## покадрово точка, куда смотрит камера (пространство SitSpot)
 var _start := [0.0, 0.0, 0.0, 0.0] ## где встаёт за креслом в начале клипа: x, y, z, поворот
@@ -63,11 +63,12 @@ var _hurry := false
 ## куда отходит, когда встал: за откаченное кресло, лицом в комнату (x, y, z, поворот; пространство SitSpot).
 ## Между креслом, столом и кроватью капсуле игрока места нет — там его выталкивало бы на кровать.
 const EXIT_SPOT := [-0.2, 0.0, 1.4, PI]
-## звуки клипа: кадр, звук, громкость, в какую сторону клипа (1 — садится, −1 — встаёт, 0 — оба)
+## звуки клипа: метка (marks в chair_sit.json), сдвиг в кадрах, звук, громкость,
+## в какую сторону клипа (1 — садится, −1 — встаёт, 0 — оба)
 const CUES := [
-	[13, "chair_roll", -7.0, 1], [33, "chair_spin", -6.0, 1], [108, "chair_sit", -4.0, 1],
-	[124, "chair_spin", -10.0, 1], [157, "chair_roll", -8.0, 1],
-	[172, "chair_roll", -8.0, -1], [144, "chair_spin", -10.0, -1], [96, "chair_sit", -7.0, -1],
+	["pull", 0, "chair_roll", -7.0, 1], ["spin", 0, "chair_spin", -6.0, 1], ["land", -2, "chair_sit", -4.0, 1],
+	["seated", 2, "chair_spin", -10.0, 1], ["pull0", 0, "chair_roll", -8.0, 1],
+	["pull1", -1, "chair_roll", -8.0, -1], ["swivel", -2, "chair_spin", -10.0, -1], ["land", -14, "chair_sit", -7.0, -1],
 ]
 
 
@@ -149,10 +150,10 @@ func _play(t0: float, t1: float) -> void:
 		var nt := t + get_process_delta_time() * (hurry_rate if _hurry else clip_rate) * dir
 		nt = minf(nt, t1) if dir > 0.0 else maxf(nt, t1)
 		for cue: Array in CUES:
-			var ct := float(cue[0]) / _fps
-			if (cue[3] == 0 or cue[3] == int(dir)) and (ct - t) * dir > 0.0 and (ct - nt) * dir <= 0.0:
+			var ct := _mark(cue[0]) + float(cue[1]) / _fps
+			if (cue[4] == 0 or cue[4] == int(dir)) and (ct - t) * dir > 0.0 and (ct - nt) * dir <= 0.0:
 				var at := chair.global_position + Vector3.UP * 0.3 if chair else global_position
-				Game.sfx(cue[1], at, cue[2], 0.08)
+				Game.sfx(cue[2], at, cue[3], 0.08)
 		t = nt
 		_apply(t)
 
