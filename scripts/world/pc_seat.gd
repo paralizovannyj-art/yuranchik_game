@@ -268,7 +268,7 @@ func _walk_to(p: Player, spot_pt: Array, look_pt: Variant = null) -> void:
 
 ## Тянется к кнопке питания: клип PowerReach от начала до конца (поза у стола → кнопка → у стола), взгляд —
 ## по его дорожке. На кадре press — щелчок и комп включается. Взгляд в начале плавно переходит от того,
-## куда смотрел игрок, к дорожке клипа, а в конце — обратно туда же.
+## куда смотрел игрок, к дорожке клипа, а в конце — на середину осмотра (монитор), а не туда, где был.
 func _press_power(p: Player) -> void:
 	var length: float = p.model.call("power_length")
 	if length <= 0.0:
@@ -276,7 +276,7 @@ func _press_power(p: Player) -> void:
 		power_on()
 		return
 	var btn: Vector3 = _glow[0].global_position if not _glow.is_empty() else global_position
-	var back := Vector2(p.cam_yaw, p.cam_pitch)
+	var from := Vector2(p.cam_yaw, p.cam_pitch)
 	var t := 0.0
 	var pressed := false
 	p.model.set("power_time", 0.0)
@@ -286,6 +286,7 @@ func _press_power(p: Player) -> void:
 		p.model.set("power_time", t)
 		if not _power_look.is_empty():
 			var a := _angles_to(p, sit_spot.global_transform * _v(_sample(_power_look, t)))
+			var back := from if t < length * 0.5 else _look_center
 			var w := _smoother(minf(t, length - t) / SETTLE_TIME)
 			p.look_at_angles(lerp_angle(back.x, a.x, w), lerpf(back.y, a.y, w))
 		if not pressed and t >= _power_press:
@@ -516,7 +517,7 @@ func sit(p: Player) -> void:
 	sat_down.emit()
 
 
-## E на системнике: тянется к кнопке питания, комп включается, взгляд возвращается туда, куда смотрел.
+## E на системнике: тянется к кнопке питания, комп включается, взгляд возвращается на середину (монитор).
 func _on_power_use(_p: Player) -> void:
 	if state != State.SEATED_LOOK or powered:
 		return

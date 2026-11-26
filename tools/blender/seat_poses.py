@@ -20,10 +20,29 @@ from mathutils import Matrix, Vector, Quaternion
 DESK_EDGE_Y = -0.11            # передний край стола (к Юрчику)
 DESK_TOP = 0.74
 KEY_TOP = 0.77                 # верх клавиш
-MOUSE_C = Vector((-0.278, -0.26, 0.779))   # мышь: середина, верх
-MOUSE_LMB = Vector((0.010, -0.030, -0.004))   # кончик указательного на левой кнопке — от середины мыши
+# мышь (mouse.gltf в yurchik_room, промерено по мешу): X −0.288…−0.225, Y −0.341…−0.228, низ 0.743, верх 0.779;
+# горб плоский от Y −0.32 до −0.26 (0.777–0.779), спереди и сзади скат; левая кнопка — к +X от середины
+MOUSE_C = Vector((-0.256, -0.284, 0.779))  # мышь: середина, верх
 MOUSE_TRAVEL = Vector((0.045, 0.030))      # насколько ездит мышь по коврику (вправо-влево, вперёд-назад), м
-KEY_W = Vector((0.192, -0.252, KEY_TOP + 0.006))   # клавиша W (средний палец левой)
+# Кончики пальцев — хвост третьей фаланги, это ось пальца у самого кончика: подушечка на ~6 мм ниже.
+PAD = 0.006
+# правая на мышке (хват ладонью): кончики — от середины мыши; указательный и средний на кнопках у переднего края,
+# безымянный и мизинец — по правому боку, большой — по левому
+MOUSE_TIPS = {"Index": Vector((0.011, -0.040, -0.006 + PAD)), "Middle": Vector((-0.011, -0.044, -0.009 + PAD)),
+              "Ring": Vector((-0.034, -0.022, -0.017 + PAD)), "Pinky": Vector((-0.036, 0.004, -0.025 + PAD)),
+              "Thumb": Vector((0.036, 0.002, -0.022 + PAD))}
+MOUSE_KNUCKLE = Vector((0.0, 0.048, 0.010))   # костяшка среднего — над задним скатом (пальцы 10 см — во всю мышь)
+MOUSE_WRIST_Z = 0.787                         # запястье над ковриком: ниже рукав (обхват ~5 см) ложится на стол
+# клавиатура (keyboard.gltf, промерено по колпачкам): верх клавиш 0.764–0.767; ряды Y: QWERTY −0.258, ASDF −0.239,
+# ZXCV −0.220, нижний −0.201; X: W 0.1895, A 0.204, S 0.185, D 0.166, левый Shift 0.225, пробел — правее 0.18
+KEYS_L = {"Middle": Vector((0.1895, -0.258, 0.767 + PAD)),    # W
+          "Ring": Vector((0.204, -0.239, 0.766 + PAD)),       # A
+          "Index": Vector((0.166, -0.239, 0.766 + PAD)),      # D
+          "Pinky": Vector((0.226, -0.220, 0.765 + PAD)),      # Shift
+          "Thumb": Vector((0.150, -0.202, 0.764 + PAD))}      # пробел
+KEY_W = KEYS_L["Middle"]
+KEYS_KNUCKLE_Z = 0.808                        # костяшки левой над клавишами (~4 см над колпачками)
+KEYS_WRIST_Z = 0.795                          # запястье у переднего края клавы, рукав чуть выше стола
 # позы мыши по коврику: имя → сдвиг в долях MOUSE_TRAVEL (x — вправо, y — вперёд); середина — поза desk
 MOUSE_GRID = {"mouse_r": (1, 0), "mouse_l": (-1, 0), "mouse_f": (0, 1), "mouse_b": (0, -1),
               "mouse_fr": (1, 1), "mouse_fl": (-1, 1), "mouse_br": (1, -1), "mouse_bl": (-1, -1)}
@@ -164,6 +183,130 @@ def place_hand_tip(arm, side, tip, finger, knuckle_dir, back_dir, pole, fingers_
     return rep
 
 
+def _chain(pb, side, finger):
+    return [pb["%s%s%d" % (finger, side, i)] for i in (1, 2, 3)]
+
+
+def straighten(pb, side, finger):
+    """Палец прямо по продолжению пястной кости (в стойке правая кисть сжата под молоток — сгибы до 86°)."""
+    prev = (pb["%s%s1" % (finger, side)].head - pb["Hand" + side].head).normalized()
+    for b in _chain(pb, side, finger):
+        _aim(b, b.head + prev)
+        prev = (b.tail - b.head).normalized()
+
+
+def bend_finger(pb, side, finger, curls, spread, oppose=0.0):
+    """Палец заново: выпрямлен (кроме большого), потом сгиб по суставам (curls, °) и отвод spread°.
+    У большого ещё oppose° — поворот под ладонь вокруг оси кисти (к остальным пальцам, как при хвате)."""
+    if finger == "Thumb":
+        k, b = hand_axes(pb, side)
+        hm = pb["Hand" + side].matrix.to_3x3()
+        kw, bw = hm @ k, hm @ b
+        t1 = pb["Thumb%s1" % side]
+        if oppose:
+            # знак: основание большого уходит под ладонь (против тыла)
+            d0 = t1.tail - t1.head
+            for sgn in (1.0, -1.0):
+                r = Matrix.Rotation(math.radians(abs(oppose)) * sgn, 3, kw)
+                if (r @ d0).dot(bw) <= d0.dot(bw):
+                    break
+            if oppose < 0.0:
+                r = r.inverted()
+            set_world_rot(t1, r @ t1.matrix.to_3x3())
+        if spread:
+            set_world_rot(t1, Matrix.Rotation(math.radians(spread), 3, bw) @ t1.matrix.to_3x3())
+        thumb(pb, side, curls)
+    else:
+        straighten(pb, side, finger)
+        curl(pb, side, finger, list(curls), spread)
+
+
+def fit_finger(arm, side, finger, tip, base):
+    """Подбор сгиба пальца, чтобы кончик лёг в tip. Свободны сгиб в костяшке, сгиб среднего сустава (дальний
+    сустав идёт за ним в доле base[2]/base[1], как у живого пальца) и отвод в сторону; старт — форма base.
+    Кисть уже стоит. Возвращает (сгибы по суставам °, отвод °, промах м)."""
+    pb = arm.pose.bones
+    chain = _chain(pb, side, finger)
+    saved = [b.matrix_basis.copy() for b in chain]
+    k3 = base[2] / base[1] if base[1] else 0.5
+    # костяшка, средний сустав, отвод, (у большого) поворот под ладонь
+    lim = ((-10.0, 80.0), (0.0, 100.0), (-30.0, 30.0), (-20.0, 50.0))
+    n = 4 if finger == "Thumb" else 3
+
+    def angles(x):
+        return [x[0], x[1], x[1] * k3]
+
+    def ev(x):
+        for b, m in zip(chain, saved):
+            b.matrix_basis = m
+        _upd()
+        bend_finger(pb, side, finger, angles(x), x[2], x[3])
+        return (finger_tip(pb, side, finger) - tip).length
+
+    x = [float(base[0]), float(base[1]), 0.0, 0.0]
+    err = ev(x)
+    step = 16.0
+    while step > 0.25:
+        moved = False
+        for i in range(n):
+            for d in (step, -step):
+                y = list(x)
+                y[i] = min(max(y[i] + d, lim[i][0]), lim[i][1])
+                e = ev(y)
+                if e < err - 1e-6:
+                    x, err, moved = y, e, True
+        if not moved:
+            step *= 0.5
+    ev(x)
+    return angles(x), x[2], err, x[3]
+
+
+def place_hand_fit(arm, side, knuckle, wrist_z, knuckle_dir, back_dir, pole, tips, bases, lead, forearm_share=0.6,
+                   slack=0.025):
+    """Кисть лежит, пальцы тянутся к своим точкам. Костяшки — в knuckle (горизонталь подбирается так, чтобы
+    ведущий палец lead доставал свою точку без перегиба), запястье — на высоте wrist_z, кисть повёрнута по
+    knuckle_dir/back_dir. Сгиб каждого пальца подбирается (fit_finger). Костяшки уходят от knuckle не дальше
+    slack по горизонтали: ладонь лежит там, где задумано, остальное добирают пальцы."""
+    pb = arm.pose.bones
+    hl = (pb["Middle" + side + "1"].head - pb["Hand" + side].head).length
+    base = snapshot(arm)
+    kn = knuckle.copy()
+    fits = {}
+    for _ in range(6):
+        d = knuckle_dir.normalized()
+        flat = Vector((d.x, d.y, 0.0)).normalized()
+        dz = kn.z - wrist_z
+        wrist = kn - flat * math.sqrt(max(hl * hl - dz * dz, 1e-6)) - Vector((0, 0, dz))
+        kd = (kn - wrist).normalized()
+        apply(arm, base)
+        rep = place_hand(arm, side, wrist, kd, back_dir, pole, forearm_share)
+        fits = {f: fit_finger(arm, side, f, tips[f], bases[f]) for f in tips}
+        miss = tips[lead] - finger_tip(pb, side, lead)
+        miss.z = 0.0
+        if miss.length < 0.0015:
+            break
+        kn += miss * 0.8
+        sh = kn - knuckle
+        sh.z = 0.0
+        if sh.length > slack:
+            kn = knuckle + sh.normalized() * slack
+    rep = dict(rep)
+    rep["knuckle"] = [round(v, 3) for v in pb["Middle" + side + "1"].head]
+    rep["wrist"] = [round(v, 3) for v in pb["Hand" + side].head]
+    rep["fingers"] = {f: {"curl": [round(a) for a in c], "spread": round(sp, 1), "miss_mm": round(e * 1000.0, 1)}
+                      for f, (c, sp, e, _o) in fits.items()}
+    rep["_fits"] = fits
+    return rep
+
+
+def shift_hand(arm, side, offset, pole):
+    """Та же кисть с теми же пальцами, сдвинутая на offset (запястье и вся кисть едут параллельно)."""
+    pb = arm.pose.bones
+    k, b = hand_axes(pb, side)
+    hm = pb["Hand" + side].matrix.to_3x3()
+    return place_hand(arm, side, pb["Hand" + side].head + offset, hm @ k, hm @ b, pole)
+
+
 def hand_report(pb, side):
     fore, hand = pb["Forearm" + side], pb["Hand" + side]
     fa = (fore.tail - fore.head).normalized()
@@ -192,11 +335,14 @@ def curl(pb, side, finger, angles, spread=0.0):
         if a == 0.0:
             continue
         # знак: кончик уходит к ладони (против тыла кисти)
+        # (минус — разогнуть: в стойке пальцы уже чуть согнуты)
         tip0 = bone.tail - bone.head
         for sgn in (1.0, -1.0):
-            r = Matrix.Rotation(math.radians(a) * sgn, 3, lat)
+            r = Matrix.Rotation(math.radians(abs(a)) * sgn, 3, lat)
             if (r @ tip0).dot(bw) <= tip0.dot(bw):
                 break
+        if a < 0.0:
+            r = r.inverted()
         set_world_rot(bone, r @ bone.matrix.to_3x3())
 
 
@@ -274,34 +420,44 @@ class Poser:
         thumb(self.pb, side, [8, 10, 8])
 
     # ------------------------------------------------------------------ руки у стола
-    def left_fingers(self):
-        pb = self.pb
-        curl(pb, "L", "Index", [20, 24, 12], spread=-2)    # D
-        curl(pb, "L", "Middle", [14, 22, 10])              # W
-        curl(pb, "L", "Ring", [20, 26, 12], spread=3)      # A
-        curl(pb, "L", "Pinky", [30, 30, 16], spread=6)     # Shift рядом
-        thumb(pb, "L", [14, 18, 10])                       # над пробелом
+    # Форма сгиба пальцев (доли по суставам); сколько сгибать — подбирает fit_finger под свою клавишу или кнопку.
+    # Печатающие пальцы — дугой: основная фаланга полого, кончик круче. На мышке — почти прямые, лежат на кнопках.
+    KEY_BASES = {"Index": (30, 40, 20), "Middle": (30, 40, 20), "Ring": (30, 40, 20), "Pinky": (30, 40, 20),
+                 "Thumb": (6, 12, 8)}
+    MOUSE_BASES = {"Index": (16, 18, 8), "Middle": (16, 18, 8), "Ring": (30, 34, 18), "Pinky": (34, 38, 22),
+                   "Thumb": (6, 14, 8)}
 
     def left_keys(self):
-        # левая — на WASD: средний на W, кисть над краем стола, пальцы вперёд и чуть вправо, кисть слегка на ребре
-        return place_hand_tip(self.arm, "L", KEY_W, "Middle", Vector((-0.30, -1.0, -0.02)),
+        # левая — на WASD: кончики на W/A/D, мизинец на Shift, большой на пробеле; кисть низко над передним краем
+        # клавы, пальцы дугой вперёд и чуть вправо, кисть слегка на ребре (пронация неполная)
+        kn = KEY_W + Vector((0.040, 0.070, 0.0))
+        kn.z = KEYS_KNUCKLE_Z
+        return place_hand_fit(self.arm, "L", kn, KEYS_WRIST_Z, Vector((-0.30, -1.0, 0.0)),
                               Vector((0.25, 0.0, 1.0)), self.pb["UpperArmL"].head + Vector((0.45, 0.25, -0.5)),
-                              self.left_fingers)
+                              KEYS_L, self.KEY_BASES, "Middle")
 
-    def right_fingers(self):
-        pb = self.pb
-        curl(pb, "R", "Index", [6, 12, 8])                 # на левой кнопке, почти прямой
-        curl(pb, "R", "Middle", [8, 12, 8], spread=-2)     # на правой
-        curl(pb, "R", "Ring", [16, 22, 12], spread=-5)     # сбоку мыши
-        curl(pb, "R", "Pinky", [20, 24, 14], spread=-9)
-        thumb(pb, "R", [6, 14, 8])                         # с другого бока
-
-    def right_mouse(self, off):
-        # правая — на мышке: кончик указательного на левой кнопке, ладонь на спинке, запястье над ковриком
+    def right_mouse(self, off, center=None):
+        """Правая на мышке (хват ладонью): ладонь лежит на горбе, указательный и средний вдоль кнопок, безымянный
+        и мизинец обнимают правый бок, большой — левый. off — сдвиг мыши по коврику; fits — сгибы пальцев из
+        средней позы — отчёт right_mouse без сдвига (мышь сдвинулась — рука едет вместе с ней, хват тот же)."""
         c = MOUSE_C + Vector((-off.x, -off.y, 0.0))
-        return place_hand_tip(self.arm, "R", c + MOUSE_LMB, "Index", Vector((0.10, -1.0, -0.30)),
-                              Vector((-0.15, 0.0, 1.0)), self.pb["UpperArmR"].head + Vector((-0.55, 0.3, -0.45)),
-                              self.right_fingers)
+        tips = {f: c + v for f, v in MOUSE_TIPS.items()}
+        kn = c + MOUSE_KNUCKLE
+        pole = self.pb["UpperArmR"].head + Vector((-0.55, 0.3, -0.45))
+        kd, back = Vector((0.10, -1.0, 0.0)), Vector((-0.15, 0.0, 1.0))
+        if center is None:
+            return place_hand_fit(self.arm, "R", kn, MOUSE_WRIST_Z, kd, back, pole, tips, self.MOUSE_BASES, "Index")
+        kn = Vector(center["knuckle"]) + Vector((-off.x, -off.y, 0.0))
+        hl = (self.pb["MiddleR1"].head - self.pb["HandR"].head).length
+        flat = Vector((kd.x, kd.y, 0.0)).normalized()
+        dz = kn.z - MOUSE_WRIST_Z
+        wrist = kn - flat * math.sqrt(hl * hl - dz * dz) - Vector((0, 0, dz))
+        rep = place_hand(self.arm, "R", wrist, (kn - wrist), back, pole)
+        for f, (c, sp, _e, op) in center["_fits"].items():
+            bend_finger(self.pb, "R", f, c, sp, op)
+        rep = dict(rep)
+        rep["miss_mm"] = {f: round((finger_tip(self.pb, "R", f) - tips[f]).length * 1000.0, 1) for f in tips}
+        return rep
 
     def point(self):
         pb = self.pb
@@ -311,11 +467,12 @@ class Poser:
         thumb(pb, "R", [20, 30, 20])
 
     def left_grip(self):
-        """Левая держится за край стола (пока тянется к кнопке)."""
-        rep = place_hand(self.arm, "L", Vector((0.12, -0.085, 0.788)), Vector((-0.25, -1.0, -0.15)),
-                         Vector((0.1, 0.1, 1.0)), self.pb["UpperArmL"].head + Vector((0.5, 0.2, -0.3)))
-        self.relaxed_fingers("L", (30, 40, 20))
-        return rep
+        """Левая упирается в край стола (пока тянется к кнопке): ладонь на кромке, кончики пальцев — на столешнице
+        перед клавой (полоса Y −0.11…−0.18), большой — на кромке."""
+        rep = place_hand_fit(self.arm, "L", Vector((0.11, -0.112, 0.786)), 0.80, Vector((-0.25, -1.0, 0.0)),
+                             Vector((0.1, 0.1, 1.0)), self.pb["UpperArmL"].head + Vector((0.5, 0.2, -0.3)),
+                             GRIP_TIPS, self.KEY_BASES, "Middle", slack=0.01)
+        return {k: v for k, v in rep.items() if k != "_fits"}
 
     def power(self, p):
         """Поза у кнопки питания; p — словарь параметров корпуса (lean, side, twist, dx, dy)."""
@@ -332,7 +489,12 @@ class Poser:
         return rep
 
 
+GRIP_Z = DESK_TOP + PAD + 0.005   # чуть над столом: между позами power_mid и power кисть проседает на ~1.5 см
+GRIP_TIPS = {"Index": Vector((0.087, -0.164, GRIP_Z)), "Middle": Vector((0.106, -0.167, GRIP_Z)),
+             "Ring": Vector((0.126, -0.164, GRIP_Z)), "Pinky": Vector((0.144, -0.155, GRIP_Z)),
+             "Thumb": Vector((0.072, -0.122, GRIP_Z))}
 DESK = {"lean": 18.0, "twist": -8.0, "dy": 0.08}
+HOVER = Vector((0.0, 0.015, 0.05))    # насколько кисти над клавой и мышью перед тем, как лечь (назад, вверх)
 POWER = {"lean": 58.0, "side": 40.0, "twist": 0.0, "dy": 0.08, "dx": 0.06}
 
 
@@ -361,15 +523,25 @@ def build(arm, idle):
     P.legs(feet_y=-0.10 - DESK["dy"] * 0.5)
     P.look(Vector((-0.02, -0.5, 1.03)))
     report["desk_L"] = P.left_keys()
-    report["desk_R"] = P.right_mouse(Vector((0.0, 0.0)))
+    mouse_c = report["desk_R"] = P.right_mouse(Vector((0.0, 0.0)))
     poses["desk"] = snapshot(arm)
     report["tips_mouse"] = {f: [round(v, 3) for v in finger_tip(pb, "R", f)] for f in ("Index", "Middle")}
     # мышь по коврику (только правая рука; X — вправо, Y — вперёд от Юрчика)
     for key, (ox, oy) in MOUSE_GRID.items():
         off = Vector((ox * MOUSE_TRAVEL.x, oy * MOUSE_TRAVEL.y))
         apply(arm, poses["desk"])
-        report[key] = P.right_mouse(off)
+        report[key] = P.right_mouse(off, mouse_c)
         poses[key] = snapshot(arm)
+    # hover: кисти той же формы зависли над клавой и мышью (подлетают к ним сверху-сзади, потом ложатся) —
+    # иначе на переходе от lift пальцы, ещё согнутые, проходят сквозь мышь и клавиши
+    apply(arm, poses["desk"])
+    for s, pole in (("L", Vector((0.45, 0.25, -0.5))), ("R", Vector((-0.55, 0.3, -0.45)))):
+        report["hover_" + s] = shift_hand(arm, s, HOVER, pb["UpperArm" + s].head + pole)
+    poses["hover"] = snapshot(arm)
+    # hover_r: только правая поднялась над мышью (к кнопке питания и обратно — левая остаётся на клавишах)
+    apply(arm, poses["desk"])
+    shift_hand(arm, "R", HOVER, pb["UpperArmR"].head + Vector((-0.55, 0.3, -0.45)))
+    poses["hover_r"] = snapshot(arm)
     # клик и нажатия клавиш — только пальцы (в Godot смешиваются поверх)
     apply(arm, poses["desk"])
     curl(pb, "R", "Index", [6, 4, 2])
@@ -389,7 +561,8 @@ def build(arm, idle):
     P.look(Vector((-0.02, -0.5, 1.03)))
     for s, x in (("L", 0.20), ("R", -0.22)):
         out = 1.0 if s == "L" else -1.0
-        report["lift_" + s] = place_hand(arm, s, Vector((x, -0.03, 0.86)), Vector((-out * 0.25, -1.0, -0.15)),
+        # (запястья не дальше Y 0.02: пальцы свисают на ~12 см вперёд и иначе на подъёме цепляют край стола)
+        report["lift_" + s] = place_hand(arm, s, Vector((x, 0.02, 0.87)), Vector((-out * 0.25, -1.0, -0.15)),
                                          Vector((out * 0.2, 0.0, 1.0)),
                                          pb["UpperArm" + s].head + Vector((out * 0.5, 0.3, -0.45)))
         P.relaxed_fingers(s, (16, 20, 12))
@@ -398,10 +571,21 @@ def build(arm, idle):
     # ---------------------------------------------------------------- power_lift: правая ушла с мышки вверх-назад
     # (к кнопке рука идёт мимо края стола: сначала к себе и над краем, потом вниз снаружи от колена)
     apply(arm, poses["desk"])
-    report["power_lift_R"] = place_hand(arm, "R", Vector((-0.30, -0.05, 0.85)), Vector((-0.1, -1.0, -0.6)),
+    # (кисть уже свесилась пальцами вниз и стоит над краем стола: дальше она идёт вниз, и пальцы, смотрящие
+    # вперёд, прошли бы сквозь столешницу)
+    report["power_lift_R"] = place_hand(arm, "R", Vector((-0.30, -0.02, 0.88)), Vector((-0.1, -0.6, -1.0)),
+                                        Vector((-0.5, -0.5, 0.5)), pb["UpperArmR"].head + Vector((-0.6, 0.3, -0.3)))
+    P.relaxed_fingers("R", (16, 20, 12))
+    shift_hand(arm, "L", HOVER, pb["UpperArmL"].head + Vector((0.45, 0.25, -0.5)))   # левая тоже приподнялась
+    poses["power_lift"] = snapshot(arm)
+    # power_back: обратно к мыши — кисть сначала поднялась выше края стола и уже смотрит пальцами вперёд
+    apply(arm, poses["desk"])
+    # (запястье ближе к себе, пальцы вперёд-вниз: поднимаются мимо кромки стола, а не сквозь неё)
+    report["power_back_R"] = place_hand(arm, "R", Vector((-0.30, 0.05, 0.93)), Vector((-0.1, -1.0, -0.55)),
                                         Vector((-0.4, 0.0, 1.0)), pb["UpperArmR"].head + Vector((-0.6, 0.3, -0.3)))
     P.relaxed_fingers("R", (16, 20, 12))
-    poses["power_lift"] = snapshot(arm)
+    shift_hand(arm, "L", HOVER, pb["UpperArmL"].head + Vector((0.45, 0.25, -0.5)))   # левая над клавой
+    poses["power_back"] = snapshot(arm)
 
     # ---------------------------------------------------------------- power: кнопка на системнике
     report["power"] = P.power(POWER)
