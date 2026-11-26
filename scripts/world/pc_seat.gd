@@ -3,9 +3,12 @@
 ## и садится, как в тесной комнате (клип ChairSit, tools/blender/build_chair_sit.py): берётся за спинку,
 ## откатывает кресло, разворачивает его к себе, садится боком, поворачивается к столу и подтягивается ногами.
 ## Кресло едет по пути из assets/animations/sit/chair_sit.json. Ещё раз E, пока садится, — быстрее.
-## Если комп выключен — жмёт кнопку питания. Потом взгляд уезжает к монитору: экран почти во весь кадр,
-## но это всё ещё монитор в комнате — рамка, блик, шум.
+## В конце клипа кладёт левую руку на WASD, правую — на мышку. Если комп выключен — наклоняется и жмёт
+## кнопку питания на системнике под столом (клип PowerReach). Потом взгляд уезжает к монитору: экран почти
+## во весь кадр, но это всё ещё монитор в комнате — рамка, блик, шум.
 ## Мышь двигает курсор внутри экрана, клики и клавиши уходят в «компьютер» (SubViewport с рабочим столом).
+## Руки при этом живые: правая с мышкой ездит по коврику за курсором (и мышка на столе вместе с ней),
+## указательный кликает, пальцы левой жмут клавиши.
 ## Esc (или B на геймпаде) — встать: клип задом наперёд до момента, где он встал. Кресло остаётся
 ## отодвинутым и повёрнутым, и в следующий раз Юрчик садится сразу, без откатывания.
 class_name PcSeat
@@ -22,7 +25,8 @@ signal powered_off         ## Windows завершила работу, экра�
 @export var screen_mesh := "PCScreen_nocol"          ## плоскость экрана в модели монитора (UV 0..1 на весь экран)
 @export var speaker_nodes: PackedStringArray = ["SpeakerLeft", "SpeakerRight"]   ## колонки на столе (левая, правая)
 @export var glow_meshes: PackedStringArray = ["PcTowerGlow_nocol", "MonitorLed_nocol"]   ## светятся, только пока комп включён: окно и кнопка системника, диод монитора
-@export var reach_pitch := -0.85                      ## куда смотрит, нажимая кнопку питания (системник на полу под столом)
+@export var mouse_mesh := "Mouse_nocol"              ## мышка на столе — ездит вместе с рукой
+@export var mouse_travel := Vector2(0.045, 0.03)      ## м — сколько ездит мышка по коврику от середины (= MOUSE_TRAVEL в seat_poses.py)
 @export var desktop_scene: PackedScene               ## что показывает комп (рабочий стол)
 @export var screen_size := Vector2i(1280, 1024)      ## разрешение экрана компа (матрица 5:4, 17")
 @export var ui_size := Vector2(1024, 820)            ## Windows на 125 %: в этих «логических» пикселях живёт рабочий стол
@@ -60,6 +64,11 @@ var _chair_keys: Array = []        ## покадрово [x, y, z, поворо�
 var _look_keys: Array = []         ## покадрово точка, куда смотрит камера (пространство SitSpot)
 var _start := [0.0, 0.0, 0.0, 0.0] ## где встаёт за креслом в начале клипа: x, y, z, поворот
 var _stand := [0.0, 0.0, 0.0, 0.0] ## где стоит перед креслом на кадре sit (встал / садится в откаченное)
+var _power_look: Array = []        ## PowerReach: покадрово точка, куда смотрит камера (пространство SitSpot)
+var _power_press := 0.0            ## PowerReach: секунда, когда палец на кнопке
+var _mouse: Node3D                 ## мышка на столе
+var _mouse_home := Vector3.ZERO    ## где она лежит (глобально)
+var _keys_held := {}               ## физический код клавиши → палец левой (индекс в YurchikAnim.DESK_TAPS)
 var _hurry := false
 var _settle := 1.0                 ## 0→1 в начале клипа: взгляд переходит от того, куда смотрел, к взгляду клипа
 var _settle_from := Vector2.ZERO
@@ -96,6 +105,9 @@ func _load_path() -> void:
 	_look_keys = d.get("look", [])
 	_start = d.get("start", _start)
 	_stand = d.get("stand", _stand)
+	var pw: Dictionary = d.get("power", {})
+	_power_look = pw.get("look", [])
+	_power_press = float(pw.get("marks", {}).get("press", 0)) / _fps
 
 
 ## Секунда клипа, на которой стоит метка (grab, sit, seated…).
@@ -231,6 +243,72 @@ func _walk_to(p: Player, spot_pt: Array, look_pt: Variant = null) -> void:
 	await get_tree().create_timer(0.15).timeout     # ноги дошагали в стойку — дальше клип с той же стойки
 
 
+## Тянется к кнопке питания: клип PowerReach от начала до конца (поза у стола → кнопка → у стола), взгляд —
+## по его дорожке. На кадре press — щелчок и комп включается.
+func _press_power(p: Player) -> void:
+	var length: float = p.model.call("power_length")
+	if length <= 0.0:
+		Game.sfx("click", global_position)
+		power_on()
+		return
+	var btn: Vector3 = _glow[0].global_position if not _glow.is_empty() else global_position
+	var t := 0.0
+	var pressed := false
+	p.model.set("power_time", 0.0)
+	while t < length:
+		await get_tree().physics_frame
+		t = minf(t + get_physics_process_delta_time() * (hurry_rate if _hurry else clip_rate), length)
+		p.model.set("power_time", t)
+		if not _power_look.is_empty():
+			var a := _angles_to(p, sit_spot.global_transform * _v(_sample(_power_look, t)))
+			p.look_at_angles(a.x, a.y)
+		if not pressed and t >= _power_press:
+			pressed = true
+			Game.sfx("click", btn)
+			power_on()
+	p.model.set("power_time", -1.0)
+
+
+## Отпустить все клавиши и кнопку мыши (руки — в покой).
+func _reset_hands(p: Player) -> void:
+	_keys_held.clear()
+	p.model.set("desk_click", false)
+	p.model.set("desk_keys", [false, false, false, false] as Array[bool])
+
+
+## Палец левой для клавиши: пробел — большой, левый край (Q A Z Tab Shift…) — безымянный,
+## W S X E — средний, D F R C V… — указательный; остальное (печатает текст) — какой-нибудь из трёх.
+static func _finger_for(code: Key) -> int:
+	match code:
+		KEY_SPACE:
+			return 3
+		KEY_Q, KEY_A, KEY_Z, KEY_1, KEY_2, KEY_TAB, KEY_SHIFT, KEY_CAPSLOCK, KEY_CTRL, KEY_QUOTELEFT:
+			return 2
+		KEY_W, KEY_S, KEY_X, KEY_E, KEY_3:
+			return 1
+		KEY_D, KEY_F, KEY_R, KEY_C, KEY_V, KEY_T, KEY_G, KEY_B, KEY_4, KEY_5:
+			return 0
+	return int(code) % 3
+
+
+func _update_keys() -> void:
+	var held: Array[bool] = [false, false, false, false]
+	for f: int in _keys_held.values():
+		held[f] = true
+	_player.model.set("desk_keys", held)
+
+
+func _physics_process(_delta: float) -> void:
+	# мышка на столе едет вместе с рукой (тот же сдвиг, что у поз DeskMouse*, и тот же вес)
+	if _mouse == null or _player == null:
+		return
+	var w: float = _player.model.get("desk_w")
+	var m: Vector2 = _player.model.get("desk_mouse")
+	m = m.clamp(-Vector2.ONE, Vector2.ONE)
+	var off := Vector3(m.x * mouse_travel.x, 0.0, -m.y * mouse_travel.y) * w
+	_mouse.global_position = _mouse_home + sit_spot.global_basis * off
+
+
 ## Экран: SubViewport с рабочим столом → текстура на плоскости экрана монитора.
 func _build_screen() -> void:
 	viewport = SubViewport.new()
@@ -271,6 +349,9 @@ func _build_screen() -> void:
 	_speaker_pos = mi.global_position
 	var kb := root.find_child("Keyboard_nocol", true, false) as Node3D
 	_keys_pos = kb.global_position if kb else _speaker_pos
+	_mouse = root.find_child(mouse_mesh, true, false) as Node3D
+	if _mouse:
+		_mouse_home = _mouse.global_position
 	var sl := root.find_child(speaker_nodes[0], true, false) as Node3D
 	var sr := root.find_child(speaker_nodes[1], true, false) as Node3D
 	speakers = PcSpeakers.new()
@@ -366,10 +447,9 @@ func sit(p: Player) -> void:
 	await _play(from_t, p.model.call("seat_length"))
 	chair_out = false
 	if not powered:
-		await _ease_look(p, yaw, reach_pitch, 0.5)   # тянется к кнопке на системнике под столом
-		Game.sfx("click", global_position)
-		power_on()
-		await get_tree().create_timer(0.6).timeout
+		await _press_power(p)                        # тянется к кнопке на системнике под столом
+	_reset_hands(p)
+	p.model.set("desk_live", true)                   # руки на клаве и мышке — живые
 	p.seat_view = screen_view.global_transform
 	p.seat_view_fov = view_fov
 	Graphics.screen_focus = true                     # чёткая картинка, пока смотрит в монитор
@@ -390,6 +470,8 @@ func stand() -> void:
 	_hurry = false
 	active = false
 	var p := _player
+	_reset_hands(p)
+	p.model.set("desk_live", false)                  # правая с мышкой плавно возвращается в середину коврика
 	var tw := _tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tw.tween_property(p, "seat_view_blend", 0.0, zoom_out)
 	# пока отъезжает от монитора, взгляд уже переходит туда, откуда начнётся клип (а не прыгает с системника)
@@ -439,6 +521,9 @@ func _input(event: InputEvent) -> void:
 		var rel: Vector2 = event.relative * cursor_speed * ui_size.y / 720.0
 		cursor = (cursor + rel).clamp(Vector2.ZERO, ui_size - Vector2.ONE)
 		_pointer.position = cursor
+		# рука с мышкой — там же на коврике, где курсор на экране (вверх по экрану — мышь от себя)
+		var u := cursor / ui_size * 2.0 - Vector2.ONE
+		_player.model.set("desk_mouse", Vector2(u.x, -u.y))
 		var mm := InputEventMouseMotion.new()
 		mm.position = cursor
 		mm.global_position = cursor
@@ -457,10 +542,19 @@ func _input(event: InputEvent) -> void:
 		mb.factor = event.factor
 		if event.pressed and event.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT]:
 			Game.sfx("pc_mouse", _keys_pos, -20.0, 0.1)
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			_player.model.set("desk_click", event.pressed)
 		viewport.push_input(mb, true)
 	elif event is InputEventKey:
 		if event.pressed and not event.echo:
 			Game.sfx("pc_key_%d" % randi_range(1, 3), _keys_pos, -18.0, 0.08)
+		var code: Key = event.physical_keycode if event.physical_keycode != KEY_NONE else event.keycode
+		if event.pressed and not event.echo:
+			_keys_held[code] = _finger_for(code)
+			_update_keys()
+		elif not event.pressed and _keys_held.has(code):
+			_keys_held.erase(code)
+			_update_keys()
 		viewport.push_input(event, true)
 
 

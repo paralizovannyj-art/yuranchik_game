@@ -15,6 +15,15 @@ const GMOD_LIB := "res://assets/animations/gmod/yurchik_gmod.glb"
 ## вставание — тот же клип задом наперёд
 const SIT_LIB := "res://assets/animations/sit/yurchik_sit.glb"
 const SEAT_CLIP := "ChairSit"
+## у стола (клипы-позы из того же yurchik_sit.glb, tools/blender/seat_poses.py): правая рука с мышкой по коврику
+## (середина и 8 сдвигов, x — вправо, y — вперёд), клик указательным, пальцы левой на клавишах; тянется к кнопке питания
+const DESK_MOUSE := {"DeskMouseC": Vector2(0, 0), "DeskMouseL": Vector2(-1, 0), "DeskMouseR": Vector2(1, 0),
+		"DeskMouseF": Vector2(0, 1), "DeskMouseB": Vector2(0, -1), "DeskMouseFL": Vector2(-1, 1),
+		"DeskMouseFR": Vector2(1, 1), "DeskMouseBL": Vector2(-1, -1), "DeskMouseBR": Vector2(1, -1)}
+const DESK_TAPS := ["Index", "Middle", "Ring", "Thumb"]   ## клипы DeskTap<палец>; desk_keys — по этому порядку
+const POWER_CLIP := "PowerReach"
+const ARM_R := ["UpperArmR", "ForearmR", "HandR", "IndexR1", "IndexR2", "IndexR3", "MiddleR1", "MiddleR2", "MiddleR3",
+		"RingR1", "RingR2", "RingR3", "PinkyR1", "PinkyR2", "PinkyR3", "ThumbR1", "ThumbR2", "ThumbR3"]
 ## зацикленные клипы библиотеки (флаг loop в assets/animations/gmod/clips.json)
 const GMOD_LOOPS := ["Idle", "Walk", "WalkBack", "WalkLeft", "WalkRight", "Run", "RunBack", "RunLeft", "RunRight",
 		"CrouchIdle", "CrouchWalk", "CrouchWalkBack", "CrouchWalkLeft", "CrouchWalkRight", "IdleAngry", "IdleScared",
@@ -71,6 +80,7 @@ const JUMP_CHAINS := ["", "b_"]       ## цепочки клипа прыжка:
 @export var lean_turn := 0.05        ## крен в повороте
 @export var lean_accel := 0.03       ## наклон при разгоне/торможении
 @export var breath := 0.015
+@export var desk_breath := 0.005     ## дыхание за компом (рад наклона корпуса)
 
 @export_group("Диагонали")
 @export var hips_twist_max := 55.0   ## ° — насколько ноги разворачиваются в сторону движения (вперёд по диагонали)
@@ -85,6 +95,15 @@ var jump_v0 := 0.0
 var land_eta := 9.0
 ## ставит pc_seat.gd: секунда клипа ChairSit (0 — стоит за креслом, конец — сидит у стола); < 0 — не в кресле
 var seat_time := -1.0
+## ставит pc_seat.gd: секунда клипа PowerReach (тянется к кнопке питания); < 0 — не тянется
+var power_time := -1.0
+## ставит pc_seat.gd, пока сидит у стола: живые руки — мышь (−1..1 по коврику: x вправо, y вперёд),
+## нажата ли левая кнопка мыши, какие пальцы левой жмут клавиши (DESK_TAPS)
+var desk_live := false
+var desk_mouse := Vector2.ZERO
+var desk_click := false
+var desk_keys: Array[bool] = [false, false, false, false]
+var desk_w := 0.0                    ## вес живых рук сейчас (по нему pc_seat.gd двигает мышку на столе)
 
 const UPPER := ["Spine", "Head", "UpperArmL", "ForearmL", "HandL", "UpperArmR", "ForearmR", "HandR"]
 
@@ -109,6 +128,9 @@ var _air := 0.0
 var _squat := 0.0
 var _reach := 0.0
 var _seat := 0.0
+var _desk_mouse := Vector2.ZERO
+var _click := 0.0
+var _taps: Array[float] = [0.0, 0.0, 0.0, 0.0]
 
 
 func _ready() -> void:
@@ -165,6 +187,8 @@ func _ready() -> void:
 			_tree.set("parameters/%s%s_ts/scale" % [pre, key], 0.0)
 		_tree.set("parameters/%sreach_seek/seek_request" % pre, 0.0)
 	_tree.set("parameters/seat_ts/scale", 0.0)
+	if _bt.has_node("power_ts"):
+		_tree.set("parameters/power_ts/scale", 0.0)
 
 	var sk := find_children("*", "Skeleton3D", true, false)
 	if sk.size() > 0:
@@ -173,9 +197,9 @@ func _ready() -> void:
 		(sk[0] as Skeleton3D).add_child(_lean_mod)
 
 
-func _filter(node: AnimationNode, bones: Array) -> void:
+func _filter(node: AnimationNode, bones: Array, ref_clip := "Idle") -> void:
 	node.filter_enabled = true
-	var ref := _anim.get_animation("Idle")
+	var ref := _anim.get_animation(ref_clip)
 	for i in ref.get_track_count():
 		var path := ref.track_get_path(i)
 		if path.get_concatenated_subnames() in bones:
@@ -330,10 +354,51 @@ func _build_tree() -> AnimationNodeBlendTree:
 		bt.add_node("seat", AnimationNodeBlend2.new())
 		bt.connect_node("seat", 0, "act_full")
 		bt.connect_node("seat", 1, "seat_ts")
-		bt.connect_node("output", 0, "seat")
+		base = "seat"
 	else:
-		bt.connect_node("output", 0, "act_full")
+		base = "act_full"
+	base = _build_desk(bt, base)
+	bt.connect_node("output", 0, base)
 	return bt
+
+
+## У стола: правая рука ходит за мышкой (BlendSpace2D по позам DeskMouse*, только правая рука), указательный
+## кликает, пальцы левой жмут клавиши (только эти пальцы), поверх — тянется к кнопке питания (PowerReach, всё тело).
+## Края всех поз совпадают с концом ChairSit, поэтому ветки включаются без рывка.
+func _build_desk(bt: AnimationNodeBlendTree, base: String) -> String:
+	if not _anim.has_animation("DeskMouseC"):
+		return base
+	var bs := AnimationNodeBlendSpace2D.new()
+	for clip: String in DESK_MOUSE:
+		if _anim.has_animation(clip):
+			bs.add_blend_point(_clip(clip), DESK_MOUSE[clip])
+	bt.add_node("mouse_bs", bs)
+	var mouse := AnimationNodeBlend2.new()
+	_filter(mouse, ARM_R, "DeskMouseC")
+	bt.add_node("mouse", mouse)
+	bt.connect_node("mouse", 0, base)
+	bt.connect_node("mouse", 1, "mouse_bs")
+	base = "mouse"
+	var keys := {"click": ["DeskClick", ["IndexR1", "IndexR2", "IndexR3"]]}
+	for f: String in DESK_TAPS:
+		keys["tap_" + f.to_lower()] = ["DeskTap" + f, [f + "L1", f + "L2", f + "L3"]]
+	for key: String in keys:
+		if not _anim.has_animation(keys[key][0]):
+			continue
+		var b := AnimationNodeBlend2.new()
+		_filter(b, keys[key][1], "DeskMouseC")
+		bt.add_node(key, b)
+		bt.add_node(key + "_clip", _clip(keys[key][0]))
+		bt.connect_node(key, 0, base)
+		bt.connect_node(key, 1, key + "_clip")
+		base = key
+	if _anim.has_animation(POWER_CLIP):
+		_seek_clip(bt, "power", POWER_CLIP)
+		bt.add_node("power_mix", AnimationNodeBlend2.new())
+		bt.connect_node("power_mix", 0, base)
+		bt.connect_node("power_mix", 1, "power_ts")
+		base = "power_mix"
+	return base
 
 
 ## Разовое действие: имя клипа (свои — Interact, Throw, Push; GMod — FlinchStomach, FlinchHead, Wave, Laugh…);
@@ -431,6 +496,7 @@ func update_anim(delta: float, speed: float, _sprint: float, state: int, yaw_rat
 	_hips = lerp_angle(_hips, twist * _move, 1.0 - exp(-hips_response * delta))
 	if _lean_mod:
 		var br := sin(_time * 1.6) * breath * _aim  # в стойке — заметное дыхание (клип стойки статичный)
+		br += sin(_time * 1.3) * desk_breath * desk_w   # за компом — еле заметно (руки на клаве и мышке почти не сдвигаются)
 		_lean_mod.spine = Vector3(_lean.x + br, 0.0, _lean.y)
 		_lean_mod.hips_yaw = _hips
 
@@ -439,8 +505,41 @@ func update_anim(delta: float, speed: float, _sprint: float, state: int, yaw_rat
 	_tree.set("parameters/seat/blend_amount", _seat)
 	if seat_time >= 0.0:
 		_tree.set("parameters/seat_seek/seek_request", seat_time)
+	_update_desk(delta)
 
 	_tree.advance(delta)
+
+
+## Живые руки у стола и клип кнопки питания (см. _build_desk).
+func _update_desk(delta: float) -> void:
+	if not _bt.has_node("mouse"):
+		return
+	var live := desk_live and seat_time >= 0.0 and power_time < 0.0
+	desk_w = move_toward(desk_w, 1.0 if live else 0.0, delta * 4.0)
+	_desk_mouse = _desk_mouse.lerp(desk_mouse.clamp(-Vector2.ONE, Vector2.ONE), 1.0 - exp(-20.0 * delta))
+	_tree.set("parameters/mouse_bs/blend_position", _desk_mouse)
+	_tree.set("parameters/mouse/blend_amount", desk_w)
+	# палец доходит до кнопки/клавиши за ~60 мс и так же отпускает
+	_click = move_toward(_click, 1.0 if desk_click and live else 0.0, delta * 16.0)
+	if _bt.has_node("click"):
+		_tree.set("parameters/click/blend_amount", smoothstep(0.0, 1.0, _click) * desk_w)
+	for i in DESK_TAPS.size():
+		_taps[i] = move_toward(_taps[i], 1.0 if desk_keys[i] and live else 0.0, delta * 16.0)
+		var key := "tap_" + String(DESK_TAPS[i]).to_lower()
+		if _bt.has_node(key):
+			_tree.set("parameters/%s/blend_amount" % key, smoothstep(0.0, 1.0, _taps[i]) * desk_w)
+	if _bt.has_node("power_mix"):
+		# начало и конец PowerReach — поза у стола, как конец ChairSit: включаем сразу
+		_tree.set("parameters/power_mix/blend_amount", 1.0 if power_time >= 0.0 else 0.0)
+		if power_time >= 0.0:
+			_tree.set("parameters/power_seek/seek_request", power_time)
+
+
+## Длина клипа PowerReach, с (0 — клипа нет).
+func power_length() -> float:
+	if _anim and _anim.has_animation(POWER_CLIP):
+		return _anim.get_animation(POWER_CLIP).length
+	return 0.0
 
 
 ## Длина клипа посадки, с (0 — клипа нет).
