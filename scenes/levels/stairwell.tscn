@@ -329,7 +329,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.816, 9.089, -3.623)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.36, 9.14, -3.374095)
 
 [node name="DeskBottleTall" parent="YurchikRoom" unique_id=1731299009 instance=ExtResource("yr_desk_bottle_tall")]
-transform = Transform3D(0.8949003, 0, 0.4462661, 0, 1, 0, -0.4462661, 0, 0.8949003, -7.2035646, 9.14, -3.7532883)
+transform = Transform3D(0.7995975, 0, 0.6005363, 0, 1, 0, -0.6005363, 0, 0.7995975, -7.2011, 9.14, -3.7255754)
 
 [node name="DeskBottleShort" parent="YurchikRoom" unique_id=937213482 instance=ExtResource("yr_desk_bottle_short")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.43, 9.14, -3.4377222)
