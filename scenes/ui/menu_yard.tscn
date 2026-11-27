@@ -8,8 +8,6 @@
 
 [sub_resource type="ShaderMaterial" id="sky_mat"]
 shader = ExtResource("3")
-shader_parameter/glow_energy = 1.5
-shader_parameter/cloud_lit = Color(0.55, 0.2, 0.34, 1)
 
 [sub_resource type="Sky" id="sky_res"]
 sky_material = SubResource("sky_mat")
@@ -19,9 +17,9 @@ radiance_size = 0
 background_mode = 2
 sky = SubResource("sky_res")
 ambient_light_source = 2
-ambient_light_color = Color(0.62, 0.5, 0.66, 1)
+ambient_light_color = Color(0.5, 0.5, 0.66, 1)
 ambient_light_sky_contribution = 0.0
-ambient_light_energy = 0.45
+ambient_light_energy = 0.42
 tonemap_mode = 2
 tonemap_white = 1.6
 glow_enabled = true
@@ -29,9 +27,9 @@ glow_intensity = 0.5
 glow_strength = 0.9
 glow_hdr_threshold = 1.0
 fog_enabled = true
-fog_light_color = Color(0.42, 0.31, 0.42, 1)
-fog_density = 0.0028
-fog_aerial_perspective = 0.55
+fog_light_color = Color(0.46, 0.4, 0.5, 1)
+fog_density = 0.0045
+fog_aerial_perspective = 0.0
 fog_sky_affect = 0.0
 adjustment_enabled = true
 adjustment_saturation = 1.05
@@ -285,8 +283,8 @@ process_material = SubResource("pm_snow")
 draw_pass_1 = SubResource("mesh_flake")
 
 [node name="MenuCam" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0, 25.2, 3.5)
-fov = 62.0
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 24.45, 2.4)
+fov = 70.0
 far = 1500.0
 current = true
 
