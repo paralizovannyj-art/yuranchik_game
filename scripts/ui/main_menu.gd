@@ -1,30 +1,20 @@
-## Главное меню: ночной район «Паскот» на фоне (камера медленно покачивается над двором Юрчика), название и три кнопки.
+## Главное меню: на фоне кадр «Юрчик курит в окне над зимним двором на закате» (scenes/ui/menu_yard.tscn, YUR-19),
+## название и кнопки. Юрчик в окне — слева в кадре, поэтому всё меню справа, над двором и небом; под ним —
+## затемнение градиентом от середины к правому краю (левая половина кадра не тронута).
 extends Node3D
 
-const BACKDROP := "res://scenes/levels/district.tscn"
+const BACKDROP := "res://scenes/ui/menu_yard.tscn"
 const PLAYGROUND := "res://scenes/levels/playground.tscn"   ## отладка: полигон со всеми существами
-const ORBIT_CENTER := Vector3(-5.0, 3.0, -55.0)   ## двор Юрчика (точка телепорта F1), над ним идёт снег
 
-var _cam: Camera3D
-var _t := 0.0
 var _help: Label
+var _help_panel: ColorRect
 
 
 func _ready() -> void:
 	Game.in_game = false
 	get_tree().paused = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	var yard := (load(BACKDROP) as PackedScene).instantiate()
-	var pl := yard.get_node_or_null("Player")
-	if pl:                                                           # герой в меню не нужен
-		yard.remove_child(pl)
-		pl.free()
-	yard.set_script(null)                                            # и сценарий уровня тоже: он создал бы HUD игры
-	add_child(yard)
-	_cam = Camera3D.new()
-	_cam.fov = 55.0
-	add_child(_cam)
-	_cam.make_current()
+	add_child((load(BACKDROP) as PackedScene).instantiate())
 	Game.ambience("amb_wind", -12.0)
 	Game.music("mus_drone", -9.0)
 
@@ -35,15 +25,25 @@ func _ready() -> void:
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.theme = HUD.make_theme()
 	layer.add_child(root)
-	var shade := ColorRect.new()
-	shade.color = Color(0, 0, 0, 0.35)
+	var grad := Gradient.new()
+	grad.offsets = PackedFloat32Array([0.0, 0.5, 1.0])
+	grad.colors = PackedColorArray([Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(0, 0, 0, 0.5)])
+	var gtex := GradientTexture2D.new()
+	gtex.gradient = grad
+	gtex.width = 256
+	gtex.height = 4
+	var shade := TextureRect.new()
+	shade.texture = gtex
+	shade.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	shade.stretch_mode = TextureRect.STRETCH_SCALE
 	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(shade)
-	HUD.mk_label(root, "ЮРЧИК", 81, Color(0.88, 0.86, 0.80), Rect2(90, 105, 750, 105))
-	HUD.mk_label(root, "ночь на Паскоте  ·  демо-версия", 20, HUD.C_ACCENT, Rect2(96, 204, 750, 30))
+	HUD.mk_label(root, "ЮРЧИК", 81, Color(0.88, 0.86, 0.80), Rect2(640, 92, 570, 105), HORIZONTAL_ALIGNMENT_RIGHT)
+	HUD.mk_label(root, "ночь на Паскоте  ·  демо-версия", 20, HUD.C_ACCENT, Rect2(640, 190, 566, 30),
+			HORIZONTAL_ALIGNMENT_RIGHT)
 	var box := VBoxContainer.new()
-	box.position = Vector2(96, 330)
+	box.position = Vector2(1210 - 330, 330)
 	box.add_theme_constant_override("separation", 9)
 	root.add_child(box)
 	var first: Button = null
@@ -55,14 +55,21 @@ func _ready() -> void:
 		var b := Button.new()
 		b.text = e[0]
 		b.custom_minimum_size = Vector2(330, 0)
-		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		b.alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		b.pressed.connect(e[1])
 		b.mouse_entered.connect(b.grab_focus)
 		box.add_child(b)
 		if first == null:
 			first = b
 	first.grab_focus.call_deferred()
-	_help = HUD.mk_label(root, "", 18, HUD.C_TEXT, Rect2(495, 300, 720, 375))
+	# управление — поверх кадра слева от кнопок, на тёмной подложке
+	_help_panel = ColorRect.new()
+	_help_panel.color = Color(0, 0, 0, 0.62)
+	_help_panel.position = Vector2(60, 280)
+	_help_panel.size = Vector2(790, 400)
+	_help_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(_help_panel)
+	_help = HUD.mk_label(_help_panel, "", 18, HUD.C_TEXT, Rect2(24, 18, 750, 375))
 	_help.text = "\n".join([
 		"WASD / левый стик — идти          мышь / правый стик — смотреть",
 		"Shift / B — бег вперёд (тратит силы)",
@@ -76,8 +83,9 @@ func _ready() -> void:
 		"Tab / Back — телефон: задания, самочувствие          I / ↓ на крестовине — сумка",
 		"Esc / Start — пауза",
 	])
-	_help.visible = false
-	HUD.mk_label(root, "звуки — временные заглушки", 15, Color(0.5, 0.5, 0.5), Rect2(96, 678, 600, 24))
+	_help_panel.visible = false
+	HUD.mk_label(root, "звуки — временные заглушки", 15, Color(0.5, 0.5, 0.5), Rect2(610, 678, 600, 24),
+			HORIZONTAL_ALIGNMENT_RIGHT)
 
 
 ## Подпись пункта графики: что выбрано сейчас. «авто» — видеокарта не умеет Vulkan, движок сам перешёл на OpenGL.
@@ -95,11 +103,5 @@ func _toggle_graphics() -> void:
 
 
 func _toggle_help() -> void:
-	_help.visible = not _help.visible
+	_help_panel.visible = not _help_panel.visible
 
-
-func _process(delta: float) -> void:
-	_t += delta
-	var a := sin(_t * 0.04) * 0.5                     # медленно покачивается вокруг вида с юга на двор
-	_cam.position = ORBIT_CENTER + Vector3(sin(a) * 14.0, 4.5 + sin(_t * 0.11) * 0.3, cos(a) * 14.0)
-	_cam.look_at(ORBIT_CENTER + Vector3(0.0, 4.0, 0.0))

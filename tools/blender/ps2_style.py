@@ -295,6 +295,8 @@ TEXTURES = {
     "eb_blue_paint": "metal", "eb_green_paint": "metal", "eb_concrete_pole": "wall", "eb_sheet": "metal",
     "eb_field": "snowfloor", "eb_road": "snowfloor", "eb_ice": "snow", "eb_grass": "decal", "eb_tree": "decal",
     "eb_poplar": "decal", "eb_house": "facade", "eb_corrugated": "metal", "eb_girder": "wall", "eb_pier": "wall",
+    # кадр главного меню (YUR-19, menu_yard_textures.py)
+    "menu_ground": "snowfloor", "menu_garage": "wall", "menu_ac": "metal", "menu_plaster": "wall", "menu_windows": "atlas",
 }
 
 # у этих текстур есть «пара»-свечение: его надо размыть так же, чтобы окна совпали
@@ -304,7 +306,7 @@ EMISSION_OF = {
     "ind_window_emission": "ind_window", "kiosk_emission": "kiosk", "shopfront_emission": "shopfront",
     "underpass_sign_emission": "underpass_sign", "pod_window_emission": "pod_window", "tv_emission": "tv",
     "details_emission": "details", "eb_coach_emission": "eb_coach",
-    "eb_house_emission": "eb_house",
+    "eb_house_emission": "eb_house", "menu_windows_emission": "menu_windows",
 }
 
 
