@@ -6,6 +6,11 @@
 ## Модель: assets/models/room_window.gltf (tools/blender/build_room_window.py) — в ней створка RoomWindowSash_nocol
 ## (пивот на оси петель) и ручка RoomWindowHandle_nocol (пивот на шейке). Звуки — tools/audio/synth_window.py.
 ## Узел стоит у самой створки: оттуда звучит окно и по нему меряется, близко ли Юрчик.
+## Открывает Юрчик руками (клип WindowOpen, tools/blender/build_window_open.py): подходит к месту у окна
+## (маркер WindowSpot), тянется через подоконник к ручке, поворачивает её, ведёт створку за ручку до упора
+## и отпускает; взгляд — за рукой, потом на улицу. Закрывает — тот же клип задом наперёд: берётся за ручку
+## открытой створки, толкает её на место, ручку вниз. Створка, ручка и взгляд идут по дорожкам из
+## assets/animations/window/window_open.json — ровно за кулаком. Нет клипа — по-старому, твинами.
 class_name RoomWindow
 extends Interactable
 
@@ -20,6 +25,12 @@ extends Interactable
 @export var open_prompt := "Открыть окно"
 @export var close_prompt := "Закрыть окно"
 @export_multiline var first_open_line := "Ух, холодрыга. Зато хоть проветрю."
+@export var spot_path: NodePath = ^"WindowSpot"  ## Marker3D: где стоит Юрчик, пока открывает (смотрит вдоль −Z, на окно)
+@export_file("*.json") var anim_path := "res://assets/animations/window/window_open.json"   ## створка, ручка, взгляд
+@export var open_rate := 1.0                     ## скорость клипа, когда открывает
+@export var close_rate := 1.25                   ## и когда закрывает (клип задом наперёд)
+@export var walk_speed := 1.3                    ## м/с — подходит к окну
+@export var turn_speed := 110.0                  ## °/с — разворачивается к окну
 
 const SASH := "RoomWindowSash_nocol"
 const HANDLE := "RoomWindowHandle_nocol"
@@ -39,6 +50,13 @@ var _breath: Node
 var _breath_pauses: PackedFloat32Array
 var _breath_warm := true
 var _cold := false
+var _spot: Node3D
+var _fps := 30.0
+var _marks := {}                  ## кадры клипа: grab, turn0, turn1, pop, open, release, free, end
+var _sash_keys: Array = []        ## покадрово угол створки, °
+var _handle_keys: Array = []      ## покадрово угол ручки, °
+var _look_keys: Array = []        ## покадрово точка взгляда (пространство WindowSpot)
+const SETTLE_TIME := 0.35
 
 
 func _ready() -> void:
@@ -63,6 +81,15 @@ func _ready() -> void:
 	add_child(_street)
 	prompt = open_prompt
 	interacted.connect(_on_interacted)
+	_spot = get_node_or_null(spot_path) as Node3D
+	var res := load(anim_path) as JSON if ResourceLoader.exists(anim_path) else null
+	if res and res.data is Dictionary:
+		var d: Dictionary = res.data
+		_fps = float(d.get("fps", 30))
+		_marks = d.get("marks", {})
+		_sash_keys = d.get("sash", [])
+		_handle_keys = d.get("handle", [])
+		_look_keys = d.get("look", [])
 
 
 ## Коллизия створки: тело не может просто ехать вместе с родителем (физика не заметит поворот),
@@ -91,10 +118,157 @@ func _physics_process(_delta: float) -> void:
 func _on_interacted(player: Player) -> void:
 	if _busy or _sash == null:
 		return
-	if is_open:
+	if player and _spot and not _sash_keys.is_empty() and float(player.model.call("window_length")) > 0.0:
+		_by_hand(player, not is_open)
+	elif is_open:
 		_close(player)
 	else:
 		_open(player)
+
+
+# ----------------------------------------------------------------------------- руками (клип WindowOpen)
+## Открыть (open) или закрыть окно руками: подойти к месту у окна, клип вперёд или задом наперёд.
+func _by_hand(p: Player, open: bool) -> void:
+	_busy = true
+	p.set_seated(true, true)                 # тело и взгляд ведёт клип; фонарик остаётся как был
+	var length: float = p.model.call("window_length")
+	var t0 := 0.0 if open else length
+	await _walk_to(p, _look_at_t(t0))
+	p.global_position = _spot.global_position
+	p.seat_yaw = _spot.global_basis.get_euler().y
+	await _play(p, t0, length - t0 if open else -length, open_rate if open else close_rate)
+	p.model.set("window_time", -1.0)
+	p.set_seated(false)
+	_busy = false
+	if open and not _opened_once:
+		_opened_once = true
+		Game.say(first_open_line)
+
+
+## Точка взгляда на секунде t клипа (мир).
+func _look_at_t(t: float) -> Vector3:
+	var v: Variant = _sample(_look_keys, t)
+	if v is Array and (v as Array).size() >= 3:
+		return _spot.global_transform * Vector3(v[0], v[1], v[2])
+	return global_position
+
+
+## Значение покадровой дорожки на секунде t (между кадрами — линейно): число или массив чисел.
+func _sample(keys: Array, t: float) -> Variant:
+	if keys.is_empty():
+		return 0.0
+	var fr := clampf(t * _fps, 0.0, keys.size() - 1.0)
+	var i := clampi(int(fr), 0, maxi(keys.size() - 2, 0))
+	var a: Variant = keys[i]
+	var b: Variant = keys[mini(i + 1, keys.size() - 1)]
+	var u := fr - i
+	if a is Array:
+		var out := []
+		for c in (a as Array).size():
+			out.append(lerpf(a[c], b[c], u))
+		return out
+	return lerpf(float(a), float(b), u)
+
+
+## Подойти шагом на место у окна и повернуться к нему; взгляд к концу шага — туда, куда смотрит первый кадр клипа.
+func _walk_to(p: Player, look_pt: Vector3) -> void:
+	var target := _spot.global_position
+	var yaw := _spot.global_basis.get_euler().y
+	var from := p.global_position
+	var yaw0 := p.seat_yaw
+	var dist := Vector2(target.x - from.x, target.z - from.z).length()
+	var cam0 := Vector2(p.cam_yaw, p.cam_pitch)
+	var aim_end := _angles_to(p, look_pt)
+	var turn := maxf(absf(angle_difference(yaw0, yaw)), absf(angle_difference(cam0.x, aim_end.x)))
+	var dur := clampf(maxf(dist / walk_speed, turn / deg_to_rad(turn_speed)), 0.4, 3.0)
+	var tw := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+	tw.tween_method(func(u: float) -> void:
+		var e := _smoother(u)
+		p.global_position = from.lerp(target, e)
+		p.seat_yaw = lerp_angle(yaw0, yaw, _smoother(minf(u * 1.15, 1.0)))
+		p.seat_walk = dist / dur * 30.0 * u * u * (1.0 - u) * (1.0 - u)   # шаг по скорости на кривой — ноги не скользят
+		var aim := _angles_to(p, look_pt)
+		var k := _smoother(minf(u * 1.15, 1.0))
+		p.look_at_angles(lerp_angle(cam0.x, aim.x, k), lerpf(cam0.y, aim.y, k)), 0.0, 1.0, dur)
+	await tw.finished
+	p.seat_walk = 0.0
+	await get_tree().create_timer(0.12).timeout     # ноги дошагали в стойку — дальше клип с той же стойки
+
+
+## Проиграть клип от t0 на dt секунд (dt < 0 — назад, закрывает): поза, створка, ручка, взгляд, звуки.
+func _play(p: Player, t0: float, dt: float, rate: float) -> void:
+	var t := t0
+	var t1 := t0 + dt
+	var dir := signf(dt)
+	var from := Vector2(p.cam_yaw, p.cam_pitch)
+	var settle := 0.0
+	_apply(p, t, from, 0.0)
+	while (t1 - t) * dir > 0.0:
+		await get_tree().physics_frame
+		var step := get_physics_process_delta_time()
+		settle = minf(settle + step / SETTLE_TIME, 1.0)
+		var nt := t + step * rate * dir
+		nt = minf(nt, t1) if dir > 0.0 else maxf(nt, t1)
+		_cues(t, nt, dir)
+		t = nt
+		_apply(p, t, from, settle)
+
+
+## Кадр клипа: поза Юрчика, створка, ручка и взгляд (в начале плавно от того, куда смотрел).
+func _apply(p: Player, t: float, from: Vector2, settle: float) -> void:
+	p.model.set("window_time", t)
+	_sash.rotation.y = deg_to_rad(float(_sample(_sash_keys, t)))
+	_handle.rotation.x = deg_to_rad(float(_sample(_handle_keys, t)))
+	var a := _angles_to(p, _look_at_t(t))
+	if settle < 1.0:
+		var e := _smoother(settle)
+		a = Vector2(lerp_angle(from.x, a.x, e), lerpf(from.y, a.y, e))
+	p.look_at_angles(a.x, a.y)
+
+
+## Прошла ли метка клипа key между секундами t и nt (в сторону dir).
+func _crossed(key: String, t: float, nt: float, dir: float) -> bool:
+	var m := float(_marks.get(key, -1)) / _fps
+	return m >= 0.0 and (m - t) * dir > 0.0 and (m - nt) * dir <= 0.0
+
+
+## Звуки и состояние на метках клипа. Открывает: ручка пошла — лязг, створка отлипла — «чпок», улица, снег.
+## Закрывает (назад): створка села на уплотнитель — глухой «пух», улица стихает; ручка пошла вниз — лязг.
+func _cues(t: float, nt: float, dir: float) -> void:
+	if dir > 0.0:
+		if _crossed("turn0", t, nt, dir):
+			Game.sfx("window_handle", global_position, -2.0, 0.04)
+		if _crossed("pop", t, nt, dir):
+			is_open = true
+			prompt = close_prompt
+			Game.sfx("window_open", global_position, 0.0, 0.03)
+			_street_fade(street_db, 2.2)
+			if _snow:
+				_snow.emitting = true
+	else:
+		if _crossed("pop", t, nt, dir):
+			is_open = false
+			prompt = open_prompt
+			Game.sfx("window_close", global_position, 0.0, 0.03)
+			_street_fade(-60.0, 0.35)
+			if _snow:
+				_snow.emitting = false
+		if _crossed("turn1", t, nt, dir):
+			Game.sfx("window_handle", global_position, -4.0, 0.04)
+
+
+## Углы взгляда (поворот, наклон) из глаз игрока на точку в мире.
+static func _angles_to(p: Player, at: Vector3) -> Vector2:
+	var d := at - p.eye_point()
+	return Vector2(atan2(-d.x, -d.z), atan2(d.y, Vector2(d.x, d.z).length()))
+
+
+static func _smoother(x: float) -> float:
+	x = clampf(x, 0.0, 1.0)
+	return x * x * x * (x * (x * 6.0 - 15.0) + 10.0)
+
+
+# ----------------------------------------------------------------------------- без клипа (твинами)
 
 
 func _open(player: Player) -> void:

@@ -22,6 +22,10 @@ const DESK_MOUSE := {"DeskMouseC": Vector2(0, 0), "DeskMouseL": Vector2(-1, 0), 
 		"DeskMouseFR": Vector2(1, 1), "DeskMouseBL": Vector2(-1, -1), "DeskMouseBR": Vector2(1, -1)}
 const DESK_TAPS := ["Index", "Middle", "Ring", "Thumb"]   ## клипы DeskTap<палец>; desk_keys — по этому порядку
 const POWER_CLIP := "PowerReach"
+## открывает окно в своей комнате (WindowOpen — tools/blender/build_window_open.py): тянется к ручке, поворачивает,
+## ведёт створку до упора, отпускает; закрывает — тот же клип задом наперёд (room_window.gd)
+const WINDOW_LIB := "res://assets/animations/window/yurchik_window.glb"
+const WINDOW_CLIP := "WindowOpen"
 const ARM_R := ["UpperArmR", "ForearmR", "HandR", "IndexR1", "IndexR2", "IndexR3", "MiddleR1", "MiddleR2", "MiddleR3",
 		"RingR1", "RingR2", "RingR3", "PinkyR1", "PinkyR2", "PinkyR3", "ThumbR1", "ThumbR2", "ThumbR3"]
 ## зацикленные клипы библиотеки (флаг loop в assets/animations/gmod/clips.json)
@@ -97,6 +101,8 @@ var land_eta := 9.0
 var seat_time := -1.0
 ## ставит pc_seat.gd: секунда клипа PowerReach (тянется к кнопке питания); < 0 — не тянется
 var power_time := -1.0
+## ставит room_window.gd: секунда клипа WindowOpen (0 — стоит у окна, конец — открыл и отпустил); < 0 — не у окна
+var window_time := -1.0
 ## ставит pc_seat.gd, пока сидит у стола: живые руки — мышь (−1..1 по коврику: x вправо, y вперёд),
 ## нажата ли левая кнопка мыши, какие пальцы левой жмут клавиши (DESK_TAPS)
 var desk_live := false
@@ -150,10 +156,11 @@ func _ready() -> void:
 	var all := AnimationLibrary.new()
 	for n: StringName in lib.get_animation_list():
 		all.add_animation(n, lib.get_animation(n))
-	var sit_lib := load(SIT_LIB) as AnimationLibrary
-	if sit_lib:
-		for n: StringName in sit_lib.get_animation_list():
-			all.add_animation(n, sit_lib.get_animation(n))
+	for path: String in [SIT_LIB, WINDOW_LIB]:
+		var extra := load(path) as AnimationLibrary if ResourceLoader.exists(path) else null
+		if extra:
+			for n: StringName in extra.get_animation_list():
+				all.add_animation(n, extra.get_animation(n))
 	var own := root.find_children("*", "AnimationPlayer", false, false)
 	if own.is_empty():
 		_anim = AnimationPlayer.new()
@@ -187,8 +194,9 @@ func _ready() -> void:
 			_tree.set("parameters/%s%s_ts/scale" % [pre, key], 0.0)
 		_tree.set("parameters/%sreach_seek/seek_request" % pre, 0.0)
 	_tree.set("parameters/seat_ts/scale", 0.0)
-	if _bt.has_node("power_ts"):
-		_tree.set("parameters/power_ts/scale", 0.0)
+	for key: String in ["power", "window"]:
+		if _bt.has_node(key + "_ts"):
+			_tree.set("parameters/%s_ts/scale" % key, 0.0)
 
 	var sk := find_children("*", "Skeleton3D", true, false)
 	if sk.size() > 0:
@@ -358,6 +366,14 @@ func _build_tree() -> AnimationNodeBlendTree:
 	else:
 		base = "act_full"
 	base = _build_desk(bt, base)
+	# окно: кадр клипа WindowOpen задаёт window_time, всё тело. Края клипа — обычная стойка на месте у окна,
+	# поэтому ветка включается и выключается сразу (snap_window), когда игрок встаёт на это место.
+	if _anim.has_animation(WINDOW_CLIP):
+		_seek_clip(bt, "window", WINDOW_CLIP)
+		bt.add_node("window_mix", AnimationNodeBlend2.new())
+		bt.connect_node("window_mix", 0, base)
+		bt.connect_node("window_mix", 1, "window_ts")
+		base = "window_mix"
 	bt.connect_node("output", 0, base)
 	return bt
 
@@ -506,6 +522,11 @@ func update_anim(delta: float, speed: float, _sprint: float, state: int, yaw_rat
 	if seat_time >= 0.0:
 		_tree.set("parameters/seat_seek/seek_request", seat_time)
 	_update_desk(delta)
+	if _bt.has_node("window_mix"):
+		# начало и конец WindowOpen — стойка, как у Idle: включаем сразу
+		_tree.set("parameters/window_mix/blend_amount", 1.0 if window_time >= 0.0 else 0.0)
+		if window_time >= 0.0:
+			_tree.set("parameters/window_seek/seek_request", window_time)
 
 	_tree.advance(delta)
 
@@ -539,6 +560,13 @@ func _update_desk(delta: float) -> void:
 func power_length() -> float:
 	if _anim and _anim.has_animation(POWER_CLIP):
 		return _anim.get_animation(POWER_CLIP).length
+	return 0.0
+
+
+## Длина клипа WindowOpen, с (0 — клипа нет).
+func window_length() -> float:
+	if _anim and _anim.has_animation(WINDOW_CLIP):
+		return _anim.get_animation(WINDOW_CLIP).length
 	return 0.0
 
 

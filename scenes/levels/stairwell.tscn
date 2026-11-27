@@ -403,6 +403,9 @@ window_path = NodePath("../RoomWindow")
 snow_path = NodePath("SnowIn")
 prompt = "Открыть окно"
 
+[node name="WindowSpot" type="Marker3D" parent="RoomWindowUse"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0.315, -1.6, -0.53)
+
 [node name="SnowIn" type="GPUParticles3D" parent="RoomWindowUse"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0.25)
 emitting = false
