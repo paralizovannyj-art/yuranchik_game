@@ -18,7 +18,8 @@ const CLIP := &"menu/MenuSmoke"
 @export var street_energy := 1.6                     ## фонари (1/d²: на снегу под фонарём ≈ e/h²)
 @export var room_energy := 4.0                       ## лампа в комнате Юрчика
 
-@export var block_glow := 0.35                       ## окна дальних высоток: свечение (в текстурах фасадов их много)
+@export var block_glow := 0.6                        ## окна дальних высоток: свечение (в текстурах фасадов их много)
+@export var block_shade := Color(0.45, 0.42, 0.48)    ## дальние высотки темнее: в дымке читаются силуэтом
 @export var dusk_from := Vector3(0.12, 0.16, -1.0)   ## откуда светит закат: из-за высоток, фасад Юрчика в тени
 
 @export var ember_idle := 0.12                       ## огонёк сигареты: свет, пока тлеет
@@ -71,13 +72,16 @@ func _spawn_lights() -> void:
 		root.add_child(o)
 
 
-## Дальние высотки — на общих текстурах фасадов района, где горит много окон: в кадре меню тусклее.
+## Дальние высотки — на общих текстурах фасадов района, где горит много окон: в кадре меню тусклее и темнее.
+## Туман тут экспоненциальный (не Depth): Graphics заменяет Depth-туман своим lit_fog, а в меню нужна
+## ровная дымка, в которой дома еле видны силуэтом и чуть светятся окна.
 func _tune_materials(node: Node) -> void:
 	for mi: MeshInstance3D in node.find_children("*", "MeshInstance3D", true, false):
 		for i in mi.mesh.get_surface_count():
 			var m := mi.mesh.surface_get_material(i) as StandardMaterial3D
-			if m and m.resource_name.begins_with("MenuFacade"):
+			if m and m.resource_name.begins_with("MenuFac"):
 				m.emission_energy_multiplier = block_glow
+				m.albedo_color = block_shade
 
 
 ## Клип курения на своём плеере модели; сигарета и рот — по точкам из smoke.json: они даны в пространстве

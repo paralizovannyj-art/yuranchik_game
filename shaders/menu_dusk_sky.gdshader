@@ -23,7 +23,8 @@ uniform vec2 glow_dir = vec2(0.34, -0.94);
 uniform float glow_elev : hint_range(0.0, 0.8) = 0.29;
 uniform float glow_width : hint_range(0.05, 1.5) = 0.24;
 uniform float glow_height : hint_range(0.01, 0.4) = 0.05;
-uniform float horizon_height : hint_range(0.01, 0.4) = 0.07;
+uniform float horizon_height : hint_range(0.01, 0.4) = 0.1;
+uniform float haze_solid : hint_range(0.0, 0.3) = 0.08;           // до этой высоты дымка сплошная (выше крыш дальних домов)
 uniform float cloud_cover : hint_range(0.0, 1.0) = 0.84;
 uniform float cloud_scale = 1.3;
 uniform float cloud_speed : hint_range(0.0, 0.05) = 0.004;
@@ -96,7 +97,7 @@ void sky() {
 		col = mix(col, cc, c);
 
 		// дымка у горизонта: тот же цвет, что у тумана сцены — дальние дома тают в ней без шва
-		float h = exp(-d.y / horizon_height);
+		float h = exp(-max(d.y - haze_solid, 0.0) / horizon_height);
 		col = mix(col, hz, clamp(h, 0.0, 1.0));
 		COLOR = compat_enc(col);
 	}
