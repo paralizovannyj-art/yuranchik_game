@@ -45,7 +45,7 @@ FLOOR_H = 2.8
 PLINTH = 0.6
 FLOORS = 12
 BAY = 3.0                          # шаг окон по фасаду
-BAYS_Z = (13.5, -82.5)             # фасад дома Юрчика от … до (z); середины клеток — через 3 м от z = 0 (окно Юрчика)
+BAYS_Z = (13.5, -67.5)             # фасад дома Юрчика от … до (z); середины клеток — через 3 м от z = 0 (окно Юрчика)
 HOME_DEPTH = 12.0
 YUR_FLOOR = 8                      # 9-й этаж (счёт с 0)
 YB = PLINTH + YUR_FLOOR * FLOOR_H  # пол его комнаты, 23.0
@@ -59,9 +59,11 @@ ROOM_Z = (-1.8, 1.8)
 ROOM_H = 2.7
 SPOT = (-0.62, YB, 0.36)           # где стоит Юрчик (ноги), лицом в +X — в открытую створку
 
-# двор: карта снега (как в menu_yard_textures.py)
-GROUND_ORIGIN = (0.0, -150.0)
-GROUND_SIZE = 160.0
+# план двора по спутнику и видео из окна — общий с menu_yard_textures.py
+PL = {"__name__": "menu_plan"}
+exec(open(os.path.join(HERE, "menu_yard_plan.py"), encoding="utf-8").read(), PL)
+TOWER_Z = -43.5                    # западнее — 16-этажная башня того же дома (спутник)
+TOWER_FLOORS = 16
 
 LIGHTS = []                        # для Godot: {"kind", "pos", "color", "energy", "range"}
 
@@ -156,13 +158,17 @@ def materials():
     M["facade"] = mat("MenuFacadeA", "facade_albedo", "facade_emission")
     M["facade_b"] = mat("MenuFacadeB", "facade_b_albedo", "facade_b_emission")
     M["facade_c"] = mat("MenuFacadeC", "facade_c_albedo", "facade_c_emission")
+    M["fac_cream"] = mat("MenuFacCream", "menu_fac_cream", "menu_fac_cream_emission")
+    M["fac_ochre"] = mat("MenuFacOchre", "menu_fac_ochre", "menu_fac_ochre_emission")
+    M["fac_brick"] = mat("MenuFacBrick", "menu_fac_brick", "menu_fac_brick_emission")
     M["corr"] = two_sided(mat("MenuCorrugated", "eb_corrugated", rough=0.6))
     M["white"] = mat("MenuWhiteMetal", "eb_white", rough=0.6)
     M["fence"] = mat("MenuFenceConcrete", "fence_concrete")
     M["parquet"] = mat("MenuParquet", "parquet")
     M["wallpaper"] = mat("MenuWallpaper", "wallpaper")
-    M["tree"] = amat("MenuTree", "eb_tree")
-    M["poplar"] = amat("MenuPoplar", "eb_poplar")
+    M["bark"] = two_sided(mat("MenuBark", "menu_bark"))
+    M["twigs"] = amat("MenuTwigs", "menu_twigs")
+    M["tsnow"] = two_sided(mat("MenuTreeSnow", "snow"))
     M["frame"] = flat("MenuPvc", (0.86, 0.86, 0.84, 1), rough=0.5)
     M["glass"] = two_sided(flat("MenuGlass", (0.05, 0.05, 0.06, 1), rough=0.08))
     M["paint"] = flat("MenuPaint", (0.9, 0.9, 0.9, 1), rough=0.45)       # машины, лавки, горка: цвет — в вершинах
@@ -235,12 +241,14 @@ def home(coll):
     b = B()
     r = random.Random(47)
     nb = int(round((BAYS_Z[0] - BAYS_Z[1]) / BAY))
-    for f in range(FLOORS):
+    for f in range(TOWER_FLOORS):
         y0 = PLINTH + f * FLOOR_H
         for i in range(nb):
             za = BAYS_Z[0] - i * BAY
             zb = za - BAY
             zc = (za + zb) / 2
+            if f >= (TOWER_FLOORS if zc < TOWER_Z else FLOORS):
+                continue
             tone = 0.42 + r.uniform(-0.03, 0.03)
             b.cur = (tone * 0.95, tone * 0.95, tone * 1.02)
             mine = (f == YUR_FLOOR and abs(zc) < 0.01)
@@ -275,15 +283,20 @@ def home(coll):
             [(0, 0), (nb * 0.75, 0), (nb * 0.75, 0.15), (0, 0.15)], M["plaster"])
     # торец и крыша не видны из камеры — только парапет сверху (линия на фоне неба вдали)
     top = PLINTH + FLOORS * FLOOR_H
+    ttop = PLINTH + TOWER_FLOORS * FLOOR_H
     b.cur = (0.45, 0.44, 0.44)
-    b.gbox(-0.3, 0.05, top, top + 0.9, BAYS_Z[1], BAYS_Z[0], {"+x": M["plaster"], "up": M["snow"]}, (4.0, 4.0))
+    b.gbox(-0.3, 0.05, top, top + 0.9, TOWER_Z, BAYS_Z[0], {"+x": M["plaster"], "up": M["snow"]}, (4.0, 4.0))
+    b.gbox(-0.3, 0.05, ttop, ttop + 0.9, BAYS_Z[1], TOWER_Z, {"+x": M["plaster"], "up": M["snow"]}, (4.0, 4.0))
+    # торец башни над крышей дома (виден на фоне неба)
+    b.gquad([(-12.0, top, TOWER_Z), (0.0, top, TOWER_Z), (0.0, ttop + 0.9, TOWER_Z), (-12.0, ttop + 0.9, TOWER_Z)],
+            [(0, 0), (3, 0), (3, 3), (0, 3)], M["plaster"])
     # кондиционер Юрчика справа от окна — крупный, с сосульками (главный кадр)
     ac_unit(b, 0.0, -1.55, YB + 1.5, icicles=True, w=0.82, h=0.56, d=0.3)
     # трубка от кондиционера вниз по стене и провод с крыши во двор
     b.cur = (1, 1, 1)
     b.cyl(P(0.04, YB + 1.5, -1.22), P(0.04, 0.6, -1.22), 0.014, 0.014, M["dark"], segs=5)
     wire = [P(0.06, top - 2.5, -7.0)]
-    a, c = Vector((0.06, top - 2.5, -7.0)), Vector((88.0, 9.0, -92.0))
+    a, c = Vector((0.06, top - 2.5, -7.0)), Vector((78.0, 30.0, -30.0))
     for k in range(1, 25):
         t = k / 24
         p = a.lerp(c, t)
@@ -424,103 +437,313 @@ def room(coll):
 
 
 # ------------------------------------------------------------------ двор
+# Всё расставлено по плану menu_yard_plan.py (PL): спутник Google Earth + видео из окна Юрчика.
 def ground(coll):
     b = B()
-    x0, z0 = GROUND_ORIGIN
-    S = GROUND_SIZE
+    x0, z0, sx, sz = PL["GX0"], PL["GZ0"], PL["GSX"], PL["GSZ"]
     b.cur = (1, 1, 1)
-    # карта двора: u по x, v по z (сверху вниз — как в картинке: v = 1 у z0)
-    b.gquad([(x0, 0, z0 + S), (x0 + S, 0, z0 + S), (x0 + S, 0, z0), (x0, 0, z0)],
+    # карта двора: u по x, v по z (v = 1 у z0 — верх картинки)
+    b.gquad([(x0, 0, z0 + sz), (x0 + sx, 0, z0 + sz), (x0 + sx, 0, z0), (x0, 0, z0)],
             [(0, 0), (1, 0), (1, 1), (0, 1)], M["ground"])
     # вокруг — просто снег до горизонта (без нахлёста, чтобы не мерцало)
-    far = 900.0
+    far = 1500.0
     T = 8.0
     def q(xa, xb, za, zb):
         b.gquad([(xa, 0, zb), (xb, 0, zb), (xb, 0, za), (xa, 0, za)],
                 [(xa / T, zb / T), (xb / T, zb / T), (xb / T, za / T), (xa / T, za / T)], M["snow"])
-    q(-60, x0, -far, 40)                 # под домом и левее
-    q(x0 + S, far, -far, 40)             # правее двора
-    q(x0, x0 + S, -far, z0)              # за двором
-    q(x0, x0 + S, z0 + S, 40)            # ближе (за камерой)
+    q(-far, x0, -far, far)               # под домом и за ним
+    q(x0 + sx, far, -far, far)           # дальше от дома
+    q(x0, x0 + sx, -far, z0)             # за проспектом
+    q(x0, x0 + sx, z0 + sz, far)         # за камерой
     return b.build("Ground_nocol", coll)
 
 
 def car(b, x, z, yaw, color):
-    """Машина под снегом: кузов, кабина, снежные шапки на капоте, крыше и багажнике."""
+    """Машина под снегом: кузов, кабина, снежные шапки на капоте, крыше и багажнике. yaw = 0 — длиной вдоль x."""
     L, W = 4.2, 1.75
     ca, sa = math.cos(yaw), math.sin(yaw)
     def tr(px, py, pz):
         return (x + px * ca - pz * sa, py, z + px * sa + pz * ca)
     def obox(a0, a1, y0, y1, c0, c1, m_sides, m_top, col):
-        # повернутая коробка: a — вдоль машины, c — поперёк
         pts = [tr(a0, y0, c0), tr(a1, y0, c0), tr(a1, y0, c1), tr(a0, y0, c1),
                tr(a0, y1, c0), tr(a1, y1, c0), tr(a1, y1, c1), tr(a0, y1, c1)]
         b.cur = col
-        faces = [(0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)]
-        for f in faces:
+        for f in [(0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)]:
             b.gquad([pts[i] for i in f], [(0, 0), (1, 0), (1, 1), (0, 1)], m_sides)
         b.cur = (1, 1, 1)
         b.gquad([pts[4], pts[5], pts[6], pts[7]][::-1], [(0, 0), (0.5, 0), (0.5, 0.5), (0, 0.5)], m_top)
     obox(-L / 2, L / 2, 0.15, 0.78, -W / 2, W / 2, M["paint"], M["snow"], color)
     obox(-0.9, 1.1, 0.78, 1.3, -W / 2 + 0.12, W / 2 - 0.12, M["glass"], M["snow"], (1, 1, 1))
-    # снег на крыше горкой
     obox(-0.85, 1.05, 1.3, 1.42, -W / 2 + 0.15, W / 2 - 0.15, M["snow"], M["snow"], (1, 1, 1))
     obox(-L / 2 + 0.05, -0.95, 0.78, 0.86, -W / 2 + 0.05, W / 2 - 0.05, M["snow"], M["snow"], (1, 1, 1))
     obox(1.15, L / 2 - 0.05, 0.78, 0.84, -W / 2 + 0.05, W / 2 - 0.05, M["snow"], M["snow"], (1, 1, 1))
-    # колёса — тёмная полоса снизу
     obox(-L / 2 + 0.3, L / 2 - 0.3, 0.0, 0.15, -W / 2 + 0.05, W / 2 - 0.05, M["dark"], M["dark"], (1, 1, 1))
+
+
+CAR_COLORS = [(0.12, 0.12, 0.14), (0.85, 0.85, 0.87), (0.15, 0.2, 0.35), (0.45, 0.1, 0.1), (0.55, 0.55, 0.58),
+              (0.92, 0.92, 0.92), (0.9, 0.9, 0.92), (0.2, 0.22, 0.25)]
 
 
 def cars(coll):
     b = B()
     r = random.Random(5)
-    colors = [(0.12, 0.12, 0.14), (0.8, 0.8, 0.82), (0.15, 0.2, 0.35), (0.45, 0.1, 0.1), (0.55, 0.55, 0.58), (0.9, 0.9, 0.9)]
-    z = 8.0
-    while z > -60:
-        if r.random() < 0.8:
-            car(b, 9.6, z, math.radians(r.uniform(-4, 4)), r.choice(colors))
-        z -= r.uniform(2.6, 3.2)
-    # пара машин у проезда вдоль дома и у гаражей
-    for (x, zz, yaw) in ((3.0, -24.0, 90), (3.0, -46.0, 92), (31.0, -6.0, 15), (52.0, -30.0, 75)):
-        car(b, x, zz, math.radians(yaw), r.choice(colors))
+    col = lambda: r.choice(CAR_COLORS)
+    # карманы у дома (видео 21–23 с: белые, тёмные, синяя) — носом к проезду
+    x0, x1, z0, z1 = PL["PARKING"]
+    z = z1 - 1.3
+    while z > z0 + 1.2:
+        if r.random() < 0.82:
+            car(b, (x0 + x1) / 2 + 0.2, z, math.radians(r.uniform(-3, 3) + (180 if r.random() < 0.3 else 0)), col())
+        z -= 2.6
+    # пара машин у края проезда напротив площадки (видео 3 с)
+    for zz in (18.0, 24.5, 31.0):
+        car(b, 9.3, zz, math.radians(90 + r.uniform(-2, 2)), col())
+    # вдоль дома с красными шапками
+    z = -47.0
+    while z < 55:
+        if r.random() < 0.55:
+            car(b, 75.0, z, math.radians(90 + r.uniform(-3, 3)), col())
+        z += r.uniform(4.6, 7.0)
+    # стоянка рынка (видео 0, 5–6 с): ряды по 2.6 м
+    mx0, mx1, mz0, mz1 = PL["MARKET_PARKING"]
+    for xr in (mx0 + 3.0, mx0 + 8.2, mx0 + 18.0, mx0 + 23.2):
+        z = mz0 + 1.5
+        while z < mz1 - 1.5:
+            if r.random() < 0.55:
+                car(b, xr, z, math.radians(r.uniform(-4, 4)), col())
+            z += 2.6
+    # проспект: у бордюров стоят, посередине едут
+    a0, a1 = PL["AVENUE_Z"]
+    for zz, p in ((a1 - 1.4, 0.45), (a0 + 1.4, 0.45), (a1 - 6.0, 0.18), (a1 - 10.0, 0.14), (a0 + 6.0, 0.18), (a0 + 10.0, 0.14)):
+        x = -70.0
+        while x < 235:
+            if r.random() < p:
+                car(b, x, zz, math.radians(r.uniform(-1.5, 1.5)), col())
+            x += r.uniform(5.0, 8.0)
+    # улица у 16-этажек справа (видео 12–13 с)
+    x = 18.0
+    while x < 150:
+        if r.random() < 0.6:
+            car(b, x, 79.5, math.radians(r.uniform(-2, 2)), col())
+        x += r.uniform(4.8, 7.5)
     return b.build("Cars_nocol", coll)
 
 
-def tree_card(b, x, z, h, poplar=False, r=None):
-    """Дерево-билборд: 3 перекрещенных квадрата текстуры (вид сверху-сбоку не пропадает)."""
-    w = h * (0.5 if poplar else 1.0)
-    m = M["poplar"] if poplar else M["tree"]
-    a0 = r.uniform(0, math.pi)
+# ------------------------------------------------------------------ деревья
+# Голые зимние деревья (орех, клён, акация; у дома напротив — тополя) настоящими ветками: ствол и ветки —
+# гранёные трубки с корой, на верхней стороне каждой ветки — снежный валик (метель завалила снегом все
+# ветки), ствол с наветренной стороны залеплен снегом, у комля — сугроб. Концы веток — пучки тонких
+# веточек со снегом (карточки menu_twigs). Дальние деревья (в дымке) проще: без веток второго порядка.
+WIND = Vector((0.5, 0.0, 0.85)).normalized()     # откуда мела метель: с этой стороны стволы залеплены снегом
+CAM_XZ = (2.5, 2.4)                              # камера меню — чтобы упростить дальние деревья
+RING = 5
+
+
+def _frame(d):
+    s = d.cross(Vector((0.0, 1.0, 0.0)))
+    if s.length < 1e-3:
+        s = Vector((1.0, 0.0, 0.0))
+    s.normalize()
+    return s, s.cross(d).normalized()
+
+
+def _tube(b, pts, radii, v0=0.0):
+    """Трубка по точкам (Godot): грани коры; смотрящие вверх и залепленные метелью — снег.
+    Сверху на каждом не слишком крутом участке — снежный валик (две наклонные грани)."""
+    rings = []
+    for i, p in enumerate(pts):
+        d = (pts[min(i + 1, len(pts) - 1)] - pts[max(i - 1, 0)]).normalized()
+        sd, up = _frame(d)
+        ring = []
+        for k in range(RING):
+            n = sd * math.cos(2 * math.pi * k / RING) + up * math.sin(2 * math.pi * k / RING)
+            ring.append((p + n * radii[i], n))
+        rings.append(ring)
+    vs = [v0]
+    for i in range(1, len(pts)):
+        vs.append(vs[-1] + (pts[i] - pts[i - 1]).length / 2.4)
+    for i in range(len(pts) - 1):
+        for k in range(RING):
+            a, c = rings[i][k], rings[i][(k + 1) % RING]
+            e, f = rings[i + 1][(k + 1) % RING], rings[i + 1][k]
+            nrm = (a[1] + c[1] + e[1] + f[1]).normalized()
+            snowy = nrm.y > 0.4 or nrm.dot(WIND) > 0.65
+            b.cur = (1, 1, 1) if snowy else (0.92, 0.9, 0.88)
+            u0, u1 = k / RING, (k + 1) / RING
+            b.gquad([tuple(a[0]), tuple(c[0]), tuple(e[0]), tuple(f[0])],
+                    [(u0, vs[i]), (u1, vs[i]), (u1, vs[i + 1]), (u0, vs[i + 1])],
+                    M["tsnow"] if snowy else M["bark"])
+        # снежный валик сверху (на крутых участках снег не держится)
+        flat_k = 1.0 - abs((pts[i + 1] - pts[i]).normalized().y)
+        if flat_k < 0.25:
+            continue
+        b.cur = (1, 1, 1)
+        q = []
+        for j in (i, i + 1):
+            dd = (pts[min(j + 1, len(pts) - 1)] - pts[max(j - 1, 0)]).normalized()
+            side = dd.cross(Vector((0.0, 1.0, 0.0)))
+            side = side.normalized() if side.length > 1e-3 else Vector((1.0, 0.0, 0.0))
+            r = radii[j]
+            t = min(0.2, max(0.05, r * 1.8)) * flat_k
+            c0 = pts[j] + Vector((0.0, r * 0.35, 0.0))
+            q.append((c0 + side * r * 1.05, pts[j] + Vector((0.0, r + t, 0.0)), c0 - side * r * 1.05))
+        for (m0, m1) in ((0, 1), (1, 2)):
+            b.gquad([tuple(q[0][m0]), tuple(q[1][m0]), tuple(q[1][m1]), tuple(q[0][m1])],
+                    [(0, 0), (1, 0), (1, 0.3), (0, 0.3)], M["tsnow"])
+
+
+def _twig_card(b, tip, d, size, r):
+    """Пучок веточек со снегом на конце ветки: две скрещённые карточки вдоль ветки (чуть вверх)."""
+    d = (d.normalized() + Vector((0.0, 0.6, 0.0))).normalized()
+    s1, s2 = _frame(d)
+    rot = r.uniform(0, math.pi)
+    p0 = tip - d * size * 0.12
     b.cur = (1, 1, 1)
-    for k in range(3):
-        a = a0 + k * math.pi / 3
-        dx, dz = math.cos(a) * w / 2, math.sin(a) * w / 2
-        b.gquad([(x - dx, 0, z - dz), (x + dx, 0, z + dz), (x + dx, h, z + dz), (x - dx, h, z - dz)],
-                [(0, 0), (1, 0), (1, 1), (0, 1)], m)
+    for k in range(2):
+        a = rot + k * math.pi / 2
+        sd = s1 * math.cos(a) + s2 * math.sin(a)
+        b.gquad([tuple(p0 - sd * size / 2), tuple(p0 + sd * size / 2), tuple(p0 + sd * size / 2 + d * size),
+                 tuple(p0 - sd * size / 2 + d * size)], [(0, 0), (1, 0), (1, 1), (0, 1)], M["twigs"])
+
+
+def _rot(v, axis, ang):
+    from mathutils import Matrix
+    return Matrix.Rotation(ang, 3, axis.normalized()) @ v
+
+
+def _branch(b, p, d, L, rad, depth, r, cards):
+    """Ветка из 3 участков, слегка изгибается вверх и случайно; дети — на 40–90 % длины."""
+    pts, radii = [p.copy()], [rad]
+    cur, dd = p.copy(), d.normalized()
+    for i in range(3):
+        dd = (dd + Vector((r.gauss(0, 0.18), 0.12 + r.gauss(0, 0.08), r.gauss(0, 0.18)))).normalized()
+        cur = cur + dd * (L / 3)
+        pts.append(cur.copy())
+        radii.append(rad * (1 - 0.55 * (i + 1) / 3))
+    _tube(b, pts, radii, r.uniform(0, 1))
+    if depth > 0:
+        for _ in range(r.choice((2, 3))):
+            t = r.uniform(0.4, 0.9)
+            k = min(2, int(t * 3))
+            base = pts[k].lerp(pts[k + 1], t * 3 - k)
+            axis = dd.cross(Vector((r.gauss(0, 1), r.gauss(0, 1), r.gauss(0, 1))))
+            if axis.length < 1e-3:
+                continue
+            cd = _rot(dd, axis, math.radians(r.uniform(25, 55)))
+            _branch(b, base, cd, L * r.uniform(0.45, 0.65), rad * 0.55, depth - 1, r, cards)
+    if depth == 0 or cards:
+        _twig_card(b, pts[-1], dd, max(1.4, L * 1.0), r)
+
+
+def tree3d(b, x, z, h, poplar, r):
+    far = math.hypot(x - CAM_XZ[0], z - CAM_XZ[1]) > 90.0
+    base = Vector((x, 0.0, z))
+    R0 = h * (0.018 if poplar else 0.024)
+    lean = Vector((r.gauss(0, 0.05), 1.0, r.gauss(0, 0.05))).normalized()
+    tl = h * (0.92 if poplar else 0.42)
+    trunk = [base + lean * tl * t + (Vector((r.gauss(0, 0.04), 0, r.gauss(0, 0.04))) if t > 0 else Vector())
+             for t in (0, 0.35, 0.7, 1.0)]
+    _tube(b, trunk, [R0 * 1.15, R0, R0 * 0.85, R0 * (0.4 if poplar else 0.7)])
+    top = trunk[-1]
+    if poplar:
+        for _ in range(5 if far else 11):
+            t = r.uniform(0.2, 0.95)
+            p = base + lean * tl * t
+            a = r.uniform(0, 2 * math.pi)
+            d = Vector((math.cos(a) * 0.4, 1.0, math.sin(a) * 0.4))
+            _branch(b, p, d, h * 0.24 * (1.15 - abs(t - 0.5)), R0 * 0.35, 0, r, True)
+    else:
+        n = r.choice((4, 5, 5, 6))
+        a0 = r.uniform(0, 2 * math.pi)
+        for i in range(n):
+            a = a0 + i * 2 * math.pi / n + r.gauss(0, 0.25)
+            e = math.radians(r.uniform(28, 58))
+            p = base + lean * tl * r.uniform(0.75, 1.0)
+            d = Vector((math.cos(a) * math.cos(e), math.sin(e), math.sin(a) * math.cos(e)))
+            _branch(b, p, d, h * r.uniform(0.36, 0.5), R0 * 0.62, 0 if far else 1, r, far)
+        _branch(b, top, lean + Vector((r.gauss(0, 0.15), 0, r.gauss(0, 0.15))), h * 0.48, R0 * 0.55,
+                0 if far else 1, r, far)
+    # сугроб у комля, с подветренной стороны длиннее
+    b.cur = (1, 1, 1)
+    rr = R0 * 7
+    apex = base + Vector((0.0, R0 * 1.8, 0.0))
+
+    def rim(a):
+        v = Vector((math.cos(a), 0.0, math.sin(a)))
+        return base + v * rr - WIND * rr * 0.8 * max(0.0, v.dot(-WIND)) + Vector((0.0, 0.02, 0.0))
+    for k in range(6):
+        a1, a2 = 2 * math.pi * k / 6, 2 * math.pi * (k + 1) / 6
+        b.gquad([tuple(rim(a2)), tuple(rim(a1)), tuple(apex), tuple(apex)], [(0, 0), (1, 0), (0.5, 1), (0.5, 1)],
+                M["tsnow"])
+
+
+def _blocked():
+    """Прямоугольники (x0, x1, z0, z1), где деревьям не место: дома, асфальт, стоянки."""
+    bx = [PL["BOX_MAIN"][:4], PL["BOX_ANNEX"][:4], PL["PINK_FENCE"], PL["WHITE_HUT"], PL["RED_CAP"][:4],
+          PL["MARKET_HALL"][:4], PL["MARKET_PARKING"], (-80, 240, PL["AVENUE_Z"][0] - 5, PL["AVENUE_Z"][1] + 4),
+          PL["STRIP"][:4], (PL["WALK_X"][0], PL["DRIVE_X"][1], -70, 60), PL["PARKING"],
+          PL["PLAYGROUND"], (68, 77, -55, 59), (-28, 10.4, -84, -66), (-28, -20, -84, -30)]
+    bx += [g for g in PL["GARAGES"]] + [w[:4] for w in PL["MARKET_WINGS"]] + [e[:4] for e in PL["EAST_ROW"]]
+    out = []
+    for (a, c, e, f) in bx:
+        out.append((min(a, c) - 1.0, max(a, c) + 1.0, min(e, f) - 1.0, max(e, f) + 1.0))
+    return out
 
 
 def trees(coll):
     b = B()
     r = random.Random(11)
-    spots = []
-    # ряд вдоль проезда у дома и вдоль парковки
-    for z in range(10, -140, -7):
-        spots.append((r.uniform(13.0, 16.0), z + r.uniform(-2, 2), r.uniform(7, 11), r.random() < 0.15))
-    # двор — по фото: группы у площадки, у трансформаторной, у домика, вдоль дальней тропинки
-    groups = [(20, -24, 6, 4), (26, -52, 7, 5), (40, -36, 5, 4), (58, -20, 6, 3), (70, -32, 6, 4),
-              (36, -70, 8, 5), (60, -68, 6, 4), (90, -28, 8, 4), (18, -80, 8, 5), (50, -95, 10, 6),
-              (100, -40, 10, 4), (120, -110, 14, 6), (30, -110, 10, 5), (80, -120, 12, 5)]
-    for (cx, cz, rad, n) in groups:
+    spots = []                                   # (x, z, высота, тополь)
+    def scatter(x0, x1, z0, z1, n, h0, h1, pop=0.0):
         for _ in range(n):
-            spots.append((cx + r.uniform(-rad, rad), cz + r.uniform(-rad, rad), r.uniform(6, 12), r.random() < 0.2))
-    # не в домах и не на машинах
-    blocked = [(24, 29.5, -31.5, -25.5), (33.5, 48.5, -20.5, -7.5), (40.5, 55.5, -60.5, -43.5), (7.0, 12.2, -62, 10),
-               (55, 155, -100, -34), (12, 25, -46, -34)]
+            spots.append((r.uniform(x0, x1), r.uniform(z0, z1), r.uniform(h0, h1), r.random() < pop))
+    # клумбы площадки — по дереву (видео 19–21 с)
+    for (cx, cz) in PL["PLANTERS"]:
+        spots.append((cx, cz, r.uniform(6.5, 8.5), False))
+    # голые деревья между проездом и первой тропинкой — передний план кадра из окна (видео 1–3 с)
+    scatter(16, 30, -64, 34, 18, 6, 11, 0.08)
+    scatter(11, 17, 14, 40, 6, 6, 9)
+    # большая группа у западного края двора (спутник E −52…−33, N 24…43)
+    scatter(13, 27, -47, -31, 8, 8, 12)
+    # берёзки на газоне у стены
+    for z in (-30.0, -18.0, 22.0, 36.0):
+        spots.append((1.5, z + r.uniform(-2, 2), r.uniform(7, 9), False))
+    # поле: одиночное большое дерево у забора и редкие кусты/деревца
+    spots.append((LONE_TREE[0], LONE_TREE[1], 12.5, False))
+    zs = PL["Z_SHIFT"]
+    for p in ((70.0, -123.0, 7.0), (36.0, -47.0, 5.5), (53.0, -26.0, 6.5), (55.0, -48.0, 5.0), (32.0, -70.0, 6.0),
+              (46.0, -64.0, 4.5), (64.0, -18.0, 7.0), (62.0, 8.0, 8.0)):
+        spots.append((p[0], p[1] + zs, p[2], False))
+    # вдоль бетонного забора — кусты и бурьян
+    (fx0, fz0), (fx1, fz1) = PL["FIELD_FENCE"]
+    for k in range(14):
+        t = r.random()
+        spots.append((fx0 + (fx1 - fx0) * t, fz0 + (fz1 - fz0) * t + r.uniform(1.5, 3.5), r.uniform(2.5, 5.0), False))
+    # у дома с красными шапками — ряд деревьев перед фасадом
+    scatter(60, 67, -29, 53, 12, 7, 11, 0.1)
+    # у розового домика и гаражей: тополя и клёны
+    for p in ((30.0, 44.0, 9.0, False), (51.0, 30.0, 13.0, True), (52.0, 40.0, 11.0, False), (28.0, 24.0, 8.0, False),
+              (46.0, 44.0, 9.0, False), (34.0, 18.0, 7.5, False)):
+        spots.append((p[0], p[1] + zs, p[2], p[3]))
+    # пустырь за забором — редкие деревья, вдоль полосы складов и проспекта — ряды
+    scatter(-40, 110, -163, -126, 8, 5, 9)
+    x = -70.0
+    while x < 235:
+        spots.append((x + r.uniform(-2, 2), PL["AVENUE_Z"][1] + 2.0, r.uniform(7, 10), r.random() < 0.15))
+        spots.append((x + r.uniform(-2, 2), PL["AVENUE_Z"][0] - 2.5, r.uniform(7, 10), r.random() < 0.15))
+        x += r.uniform(8, 12)
+    # между рынком и домом напротив, за домом напротив
+    scatter(96, 136, -49, -5, 8, 7, 11)
+    scatter(96, 160, -5, 75, 14, 8, 12, 0.2)
+    blocked = _blocked()
     for (x, z, h, pop) in spots:
-        if any(a <= x <= c and e <= z <= f for (a, c, e, f) in blocked):
+        if any(a <= x <= c and e <= z <= f for (a, c, e, f) in blocked) and (x, z) not in PL["PLANTERS"]:
             continue
-        tree_card(b, x, z, h * (1.3 if pop else 1.0), pop, r)
+        tree3d(b, x, z, h * (1.3 if pop else 1.0), pop, r)
     return b.build("Trees_nocol", coll)
+
+
+LONE_TREE = PL["LONE_TREE"]
 
 
 def walls_box(b, x0, x1, y0, y1, z0, z1, m_wall, wall_scale, m_roof=None, sides=("+x", "-x", "+z", "-z")):
@@ -533,80 +756,195 @@ def walls_box(b, x0, x1, y0, y1, z0, z1, m_wall, wall_scale, m_roof=None, sides=
         b.cur = keep
 
 
-def yard_buildings(coll):
-    b = B()
-    # трансформаторная посреди двора (центр главного кадра)
-    b.cur = (0.95, 0.93, 0.92)
-    walls_box(b, 24.0, 29.5, 0, 2.8, -31.5, -25.5, M["garage"], (8.0, 4.0), M["snow"])
-    # бетонная коробка в граффити с пристройкой-загородкой (справа внизу главного кадра)
-    b.cur = (1.0, 1.0, 1.0)
-    walls_box(b, 34.0, 42.0, 0, 3.8, -20.0, -8.0, M["garage"], (8.0, 4.0), M["snow"])
-    for (vx, vz) in ((37.0, -12.0), (39.5, -17.0)):
-        b.cur = (0.5, 0.5, 0.5)
-        b.gbox(vx - 0.3, vx + 0.3, 3.98, 4.4, vz - 0.3, vz + 0.3,
-               {"+x": M["dark"], "-x": M["dark"], "+z": M["dark"], "-z": M["dark"], "up": M["snow"]})
-    b.cur = (0.9, 0.9, 0.9)
-    for (x0, x1, z0, z1) in ((42.0, 48.0, -12.25, -12.0), (42.0, 48.0, -20.0, -19.75), (47.75, 48.0, -20.0, -12.0)):
-        walls_box(b, x0, x1, 0, 2.3, z0, z1, M["garage"], (8.0, 4.0), M["snow"])
-    # розовый домик за забором из профнастила (фото из окна)
-    b.cur = (0.95, 0.62, 0.6)
-    walls_box(b, 44.0, 51.0, 0, 3.0, -56.0, -48.0, M["plaster"], (3.0, 3.0))
-    gable(b, 43.6, 51.4, 3.0, 4.4, -56.4, -47.6)
-    b.cur = (0.55, 0.42, 0.35)
-    for (x0, x1, z0, z1) in ((41.0, 55.0, -60.0, -59.9), (41.0, 55.0, -44.1, -44.0), (41.0, 41.1, -60.0, -44.0),
-                             (54.9, 55.0, -60.0, -44.0)):
-        b.gbox(x0, x1, 0, 2.0, z0, z1, {"+x": M["corr"], "-x": M["corr"], "+z": M["corr"], "-z": M["corr"]}, (4.0, 2.0))
-        b.cur, keep = (1, 1, 1), b.cur
-        b.gbox(x0, x1, 2.0, 2.06, z0 - 0.02, z1 + 0.02, {"up": M["snow"]}, (4.0, 4.0))
-        b.cur = keep
-    # детская площадка у дома: горка-домик с красной крышей, качели, лавки
-    b.cur = (0.85, 0.75, 0.3)
-    b.gbox(17.0, 18.6, 0, 1.6, -40.6, -39.0, {"+x": M["paint"], "-x": M["paint"], "+z": M["paint"], "-z": M["paint"]})
-    b.cur = (0.75, 0.15, 0.12)
-    gable(b, 16.8, 18.8, 1.6, 2.4, -40.8, -38.8, m=M["paint"])
-    b.cur = (0.25, 0.45, 0.3)
-    for (x, z) in ((14.0, -36.0), (14.0, -44.0), (22.5, -45.5)):
-        b.gbox(x - 0.9, x + 0.9, 0.35, 0.45, z - 0.25, z + 0.25,
-               {"+x": M["paint"], "-x": M["paint"], "+z": M["paint"], "-z": M["paint"], "up": M["snow"]})
-    b.cur = (1, 1, 1)
-    for (x0, z0, x1, z1) in ((20.0, -36.0, 20.0, -38.5),):
-        for zz in (z0, z1):
-            b.cyl(P(x0 - 0.8, 0, zz), P(x0, 2.2, zz), 0.04, 0.04, M["dark"], segs=4)
-            b.cyl(P(x0 + 0.8, 0, zz), P(x0, 2.2, zz), 0.04, 0.04, M["dark"], segs=4)
-        b.cyl(P(x0, 2.2, z0), P(x0, 2.2, z1), 0.04, 0.04, M["dark"], segs=4)
-    return b.build("YardBuildings_nocol", coll)
-
-
-def gable(b, x0, x1, y0, y1, z0, z1, m=None):
-    """Двускатная крыша под снегом, конёк вдоль z."""
+def gable(b, x0, x1, y0, y1, z0, z1, m=None, ends=None):
+    """Двускатная крыша, конёк вдоль z; ends — материал фронтонов (по умолчанию штукатурка)."""
     m = m or M["snow"]
+    e = ends or M["plaster"]
     xm = (x0 + x1) / 2
     b.gquad([(x0, y0, z1), (x0, y0, z0), (xm, y1, z0), (xm, y1, z1)][::-1], [(0, 0), (1, 0), (1, 1), (0, 1)], m)
     b.gquad([(x1, y0, z0), (x1, y0, z1), (xm, y1, z1), (xm, y1, z0)][::-1], [(0, 0), (1, 0), (1, 1), (0, 1)], m)
-    b.gquad([(x0, y0, z1), (x1, y0, z1), (xm, y1, z1), (xm, y1, z1)], [(0, 0), (1, 0), (0.5, 1), (0.5, 1)], M["plaster"])
-    b.gquad([(x1, y0, z0), (x0, y0, z0), (xm, y1, z0), (xm, y1, z0)], [(0, 0), (1, 0), (0.5, 1), (0.5, 1)], M["plaster"])
+    b.gquad([(x0, y0, z1), (x1, y0, z1), (xm, y1, z1), (xm, y1, z1)], [(0, 0), (1, 0), (0.5, 1), (0.5, 1)], e)
+    b.gquad([(x1, y0, z0), (x0, y0, z0), (xm, y1, z0), (xm, y1, z0)], [(0, 0), (1, 0), (0.5, 1), (0.5, 1)], e)
 
 
-def warehouses(coll):
-    """Склады с белыми крышами за двором (средний план справа) и бетонный забор перед ними."""
+def shed_roof_x(b, x0, x1, y0, y1, z0, z1, m):
+    """Односкатная крыша: высокий край у x0, низкий у x1."""
+    b.gquad([(x1, y1, z0), (x1, y1, z1), (x0, y0, z1), (x0, y0, z0)][::-1], [(0, 0), (1, 0), (1, 1), (0, 1)], m)
+
+
+def yard_buildings(coll):
     b = B()
-    sheds = [(60, 110, -48, -36, 6.0), (70, 125, -70, -56, 7.0), (95, 150, -95, -80, 5.5), (55, 85, -88, -76, 4.5),
-             (112, 160, -60, -50, 6.5)]
-    for (x0, x1, z0, z1, h) in sheds:
-        b.cur = (0.95, 0.95, 0.97)
-        walls_box(b, x0, x1, 0, h, z0, z1, M["white"], (4.0, h), M["snow"])
-        # синяя полоса под крышей (как на фото)
-        b.cur = (0.25, 0.42, 0.75)
-        b.gbox(x0 - 0.02, x1 + 0.02, h - 0.9, h - 0.3, z0 - 0.02, z1 + 0.02,
-               {"+x": M["paint"], "-x": M["paint"], "+z": M["paint"], "-z": M["paint"]})
-        # окна-полосы и ворота
-        for k in range(int((x1 - x0) / 9)):
-            xx = x0 + 4 + k * 9
-            b.cur = (1, 1, 1)
-            facade_window_z(b, xx, z1 + 0.03, 1.6, "lit" if (k * 7 + int(x0)) % 5 == 0 else "dark")
-    b.cur = (0.8, 0.8, 0.8)
-    b.gbox(55.0, 135.0, 0, 2.2, -34.2, -34.0, {"+z": M["fence"], "-z": M["fence"], "up": M["snow"]}, (2.0, 2.2))
-    return b.build("Warehouses_nocol", coll)
+    # --- бетонная коробка в граффити (подстанция): основной блок + пристройка-загородка без крыши
+    x0, x1, z0, z1, h = PL["BOX_MAIN"]
+    b.cur = (1.0, 0.98, 0.96)
+    walls_box(b, x0, x1, 0, h, z0, z1, M["garage"], (8.0, 4.0), M["snow"])
+    # парапет по краю крыши и две вытяжки
+    b.cur = (0.85, 0.84, 0.82)
+    for (a, c, e, f) in ((x0, x1, z0, z0 + 0.25), (x0, x1, z1 - 0.25, z1), (x0, x0 + 0.25, z0, z1), (x1 - 0.25, x1, z0, z1)):
+        b.gbox(a, c, h, h + 0.35, e, f, {"+x": M["garage"], "-x": M["garage"], "+z": M["garage"], "-z": M["garage"],
+                                         "up": M["snow"]}, (8.0, 4.0))
+    for (vx, vz) in ((x0 + 3.0, z0 + 4.0), (x0 + 5.5, z1 - 3.5)):
+        b.cur = (0.45, 0.45, 0.45)
+        b.gbox(vx - 0.35, vx + 0.35, h + 0.18, h + 0.75, vz - 0.35, vz + 0.35,
+               {"+x": M["dark"], "-x": M["dark"], "+z": M["dark"], "-z": M["dark"], "up": M["snow"]})
+    # тёмные окошки-продухи под крышей и дверь на стороне к дому Юрчика (−x)
+    b.cur = (1, 1, 1)
+    for k in range(4):
+        zc = z0 + 1.8 + k * 2.8
+        b.gbox(x0 - 0.03, x0, h - 1.3, h - 0.6, zc - 0.5, zc + 0.5, {"-x": M["dark"]})
+    b.gbox(x0 - 0.03, x0, 0, 2.2, z1 - 4.0, z1 - 2.8, {"-x": M["dark"]})
+    # пристройка: четыре стены без крыши, внутри снег и хлам
+    a0, a1, c0, c1, hh = PL["BOX_ANNEX"]
+    b.cur = (0.95, 0.93, 0.9)
+    t = 0.3
+    for (p, q, e, f) in ((a0, a1, c1 - t, c1), (a0, a0 + t, c0, c1), (a0, a1, c0, c0 + t)):
+        walls_box(b, p, q, 0, hh, e, f, M["garage"], (8.0, 4.0), M["snow"])
+    b.cur = (1, 1, 1)
+    b.gbox(a0 + t, a1, 0.0, 0.6, c0 + t, c1 - t, {"up": M["snow"]}, (2.0, 2.0))
+    b.cur = (0.5, 0.45, 0.4)
+    b.gbox(a0 + 1.5, a0 + 3.0, 0.6, 1.2, c0 + 2.0, c0 + 3.2, {"+x": M["dark"], "-x": M["dark"], "+z": M["dark"],
+                                                                 "-z": M["dark"], "up": M["snow"]})
+
+    # --- забор из бетонных плит в граффити поперёк поля
+    (fx0, fz0), (fx1, fz1) = PL["FIELD_FENCE"]
+    n = int(math.hypot(fx1 - fx0, fz1 - fz0) / 3.0)
+    b.cur = (0.92, 0.9, 0.88)
+    for k in range(n):
+        if k in (9, 10, 27):                                  # проломы
+            continue
+        pa = (fx0 + (fx1 - fx0) * k / n, fz0 + (fz1 - fz0) * k / n)
+        pb = (fx0 + (fx1 - fx0) * (k + 1) / n, fz0 + (fz1 - fz0) * (k + 1) / n)
+        hgt = 2.2 + (0.1 if k % 3 == 0 else 0.0)
+        for side in (1, -1):
+            dz = 0.09 * side
+            pts = [(pa[0], 0, pa[1] + dz), (pb[0], 0, pb[1] + dz), (pb[0], hgt, pb[1] + dz), (pa[0], hgt, pa[1] + dz)]
+            u0 = (k % 8) / 8
+            b.gquad(pts if side > 0 else pts[::-1], [(u0, 0), (u0 + 0.375, 0), (u0 + 0.375, 0.55), (u0, 0.55)], M["garage"])
+        b.cur, keep = (1, 1, 1), b.cur
+        b.gquad([(pa[0], hgt + 0.06, pa[1] - 0.12), (pb[0], hgt + 0.06, pb[1] - 0.12), (pb[0], hgt + 0.06, pb[1] + 0.12),
+                 (pa[0], hgt + 0.06, pa[1] + 0.12)][::-1], [(0, 0), (1, 0), (1, 0.1), (0, 0.1)], M["snow"])
+        b.cur = keep
+
+    # --- розовый домик с оранжевой крышей за дощатым забором (видео 9–15 с)
+    x0, x1, z0, z1 = PL["PINK_HOUSE"]
+    b.cur = (0.98, 0.7, 0.7)
+    walls_box(b, x0, x1, 0, 3.0, z0, z1, M["plaster"], (3.0, 3.0))
+    b.cur = (0.95, 0.45, 0.25)
+    gable(b, x0 - 0.5, x1 + 0.5, 3.0, 4.6, z0 + 3.5, z1 + 0.5, m=M["paint"], ends=M["plaster"])
+    b.cur = (1, 1, 1)
+    gable(b, x0 + 0.6, x1 - 0.6, 3.75, 4.66, z0 + 3.5, z1 + 0.5)             # снег на коньке
+    b.cur = (0.8, 0.8, 0.82)                                                  # плоская часть крыши со стороны −z
+    b.gbox(x0 - 0.3, x1 + 0.3, 3.0, 3.2, z0 - 0.3, z0 + 3.5, {"+x": M["plaster"], "-x": M["plaster"], "-z": M["plaster"],
+                                                              "up": M["snow"]})
+    b.cur = (0.95, 0.95, 0.95)                                                # белая пристройка с гофрой
+    walls_box(b, x0 - 3.0, x0, 0, 2.4, z0 + 1.0, z0 + 6.0, M["plaster"], (3.0, 3.0), M["snow"])
+    b.cur = (1, 1, 1)
+    for (zc, kind) in ((z0 + 5.5, "lit"), (z1 - 2.5, "curtain")):
+        facade_window(b, x0, zc, 0.9, kind, face=-1)
+    # тарелка-антенна на крыше
+    b.cyl(P(x0 + 1.0, 4.0, z1 - 1.0), P(x0 + 1.0, 5.1, z1 - 1.0), 0.03, 0.03, M["dark"], segs=4)
+    b.cyl(P(x0 + 0.85, 5.15, z1 - 1.0), P(x0 + 1.15, 5.15, z1 - 1.0), 0.42, 0.42, M["paint"], segs=8)
+    # дощатый забор
+    fx0, fx1, fz0, fz1 = PL["PINK_FENCE"]
+    b.cur = (0.42, 0.3, 0.24)
+    for (a, c, e, f) in ((fx0, fx1, fz0, fz0 + 0.06), (fx0, fx1, fz1 - 0.06, fz1), (fx0, fx0 + 0.06, fz0, fz1),
+                         (fx1 - 0.06, fx1, fz0, fz1)):
+        b.gbox(a, c, 0, 2.0, e, f, {"+x": M["corr"], "-x": M["corr"], "+z": M["corr"], "-z": M["corr"]}, (4.0, 2.0))
+        b.cur, keep = (1, 1, 1), b.cur
+        b.gbox(a, c, 2.0, 2.06, e - 0.02, f + 0.02, {"up": M["snow"]}, (4.0, 4.0))
+        b.cur = keep
+
+    # --- белая будка в граффити с тёмной плоской крышей
+    x0, x1, z0, z1 = PL["WHITE_HUT"]
+    b.cur = (1.15, 1.15, 1.15)
+    walls_box(b, x0, x1, 0, 3.0, z0, z1, M["garage"], (8.0, 4.0))
+    b.cur = (0.25, 0.25, 0.27)
+    b.gbox(x0 - 0.3, x1 + 0.3, 3.0, 3.25, z0 - 0.3, z1 + 0.3, {"+x": M["dark"], "-x": M["dark"], "+z": M["dark"],
+                                                               "-z": M["dark"]})
+    b.cur = (1, 1, 1)
+    b.gbox(x0 - 0.3, x1 + 0.3, 3.25, 3.4, z0 - 0.3, z1 + 0.3, {"up": M["snow"]}, (4.0, 4.0))
+
+    # --- гаражи с тёмными крышами за зелёным забором
+    for (x0, x1, z0, z1) in PL["GARAGES"]:
+        n = int((x1 - x0) / 3.5)
+        for k in range(n):
+            a = x0 + k * (x1 - x0) / n
+            c = a + (x1 - x0) / n
+            b.cur = (0.8 + 0.1 * (k % 3), 0.78 + 0.08 * (k % 2), 0.75)
+            b.gbox(a, c - 0.05, 0, 2.5, z0, z1, {"+z": M["corr"], "-z": M["corr"], "+x": M["plaster"], "-x": M["plaster"]},
+                   (2.0, 2.0))
+        b.cur = (0.28, 0.24, 0.22)
+        shed_roof_x(b, x0 - 0.2, x1 + 0.2, 2.7, 2.7, z0 - 0.3, z1 + 0.3, M["dark"])
+        b.cur = (1, 1, 1)
+        shed_roof_x(b, x0 - 0.2, x1 + 0.2, 2.74, 2.74, z0 - 0.1, z1 + 0.1, M["snow"])
+    b.cur = (0.3, 0.55, 0.35)
+    b.gbox(48.0, 94.0, 0, 2.0, 58.0, 58.06, {"+z": M["corr"], "-z": M["corr"]}, (8.0, 2.0))
+
+    # --- у дома Юрчика: газон с низким зелёным заборчиком, бордюр, покрышки
+    b.cur = (0.25, 0.5, 0.3)
+    zA, zB = PL["DRIVE_Z"]
+    for z in range(int(zB), int(zA), 2):
+        b.cyl(P(LAWN_X1, 0, z), P(LAWN_X1, 0.55, z), 0.025, 0.025, M["paint"], segs=4)
+    b.cyl(P(LAWN_X1, 0.5, zB), P(LAWN_X1, 0.5, zA), 0.02, 0.02, M["paint"], segs=4)
+    b.cur = (0.75, 0.75, 0.75)
+    x0, x1, z0, z1 = PL["PLAYGROUND"]
+    b.gbox(x0 - 0.15, x0, 0, 0.15, PL["PARKING"][2], z1, {"+x": M["plaster"], "-x": M["plaster"], "up": M["snow"]})
+    rr = random.Random(3)
+    for z in list(range(int(z1) + 2, int(z1) + 18, 3)) + [z0 + 1, z0 + 5]:
+        b.cur = rr.choice([(0.85, 0.8, 0.2), (0.3, 0.6, 0.3), (0.9, 0.9, 0.3)])
+        b.cyl(P(x0 + 0.6, 0, z), P(x0 + 0.6, 0.3, z), 0.38, 0.38, M["paint"], segs=8, caps=True)
+
+    # --- детская площадка (видео 3, 19–27 с)
+    for (cx, cz) in PL["PLANTERS"]:                                         # бортики клумб
+        b.cur = (0.55, 0.42, 0.3)
+        for (a, c, e, f) in ((cx - 1.3, cx + 1.3, cz - 1.3, cz - 1.2), (cx - 1.3, cx + 1.3, cz + 1.2, cz + 1.3),
+                             (cx - 1.3, cx - 1.2, cz - 1.3, cz + 1.3), (cx + 1.2, cx + 1.3, cz - 1.3, cz + 1.3)):
+            b.gbox(a, c, 0, 0.35, e, f, {"+x": M["paint"], "-x": M["paint"], "+z": M["paint"], "-z": M["paint"],
+                                         "up": M["snow"]})
+    # горка-домик с розовой крышей
+    gx, gz = 17.5, 5.0
+    b.cur = (0.85, 0.65, 0.25)
+    for (dx, dz) in ((-0.7, -0.7), (0.7, -0.7), (-0.7, 0.7), (0.7, 0.7)):
+        b.cyl(P(gx + dx, 0, gz + dz), P(gx + dx, 2.3, gz + dz), 0.05, 0.05, M["paint"], segs=4)
+    b.gbox(gx - 0.8, gx + 0.8, 1.2, 1.3, gz - 0.8, gz + 0.8, {"up": M["snow"], "+x": M["paint"], "-x": M["paint"],
+                                                               "+z": M["paint"], "-z": M["paint"]})
+    b.cur = (0.95, 0.4, 0.5)
+    gable(b, gx - 0.95, gx + 0.95, 2.3, 3.0, gz - 0.95, gz + 0.95, m=M["paint"], ends=M["paint"])
+    b.cur = (0.3, 0.55, 0.85)
+    b.gquad([(gx + 0.8, 1.3, gz - 0.4), (gx + 0.8, 1.3, gz + 0.4), (gx + 3.2, 0.1, gz + 0.4), (gx + 3.2, 0.1, gz - 0.4)][::-1],
+            [(0, 0), (1, 0), (1, 1), (0, 1)], M["paint"])
+    # качели (А-рама) и песочница с крышей-грибком
+    sx, sz = 21.5, -1.5
+    b.cur = (0.8, 0.2, 0.15)
+    for zz in (sz - 1.4, sz + 1.4):
+        b.cyl(P(sx - 0.9, 0, zz), P(sx, 2.3, zz), 0.045, 0.045, M["paint"], segs=4)
+        b.cyl(P(sx + 0.9, 0, zz), P(sx, 2.3, zz), 0.045, 0.045, M["paint"], segs=4)
+    b.cyl(P(sx, 2.3, sz - 1.4), P(sx, 2.3, sz + 1.4), 0.045, 0.045, M["paint"], segs=4)
+    b.cur = (0.2, 0.2, 0.2)
+    for zz in (sz - 0.4, sz + 0.4):
+        b.cyl(P(sx, 2.3, zz), P(sx, 0.5, zz), 0.01, 0.01, M["dark"], segs=3)
+    b.gbox(sx - 0.2, sx + 0.2, 0.45, 0.5, sz - 0.45, sz + 0.45, {"up": M["snow"], "+x": M["dark"], "-x": M["dark"]})
+    px, pz = 13.0, 9.5
+    b.cur = (0.75, 0.6, 0.35)
+    for (a, c, e, f) in ((px - 1.5, px + 1.5, pz - 1.5, pz - 1.4), (px - 1.5, px + 1.5, pz + 1.4, pz + 1.5),
+                         (px - 1.5, px - 1.4, pz - 1.5, pz + 1.5), (px + 1.4, px + 1.5, pz - 1.5, pz + 1.5)):
+        b.gbox(a, c, 0, 0.3, e, f, {"+x": M["paint"], "-x": M["paint"], "+z": M["paint"], "-z": M["paint"], "up": M["snow"]})
+    b.cyl(P(px, 0, pz), P(px, 2.0, pz), 0.05, 0.05, M["paint"], segs=4)
+    b.cur = (0.3, 0.6, 0.35)
+    gable(b, px - 1.2, px + 1.2, 2.0, 2.6, pz - 1.2, pz + 1.2, m=M["paint"], ends=M["paint"])
+    # лавки (зелёные)
+    for (lx, lz, yaw) in ((11.4, -2.0, 0), (11.4, 6.0, 0), (24.0, 4.0, 0), (16.0, 12.2, 1)):
+        b.cur = (0.2, 0.5, 0.3)
+        if yaw:
+            b.gbox(lx - 0.9, lx + 0.9, 0.4, 0.48, lz - 0.22, lz + 0.22, {"+x": M["paint"], "-x": M["paint"],
+                   "+z": M["paint"], "-z": M["paint"], "up": M["snow"]})
+        else:
+            b.gbox(lx - 0.22, lx + 0.22, 0.4, 0.48, lz - 0.9, lz + 0.9, {"+x": M["paint"], "-x": M["paint"],
+                   "+z": M["paint"], "-z": M["paint"], "up": M["snow"]})
+    return b.build("YardBuildings_nocol", coll)
+
+
+LAWN_X1 = PL["LAWN_X"][1]
 
 
 def facade_window_z(b, xc, z, y0, kind):
@@ -615,72 +953,150 @@ def facade_window_z(b, xc, z, y0, kind):
     b.gquad([(x0, y0, z), (x1, y0, z), (x1, y0 + WIN_H * 0.8, z), (x0, y0 + WIN_H * 0.8, z)], win_uv(kind), M["win"])
 
 
+def market(coll):
+    """Рынок «Сім'я» (белый корпус, крылья с синими крышами) и полоса низких магазинов вдоль проспекта."""
+    b = B()
+    blue = (0.22, 0.4, 0.78)
+    x0, x1, z0, z1, h = PL["MARKET_HALL"]
+    b.cur = (0.95, 0.95, 0.97)
+    walls_box(b, x0, x1, 0, h, z0, z1, M["white"], (4.0, h), M["snow"])
+    b.cur = blue
+    b.gbox(x0 - 0.03, x1 + 0.03, h - 1.2, h - 0.5, z0 - 0.03, z1 + 0.03,
+           {"+x": M["paint"], "-x": M["paint"], "+z": M["paint"], "-z": M["paint"]})
+    for (a0, a1, c0, c1, hh) in PL["MARKET_WINGS"]:
+        b.cur = (0.95, 0.95, 0.97)
+        walls_box(b, a0, a1, 0, hh, c0, c1, M["white"], (4.0, hh))
+        # синяя крыша скатом наружу, снег лежит пятнами — видна синяя кромка
+        b.cur = blue
+        b.gbox(a0 - 0.4, a1 + 0.4, hh, hh + 0.35, c0 - 0.4, c1 + 0.4,
+               {"+x": M["paint"], "-x": M["paint"], "+z": M["paint"], "-z": M["paint"]})
+        b.cur = (1, 1, 1)
+        b.gbox(a0 - 0.3, a1 + 0.3, hh + 0.35, hh + 0.45, c0 - 0.3, c1 + 0.3, {"up": M["snow"]}, (4.0, 4.0))
+        # витрины и ворота на стороне к двору (−x)
+        rr = random.Random(int(a0 * 7 + c0))
+        k = 0
+        z = c0 + 3.0
+        while z < c1 - 2.0:
+            b.cur = (1, 1, 1)
+            facade_window(b, a0, z, 1.0, "lit" if rr.random() < 0.35 else "dark", face=-1)
+            z += 5.0
+            k += 1
+        b.cur = (0.6, 0.15, 0.12)
+        b.gbox(a0 - 0.03, a0, 0, 3.2, c1 - 9.0, c1 - 5.5, {"-x": M["paint"]})
+    # полоса низких магазинов/складов вдоль проспекта, с проходами
+    x0, x1, z0, z1, h = PL["STRIP"]
+    rr = random.Random(17)
+    x = x0
+    while x < x1:
+        L = rr.uniform(18, 34)
+        hh = h * rr.uniform(0.8, 1.25)
+        b.cur = rr.choice([(0.92, 0.92, 0.94), (0.85, 0.84, 0.82), (0.95, 0.9, 0.82)])
+        walls_box(b, x, min(x + L, x1), 0, hh, z0, z1, M["white"], (4.0, hh), M["snow"])
+        for k in range(int(L / 6)):
+            b.cur = (1, 1, 1)
+            facade_window_z(b, x + 3 + k * 6, z1 + 0.03, 1.4, "lit" if rr.random() < 0.3 else "dark")
+        x += L + rr.uniform(3, 8)
+    return b.build("Market_nocol", coll)
+
+
 # ------------------------------------------------------------------ высотки вокруг двора
-# (x0, x1, z0, z1, этажей, фасад, к камере смотрит, оттенок, красные «шапки»)
-BLOCKS = [
-    (15, 140, -205, -193, 16, "facade", "+z", (1.0, 0.8, 0.72), False),
-    (150, 262, -228, -216, 16, "facade_b", "+z", (1.0, 0.72, 0.58), False),
-    (60, 118, -152, -140, 10, "facade_c", "+z", (1.0, 0.88, 0.72), True),
-    (140, 152, -170, -112, 18, "facade", "-x", (0.98, 0.66, 0.6), False),
-    (176, 190, -165, -100, 22, "facade_b", "-x", (0.95, 0.7, 0.62), False),
-    (-90, 10, -262, -250, 14, "facade_b", "+z", (0.95, 0.8, 0.75), False),
-    (-120, 420, -340, -328, 14, "facade", "+z", (0.85, 0.72, 0.72), False),
-    (270, 330, -190, -150, 16, "facade_c", "-x", (1.0, 0.78, 0.66), False),
-]
 TILE = (22.4, 25.2)                # facade_*: 7 окон × 9 этажей
+TILE_OF = {"fac_cream": (12.0, 11.2), "fac_ochre": (12.0, 11.2), "fac_brick": (12.0, 11.2)}   # menu_fac_*: 4 клетки × 4 этажа
+
+
+def slab(b, x0, x1, z0, z1, fl, fac, face, tint, caps=False):
+    """Панельный дом: фасад к камере — текстура окон, остальное — штукатурка, снег на крыше."""
+    h = PLINTH + fl * FLOOR_H
+    su, sv = TILE_OF.get(fac, TILE)
+    m = M[fac]
+    b.cur = (tint[0] * 0.6, tint[1] * 0.6, tint[2] * 0.6)
+    faces = {k: M["plaster"] for k in ("+x", "-x", "+z", "-z") if k != face}
+    b.gbox(x0, x1, 0, h, z0, z1, faces, (6.0, 6.0))
+    b.cur = tint
+    if face == "+z":
+        q, L = [(x0, PLINTH, z1), (x1, PLINTH, z1), (x1, h, z1), (x0, h, z1)], x1 - x0
+        base = [(x0, 0, z1), (x1, 0, z1), (x1, PLINTH, z1), (x0, PLINTH, z1)]
+    elif face == "-z":
+        q, L = [(x1, PLINTH, z0), (x0, PLINTH, z0), (x0, h, z0), (x1, h, z0)], x1 - x0
+        base = [(x1, 0, z0), (x0, 0, z0), (x0, PLINTH, z0), (x1, PLINTH, z0)]
+    else:   # "-x"
+        q, L = [(x0, PLINTH, z1), (x0, PLINTH, z0), (x0, h, z0), (x0, h, z1)], z1 - z0
+        base = [(x0, 0, z1), (x0, 0, z0), (x0, PLINTH, z0), (x0, PLINTH, z1)]
+    b.gquad(q, [(0, 0), (L / su, 0), (L / su, (h - PLINTH) / sv), (0, (h - PLINTH) / sv)], m)
+    b.cur = (0.3, 0.29, 0.29)
+    b.gquad(base, [(0, 0), (1, 0), (1, 0.1), (0, 0.1)], M["plaster"])
+    b.cur = (1, 1, 1)
+    b.gbox(x0, x1, h, h + 0.4, z0, z1, {"up": M["snow"], "+x": M["snow"], "-x": M["snow"], "+z": M["snow"], "-z": M["snow"]},
+           (6.0, 6.0))
+    # надстройки над лестницами и лифтами
+    n = max(1, int(L / 24))
+    for k in range(n):
+        c = (k + 0.5) / n
+        if face == "-x":
+            zc, xc = z0 + c * (z1 - z0), x0 + 5.0
+        else:
+            zc, xc = (z0 + z1) / 2, x0 + c * (x1 - x0)
+        b.cur = (tint[0] * 0.75, tint[1] * 0.75, tint[2] * 0.75)
+        b.gbox(xc - 2.0, xc + 2.0, h + 0.4, h + 3.0, zc - 2.0, zc + 2.0,
+               {"+x": M["plaster"], "-x": M["plaster"], "+z": M["plaster"], "-z": M["plaster"], "up": M["snow"]}, (3.0, 3.0))
+    if caps:
+        # красные «шапки»: скаты к фасаду с белыми фронтонами между ними (видео 0, 5–8 с), сверху снег
+        n = int(L / 14)
+        for k in range(n):
+            zc = z0 + (k + 0.5) * L / n
+            b.cur = (0.72, 0.12, 0.1)
+            gable(b, x0 - 0.4, x0 + 4.4, h + 0.4, h + 2.5, zc - 5.2, zc + 5.2, m=M["paint"], ends=M["plaster"])
+            b.cur = (1, 1, 1)
+            gable(b, x0 + 1.3, x0 + 2.7, h + 1.93, h + 2.56, zc - 5.15, zc + 5.15)          # снег только у конька
+
+
+# дома за пределами плана — силуэты в дымке (дальше ряда за проспектом)
+BACK_BLOCKS = [
+    (-150, 20, -315, -303, 16, "fac_ochre", "+z", (0.95, 0.85, 0.8)),
+    (40, 260, -335, -323, 14, "fac_ochre", "+z", (0.9, 0.8, 0.78)),
+    (270, 420, -305, -293, 16, "fac_ochre", "+z", (1.0, 0.85, 0.75)),
+    (200, 214, -45, 55, 9, "fac_cream", "-x", (0.95, 0.85, 0.8)),
+    (230, 244, -155, -75, 12, "fac_ochre", "-x", (0.98, 0.85, 0.75)),
+]
 
 
 def blocks(coll):
     b = B()
-    for (x0, x1, z0, z1, fl, fac, face, tint, caps) in BLOCKS:
-        h = PLINTH + fl * FLOOR_H
-        b.cur = tint
-        su, sv = TILE
-        m = M[fac]
-        # фасад к двору — текстура с окнами (U — по фасаду, V — по этажам), остальные стены — штукатурка
-        side_tint = (tint[0] * 0.6, tint[1] * 0.6, tint[2] * 0.6)
-        faces = {k: M["plaster"] for k in ("+x", "-x", "+z", "-z")}
-        b.cur = side_tint
-        b.gbox(x0, x1, 0, h, z0, z1, {k: v for k, v in faces.items() if k != face}, (6.0, 6.0))
-        b.cur = tint
-        if face == "+z":
-            b.gquad([(x0, PLINTH, z1), (x1, PLINTH, z1), (x1, h, z1), (x0, h, z1)],
-                    [(0, 0), ((x1 - x0) / su, 0), ((x1 - x0) / su, (h - PLINTH) / sv), (0, (h - PLINTH) / sv)], m)
-            b.cur = (0.3, 0.29, 0.29)
-            b.gquad([(x0, 0, z1), (x1, 0, z1), (x1, PLINTH, z1), (x0, PLINTH, z1)], [(0, 0), (1, 0), (1, 0.1), (0, 0.1)], M["plaster"])
-        else:
-            b.gquad([(x0, PLINTH, z1), (x0, PLINTH, z0), (x0, h, z0), (x0, h, z1)],
-                    [(0, 0), ((z1 - z0) / su, 0), ((z1 - z0) / su, (h - PLINTH) / sv), (0, (h - PLINTH) / sv)], m)
-            b.cur = (0.3, 0.29, 0.29)
-            b.gquad([(x0, 0, z1), (x0, 0, z0), (x0, PLINTH, z0), (x0, PLINTH, z1)], [(0, 0), (1, 0), (1, 0.1), (0, 0.1)], M["plaster"])
-        b.cur = (1, 1, 1)
-        b.gbox(x0, x1, h, h + 0.4, z0, z1, {"up": M["snow"], "+x": M["snow"], "-x": M["snow"], "+z": M["snow"], "-z": M["snow"]}, (6.0, 6.0))
-        if caps:
-            # красные «шапки» над лестничными клетками (дом с красной крышей на фото)
-            n = int((x1 - x0) / 9)
-            for k in range(n):
-                cx = x0 + 4.5 + k * 9
-                b.cur = (0.7, 0.12, 0.1)
-                gable(b, cx - 3.6, cx + 3.6, h + 0.4, h + 2.2, z1 - 3.0, z1 + 0.2, m=M["paint"])
-                b.cur = (1, 1, 1)
-                gable(b, cx - 3.5, cx + 3.5, h + 0.45, h + 2.25, z1 - 2.9, z1 + 0.1)
+    # дом с красными шапками напротив (фасадом к двору — в −x)
+    x0, x1, z0, z1, fl = PL["RED_CAP"]
+    slab(b, x0, x1, z0, z1, fl, "fac_cream", "-x", (1.0, 1.0, 1.0), caps=True)
+    # ряд 16-этажек справа: фасадом к двору (в −z), кирпично-бежевые
+    tints = [(1.0, 1.0, 1.0), (0.97, 0.93, 0.9), (1.0, 0.97, 0.95)]
+    for i, (a0, a1, c0, c1, fl) in enumerate(PL["EAST_ROW"]):
+        slab(b, a0, a1, c0, c1, fl, "fac_brick", "-z", tints[i % len(tints)])
+    # ряд высоток за проспектом — фасадом к нам (+z), охра и персик
+    z0, z1 = PL["FAR_ROW_Z"]
+    rr = random.Random(29)
+    for i, (a0, a1, fl) in enumerate(PL["FAR_ROW"]):
+        t = rr.choice([(1.0, 1.0, 1.0), (1.0, 0.94, 0.9), (0.98, 0.98, 0.94), (1.0, 0.9, 0.86)])
+        slab(b, a0, a1, z0 + rr.uniform(-2, 2), z1, fl, "fac_ochre", "+z", t)
+    for (a0, a1, c0, c1, fl, fac, face, tint) in BACK_BLOCKS:
+        slab(b, a0, a1, c0, c1, fl, fac, face, tint)
     return b.build("Blocks_nocol", coll)
 
 
 def lamps(coll):
-    """Фонари: вдоль дальней улицы (оранжевые точки у основания домов) и пара во дворе."""
+    """Фонари: вдоль проспекта с обеих сторон (оранжевые точки у подножия высоток) и несколько во дворе."""
     b = B()
-    pts = [(x, -182.0) for x in range(-20, 280, 28)] + [(x, -134.0) for x in range(20, 140, 30)] + \
-          [(12.5, -14.0), (12.5, -52.0), (40.0, -40.0), (66.0, -26.0)]
-    for (x, z) in pts:
-        hgt = 8.0 if z < -100 else 6.0
+    a0, a1 = PL["AVENUE_Z"]
+    pts = [(x, a1 + 0.8, 9.0, -1) for x in range(-60, 235, 30)] + [(x + 15, a0 - 0.8, 9.0, 1) for x in range(-60, 235, 30)]
+    pts += [(11.0, -48.0, 6.0, 1), (11.0, 16.0, 6.0, 1), (34.0, -47.0, 5.0, 1), (48.0, 35.0, 6.0, 1), (67.0, -15.0, 6.0, 1),
+            (67.0, 35.0, 6.0, 1), (100.0, -65.0, 7.0, 1)]
+    for i, (x, z, hgt, d) in enumerate(pts):
         b.cur = (1, 1, 1)
         b.cyl(P(x, 0, z), P(x, hgt, z), 0.08, 0.06, M["dark"], segs=5)
-        b.cyl(P(x, hgt, z), P(x + 0.9, hgt + 0.1, z), 0.04, 0.04, M["dark"], segs=4)
-        b.gbox(x + 0.6, x + 1.2, hgt - 0.12, hgt + 0.05, z - 0.15, z + 0.15,
+        b.cyl(P(x, hgt, z), P(x, hgt + 0.1, z + 1.2 * d), 0.04, 0.04, M["dark"], segs=4)
+        b.gbox(x - 0.15, x + 0.15, hgt - 0.12, hgt + 0.05, z + 0.9 * d - 0.3, z + 0.9 * d + 0.3,
                {"down": M["lamp_o"], "up": M["dark"], "+x": M["dark"], "-x": M["dark"], "+z": M["dark"], "-z": M["dark"]})
-        LIGHTS.append({"kind": "street", "pos": [x + 0.9, hgt - 0.3, z], "color": [1.0, 0.55, 0.22], "energy": 4.0,
-                       "range": 18.0})
+        far = z < -150
+        if not far or i % 2 == 0:
+            LIGHTS.append({"kind": "street", "pos": [x, hgt - 0.3, z + 0.9 * d], "color": [1.0, 0.55, 0.22],
+                           "energy": 4.0, "range": 22.0 if far else 16.0})
     return b.build("Lamps_nocol", coll)
 
 
@@ -699,7 +1115,7 @@ def main():
     materials()
     LIGHTS.clear()
     obs = [home(coll), my_window(coll), room(coll), ground(coll), cars(coll), trees(coll), yard_buildings(coll),
-           warehouses(coll), blocks(coll), lamps(coll)]
+           market(coll), blocks(coll), lamps(coll)]
     stats = {ob.name: len(ob.data.polygons) for ob in obs}
     os.makedirs(OUT_DIR, exist_ok=True)
     if bpy.context.window:
