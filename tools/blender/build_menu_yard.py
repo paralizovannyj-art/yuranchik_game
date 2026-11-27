@@ -546,7 +546,7 @@ def _blocked():
     bx = [PL["BOX_MAIN"][:4], PL["BOX_ANNEX"][:4], PL["PINK_FENCE"], PL["WHITE_HUT"], PL["RED_CAP"][:4],
           PL["MARKET_HALL"][:4], PL["MARKET_PARKING"], (-80, 240, PL["AVENUE_Z"][0] - 5, PL["AVENUE_Z"][1] + 4),
           PL["STRIP"][:4], (PL["WALK_X"][0], PL["DRIVE_X"][1], -70, 60), PL["PARKING"],
-          PL["PLAYGROUND"], (68, 77, -55, 59)]
+          PL["PLAYGROUND"], (68, 77, -55, 59), (-28, 10.4, -84, -66), (-28, -20, -84, -30)]
     bx += [g for g in PL["GARAGES"]] + [w[:4] for w in PL["MARKET_WINGS"]] + [e[:4] for e in PL["EAST_ROW"]]
     out = []
     for (a, c, e, f) in bx:

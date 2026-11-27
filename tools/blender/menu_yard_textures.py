@@ -87,6 +87,11 @@ def ground():
             (-80.0, 240.0, P["AVENUE_Z"][0] - 5.0, P["AVENUE_Z"][1] + 4.0),
             (-80.0, 240.0, -180.0, -176.0)]:
         asph = np.maximum(asph, rect(x0, x1, z0, z1))
+    # заворот проезда за торец дома
+    turn = catmull([to_px(p) for p in P["DRIVE_TURN"]], 40)
+    tmask = np.zeros((h, w), np.float32)
+    disc_stroke(tmask, turn, P["DRIVE_W"] / 2 / m, soft=0.4 / m)
+    asph = np.maximum(asph, tmask)
     slush = rgb((0.50, 0.50, 0.55)) * (0.78 + fbm(w, h, 90, 135, rng, oct=3)[..., None] * 0.32)
     # снег по краям асфальта (отвалы) и белые пятна поверх каши
     patches = np.clip((fbm(w, h, 60, 90, rng, oct=3) - 0.5) * 3.0, 0, 1)
@@ -120,6 +125,12 @@ def ground():
     for xr in (6.4, 8.4, 71.0, 73.0):
         r = [(xr, P["DRIVE_Z"][0]), (xr, P["DRIVE_Z"][1])]
         pts = catmull([to_px(p) for p in r], 600)
+        disc_stroke(ruts, pts + rng.normal(0, 0.2, pts.shape), 1.3, soft=1.0)
+    # колеи на завороте: осевая ± 1 м по нормали
+    d = np.gradient(turn, axis=0)
+    nrm = np.stack([-d[:, 1], d[:, 0]], 1) / (np.linalg.norm(d, axis=1, keepdims=True) + 1e-6)
+    for off in (-1.0, 1.0):
+        pts = turn + nrm * (off / m)
         disc_stroke(ruts, pts + rng.normal(0, 0.2, pts.shape), 1.3, soft=1.0)
     arr = arr * (1 - ruts[..., None] * 0.45) + rgb((0.36, 0.36, 0.40)) * ruts[..., None] * 0.45
     save("menu_ground", arr)
