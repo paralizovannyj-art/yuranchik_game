@@ -468,7 +468,8 @@ func _physics_process(delta: float) -> void:
 
 # ----------------------------------------------------------------------------- кресло
 ## Сесть (true) / встать (false). Положение и поворот на это время задаёт pc_seat.gd.
-func set_seated(on: bool) -> void:
+## Так же — любое действие, где тело и взгляд ведёт клип (окно — room_window.gd); keep_light — фонарик не гасить.
+func set_seated(on: bool, keep_light := false) -> void:
 	seated = on
 	control = not on
 	collision.disabled = on
@@ -487,7 +488,8 @@ func set_seated(on: bool) -> void:
 		if crouching:
 			_set_crouch(false)
 		_flash_before_seat = flashlight.visible       # фонарик в лоб монитору — блик на весь экран; гасим
-		flashlight.visible = false
+		if not keep_light:
+			flashlight.visible = false
 	else:
 		seat_look = false
 		seat_view_blend = 0.0
