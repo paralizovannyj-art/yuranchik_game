@@ -166,8 +166,9 @@ def materials():
     M["fence"] = mat("MenuFenceConcrete", "fence_concrete")
     M["parquet"] = mat("MenuParquet", "parquet")
     M["wallpaper"] = mat("MenuWallpaper", "wallpaper")
-    M["tree"] = amat("MenuTree", "eb_tree")
-    M["poplar"] = amat("MenuPoplar", "eb_poplar")
+    M["bark"] = two_sided(mat("MenuBark", "menu_bark"))
+    M["twigs"] = amat("MenuTwigs", "menu_twigs")
+    M["tsnow"] = two_sided(mat("MenuTreeSnow", "snow"))
     M["frame"] = flat("MenuPvc", (0.86, 0.86, 0.84, 1), rough=0.5)
     M["glass"] = two_sided(flat("MenuGlass", (0.05, 0.05, 0.06, 1), rough=0.08))
     M["paint"] = flat("MenuPaint", (0.9, 0.9, 0.9, 1), rough=0.45)       # машины, лавки, горка: цвет — в вершинах
@@ -528,17 +529,152 @@ def cars(coll):
     return b.build("Cars_nocol", coll)
 
 
-def tree_card(b, x, z, h, poplar=False, r=None):
-    """Дерево-билборд: 3 перекрещенных квадрата текстуры (вид сверху-сбоку не пропадает)."""
-    w = h * (0.5 if poplar else 1.0)
-    m = M["poplar"] if poplar else M["tree"]
-    a0 = r.uniform(0, math.pi)
+# ------------------------------------------------------------------ деревья
+# Голые зимние деревья (орех, клён, акация; у дома напротив — тополя) настоящими ветками: ствол и ветки —
+# гранёные трубки с корой, на верхней стороне каждой ветки — снежный валик (метель завалила снегом все
+# ветки), ствол с наветренной стороны залеплен снегом, у комля — сугроб. Концы веток — пучки тонких
+# веточек со снегом (карточки menu_twigs). Дальние деревья (в дымке) проще: без веток второго порядка.
+WIND = Vector((0.5, 0.0, 0.85)).normalized()     # откуда мела метель: с этой стороны стволы залеплены снегом
+CAM_XZ = (2.5, 2.4)                              # камера меню — чтобы упростить дальние деревья
+RING = 5
+
+
+def _frame(d):
+    s = d.cross(Vector((0.0, 1.0, 0.0)))
+    if s.length < 1e-3:
+        s = Vector((1.0, 0.0, 0.0))
+    s.normalize()
+    return s, s.cross(d).normalized()
+
+
+def _tube(b, pts, radii, v0=0.0):
+    """Трубка по точкам (Godot): грани коры; смотрящие вверх и залепленные метелью — снег.
+    Сверху на каждом не слишком крутом участке — снежный валик (две наклонные грани)."""
+    rings = []
+    for i, p in enumerate(pts):
+        d = (pts[min(i + 1, len(pts) - 1)] - pts[max(i - 1, 0)]).normalized()
+        sd, up = _frame(d)
+        ring = []
+        for k in range(RING):
+            n = sd * math.cos(2 * math.pi * k / RING) + up * math.sin(2 * math.pi * k / RING)
+            ring.append((p + n * radii[i], n))
+        rings.append(ring)
+    vs = [v0]
+    for i in range(1, len(pts)):
+        vs.append(vs[-1] + (pts[i] - pts[i - 1]).length / 2.4)
+    for i in range(len(pts) - 1):
+        for k in range(RING):
+            a, c = rings[i][k], rings[i][(k + 1) % RING]
+            e, f = rings[i + 1][(k + 1) % RING], rings[i + 1][k]
+            nrm = (a[1] + c[1] + e[1] + f[1]).normalized()
+            snowy = nrm.y > 0.4 or nrm.dot(WIND) > 0.65
+            b.cur = (1, 1, 1) if snowy else (0.92, 0.9, 0.88)
+            u0, u1 = k / RING, (k + 1) / RING
+            b.gquad([tuple(a[0]), tuple(c[0]), tuple(e[0]), tuple(f[0])],
+                    [(u0, vs[i]), (u1, vs[i]), (u1, vs[i + 1]), (u0, vs[i + 1])],
+                    M["tsnow"] if snowy else M["bark"])
+        # снежный валик сверху (на крутых участках снег не держится)
+        flat_k = 1.0 - abs((pts[i + 1] - pts[i]).normalized().y)
+        if flat_k < 0.25:
+            continue
+        b.cur = (1, 1, 1)
+        q = []
+        for j in (i, i + 1):
+            dd = (pts[min(j + 1, len(pts) - 1)] - pts[max(j - 1, 0)]).normalized()
+            side = dd.cross(Vector((0.0, 1.0, 0.0)))
+            side = side.normalized() if side.length > 1e-3 else Vector((1.0, 0.0, 0.0))
+            r = radii[j]
+            t = min(0.2, max(0.05, r * 1.8)) * flat_k
+            c0 = pts[j] + Vector((0.0, r * 0.35, 0.0))
+            q.append((c0 + side * r * 1.05, pts[j] + Vector((0.0, r + t, 0.0)), c0 - side * r * 1.05))
+        for (m0, m1) in ((0, 1), (1, 2)):
+            b.gquad([tuple(q[0][m0]), tuple(q[1][m0]), tuple(q[1][m1]), tuple(q[0][m1])],
+                    [(0, 0), (1, 0), (1, 0.3), (0, 0.3)], M["tsnow"])
+
+
+def _twig_card(b, tip, d, size, r):
+    """Пучок веточек со снегом на конце ветки: две скрещённые карточки вдоль ветки (чуть вверх)."""
+    d = (d.normalized() + Vector((0.0, 0.6, 0.0))).normalized()
+    s1, s2 = _frame(d)
+    rot = r.uniform(0, math.pi)
+    p0 = tip - d * size * 0.12
     b.cur = (1, 1, 1)
-    for k in range(3):
-        a = a0 + k * math.pi / 3
-        dx, dz = math.cos(a) * w / 2, math.sin(a) * w / 2
-        b.gquad([(x - dx, 0, z - dz), (x + dx, 0, z + dz), (x + dx, h, z + dz), (x - dx, h, z - dz)],
-                [(0, 0), (1, 0), (1, 1), (0, 1)], m)
+    for k in range(2):
+        a = rot + k * math.pi / 2
+        sd = s1 * math.cos(a) + s2 * math.sin(a)
+        b.gquad([tuple(p0 - sd * size / 2), tuple(p0 + sd * size / 2), tuple(p0 + sd * size / 2 + d * size),
+                 tuple(p0 - sd * size / 2 + d * size)], [(0, 0), (1, 0), (1, 1), (0, 1)], M["twigs"])
+
+
+def _rot(v, axis, ang):
+    from mathutils import Matrix
+    return Matrix.Rotation(ang, 3, axis.normalized()) @ v
+
+
+def _branch(b, p, d, L, rad, depth, r, cards):
+    """Ветка из 3 участков, слегка изгибается вверх и случайно; дети — на 40–90 % длины."""
+    pts, radii = [p.copy()], [rad]
+    cur, dd = p.copy(), d.normalized()
+    for i in range(3):
+        dd = (dd + Vector((r.gauss(0, 0.18), 0.12 + r.gauss(0, 0.08), r.gauss(0, 0.18)))).normalized()
+        cur = cur + dd * (L / 3)
+        pts.append(cur.copy())
+        radii.append(rad * (1 - 0.55 * (i + 1) / 3))
+    _tube(b, pts, radii, r.uniform(0, 1))
+    if depth > 0:
+        for _ in range(r.choice((2, 3))):
+            t = r.uniform(0.4, 0.9)
+            k = min(2, int(t * 3))
+            base = pts[k].lerp(pts[k + 1], t * 3 - k)
+            axis = dd.cross(Vector((r.gauss(0, 1), r.gauss(0, 1), r.gauss(0, 1))))
+            if axis.length < 1e-3:
+                continue
+            cd = _rot(dd, axis, math.radians(r.uniform(25, 55)))
+            _branch(b, base, cd, L * r.uniform(0.45, 0.65), rad * 0.55, depth - 1, r, cards)
+    if depth == 0 or cards:
+        _twig_card(b, pts[-1], dd, max(1.4, L * 1.0), r)
+
+
+def tree3d(b, x, z, h, poplar, r):
+    far = math.hypot(x - CAM_XZ[0], z - CAM_XZ[1]) > 90.0
+    base = Vector((x, 0.0, z))
+    R0 = h * (0.018 if poplar else 0.024)
+    lean = Vector((r.gauss(0, 0.05), 1.0, r.gauss(0, 0.05))).normalized()
+    tl = h * (0.92 if poplar else 0.42)
+    trunk = [base + lean * tl * t + (Vector((r.gauss(0, 0.04), 0, r.gauss(0, 0.04))) if t > 0 else Vector())
+             for t in (0, 0.35, 0.7, 1.0)]
+    _tube(b, trunk, [R0 * 1.15, R0, R0 * 0.85, R0 * (0.4 if poplar else 0.7)])
+    top = trunk[-1]
+    if poplar:
+        for _ in range(5 if far else 11):
+            t = r.uniform(0.2, 0.95)
+            p = base + lean * tl * t
+            a = r.uniform(0, 2 * math.pi)
+            d = Vector((math.cos(a) * 0.4, 1.0, math.sin(a) * 0.4))
+            _branch(b, p, d, h * 0.24 * (1.15 - abs(t - 0.5)), R0 * 0.35, 0, r, True)
+    else:
+        n = r.choice((4, 5, 5, 6))
+        a0 = r.uniform(0, 2 * math.pi)
+        for i in range(n):
+            a = a0 + i * 2 * math.pi / n + r.gauss(0, 0.25)
+            e = math.radians(r.uniform(28, 58))
+            p = base + lean * tl * r.uniform(0.75, 1.0)
+            d = Vector((math.cos(a) * math.cos(e), math.sin(e), math.sin(a) * math.cos(e)))
+            _branch(b, p, d, h * r.uniform(0.36, 0.5), R0 * 0.62, 0 if far else 1, r, far)
+        _branch(b, top, lean + Vector((r.gauss(0, 0.15), 0, r.gauss(0, 0.15))), h * 0.48, R0 * 0.55,
+                0 if far else 1, r, far)
+    # сугроб у комля, с подветренной стороны длиннее
+    b.cur = (1, 1, 1)
+    rr = R0 * 7
+    apex = base + Vector((0.0, R0 * 1.8, 0.0))
+
+    def rim(a):
+        v = Vector((math.cos(a), 0.0, math.sin(a)))
+        return base + v * rr - WIND * rr * 0.8 * max(0.0, v.dot(-WIND)) + Vector((0.0, 0.02, 0.0))
+    for k in range(6):
+        a1, a2 = 2 * math.pi * k / 6, 2 * math.pi * (k + 1) / 6
+        b.gquad([tuple(rim(a2)), tuple(rim(a1)), tuple(apex), tuple(apex)], [(0, 0), (1, 0), (0.5, 1), (0.5, 1)],
+                M["tsnow"])
 
 
 def _blocked():
@@ -603,7 +739,7 @@ def trees(coll):
     for (x, z, h, pop) in spots:
         if any(a <= x <= c and e <= z <= f for (a, c, e, f) in blocked) and (x, z) not in PL["PLANTERS"]:
             continue
-        tree_card(b, x, z, h * (1.3 if pop else 1.0), pop, r)
+        tree3d(b, x, z, h * (1.3 if pop else 1.0), pop, r)
     return b.build("Trees_nocol", coll)
 
 

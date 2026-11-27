@@ -333,7 +333,53 @@ def facades():
                ["brick", "loggia", "loggia", "brick"], accent=(0.66, 0.36, 0.28), ac_p=0.3)
 
 
-ALL = (ground, garage, ac, plaster, windows, facades)
+# ------------------------------------------------------------------ деревья: кора и снежные веточки
+def bark():
+    """Кора голых деревьев двора (тянется вдоль ствола и веток): тёмная, с продольными трещинами и пятнами
+    лишайника. 64 × 256, тайл 0.6 × 2.4 м."""
+    rng = rng_for("menu_bark")
+    w, h = 64, 256
+    arr = rgb((0.33, 0.3, 0.28)) * (0.75 + fbm(w, h, 4, 16, rng, oct=4)[..., None] * 0.4)
+    fis = np.clip((0.42 - fbm(w, h, 14, 3, rng, oct=3)) * 6.0, 0, 1)                 # трещины вдоль
+    arr *= 1 - fis[..., None] * 0.6
+    li = np.clip((fbm(w, h, 6, 12, rng, oct=3) - 0.62) * 4.0, 0, 1)                 # серый лишайник
+    arr = arr * (1 - li[..., None] * 0.4) + rgb((0.45, 0.45, 0.41)) * li[..., None] * 0.4
+    save("menu_bark", arr)
+
+
+def twigs():
+    """Пучок тонких веточек на концах веток (карточки с альфой): голые прутья, на каждом сверху налип снег
+    после метели. Рендер настоящих веточек в студии, 256 × 256 на 4 × 4 м, низ середины — точка крепления."""
+    T, tm = _eb["T"], _eb["_tree_mesh"]
+    rng = rng_for("menu_twigs")
+    bark_m = T.material("menu_t_twig", (0.15, 0.13, 0.12), rough=0.95, noise=0.2, noise_scale=8,
+                        snow_top=0.95, snow_axis="Y")
+    sc = T.studio(4.0, 4.0, 256, 256, samples=24, sun_elev=60, transparent=True)
+    parts = []
+    for i in range(5):
+        a = (i - 2) * 0.32 + rng.normal(0, 0.1)
+        parts.append(tm(rng, 2.0 + rng.normal(0, 0.08), 0.0, a, rng.uniform(1.9, 2.8), 0.06, 3,
+                        (0.3, 0.75), (0.5, 0.7), 2, up_bias=0.15))
+    v, f = T.merge(parts)
+    T.mesh_object(sc, "twigs", v, f, bark_m)
+    arr = T.render(sc, "menu_twigs")
+    # метель: снег налип на верхнюю сторону каждого прутика — белая кромка 2 px там, где над веткой пусто,
+    # и местами комья побольше
+    al = arr[..., 3] > 0.5
+    above = np.zeros_like(al)
+    above[1:] = al[:-1]
+    edge = al & ~above
+    edge2 = edge.copy()
+    edge2[1:] |= edge[:-1]
+    clump = np.clip((fbm(256, 256, 24, 24, rng, oct=2) - 0.5) * 6.0, 0, 1) > 0.5
+    edge3 = edge2.copy()
+    edge3[2:] |= edge2[:-2] & clump[2:]
+    snow = rgb((0.88, 0.9, 0.96)) * (0.92 + fbm(256, 256, 30, 30, rng, oct=2)[..., None] * 0.1)
+    arr[..., :3] = np.where(edge3[..., None] & al[..., None], snow, arr[..., :3])
+    _eb["save_rgba"]("menu_twigs", arr)
+
+
+ALL = (ground, garage, ac, plaster, windows, facades, bark, twigs)
 MAKES = {"windows": ["menu_windows", "menu_windows_emission"],
          "facades": ["menu_fac_cream", "menu_fac_ochre", "menu_fac_brick"]}
 

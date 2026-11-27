@@ -297,7 +297,7 @@ TEXTURES = {
     "eb_poplar": "decal", "eb_house": "facade", "eb_corrugated": "metal", "eb_girder": "wall", "eb_pier": "wall",
     # кадр главного меню (YUR-19, menu_yard_textures.py)
     "menu_ground": "snowfloor", "menu_garage": "wall", "menu_ac": "metal", "menu_plaster": "wall", "menu_windows": "atlas",
-    "menu_fac_cream": "facade", "menu_fac_ochre": "facade", "menu_fac_brick": "facade",
+    "menu_fac_cream": "facade", "menu_fac_ochre": "facade", "menu_fac_brick": "facade", "menu_bark": "wall", "menu_twigs": "decal",
 }
 
 # у этих текстур есть «пара»-свечение: его надо размыть так же, чтобы окна совпали
