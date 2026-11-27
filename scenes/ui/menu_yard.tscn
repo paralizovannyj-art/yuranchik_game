@@ -1,0 +1,303 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/menu_yard.gd" id="1"]
+[ext_resource type="PackedScene" path="res://assets/models/menu/menu_yard.gltf" id="2"]
+[ext_resource type="Shader" path="res://shaders/menu_dusk_sky.gdshader" id="3"]
+[ext_resource type="Shader" path="res://shaders/ps2_post.gdshader" id="4"]
+[ext_resource type="PackedScene" path="res://assets/models/yurchik.gltf" id="5"]
+
+[sub_resource type="ShaderMaterial" id="sky_mat"]
+shader = ExtResource("3")
+shader_parameter/glow_energy = 1.5
+shader_parameter/cloud_lit = Color(0.55, 0.2, 0.34, 1)
+
+[sub_resource type="Sky" id="sky_res"]
+sky_material = SubResource("sky_mat")
+radiance_size = 0
+
+[sub_resource type="Environment" id="env"]
+background_mode = 2
+sky = SubResource("sky_res")
+ambient_light_source = 2
+ambient_light_color = Color(0.62, 0.5, 0.66, 1)
+ambient_light_sky_contribution = 0.0
+ambient_light_energy = 0.45
+tonemap_mode = 2
+tonemap_white = 1.6
+glow_enabled = true
+glow_intensity = 0.5
+glow_strength = 0.9
+glow_hdr_threshold = 1.0
+fog_enabled = true
+fog_light_color = Color(0.42, 0.31, 0.42, 1)
+fog_density = 0.0028
+fog_aerial_perspective = 0.55
+fog_sky_affect = 0.0
+adjustment_enabled = true
+adjustment_saturation = 1.05
+
+[sub_resource type="ParticleProcessMaterial" id="pm_snow"]
+emission_shape = 3
+emission_box_extents = Vector3(14, 1, 18)
+direction = Vector3(0, -1, 0)
+spread = 20.0
+initial_velocity_min = 0.4
+initial_velocity_max = 0.9
+gravity = Vector3(0.25, -0.35, 0.05)
+turbulence_enabled = true
+turbulence_noise_strength = 0.35
+turbulence_noise_scale = 5.0
+
+[sub_resource type="Gradient" id="grad_flake"]
+offsets = PackedFloat32Array(0, 0.45, 1)
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0.75, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="tex_flake"]
+gradient = SubResource("grad_flake")
+width = 32
+height = 32
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(0.5, 0)
+
+[sub_resource type="StandardMaterial3D" id="mat_flake"]
+transparency = 1
+albedo_color = Color(0.95, 0.92, 0.97, 1)
+albedo_texture = SubResource("tex_flake")
+billboard_mode = 3
+particles_anim_h_frames = 1
+particles_anim_v_frames = 1
+particles_anim_loop = false
+
+[sub_resource type="QuadMesh" id="mesh_flake"]
+material = SubResource("mat_flake")
+size = Vector2(0.045, 0.045)
+
+[sub_resource type="StandardMaterial3D" id="mat_cig_paper"]
+albedo_color = Color(0.93, 0.92, 0.88, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="mat_cig_filter"]
+albedo_color = Color(0.78, 0.5, 0.26, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="mat_ember"]
+albedo_color = Color(0.35, 0.08, 0.02, 1)
+emission_enabled = true
+emission = Color(1, 0.38, 0.1, 1)
+emission_energy_multiplier = 2.0
+
+[sub_resource type="CylinderMesh" id="mesh_cig_paper"]
+material = SubResource("mat_cig_paper")
+top_radius = 0.0042
+bottom_radius = 0.0042
+height = 0.061
+radial_segments = 6
+rings = 1
+
+[sub_resource type="CylinderMesh" id="mesh_cig_filter"]
+material = SubResource("mat_cig_filter")
+top_radius = 0.0043
+bottom_radius = 0.0043
+height = 0.024
+radial_segments = 6
+rings = 1
+
+[sub_resource type="SphereMesh" id="mesh_ember"]
+material = SubResource("mat_ember")
+radius = 0.0046
+height = 0.006
+radial_segments = 6
+rings = 3
+
+[sub_resource type="Gradient" id="grad_puff"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0.45, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="tex_puff"]
+gradient = SubResource("grad_puff")
+width = 32
+height = 32
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(0.5, 0)
+
+[sub_resource type="StandardMaterial3D" id="mat_smoke"]
+transparency = 1
+shading_mode = 0
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.8, 0.77, 0.82, 1)
+albedo_texture = SubResource("tex_puff")
+billboard_mode = 3
+particles_anim_h_frames = 1
+particles_anim_v_frames = 1
+particles_anim_loop = false
+
+[sub_resource type="Gradient" id="grad_smoke_life"]
+offsets = PackedFloat32Array(0, 0.15, 0.6, 1)
+colors = PackedColorArray(1, 1, 1, 0, 1, 1, 1, 0.22, 1, 1, 1, 0.1, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture1D" id="tex_smoke_life"]
+gradient = SubResource("grad_smoke_life")
+
+[sub_resource type="Gradient" id="grad_exhale_life"]
+offsets = PackedFloat32Array(0, 0.1, 0.5, 1)
+colors = PackedColorArray(1, 1, 1, 0, 1, 1, 1, 0.2, 1, 1, 1, 0.09, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture1D" id="tex_exhale_life"]
+gradient = SubResource("grad_exhale_life")
+
+[sub_resource type="Curve" id="curve_smoke_grow"]
+_data = [Vector2(0, 0.25), 0.0, 1.6, 0, 0, Vector2(1, 1), 0.4, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="tex_smoke_grow"]
+curve = SubResource("curve_smoke_grow")
+
+[sub_resource type="ParticleProcessMaterial" id="pm_cig_smoke"]
+direction = Vector3(0, 1, 0)
+spread = 10.0
+initial_velocity_min = 0.05
+initial_velocity_max = 0.1
+gravity = Vector3(0.03, 0.07, -0.02)
+damping_min = 0.02
+damping_max = 0.05
+scale_min = 0.7
+scale_max = 1.1
+scale_curve = SubResource("tex_smoke_grow")
+color_ramp = SubResource("tex_smoke_life")
+turbulence_enabled = true
+turbulence_noise_strength = 0.25
+turbulence_noise_scale = 1.6
+
+[sub_resource type="QuadMesh" id="mesh_cig_puff"]
+material = SubResource("mat_smoke")
+size = Vector2(0.06, 0.06)
+
+[sub_resource type="ParticleProcessMaterial" id="pm_exhale"]
+direction = Vector3(1, 0.35, -0.2)
+spread = 24.0
+initial_velocity_min = 0.35
+initial_velocity_max = 0.6
+gravity = Vector3(0.02, 0.06, -0.03)
+damping_min = 0.3
+damping_max = 0.5
+scale_min = 0.6
+scale_max = 1.2
+scale_curve = SubResource("tex_smoke_grow")
+color_ramp = SubResource("tex_exhale_life")
+turbulence_enabled = true
+turbulence_noise_strength = 0.3
+turbulence_noise_scale = 1.4
+
+[sub_resource type="QuadMesh" id="mesh_exhale_puff"]
+material = SubResource("mat_smoke")
+size = Vector2(0.15, 0.15)
+
+[sub_resource type="ShaderMaterial" id="post"]
+shader = ExtResource("4")
+shader_parameter/blur_px = 1.0
+shader_parameter/color_levels = 128.0
+shader_parameter/dither_strength = 0.0
+shader_parameter/black_crush = 0.01
+shader_parameter/s_curve = 0.2
+shader_parameter/saturation = 0.9
+shader_parameter/exposure = 1.0
+shader_parameter/shadow_tint = Color(0.03, 0.0, 0.05, 1)
+shader_parameter/highlight_tint = Color(1.0, 0.93, 0.95, 1)
+shader_parameter/halo = 0.12
+shader_parameter/grain = 0.05
+shader_parameter/vignette = 0.4
+
+[node name="MenuYard" type="Node3D"]
+script = ExtResource("1")
+
+[node name="Env" type="WorldEnvironment" parent="."]
+environment = SubResource("env")
+
+[node name="Dusk" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.912, 0.137, -0.386, 0, 0.942, 0.335, 0.41, -0.306, 0.859, 0, 60, 0)
+light_color = Color(1, 0.55, 0.68, 1)
+light_energy = 0.35
+shadow_enabled = true
+directional_shadow_max_distance = 120.0
+
+[node name="Set" parent="." instance=ExtResource("2")]
+
+[node name="Yurchik" parent="." instance=ExtResource("5")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -0.62, 23, 0.42)
+
+[node name="Hammer" parent="Yurchik/Yurchik/Skeleton3D/HandR" index="0"]
+visible = false
+
+[node name="Cig" type="Node3D" parent="Yurchik/Yurchik/Skeleton3D/HandR"]
+
+[node name="Filter" type="MeshInstance3D" parent="Yurchik/Yurchik/Skeleton3D/HandR/Cig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.012, 0)
+mesh = SubResource("mesh_cig_filter")
+
+[node name="Paper" type="MeshInstance3D" parent="Yurchik/Yurchik/Skeleton3D/HandR/Cig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0545, 0)
+mesh = SubResource("mesh_cig_paper")
+
+[node name="Ember" type="MeshInstance3D" parent="Yurchik/Yurchik/Skeleton3D/HandR/Cig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0855, 0)
+mesh = SubResource("mesh_ember")
+
+[node name="EmberLight" type="OmniLight3D" parent="Yurchik/Yurchik/Skeleton3D/HandR/Cig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.095, 0)
+light_color = Color(1, 0.42, 0.14, 1)
+light_energy = 0.12
+omni_range = 0.55
+omni_attenuation = 2.0
+
+[node name="Tip" type="Marker3D" parent="Yurchik/Yurchik/Skeleton3D/HandR/Cig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.09, 0)
+
+[node name="HeadHold" type="BoneAttachment3D" parent="Yurchik/Yurchik/Skeleton3D"]
+bone_name = "Head"
+
+[node name="Mouth" type="Marker3D" parent="Yurchik/Yurchik/Skeleton3D/HeadHold"]
+
+[node name="CigSmoke" type="GPUParticles3D" parent="."]
+amount = 80
+lifetime = 5.0
+preprocess = 4.0
+visibility_aabb = AABB(-1, -0.5, -1, 2, 3, 2)
+process_material = SubResource("pm_cig_smoke")
+draw_pass_1 = SubResource("mesh_cig_puff")
+
+[node name="Exhale" type="GPUParticles3D" parent="."]
+emitting = false
+amount = 110
+lifetime = 3.0
+visibility_aabb = AABB(-1, -1, -2, 4, 3, 4)
+process_material = SubResource("pm_exhale")
+draw_pass_1 = SubResource("mesh_exhale_puff")
+
+[node name="Snowfall" type="GPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 31, -8)
+amount = 2500
+lifetime = 16.0
+preprocess = 16.0
+visibility_aabb = AABB(-20, -25, -25, 40, 30, 50)
+process_material = SubResource("pm_snow")
+draw_pass_1 = SubResource("mesh_flake")
+
+[node name="MenuCam" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, 24.6, 2.0)
+fov = 62.0
+far = 1500.0
+current = true
+
+[node name="PS2Post" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="Filter" type="ColorRect" parent="PS2Post"]
+material = SubResource("post")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
