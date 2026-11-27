@@ -297,11 +297,14 @@ TEXTURES = {
     "eb_poplar": "decal", "eb_house": "facade", "eb_corrugated": "metal", "eb_girder": "wall", "eb_pier": "wall",
     # кадр главного меню (YUR-19, menu_yard_textures.py)
     "menu_ground": "snowfloor", "menu_garage": "wall", "menu_ac": "metal", "menu_plaster": "wall", "menu_windows": "atlas",
+    "menu_fac_cream": "facade", "menu_fac_ochre": "facade", "menu_fac_brick": "facade",
 }
 
 # у этих текстур есть «пара»-свечение: его надо размыть так же, чтобы окна совпали
 EMISSION_OF = {
     "facade_emission": "facade_albedo", "facade_b_emission": "facade_b_albedo",
+    "menu_fac_cream_emission": "menu_fac_cream", "menu_fac_ochre_emission": "menu_fac_ochre",
+    "menu_fac_brick_emission": "menu_fac_brick",
     "facade_c_emission": "facade_c_albedo", "khr_emission": "khr_albedo", "school_emission": "school_albedo",
     "ind_window_emission": "ind_window", "kiosk_emission": "kiosk", "shopfront_emission": "shopfront",
     "underpass_sign_emission": "underpass_sign", "pod_window_emission": "pod_window", "tv_emission": "tv",

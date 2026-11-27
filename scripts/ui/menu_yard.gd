@@ -12,8 +12,8 @@ const SMOKE_LIB := "res://assets/animations/menu/yurchik_smoke.glb"
 const SMOKE_DATA := "res://assets/animations/menu/smoke.json"
 const CLIP := &"menu/MenuSmoke"
 
-@export var cam_pos := Vector3(1.2, 24.6, 2.0)       ## где камера (снаружи у стены, на уровне окна)
-@export var cam_target := Vector3(-0.2, 22.8, -18.0) ## куда смотрит (вдоль фасада, окно — слева в кадре)
+@export var cam_pos := Vector3(1.0, 25.2, 3.5)       ## где камера (снаружи у стены, чуть позади окна и выше)
+@export var cam_target := Vector3(7.72, 21.38, -14.95) ## куда смотрит: вдоль фасада с поворотом во двор на 20°
 @export var sway := 0.03                             ## м — насколько камера «дышит»
 @export var street_energy := 1.6                     ## фонари (1/d²: на снегу под фонарём ≈ e/h²)
 @export var room_energy := 4.0                       ## лампа в комнате Юрчика
