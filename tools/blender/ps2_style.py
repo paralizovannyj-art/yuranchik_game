@@ -298,6 +298,8 @@ TEXTURES = {
     # кадр главного меню (YUR-19, menu_yard_textures.py)
     "menu_ground": "snowfloor", "menu_garage": "wall", "menu_ac": "metal", "menu_plaster": "wall", "menu_windows": "atlas",
     "menu_fac_cream": "facade", "menu_fac_ochre": "facade", "menu_fac_brick": "facade", "menu_bark": "wall", "menu_twigs": "decal",
+    # детская площадка под окном Юрчика (YUR-49, playground_textures.py)
+    "pg_paint": "metal", "pg_planks": "wood", "pg_lattice": "decal", "pg_roof": "metal",
 }
 
 # у этих текстур есть «пара»-свечение: его надо размыть так же, чтобы окна совпали

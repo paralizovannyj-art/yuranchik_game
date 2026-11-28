@@ -5,6 +5,7 @@
 [ext_resource type="Shader" path="res://shaders/menu_dusk_sky.gdshader" id="3"]
 [ext_resource type="Shader" path="res://shaders/ps2_post.gdshader" id="4"]
 [ext_resource type="PackedScene" path="res://assets/models/yurchik.gltf" id="5"]
+[ext_resource type="PackedScene" path="res://scenes/yard/playground.tscn" id="6"]
 
 [sub_resource type="ShaderMaterial" id="sky_mat"]
 shader = ExtResource("3")
@@ -221,6 +222,8 @@ shadow_enabled = true
 directional_shadow_max_distance = 120.0
 
 [node name="Set" parent="." instance=ExtResource("2")]
+
+[node name="Playground" parent="." instance=ExtResource("6")]
 
 [node name="Yurchik" parent="." instance=ExtResource("5")]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -0.62, 23, 0.42)

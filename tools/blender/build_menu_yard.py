@@ -697,8 +697,9 @@ def trees(coll):
     def scatter(x0, x1, z0, z1, n, h0, h1, pop=0.0):
         for _ in range(n):
             spots.append((r.uniform(x0, x1), r.uniform(z0, z1), r.uniform(h0, h1), r.random() < pop))
-    # клумбы площадки — по дереву (видео 19–21 с)
-    for (cx, cz) in PL["PLANTERS"]:
+    # клумбы площадки: деревья в них теперь строит build_playground.py (общая модель с локацией, YUR-49); здесь
+    # прежние четыре только «растут вхолостую» — чтобы случайные числа и все остальные деревья кадра не сдвинулись
+    for (cx, cz) in OLD_PLANTERS:
         spots.append((cx, cz, r.uniform(6.5, 8.5), False))
     # голые деревья между проездом и первой тропинкой — передний план кадра из окна (видео 1–3 с)
     scatter(16, 30, -64, 34, 18, 6, 11, 0.08)
@@ -736,14 +737,19 @@ def trees(coll):
     scatter(96, 136, -49, -5, 8, 7, 11)
     scatter(96, 160, -5, 75, 14, 8, 12, 0.2)
     blocked = _blocked()
+    ghost = B()
     for (x, z, h, pop) in spots:
-        if any(a <= x <= c and e <= z <= f for (a, c, e, f) in blocked) and (x, z) not in PL["PLANTERS"]:
+        if (x, z) in OLD_PLANTERS:
+            tree3d(ghost, x, z, h, pop, r)
+            continue
+        if any(a <= x <= c and e <= z <= f for (a, c, e, f) in blocked):
             continue
         tree3d(b, x, z, h * (1.3 if pop else 1.0), pop, r)
     return b.build("Trees_nocol", coll)
 
 
 LONE_TREE = PL["LONE_TREE"]
+OLD_PLANTERS = [(13.5, -6.5), (13.5, 2.0), (19.5, -6.5), (22.0, 9.5)]   # клумбы до YUR-49 (только для trees())
 
 
 def walls_box(b, x0, x1, y0, y1, z0, z1, m_wall, wall_scale, m_roof=None, sides=("+x", "-x", "+z", "-z")):
@@ -888,59 +894,14 @@ def yard_buildings(coll):
     b.cyl(P(LAWN_X1, 0.5, zB), P(LAWN_X1, 0.5, zA), 0.02, 0.02, M["paint"], segs=4)
     b.cur = (0.75, 0.75, 0.75)
     x0, x1, z0, z1 = PL["PLAYGROUND"]
-    b.gbox(x0 - 0.15, x0, 0, 0.15, PL["PARKING"][2], z1, {"+x": M["plaster"], "-x": M["plaster"], "up": M["snow"]})
+    # бордюр вдоль парковки; дальше, вдоль площадки, — свой у неё (build_playground.py)
+    b.gbox(x0 - 0.15, x0, 0, 0.15, PL["PARKING"][2], z0 - 0.15, {"+x": M["plaster"], "-x": M["plaster"], "up": M["snow"]})
     rr = random.Random(3)
-    for z in list(range(int(z1) + 2, int(z1) + 18, 3)) + [z0 + 1, z0 + 5]:
+    for z in range(int(z1) + 2, int(z1) + 18, 3):
         b.cur = rr.choice([(0.85, 0.8, 0.2), (0.3, 0.6, 0.3), (0.9, 0.9, 0.3)])
         b.cyl(P(x0 + 0.6, 0, z), P(x0 + 0.6, 0.3, z), 0.38, 0.38, M["paint"], segs=8, caps=True)
 
-    # --- детская площадка (видео 3, 19–27 с)
-    for (cx, cz) in PL["PLANTERS"]:                                         # бортики клумб
-        b.cur = (0.55, 0.42, 0.3)
-        for (a, c, e, f) in ((cx - 1.3, cx + 1.3, cz - 1.3, cz - 1.2), (cx - 1.3, cx + 1.3, cz + 1.2, cz + 1.3),
-                             (cx - 1.3, cx - 1.2, cz - 1.3, cz + 1.3), (cx + 1.2, cx + 1.3, cz - 1.3, cz + 1.3)):
-            b.gbox(a, c, 0, 0.35, e, f, {"+x": M["paint"], "-x": M["paint"], "+z": M["paint"], "-z": M["paint"],
-                                         "up": M["snow"]})
-    # горка-домик с розовой крышей
-    gx, gz = 17.5, 5.0
-    b.cur = (0.85, 0.65, 0.25)
-    for (dx, dz) in ((-0.7, -0.7), (0.7, -0.7), (-0.7, 0.7), (0.7, 0.7)):
-        b.cyl(P(gx + dx, 0, gz + dz), P(gx + dx, 2.3, gz + dz), 0.05, 0.05, M["paint"], segs=4)
-    b.gbox(gx - 0.8, gx + 0.8, 1.2, 1.3, gz - 0.8, gz + 0.8, {"up": M["snow"], "+x": M["paint"], "-x": M["paint"],
-                                                               "+z": M["paint"], "-z": M["paint"]})
-    b.cur = (0.95, 0.4, 0.5)
-    gable(b, gx - 0.95, gx + 0.95, 2.3, 3.0, gz - 0.95, gz + 0.95, m=M["paint"], ends=M["paint"])
-    b.cur = (0.3, 0.55, 0.85)
-    b.gquad([(gx + 0.8, 1.3, gz - 0.4), (gx + 0.8, 1.3, gz + 0.4), (gx + 3.2, 0.1, gz + 0.4), (gx + 3.2, 0.1, gz - 0.4)][::-1],
-            [(0, 0), (1, 0), (1, 1), (0, 1)], M["paint"])
-    # качели (А-рама) и песочница с крышей-грибком
-    sx, sz = 21.5, -1.5
-    b.cur = (0.8, 0.2, 0.15)
-    for zz in (sz - 1.4, sz + 1.4):
-        b.cyl(P(sx - 0.9, 0, zz), P(sx, 2.3, zz), 0.045, 0.045, M["paint"], segs=4)
-        b.cyl(P(sx + 0.9, 0, zz), P(sx, 2.3, zz), 0.045, 0.045, M["paint"], segs=4)
-    b.cyl(P(sx, 2.3, sz - 1.4), P(sx, 2.3, sz + 1.4), 0.045, 0.045, M["paint"], segs=4)
-    b.cur = (0.2, 0.2, 0.2)
-    for zz in (sz - 0.4, sz + 0.4):
-        b.cyl(P(sx, 2.3, zz), P(sx, 0.5, zz), 0.01, 0.01, M["dark"], segs=3)
-    b.gbox(sx - 0.2, sx + 0.2, 0.45, 0.5, sz - 0.45, sz + 0.45, {"up": M["snow"], "+x": M["dark"], "-x": M["dark"]})
-    px, pz = 13.0, 9.5
-    b.cur = (0.75, 0.6, 0.35)
-    for (a, c, e, f) in ((px - 1.5, px + 1.5, pz - 1.5, pz - 1.4), (px - 1.5, px + 1.5, pz + 1.4, pz + 1.5),
-                         (px - 1.5, px - 1.4, pz - 1.5, pz + 1.5), (px + 1.4, px + 1.5, pz - 1.5, pz + 1.5)):
-        b.gbox(a, c, 0, 0.3, e, f, {"+x": M["paint"], "-x": M["paint"], "+z": M["paint"], "-z": M["paint"], "up": M["snow"]})
-    b.cyl(P(px, 0, pz), P(px, 2.0, pz), 0.05, 0.05, M["paint"], segs=4)
-    b.cur = (0.3, 0.6, 0.35)
-    gable(b, px - 1.2, px + 1.2, 2.0, 2.6, pz - 1.2, pz + 1.2, m=M["paint"], ends=M["paint"])
-    # лавки (зелёные)
-    for (lx, lz, yaw) in ((11.4, -2.0, 0), (11.4, 6.0, 0), (24.0, 4.0, 0), (16.0, 12.2, 1)):
-        b.cur = (0.2, 0.5, 0.3)
-        if yaw:
-            b.gbox(lx - 0.9, lx + 0.9, 0.4, 0.48, lz - 0.22, lz + 0.22, {"+x": M["paint"], "-x": M["paint"],
-                   "+z": M["paint"], "-z": M["paint"], "up": M["snow"]})
-        else:
-            b.gbox(lx - 0.22, lx + 0.22, 0.4, 0.48, lz - 0.9, lz + 0.9, {"+x": M["paint"], "-x": M["paint"],
-                   "+z": M["paint"], "-z": M["paint"], "up": M["snow"]})
+    # детская площадка — отдельная общая модель меню и локации (build_playground.py, YUR-49)
     return b.build("YardBuildings_nocol", coll)
 
 
@@ -1136,5 +1097,6 @@ def main():
     return {"polys": stats, "total": sum(stats.values()), "lights": len(LIGHTS)}
 
 
-result = main()
-print(result)
+if not globals().get("MENU_NO_MAIN"):          # build_playground.py берёт отсюда материалы и деревья, не собирая кадр
+    result = main()
+    print(result)
