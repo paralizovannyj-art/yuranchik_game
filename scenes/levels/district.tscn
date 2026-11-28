@@ -267,7 +267,7 @@ script = ExtResource("pick")
 item_id = "brick"
 
 [node name="Bandage1" type="Node3D" parent="Quest/Items"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 3.03, -50)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 3.03, -47.5)
 script = ExtResource("pick")
 item_id = "bandage"
 

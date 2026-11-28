@@ -99,7 +99,7 @@ def ground():
     arr = arr * (1 - k[..., None] * 0.75) + slush * k[..., None] * 0.75
 
     # клумбы на площадке: земля с листвой под снегом в бортиках
-    for (cx, cz) in P["PLANTERS"]:
+    for (cx, cz, _kind) in P["PLANTERS"]:
         bed = rect(cx - 1.2, cx + 1.2, cz - 1.2, cz + 1.2, soft=0.15)
         arr = arr * (1 - bed[..., None] * 0.45) + rgb((0.35, 0.28, 0.24)) * bed[..., None] * 0.45
     # разметка карманов парковки — чуть видна сквозь кашу

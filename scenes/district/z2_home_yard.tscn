@@ -4,17 +4,7 @@
 
 [ext_resource type="PackedScene" path="res://assets/models/district/homeyard_westwing.gltf" id="m3"]
 
-[ext_resource type="PackedScene" path="res://assets/models/district/homeyard_southrow.gltf" id="m4"]
-
 [ext_resource type="PackedScene" path="res://assets/models/district/homeyard_eastkhr.gltf" id="m5"]
-
-[ext_resource type="PackedScene" path="res://assets/models/district/props/slide_slide_1_5x2x3.gltf" id="m6"]
-
-[ext_resource type="PackedScene" path="res://assets/models/district/props/swing_swing_3x2_2x1.gltf" id="m7"]
-
-[ext_resource type="PackedScene" path="res://assets/models/district/props/carousel_carousel_2x0_6x2.gltf" id="m8"]
-
-[ext_resource type="PackedScene" path="res://assets/models/district/props/sandbox_sandbox_3x0_3x3.gltf" id="m9"]
 
 [ext_resource type="PackedScene" path="res://assets/models/district/props/sheds_sheds_18x2_5x3.gltf" id="m10"]
 
@@ -48,6 +38,8 @@
 
 [ext_resource type="PackedScene" path="res://scenes/props/street_light.tscn" id="L1"]
 
+[ext_resource type="PackedScene" path="res://scenes/yard/playground.tscn" id="pg"]
+
 [node name="HomeYard" type="Node3D"]
 
 [node name="EntranceLight" type="OmniLight3D" parent="."]
@@ -70,32 +62,20 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 3, -71)
 [node name="Westwing_mdl" parent="." instance=ExtResource("m3")]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -36, 3, -46)
 
-[node name="Southrow_mdl" parent="." instance=ExtResource("m4")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -11, 3, -32.5)
-
 [node name="Eastkhr_mdl" parent="." instance=ExtResource("m5")]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 11, 3, -51)
 
-[node name="Slide_mdl" parent="." instance=ExtResource("m6")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.25, 3, -57.5)
-
-[node name="Swing_mdl" parent="." instance=ExtResource("m7")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 3, -58)
-
-[node name="Carousel_mdl" parent="." instance=ExtResource("m8")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23, 3, -53)
-
-[node name="Sandbox_mdl" parent="." instance=ExtResource("m9")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.5, 3, -52.5)
+[node name="Playground" parent="." instance=ExtResource("pg")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -14.5, 3, -62.9)
 
 [node name="Sheds_mdl" parent="." instance=ExtResource("m10")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, 3, -44.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 3, -28.4)
 
 [node name="Kiosk_mdl" parent="." instance=ExtResource("m11")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 3, -54.75)
 
 [node name="Turnik_mdl" parent="." instance=ExtResource("m12")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 3, -48)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 3, -35)
 
 [node name="Bench_mdl" parent="." instance=ExtResource("m13")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 3, -55)
@@ -110,7 +90,7 @@ transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -6, 3, -60)
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 3, 3, -42)
 
 [node name="Drift_mdl" parent="." instance=ExtResource("m16")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 3, -40.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 3, -34.5)
 
 [node name="Drift2_mdl" parent="." instance=ExtResource("m17")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 3, -40.5)
